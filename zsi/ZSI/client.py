@@ -256,7 +256,7 @@ class Binding:
         self.ReceiveSOAP(**kw)
         if self.ps.IsAFault():
             msg = FaultFromFaultMessage(self.ps)
-            raise TypeError("Unexpected SOAP fault: " + msg.string)
+            raise FaultException(msg)
 
         if replytype is None:
             tc = TC.Any(aslist=1)

@@ -11,6 +11,8 @@ Changes for ??, released ???:
     -   User can specify which module contains complex type definitions
     -   Mod_Python support for dispatch to multiple functions within a module
     -   In client.py, try to get port from URL if available (via Wichert Akkerman)
+    -   Add ZSIException as parent for ZSI exception classes, FaultException
+        class, and raise that if we get unexpected fault in client (Wichert)
 
 Changes for 1.3, released xx-May-2002:
     -	Fixed parsing bug evidenced by dW article

@@ -124,7 +124,12 @@ def _backtrace(elt, dom):
 
 ##
 ##  Exception classes.
-class ParseException(Exception):
+class ZSIException(Exceptoin):
+    '''Base class for all ZSI exceptions.
+    '''
+    pass
+
+class ParseException(ZSIException):
     '''Exception raised during parsing.
     '''
 
@@ -143,7 +148,7 @@ class ParseException(Exception):
         return "<%s.ParseException at 0x%x>" % (__name__, id(self))
 
 
-class EvaluateException(Exception):
+class EvaluateException(ZSIException):
     '''Exception raised during data evaluation (serialization).
     '''
 
@@ -158,6 +163,20 @@ class EvaluateException(Exception):
 
     def __repr__(self):
         return "<%s.EvaluateException at 0x%x>" % (__name__, id(self))
+
+class FaultException(ZSIException):
+    '''Exception raised when a fault is received.
+    '''
+
+    def __init__(self, fault):
+        self.fault = fault
+        self.str = fault.string
+
+    def __str__(self):
+        return self.str
+
+    def __repr__(self):
+        return "<%s.FaultException at 0x%x>" % (__name__, id(self))
 
 
 ##
