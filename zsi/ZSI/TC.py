@@ -10,10 +10,7 @@ from ZSI import _copyright, _children, _child_elements, \
         EvaluateException, _valid_encoding
 
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
-try:
-    from xml.dom.ext import Canonicalize
-except:
-    from ZSI.compat import Canonicalize
+from ZSI.wstools.c14n import Canonicalize
 
 import re, types, time
 

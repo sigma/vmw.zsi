@@ -7,10 +7,8 @@ from ZSI import _copyright, ZSI_SCHEMA_URI
 from ZSI import _stringtypes, _seqtypes
 from ZSI.TC import TypeCode
 from ZSI.wstools.Namespaces import XMLNS, SOAP, SCHEMA
-try:
-    from xml.dom.ext import Canonicalize
-except:
-    from ZSI.compat import Canonicalize
+from ZSI.wstools.c14n import Canonicalize
+
 import types
 
 _standard_ns = [ ('xml', XMLNS.XML), ('xmlns', XMLNS.BASE) ]

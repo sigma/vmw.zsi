@@ -7,10 +7,8 @@ from ZSI import _copyright, _children, _child_elements, \
         _textprotect, _stringtypes, _seqtypes, _Node, SoapWriter
 
 from ZSI.wstools.Namespaces import SOAP
-try:
-    from xml.dom.ext import Canonicalize
-except:
-    from ZSI.compat import Canonicalize
+from ZSI.wstools.c14n import Canonicalize
+
 import traceback, cStringIO as StringIO
 
 class Fault:
