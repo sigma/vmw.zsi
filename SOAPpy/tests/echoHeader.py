@@ -14,7 +14,10 @@ Config.BuildWithNoType = 1
 Config.BuildWithNoNamespacePrefix = 1
 
 
+
 hd = headerType(data = {"mystring": "Hello World"})
 server = SOAPProxy("http://localhost:9900/", header=hd) 
 
 print server.echo("Hello world")
+
+server.quit()

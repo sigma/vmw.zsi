@@ -13,7 +13,7 @@ from SOAPpy import *
 #Config.dumpSOAPOut = 1
 
 # ask for returned SOAP responses to be converted to basic python types
-Config.simplify_objects = 1
+Config.simplify_objects = 0
 
 #Config.BuildWithNoType = 1
 #Config.BuildWithNoNamespacePrefix = 1
@@ -21,13 +21,13 @@ Config.simplify_objects = 1
 server = SOAPProxy("http://localhost:9900/")
 
 x = u'uMOO' # Single unicode string
-y = server.echo_simple(x)
+y = server.echo_simple((x,))
 assert( x==y[0] )
 
 x = [u'uMoo1',u'uMoo2'] # array of unicode strings
 y = server.echo_simple(x)
-assert( x[0] == y[0][0] )
-assert( x[1] == y[0][1] )
+assert( x[0] == y[0] )
+assert( x[1] == y[1] )
 
 x = {
      u'A':1,

@@ -38,7 +38,7 @@ All of the tests here work without generating errors EXCEPT:
     test.  This is a problem with the test, not with SOAPpy, but we
     intend to get it fixed so that we can create better unit tests.
 
-The test files which rely on no-longer available serveres should be
+The test files which rely on no-longer available servers should be
 removed unless we can find a replacement. This will wait for a cleanup
 associated with release of version 1.0.
 

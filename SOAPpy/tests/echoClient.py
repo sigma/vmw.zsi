@@ -38,7 +38,6 @@ else:
 # Echo...
 
 try:
-    print 'server.echo("MOO")'
     print server.echo("MOO")
 except Exception, e:
     print "Caught exception: ", e
@@ -49,7 +48,6 @@ except Exception, e:
     
 # ...in an object
 try:
-    print 'server.echo_ino("moo")'
     print server.echo_ino("moo")
 except Exception, e:
     print "Caught exception: ", e
@@ -60,7 +58,6 @@ except Exception, e:
 
 # ...in an object in an object
 try:
-    print 'server.prop.echo2("moo")'
     print server.prop.echo2("moo")
 except Exception, e:
     print "Caught exception: ", e
@@ -72,7 +69,6 @@ except Exception, e:
 
 # ...with keyword arguments 
 try:
-    print 'server.echo_wkw(third = "three", first = "one", second = "two")'
     print server.echo_wkw(third = "three", first = "one", second = "two")
 except Exception, e:
     print "Caught exception: ", e
@@ -83,7 +79,6 @@ except Exception, e:
 
 # ...with a context object
 try:
-    print 'server.echo_wc("moo")'
     print server.echo_wc("moo")
 except Exception, e:
     print "Caught exception: ", e
@@ -95,7 +90,6 @@ except Exception, e:
 # ...with a header
 hd = headerType(data = {"mystring": "Hello World"})
 try:
-    print 'server._hd(hd).echo_wc("moo")'
     print server._hd(hd).echo_wc("moo")
 except Exception, e:
     print "Caught exception: ", e
@@ -103,3 +97,6 @@ try:
     print pathserver._hd(hd).echo_wc("cow")
 except Exception, e:
     print "Caught exception: ", e
+
+# close down server
+server.quit()

@@ -3,7 +3,7 @@
 import sys, unittest
 sys.path.insert(1, "..")
 from SOAPpy import *
-#Config.debug=1
+Config.debug=1
 
 class ClientTestCase(unittest.TestCase):
     def testParseRules(self):
@@ -34,12 +34,15 @@ class ClientTestCase(unittest.TestCase):
             return float(x) * -1.0
 
         # parse rules
-        pr = {'Result':
-              {'Book':   {'title':"string"},
-               'Person': {'age':'int',
-                          'height':negfloat}
+        pr = {'SomeMethod':
+               {'Result':
+                 {
+                  'Book':   {'title':'string'},
+                  'Person': {'age':'int',
+                             'height':negfloat}
+                  }
                }
-              }
+             } 
         y = parseSOAPRPC(x, rules=pr)
         
         assert y.Result.Person.age == 49

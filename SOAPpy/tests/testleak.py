@@ -10,8 +10,8 @@ import types
 gc.set_debug(gc.DEBUG_SAVEALL) 
 
 for i in range(400):
-    try: #t = SOAPpy.SOAP.parseSOAPRPC('bad soap payload') 
-        t = test()
+    try:
+        t = SOAPpy.SOAP.parseSOAPRPC('bad soap payload') 
     except: pass
 
 gc.collect()

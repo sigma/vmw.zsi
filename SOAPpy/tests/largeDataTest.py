@@ -46,3 +46,5 @@ hd = headerType(data = {"mystring": "Hello World"})
 print "server._hd(hd).echo_wc(big)..",
 tmp = server._hd(hd).echo_wc(big)
 print "done"
+
+server.quit()

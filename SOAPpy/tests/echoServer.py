@@ -3,7 +3,7 @@
 # Copyright (c) 2001 actzero, inc. All rights reserved.
 
 import sys
-#sys.path.insert(1, "..")
+sys.path.insert(1, "..")
 
 from SOAPpy import *
 
@@ -20,6 +20,14 @@ allowAll = 1
 
 # ask for returned SOAP responses to be converted to basic python types
 Config.simplify_objects = 1
+
+
+# provide a mechanism to stop the server
+run = 1
+def quit():
+    global run
+    run=0;
+
 
 if Config.SSLserver:
     from M2Crypto import SSL
@@ -135,7 +143,6 @@ def echo_header(s, _SOAPContext):
     return s, c.header
 
 
-
 addr = ('localhost', 9900)
 GSI = 0
 SSL = 0
@@ -181,9 +188,11 @@ server.registerKWFunction(echo_wkw)
 
 server.registerFunction(echo_simple)
 server.registerFunction(MethodSig(echo_header, keywords=0, context=1))
+server.registerFunction(quit)
 
 # Start the server
 try:
-    server.serve_forever()
+    while run:
+        server.handle_request()
 except KeyboardInterrupt:
     pass

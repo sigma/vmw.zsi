@@ -67,6 +67,9 @@ for key in kw2.keys():
 retval = server.echo_header((adgroupid, keylist))
 
 assert(retval[1].has_key('useragent'))
-assert(retval[1]['useragent'] == ['foo'])
+assert(retval[1]['useragent'] == 'foo')
+
+server.quit()
 
 print "Success!"
+
