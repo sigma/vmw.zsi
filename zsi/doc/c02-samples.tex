@@ -1,8 +1,9 @@
 \chapter{Examples}
 
-This section contains examples to help you better understand what \ZSI{}
-offers.  It is broken down into client-side and server-side examples, and
-explores different implementation options a developer has using \ZSI{}.
+This chapter contains a number of examples to show off some of \ZSI{}'s
+features.
+It is broken down into client-side and server-side examples, and
+explores different implementation options \ZSI{} provides.
 
 \section{Server Side Examples}
 \subsection{Simple example}
@@ -246,11 +247,13 @@ def savePerson(person):
 \end{verbatim}
 
 In order for \ZSI{} to transparently deserialize the returned complex type into
-a \class{Person} instance, you must append \class{ZSI.Path} with a module that
-defines the class and its typecode.  Alternatively, you could explicitly
-tell \ZSI{} what class to instantiate by passing the class to the
-\code{Binding.Receive} method.  The first method is preferred, as the code is
-easier to read.
+a \class{Person} instance, a module defining the class and its typecode must
+be appended to the \var{ZSI.Path} list.
+It is also possible to explicitly tell \ZSI{} what class and typecode to
+use by passing the class as a parameter to the
+\method{Binding.Receive()} method.
+The first method is often preferred, particularly for publically-distributed
+libraries.
 
 The following fragment shows both styles:
 
@@ -263,7 +266,6 @@ from MyComplexTypes import Person
 a = apply(b.getPerson, 'christopher')
 person = b.Receive(Person)
 
-
 # Transparent deserialization
 import MyComplexTypes
 b = Binding(url='/cgi-bin/complex-test', typesmodule=MyComplexTypes)
@@ -271,9 +273,9 @@ person = b.getPerson('christopher')
 \end{verbatim}
 
 Because the returned complex type is defined in a class registered in 
-\class{ZSI.Path}, transparent deserialization is possible.  When sending
-complex types to the server, transparent serialization does not require you to
-register your module in \class{ZSI.Path}:
+\var{ZSI.Path}, transparent deserialization is possible.  When sending
+complex types to the server, it is not necessary to list the module
+in \var{ZSI.Path}:
 
 \begin{verbatim}
 from ZSI.client import Binding

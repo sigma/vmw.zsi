@@ -6,7 +6,7 @@ MKHOWTO=	$(PYSRCDIR)/Doc/tools/mkhowto
 #PAPER=		a4
 PAPER=		letter
 
-CHAPTERS=	c01-intro.tex c02-samples.tex c02a-coverage.tex \
+CHAPTERS=	c01-intro.tex c02-samples.tex \
 		c03-except.tex c04-utils.tex c05-parse.tex c06-tc.tex \
 		c07-writer.tex c08-fault.tex c09-resolve.tex \
 		c10-dispatch.tex c11-wsdl.tex
