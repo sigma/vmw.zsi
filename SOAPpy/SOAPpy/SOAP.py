@@ -3,6 +3,7 @@
 #
 # SOAP.py 0.9.7 - Cayce Ullman    (cayce@actzero.com)
 #                 Brian Matthews  (blm@actzero.com)
+#                 Gregory Warnes  (gregory_r_warnes@groton.pfizer.com)
 #
 # INCLUDED:
 # - General SOAP Parser based on sax.xml (requires Python 2.0)
@@ -12,7 +13,7 @@
 #
 # FEATURES:
 # - Handles all of the types in the BDG
-# - Handles faults
+# - Handles faults on the *server* side
 # - Allows namespace specification
 # - Allows SOAPAction specification
 # - Homogeneous typed arrays
@@ -25,6 +26,7 @@
 # - Encodings
 # - SSL clients (with OpenSSL configured in to Python)
 # - SSL servers (with OpenSSL configured in to Python and M2Crypto installed)
+# - Encodes XML tags per SOAP 1.2 name mangling specification
 #
 # TODO:
 # - Timeout on method calls - MCU
@@ -38,6 +40,8 @@
 # - medusa example - MCU
 # - Documentation - JAG
 # - Look at performance
+# - Handle faults on the *client* side
+# - Put into standard 'setup.py' module format to ease installation
 #
 ################################################################################
 #
@@ -84,6 +88,7 @@ import string
 import sys
 import time
 import SocketServer
+from XMLname import toXMLname, fromXMLname
 from types import *
 
 try: from M2Crypto import SSL
@@ -1527,7 +1532,10 @@ class compoundType(anyType):
             return d
         return [d]
 
+
 class structType(compoundType):
+    def __str__(self):
+        return str(self._asdict)
     pass
 
 class headerType(structType):
@@ -2008,6 +2016,8 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             ns, name = None, name[1][1:]
         else:
             ns, name = tuple(name)
+
+        name = fromXMLname(name) # convert to SOAP 1.2 XML name encoding
 
         if self._next == "E":
             raise Error, "didn't get SOAP-ENV:Envelope"
@@ -3063,6 +3073,8 @@ class SOAPBuilder:
 
         tag = tag or self.gentag()
 
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
+
         a = n = t = ''
         if typed and obj_type:
             ns, n = self.genns(ns_map, nsURI)
@@ -3073,7 +3085,12 @@ class SOAPBuilder:
         except: pass
 
         try: data = obj._marshalData()
-        except: data = obj
+        except:
+            if (obj_type != "string"): # strings are already encoded
+                data = cgi.escape(str(obj))
+            else:
+                data = obj
+
 
         return xml % {"tag": tag, "type": t, "data": data, "root": rootattr,
             "id": id, "attrs": a}
@@ -3460,7 +3477,7 @@ class HTTPTransport:
             s = 'Incoming SOAP'
             debugHeader(s)
             print data,
-            if data[-1] != '\n':
+            if (len(data)>0) and (data[-1] != '\n'):
                 print
             debugFooter(s)
 
