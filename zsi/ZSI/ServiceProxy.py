@@ -75,8 +75,9 @@ class ServiceProxy:
                           ns=self._ns, op_ns=self._op_ns)
 
         if self._use_wsdl:
-            request, response = self._getTypeCodes()
-            binding.Send(url=uri, opname=None, obj=args or kwargs,
+            request, response = self._getTypeCodes(callinfo)
+            if len(kwargs): args = kwargs
+            binding.Send(url=uri, opname=None, obj=args,
                          nsdict=self._nsdict, soapaction=soapAction, requesttypecode=request)
             return binding.Receive(replytype=response)
 
@@ -84,19 +85,9 @@ class ServiceProxy:
 
         return binding.Receive()
 
-    def _getTypeCodes(self):
-        #XXX This sucks but we need to dereference the prefix, so
-        # we need to track down the representative DOM nodes
-        requestTC = replyTC = None
-        operation = self._port.getBinding().getPortType().operations[callinfo.methodName]
-
-        NS_WSDL = DOM.GetWSDLUri(self._wsdl.version)
-        definition = DOM.getElement(node=self._wsdl.document, name='definitions', nsuri=NS_WSDL)
-        for node in DOM.getElements(node=definition, name='message', nsuri=NS_WSDL):
-            if DOM.getAttr(node=node, name='name') == operation.input.message:
-                requestTC = self._getTypeCode(node=node, parameters=callinfo.getInParameters())
-            elif DOM.getAttr(node=node, name='name') == operation.output.message:
-                replyTC = self._getTypeCode(node=node, parameters=callinfo.getOutParameters())
+    def _getTypeCodes(self, callinfo):
+        requestTC = self._getTypeCode(parameters=callinfo.getInParameters())
+        replyTC = self._getTypeCode(parameters=callinfo.getOutParameters())
 
         if callinfo.style == 'rpc':
             request = TC.Struct(pyclass=None, ofwhat=requestTC, pname=callinfo.methodName)
@@ -107,7 +98,7 @@ class ServiceProxy:
 
         return request, response
 
-    def _getTypeCode(self, node, parameters):
+    def _getTypeCode(self, parameters):
         bti = BaseTypeInterpreter()
         typeCode = []
         for part in parameters:
