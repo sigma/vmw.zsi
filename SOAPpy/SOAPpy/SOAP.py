@@ -3454,6 +3454,9 @@ class HTTPTransport:
 
         if code not in (200, 500):
             raise HTTPError(code, msg)
+        
+        if code == 500 and headers.get("content-type","text/xml") != "text/xml":
+            raise HTTPError(code, msg)
 
         if not config.dumpSOAPIn:
             data = r.getfile().read()
