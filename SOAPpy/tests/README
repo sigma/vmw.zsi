@@ -24,6 +24,15 @@ They all work without generating errors EXCEPT:
     Fails (gracefully) with a message that the service is no longer
     available.
 
+- excelTest.py
+
+    Fails because the EXCEL service is not available.
+
+Some of these files should just be removed if the corresponding
+service is not available.  That will wait for a cleanup associated
+with release of version 1.0.
+
+-G
 
 
 GRW 2003-12-18
