@@ -19,7 +19,7 @@ config.strict_range=1
 
 
 # run these tests with this variable set both to 1 and 0
-config.simplify_objects=0
+config.simplify_objects=1
 
 # as borrowed from jake.soapware.org for float compares.
 def nearlyeq(a, b, prec = 1e-7):
@@ -3772,4 +3772,15 @@ epnedUwrkPzedWU9AL7c/oN7rk65UuPWf7V8c/4E9bc=</dsig:Modulus>
         x = parseSOAPRPC(xml)
 
 if __name__ == '__main__':
+
+    print """
+
+    NOTE: The 'testArray' test will fail because 'referenced' elements are
+    included in the return object.  This is a known shortcoming of
+    the current version of SOAPpy.
+
+    All other tests should succeed.
+
+    """
+    
     unittest.main()

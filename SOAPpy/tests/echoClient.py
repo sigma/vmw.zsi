@@ -18,12 +18,22 @@ Config.simplify_objects = 1
 #Config.BuildWithNoNamespacePrefix = 1
 
 if len(sys.argv) > 1 and sys.argv[1] == '-s':
+    # Use secure http
     pathserver = SOAPProxy("https://localhost:9900/pathtest")
+    server = SOAPProxy("https://localhost:9900")
+    
 elif len(sys.argv) > 1 and sys.argv[1] == '-g':
+    # use Globus for communication
+    import pyGlobus 
+
+    Config.channel_mode = 1
+    Config.delegation_mode = 1
+
     server = SOAPProxy("httpg://localhost:9900")
     pathserver = SOAPProxy("httpg://localhost:9900/pathtest")
-    server = SOAPProxy("https://localhost:9900")
-else:
+    
+else: 
+    # Default: use standard http
     pathserver = SOAPProxy("http://localhost:9900/pathtest")
     server = SOAPProxy("http://localhost:9900")
 

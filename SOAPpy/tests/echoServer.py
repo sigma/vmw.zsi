@@ -23,6 +23,7 @@ Config.simplify_objects = 1
 
 if Config.SSLserver:
     from M2Crypto import SSL
+    
 def _authorize(*args, **kw):
     global allowAll
     if allowAll:
@@ -31,7 +32,6 @@ def _authorize(*args, **kw):
     else:
         print "Authorize (function) called! (denied)"
         return 0
-
 
 # Simple echo
 def echo(s):
@@ -51,11 +51,16 @@ class echoBuilder:
         return val + val
     def _authorize(self, *args, **kw):
         global allowAll
+        
+        print "Authorize (method) called with arguments:"
+        print "*args=%s" % str(args)
+        print "**kw =%s" % str(kw)
+        
         if allowAll:
-            print "Authorize (method) called! (approved)"
+            print "--> Approved."
             return 1
         else:
-            print "Authorize (method) called! (denied)"
+            print "--> Denied."
             return 0
 
 
@@ -113,6 +118,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-s':
     server = SOAPServer(addr, ssl_context = ssl_context)
 elif len(sys.argv) > 1 and sys.argv[1] == '-g':
     GSI = 1
+    from SOAPpy.GSIServer import GSISOAPServer
     server = GSISOAPServer(addr)
 else:
     server = SOAPServer(addr)

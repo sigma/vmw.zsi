@@ -1,3 +1,6 @@
+import sys
+
+sys.path.insert(1, "..")
 import SOAPpy
 
 url = 'http://www.xmethods.org/sd/2001/TemperatureService.wsdl'
