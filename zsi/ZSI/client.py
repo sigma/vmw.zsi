@@ -4,7 +4,7 @@
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
 from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
-    FaultFromFaultMessage, _child_elements, _attrs, Path
+    FaultFromFaultMessage, _child_elements, _attrs
 from ZSI.auth import AUTH
 import base64, httplib, cStringIO as StringIO, types, time
 
@@ -52,7 +52,7 @@ class Binding:
     '''
 
     def __init__(self, nsdict=None, ssl=0, url=None, tracefile=None,
-    host='localhost', readerclass=None, port=None,
+    host='localhost', readerclass=None, port=None, typesmodule=None,
     soapaction='"http://www.zolera.com"', **kw):
         '''Initialize.
         Keyword arguments include:
@@ -69,6 +69,7 @@ class Binding:
         '''
         self.data, self.ps, self.ns, self.user_headers = \
             None, None, None, []
+        self.typesmodule = typesmodule
         self.nsdict, self.ssl, self.url, self.trace, self.host, \
         self.readerclass, self.soapaction = \
             nsdict or {}, ssl, url, tracefile, host, readerclass, soapaction
@@ -286,12 +287,11 @@ class Binding:
 
     def __parse(self, node, type):
         try:
-            for m in Path:
-                if hasattr(m, type):
-                    clazz = eval('m.%s' % type)
-                    tc = clazz.typecode
-                    instance = tc.parse(node, self.ps)
-                    return instance
+            if hasattr(self.typesmodule, type):
+                clazz = eval('self.typesmodule.%s' % type)
+                tc = clazz.typecode
+                instance = tc.parse(node, self.ps)
+                return instance
         except Exception, e:
             tc = TC.Any(aslist=1)
             return tc.parse(node, self.ps)
