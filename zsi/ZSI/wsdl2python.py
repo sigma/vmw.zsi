@@ -226,6 +226,7 @@ class WriteServiceModule:
                                       self.nsh.getModuleName(ns),
                                       self.nsh.getAlias(ns)) ]
             if self._importlib:
+                exec( 'import %s' % self._importlib )
                 exec( 'obj = %s' % self._importlib )
                 if hasattr(obj, 'clientimports' ):
                     sd.imports += obj.clientimports
