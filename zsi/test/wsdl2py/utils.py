@@ -95,6 +95,11 @@ def setUpWsdl(path):
 
 
 def failureException(exc, msg):
+    """Determines whether an exception occurred due to a
+       timeout, in which case the result of a test is not
+       treated as a failure.
+    """
+
     if (msg.str.startswith('Connection timed out') or
        msg.str.find('timeout')):
         print '\n', msg
@@ -106,16 +111,25 @@ def failureException(exc, msg):
         
 
 class TestSetUp(ConfigParser.ConfigParser):
+    """Facilitates test set up."""
 
     def __init__(self, fname):
         ConfigParser.ConfigParser.__init__(self)
         self.read(fname)
 
     def optionxform(self, optionstr):
+        """Overriding ConfigParser method allows configuration option
+           to contain both lower and upper case."""
         return optionstr
 
 
     def setService(self, testcase, serviceLoc, serviceName, portTypeName, **kw):
+        """Returns reference to higher-level interface module, generating
+           the _services, _types, and _services_interface code if
+           necessary, and a reference to a class containing proxy
+           methods for the operations listed in the WSDL portType.
+        """
+           
         if not hasattr(testcase, 'service'):
             serviceModule = ClientGenerator().getModule(serviceName, serviceLoc,
                                                         'stubs')
@@ -138,13 +152,13 @@ class TestSetUp(ConfigParser.ConfigParser):
 
 class TestDiff:
     """TestDiff encapsulates comparing a string or StringIO object
-       against text in a test file.  Test files are expected to
-       be located in a subdirectory of the current directory,
-       named diffs if a name isn't provided.  If the sub-directory
-       doesn't exist, it will be created.  If a single test file
-       is to be generated, the file name is passed in.  If not,
-       another sub-directory is created below the diffs directory,
-       in which a file is created for each test.
+       against text in a test file.  Test files are located in a
+       subdirectory of the current directory, named diffs if a name
+       isn't provided.  If the sub-directory doesn't exist, it will
+       be created.  If a single test file is to be generated, the file
+       name is passed in.  If not, another sub-directory is created
+       below the diffs directory, in which a file is created for each
+       test.
 
        The calling unittest.TestCase instance is passed
        in on object creation.  Optional compiled regular expressions
@@ -156,6 +170,8 @@ class TestDiff:
        files.  When the tests are run again, the new output
        is compared against the old, line by line.  To generate
        a new test file, remove the old one from the sub-directory.
+       The tests also allow this to be done automatically if the
+       -d option is passed in on the command-line.
     """
 
     def __init__(self, testInst, testFilePath='diffs', singleFileName='',
@@ -169,9 +185,14 @@ class TestDiff:
             os.mkdir(testFilePath)
 
         if not singleFileName:
+            #  if potentially multiple tests will be performed by
+            #  a test module, create a subdirectory for them.
             testFilePath = testFilePath + os.sep + testInst.__class__.__name__
             if not os.path.exists(testFilePath):
                 os.mkdir(testFilePath)
+
+                # get name of test method, and name the diffs file after
+                # it
             f = inspect.currentframe()
             fullName = testFilePath + os.sep + \
                        inspect.getouterframes(f)[1][3] + '.diffs'
@@ -412,7 +433,6 @@ class MatchTestLoader(unittest.TestLoader):
                 for m in methods:
                     counter = counter + 1
                     prevAdded.append(m)
-#        print "found %d cases" % counter
         return counter
 
 
@@ -426,7 +446,6 @@ class MatchTestLoader(unittest.TestLoader):
         prevAdded = []
         suites = unittest.TestSuite()
 	for testStr in self.testArgs:
-#            print testStr
             if testStr:
                 for m in methods:
                     if m.find(testStr) >= 0 and m not in prevAdded:

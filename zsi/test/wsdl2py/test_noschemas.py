@@ -16,11 +16,11 @@ has no schema.
 
 TemperatureService
 
-    WSDL: 
+    WSDL:  http://www.xmethods.net/sd/2001/TemperatureService.wsdl
 
 WorldTimeService
 
-    WSDL: 
+    WSDL:  http://ws.digiposs.com/WorldTime.jws?wsdl
 
 """
 
@@ -84,7 +84,6 @@ def makeTestSuite():
                                   **kw)
     
     serviceLoc = setUp.get('no_schemas', 'WorldTimeService')
-    useTracefile = setUp.get('configuration', 'tracefile') 
     service, worldTimePortType = \
         setUp.setService(WorldTimeServiceTest, serviceLoc,
                                   'WorldTimeService', 'WorldTime',

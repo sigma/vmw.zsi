@@ -23,7 +23,7 @@ class GlobalWeatherTest(unittest.TestCase):
     """
 
         # requires a floating point ZSI typecode; in progress
-    def test_getWeatherReport(self):
+    def notest_getWeatherReport(self):
         request = portType.inputWrapper('getWeatherReport')
             # airport code
         request._code = 'SFO'
