@@ -188,7 +188,8 @@ class WriteServiceModule:
         self.typeDict = {}
         self.aname_func = aname_func
 
-    def write(self, schemaOnly=False, output_dir=".", do_extended=0):
+    def write(self, schemaOnly=False, output_dir=".", do_extended=0,
+              types=None):
         """
         Write schema instance contents w/respect to dependency
         requirements, and create client interface.  Not guaranteed to
@@ -198,7 +199,6 @@ class WriteServiceModule:
         if do_extended:
             csuffix = ""
             self.aname_func = lambda x: x
-                                        
         else:
             csuffix = "_Def"
             

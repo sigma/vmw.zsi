@@ -1,18 +1,20 @@
 #!/bin/env python
 
-import ZSI, string, sys, getopt, urlparse
+import ZSI, string, sys, getopt, urlparse, os
 from ZSI.wstools import WSDLTools
 from ZSI.wsdl2python import WriteServiceModule
 from ZSI.wsdlInterface import ZSIWsdlAdapter
 
 
-USAGE = """Usage: ./serverstub -f wsdlfile | -u url [-h]
+USAGE = """Usage: ./serverstub -f wsdlfile | -u url [-h] [-e] [-d output dir] [-t typesmodule]
   where:
     wsdl        -> wsdl file to generate callbacks from.
     -f          -> location of wsdl file in disc
     -e          -> enable experimental server code generation
     -u          -> location of wsdl via url
+    -d          -> output directory for files
     -h          -> prints this message and exits.
+    -t          -> specify a module name to use as the types implementation
 """
 
 ID1 = '    '
@@ -271,11 +273,12 @@ def doCommandLine():
     args_d = {
         'fromfile': False,
         'fromurl': False,
-        'extended' : False
+        'extended' : False,
+        'output_directory' : '.'
         }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:he')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:d:t:he')
     except getopt.GetoptError, e:
         print >> sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -296,6 +299,10 @@ def doCommandLine():
             args_d['fromurl'] = True
         elif opt in ['-e']:
             args_d['extended'] = True
+        elif opt in ['-d']:
+            args_d['output_directory'] = val
+        elif opt in ['-t']:
+            args_d['types'] = val
         else:
             print USAGE
             sys.exit(-1)
@@ -318,7 +325,8 @@ def main():
 
     ss.fromWsdl(wsdl, do_extended = args_d['extended'])
 
-    fd = open( ss.getStubName() + '.py', 'w+' )
+    fd = open(os.path.join(args_d['output_directory'], ss.getStubName()+'.py'),
+              'w+' )
 
     ss.write(fd)
 

@@ -9,7 +9,7 @@ import ZSI
 from ZSI.wsdl2python import WriteServiceModule
 from ZSI.wstools import WSDLTools, XMLSchema
 
-USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s]
+USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s] [-e] [-x] [-d outputdir] [-t typemodulename ]
   where:
     wsdl        -> wsdl file to generate typecodes from.
     -h          -> prints this message and exits.
@@ -18,6 +18,7 @@ USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s]
     -x          -> process just the schema from an xsd file [no services]
     -z          -> specify a function to use to generate attribute names
     -d          -> output directory for files
+    -t          -> specify a module name to use as the types implementation
 """
 
 """
@@ -43,11 +44,12 @@ def doCommandLine():
         'schemaOnly': False,
         'aname' : None,
         'output_directory' : '.',
-        'extended' : False
+        'extended' : False,
+        'types' : None
         }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:d:hxe')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:d:t:hxe')
     except getopt.GetoptError, e:
         print >>sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -74,6 +76,8 @@ def doCommandLine():
             args_d['aname'] = val
         elif opt in ['-d']:
             args_d['output_directory'] = val
+        elif opt in ['-t']:
+            args_d['types'] = val
         else:
             print USAGE
             sys.exit(-1)
@@ -151,7 +155,7 @@ def main():
     wsm = ZSI.wsdl2python.WriteServiceModule(wsdl, aname_func = aname_func)
     
     wsm.write(schemaOnly, output_dir=args_d['output_directory'],
-              do_extended=args_d['extended'])
+              do_extended=args_d['extended'], types=args_d['types'])
     
     return
 
