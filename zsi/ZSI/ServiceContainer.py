@@ -40,6 +40,8 @@ def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw
         result = server(ps, post, action)
     except Exception, e:
         return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
+    if result == None:
+        return
     reply = StringIO.StringIO()
     try:
         SoapWriter(reply, nsdict=nsdict).serialize(result)
