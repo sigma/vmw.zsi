@@ -125,7 +125,7 @@ class HeaderHandler:
 class SOAPServerBase:
 
     def get_request(self):
-        sock, addr = get_request(self)
+        sock, addr = SocketServer.TCPServer.get_request(self)
 
         if self.ssl_context:
             sock = SSL.Connection(self.ssl_context, sock)
@@ -565,7 +565,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 
-class SOAPServer(SocketServer.TCPServer, SOAPServerBase):
+class SOAPServer(SOAPServerBase, SocketServer.TCPServer):
 
     def __init__(self, addr = ('localhost', 8000),
         RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
@@ -592,7 +592,7 @@ class SOAPServer(SocketServer.TCPServer, SOAPServerBase):
         SocketServer.TCPServer.__init__(self, addr, RequestHandler)
 
 
-class ThreadingSOAPServer(SocketServer.ThreadingTCPServer, SOAPServerBase):
+class ThreadingSOAPServer(SOAPServerBase, SocketServer.ThreadingTCPServer):
 
     def __init__(self, addr = ('localhost', 8000),
         RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
@@ -621,7 +621,7 @@ class ThreadingSOAPServer(SocketServer.ThreadingTCPServer, SOAPServerBase):
 # only define class if Unix domain sockets are available
 if hasattr(socket, "AF_UNIX"):
 
-    class SOAPUnixSocketServer(SocketServer.UnixStreamServer, SOAPServerBase):
+    class SOAPUnixSocketServer(SOAPServerBase, SocketServer.UnixStreamServer):
     
         def __init__(self, addr = 8000,
             RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
