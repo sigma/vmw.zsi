@@ -966,7 +966,8 @@ class ZSIInputAdapter(InputInterface):
         if self._input and \
            hasattr(self._input, 'message'):
             return ZSIMessageAdapter(self._ws,
-                                     self._ws.messages[self._input.message])
+                                     self._ws.messages[self._input.message],
+                                     i=True)
         else:
             return None
 
@@ -1004,7 +1005,8 @@ class ZSIOutputAdapter(OutputInterface):
         if self._output and \
                hasattr(self._output, 'message'):
             return ZSIMessageAdapter(self._ws,
-                                     self._ws.messages[self._output.message])
+                                     self._ws.messages[self._output.message],
+                                     o=True)
         else:
             return None
 
@@ -1021,9 +1023,11 @@ class ZSIOutputAdapter(OutputInterface):
 class ZSIMessageAdapter(MessageInterface):
     """Inteface to message class
     """
-    def __init__(self, ws, m):
+    def __init__(self, ws, m, i=False, o=False):
         MessageInterface.__init__(self, m)
         self._ws = ws
+        self._isInput  = i
+        self._isOutput = o
         
     def getName(self):
         """return name of operation, or None
@@ -1037,6 +1041,12 @@ class ZSIMessageAdapter(MessageInterface):
         for part in self._message.parts.values():
             parts.append(ZSIPartAdapter(self._ws, part))
         return parts
+
+    def isInput(self):
+        return self._isInput
+
+    def isOutput(self):
+        return self._isOutput
 
 class ZSIPartAdapter(PartInterface):
     """Inteface to part class
