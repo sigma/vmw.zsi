@@ -312,6 +312,10 @@ class Array(TypeCode):
                 vlen += 1
                 v.append(self.fill)
         for c in _child_elements(elt):
+                # name may not provided in WSDL; this done to guarantee
+                # doesn't fail when name returned is not the same as
+                # the default name of 'element'
+            self.ofwhat.pname = c.localName
             item = self.ofwhat.parse(c, ps)
             position = self.parse_position(c, ps) or offset
             if self.sparse:
