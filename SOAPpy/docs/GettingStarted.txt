@@ -4,7 +4,7 @@ HOWTO:
 The easiest way to get up to speed is to run and read the scripts in the
 tests directory. Better documentation is coming.
 
-Here are some examples of how to use SOAP.py:
+Here are some examples of how to use SOAPpy:
 
 
 CLIENT EXAMPLES:
@@ -81,7 +81,7 @@ The same example, this time with both the soapaction and the namespace
 specified inline and saved in a local variable for getQuote to be called
 against.
 
-** What SOAP.py does with the results of a call could seem surprising. If
+** What SOAPpy does with the results of a call could seem surprising. If
 there is only one element in the structType that has the return value and
 unwrap_results is turned on (the default) it will bubble up the single
 attribute, otherwise it will return you a structType object with all of the
