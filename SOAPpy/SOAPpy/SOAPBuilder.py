@@ -60,8 +60,9 @@ except NameError:
 class SOAPBuilder:
     _xml_top = '<?xml version="1.0"?>\n'
     _xml_enc_top = '<?xml version="1.0" encoding="%s"?>\n'
-    _env_top = '%(ENV_T)s:Envelope %(ENV_T)s:encodingStyle="%(ENC)s"' % \
-        NS.__dict__
+    _env_top = ( '%(ENV_T)s:Envelope\n' + \
+                 '  %(ENV_T)s:encodingStyle="%(ENC)s"\n' ) % \
+                 NS.__dict__
     _env_bot = '</%(ENV_T)s:Envelope>\n' % NS.__dict__
 
     # Namespaces potentially defined in the Envelope tag.
@@ -183,7 +184,7 @@ class SOAPBuilder:
             self.depth -= 1
 
         if self.envelope:
-            e = map (lambda ns: ' xmlns:%s="%s"' % (ns[1], ns[0]),
+            e = map (lambda ns: '  xmlns:%s="%s"\n' % (ns[1], ns[0]),
                 self.envns.items())
 
             self.out = ['<', self._env_top] + e + ['>\n'] + \
@@ -452,7 +453,7 @@ class SOAPBuilder:
                                 
             elif isinstance(sample, anyType):
                 ns = sample._validNamespaceURI(self.config.typesNamespaceURI,
-                    self.config.strictNamespaces)
+                                               self.config.strictNamespaces)
                 if ns:
                     ns, ndecl = self.genns(ns_map, ns)
                     t = ns + str(sample._type)
@@ -623,9 +624,11 @@ class SOAPBuilder:
 ################################################################################
 # SOAPBuilder's more public interface
 ################################################################################
-def buildSOAP(args=(), kw={}, method=None, namespace=None, header=None,
-              methodattrs=None,envelope=1,encoding='UTF-8',config=Config,noroot = 0):
-    t = SOAPBuilder(args=args,kw=kw, method=method, namespace=namespace,
-        header=header, methodattrs=methodattrs,envelope=envelope,
-        encoding=encoding, config=config,noroot=noroot)
+
+def buildSOAP(args=(), kw={}, method=None, namespace=None,
+              header=None, methodattrs=None, envelope=1, encoding='UTF-8',
+              config=Config, noroot = 0):
+    t = SOAPBuilder(args=args, kw=kw, method=method, namespace=namespace,
+                    header=header, methodattrs=methodattrs,envelope=envelope,
+                    encoding=encoding, config=config,noroot=noroot)
     return t.build()
