@@ -19,6 +19,7 @@ PROXY="http://www.soapware.org/xmlStorageSystem"
 EMAIL="SOAPpy@actzero.com"
 NAME="test_user"
 PASSWORD="mypasswd"
+SERIAL=1123214
 
 MY_PORT=15600
 
@@ -42,7 +43,9 @@ server = SOAPProxy(encoding="US-ASCII",
                    )
 
 # Register as a new user or update user information
-reg = server.registerUser(email=EMAIL, name=NAME, password=PASSWORD, clientPort=MY_PORT, userAgent=SOAPUserAgent())
+reg = server.registerUser(email=EMAIL, name=NAME, password=PASSWORD,
+                          clientPort=MY_PORT, userAgent=SOAPUserAgent(),
+                          serialnumber=SERIAL)
 printstatus("registerUser", reg)
 
 # See what this server can do
