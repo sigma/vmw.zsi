@@ -401,7 +401,13 @@ class SOAPBuilder:
         except:
             # preserve type if present
             if getattr(obj,"_typed",None) and getattr(obj,"_type",None):
-                sample = typedArrayType(typed=obj._type)
+		if getattr(obj, "_complexType", None):
+                    sample = typedArrayType(typed=obj._type,
+                                            complexType = obj._complexType)
+                    sample._typename = obj._type
+                    obj._ns = NS.URN
+		else:
+                    sample = typedArrayType(typed=obj._type)
             else:
                 sample = structType()
             empty = 1
@@ -420,8 +426,10 @@ class SOAPBuilder:
         ndecl = ''
         if same_type:
             if (isinstance(sample, structType)) or \
-                type(sample) == DictType: # force to urn struct
-
+                   type(sample) == DictType or \
+                   (isinstance(sample, anyType) and \
+                    (getattr(sample, "_complexType", None) and \
+                     sample._complexType)): # force to urn struct
                 try:
                     tns = obj._ns or NS.URN
                 except:
