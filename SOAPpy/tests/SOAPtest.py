@@ -53,6 +53,19 @@ ws = ' \t\r\n'
 N = None
                    
 class SOAPTestCase(unittest.TestCase):
+        # test struct
+    def testOrdering(self):
+        x = buildSOAP(method="newCustomer", namespace="urn:customer", \
+                      kw={"name":"foo1", "address":"bar"}, \
+                      config=SOAPConfig(argsOrdering={"newCustomer":("address", "name")}))
+        # could be parsed using an XML parser?
+        self.failUnless(string.find(x, "<address ")<string.find(x, "<name "))
+        x = buildSOAP(method="newCustomer", namespace="urn:customer", \
+                      kw={"name":"foo1", "address":"bar"}, \
+                      config=SOAPConfig(argsOrdering={"newCustomer":("name", "address")}))
+        # could be parsed using an XML parser?
+        self.failUnless(string.find(x, "<address ")>string.find(x, "<name "))
+
     def testStructIn(self):
         x = '''<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
