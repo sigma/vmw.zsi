@@ -586,6 +586,11 @@ class SchemaDeclarationInterface:
         """
         raise NotImplementedError, 'abstract method not implemented'
 
+    def isElementReference(self):
+        """boolean - an element ref?
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
     def isLocalElement(self):
         """boolean - a local element?
         """
@@ -1463,7 +1468,7 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
              isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference):
             return ZSISchemaDeclarationAdapter(tp)
         if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
-            return self.__adapterWrap( tp.getElementDeclaration('ref') )
+            return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'))
         else:
             raise TypeError, 'unknown adapter type: %s' % tp
 
@@ -1682,6 +1687,9 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
         else:
             return False
 
+    def isElementReference(self):
+        return False
+
     def isLocalElement(self):
         """boolean - an element?
         """
@@ -1707,8 +1715,8 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
     def getType(self):
         """return type
         """
-        if isinstance( self._dec, ZSI.wstools.XMLSchema.ElementReference ):
-            return self.__adapterWrap( self._dec.getElementDeclaration('ref') )
+        if self.isElementReference():
+            return self
         
         typ = self._dec.getTypeDefinition('type')
 
@@ -1744,6 +1752,10 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
             return self._dec.attributes['nillable']
         else:
             return 0
+
+class ZSIElementReferenceAdapter(AdapterBase, ZSISchemaDeclarationAdapter):
+    def isElementReference(self):
+        return True
 
 class ZSIModelGroupAdapter(AdapterBase, ModelGroupInterface):
     def isAll(self):
@@ -1781,7 +1793,7 @@ class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
              isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference):
             return ZSISchemaDeclarationAdapter(tp)
         if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
-            return self.__adapterWrap( tp.getElementDeclaration('ref') )
+            return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'))
         else:
             raise TypeError, 'unknown adapter type: %s' % tp
 

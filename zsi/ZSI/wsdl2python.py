@@ -1452,6 +1452,13 @@ class SchemaDescription:
                         typecodelist  += 'ZSI.TC.XML(pname="%s",aname="_%s"), '\
                                          %(e.getName(),e.getName())
 
+                    elif e.isDeclaration() and e.isElementReference():
+                        occurs = self._calculateOccurance(e)
+                        nsp = self.nsh.getAlias(etp.getTargetNamespace())
+                        typeName = '%s.%s' % (nsp, e.getName()) + '_Dec'
+                        typecodelist +='%s(name="%s",ns=ns%s), '\
+                                        %(typeName, e.getName(), occurs)
+
                     elif etp.isDefinition() and etp.isSimpleType():
                         occurs = self._calculateOccurance(e)
 
