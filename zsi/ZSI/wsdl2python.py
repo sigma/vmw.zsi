@@ -751,6 +751,8 @@ class ServiceDescription:
             for item in self.typeList:
                 if item[1]:
                     item[1] = item[1].replace('LOCAL_Def', '_Def')
+                else:
+                    item[1] = 'Any'
             alreadyListed = []
             docList.extend(self.recurseTypeList(allTypeDict, self.typeList,
                                                 1, alreadyListed))
@@ -762,7 +764,7 @@ class ServiceDescription:
             """Recurse through a dictionary of type lists until reach
                Python types.
             """
-            if level > 10:
+            if level > 12:  # just in case
                 return
             strList = []
             for item in typeList:
@@ -774,9 +776,9 @@ class ServiceDescription:
                     strList.append('\n')
                 if allTypeDict.has_key(item[1]):
                     if item[1] not in alreadyListed:
+                        alreadyListed.append(item[1])
                         strList.extend(self.recurseTypeList(allTypeDict,
                                allTypeDict[item[1]], level+1, alreadyListed))
-                        alreadyListed.append(item[1])
             return strList
 
 
@@ -1009,6 +1011,8 @@ class SchemaDescription:
                 objName = '_' + tp.getName()
                 if tpc:
                     typeName = self.bti.get_pythontype(None, None, tpc)
+                    if not typeName:
+                        typeName = 'Any'
                     self.precede  = '%s' % (tpc)
                     self.classdef = '\n\n%sclass %s(%s):' % (ID1,
                                                              tp.getName() \
@@ -1304,6 +1308,8 @@ class SchemaDescription:
                     else:
                         atype = arrayinfo[1]
                         typeName = self.bti.get_pythontype(None, None, atype)
+                        if not typeName:
+                            typeName = 'Any'
 
                     self.initdef +=\
                                  "\n%s%s.__init__(self, '%s', %s%s(name='element'), pname=name, aname='_%%s' %% name, oname='%%s xmlns=\"%s\"' %% name, **kw)" \
@@ -1392,6 +1398,8 @@ class SchemaDescription:
 
                         if tpc:
                             typeName = self.bti.get_pythontype(None, None, tpc)
+                            if not typeName:
+                                typeName = 'Any'
                                             
                             typecodelist +=\
                                          '%s(pname="%s",aname="_%s"%s), ' \
