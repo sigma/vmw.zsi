@@ -136,51 +136,37 @@ SoapWriter(OUT).serialize(result)
 
 The Apache module \code{mod_python} (see
 \url{http://www.modpython.org}) embeds Python within the Apache server.
-It is fairly easy to use \ZSI{} with \code{mod_python}; the only ``trick''
-is that it is necessary to serialize the output into a string before
-sending it to the client.
+In order to expose operations within a module via mod_python, use the 
+\method{dispatch.AsHandler()} function.  The \method{dispatch.AsHandler()}
+function will dispatch requests to any operation defined in the module you
+pass it, which allows for multiple operations to be defined in a module.
+The only trick is to use __import__ to load the XML encodings your service 
+expects.  This is a required workaround to avoid the pitfalls of restricted
+execution with respect to XML parsing.
 
-The following is a complete example of a simple handler:
+The following is a complete example of a simple handler named MyHandler:
 
 \begin{verbatim}
+def hello():
+    return "Hello, world"
+
+def echo(*args):
+    return args
+
+def average(*args):
+    sum = 0
+    for i in args: sum += i
+    return sum / len(args)
+
+from ZSI import dispatch
 from mod_python import apache
-from ZSI import *
-import cStringIO
 
-class TestInput:
-    def __init__(self, name):
-        pass
-TestInput.typecode = TC.Struct(TestInput, [
-                                 TC.Integer('x'),
-                                 ], 'TestInput')
-
-class TestOutput:
-    def __init__(self, y):
-        self.y = y
-TestOutput.typecode = TC.Struct(TestOutput, [
-                                  TC.Integer('y'),
-                                  ], 'TestOutput')
+import MyHandler
+mod = __import__('encodings.utf_8', globals(), locals(), '*')
+mod = __import__('encodings.utf_16_be', globals(), locals(), '*')
 
 def handler(req):
-    # Parse the input
-    ps = ParsedSoap(req)
-    testinput = ps.Parse(TestInput.typecode)
-
-    # Calculate the output
-    result = TestOutput(testinput.x * 2)
-
-    # Serialize the output into a string
-    out_io = cStringIO.StringIO()
-    sw = SoapWriter(out_io)
-    sw.serialize(result)
-    sw.close()
-    out_str = out_io.getvalue()
-
-    # Set up the return values
-    req.content_type = "text/xml"
-    req.content_length = len(out_str)
-    req.send_http_header()
-    req.write(out_str)
+    dispatch.AsHandler(modules=(MyHandler,), request=req)
     return apache.OK
 \end{verbatim}
 
