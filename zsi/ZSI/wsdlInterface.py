@@ -684,6 +684,9 @@ class DerivedTypesInterface:
 class WsdlInterfaceError(Exception):
     pass
 
+class WsdlInterfaceLimitation(Exception):
+    pass
+
 
 class ZSIWsdlAdapter(WsdlInterface):
     def getName(self):
@@ -1268,6 +1271,7 @@ class ZSISchemaTypeAdapter(SchemaTypeInterface):
                     # this is a hack, we have a primitive most likely
                     d = ZSISchemaDeclarationAdapter.DefinitionContainer()
                     d.attributes = self._type.attributes
+                    d.tns = self._type.getTargetNamespace()
                     return ZSISchemaDefinitionAdapter(d)
             elif hasattr(tp, 'content'):
                 # a element containing a complex type
@@ -1713,10 +1717,9 @@ class ZSIDerivedTypesAdapter(DerivedTypesInterface):
                  .has_key('arrayType'):
                 t = self._content.derivation.attr_content[0].\
                     attributes['http://schemas.xmlsoap.org/wsdl/']['arrayType']
-##             elif hasattr(self._content.derivation, 'content') and \
-##                      self._content.derivation.content:
-##                 t = self._content.derivation.content.content[0].\
-##                     attributes['type'][1]
+            elif hasattr(self._content.derivation, 'content') and \
+                     self._content.derivation.content:
+                raise WsdlInterfaceLimitation, 'derived arrays not supported'
             else:
                 raise WsdlInterfaceError, 'could not determine array type'
 
