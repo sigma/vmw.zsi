@@ -100,3 +100,20 @@ class Proxy:
         self.soapproxy.namespace = callinfo.namespace
         self.soapproxy.soapaction = callinfo.soapAction
         return self.soapproxy.__getattr__(name)
+
+    def show_methods(self):
+        for key in self.methods.keys():
+            method = self.methods[key]
+            print "Method Name:", key.ljust(15)
+            print
+            inps = method.inparams
+            for parm in range(len(inps)):
+                details = inps[parm]
+                print "   In #%d: %s  (%s)" % (parm, details.name, details.type)
+            print
+            outps = method.outparams
+            for parm in range(len(outps)):
+                details = outps[parm]
+                print "   Out #%d: %s  (%s)" % (parm, details.name, details.type)
+            print
+
