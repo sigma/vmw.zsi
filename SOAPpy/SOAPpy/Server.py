@@ -185,6 +185,10 @@ class SOAPServerBase:
         self.registerFunction(MethodSig(function,keywords=1), namespace,
         funcName)
 
+    def unregisterObject(self, object):
+        for n, o in self.objmap.items():
+            if o == object:
+                del self.objmap[n]
 
 class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def version_string(self):
