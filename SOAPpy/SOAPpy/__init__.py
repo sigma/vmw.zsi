@@ -1,3 +1,6 @@
+
+ident = '$Id$'
+
 from Client      import *
 from Config      import *
 from Errors      import *

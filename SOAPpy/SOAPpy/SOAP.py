@@ -1,5 +1,9 @@
-# This file is here for backward compatibility with versions <= 0.9.9 
-# Delete when 1.0.0 is released!
+"""This file is here for backward compatibility with versions <= 0.9.9 
+
+Delete when 1.0.0 is released!
+"""
+
+ident = '$Id$'
 
 from Client      import *
 from Config      import *

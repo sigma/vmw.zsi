@@ -2,6 +2,8 @@
 
 Rudimentary support.'''
 
+ident = '$Id$'
+
 import wstools
 from Client import SOAPProxy, SOAPAddress
 

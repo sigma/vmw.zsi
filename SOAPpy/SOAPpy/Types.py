@@ -125,7 +125,7 @@ class anyType:
     def _setAttr(self, attr, value):
         attr = self._fixAttr(attr)
 
-        self._attrs[attr] = str(value)
+        self._attrs[attr] = unicode(value)
 
     def _setAttrs(self, attrs):
         if type(attrs) in (ListType, TupleType):

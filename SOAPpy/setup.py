@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+#
+# $Id$
 
-VERSION="0.9.9pre6"
-CVS=1
+VERSION="0.10.0"
+CVS=0
 
 from distutils.core import setup, Command, Extension
 from SOAPpy import SOAP

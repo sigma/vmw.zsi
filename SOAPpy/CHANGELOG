@@ -1,5 +1,41 @@
+$Id$
 
 SOAP.py
+
+CHANGES SINCE VERSION 0.9.9-pre5
+
+- Major Change: The huge file SOAPpy/SOAP.py (4,122 lines, 131K) has
+  been split into 10 separate files: 
+	Client.py	NS.py		SOAPBuilder.py	Utilities.py
+	Config.py	Parser.py	Server.py	
+	Errors.py	SOAP.py		Types.py	
+  This should ease navigation and maintenance.
+
+- A new CVS module 'wstools' was created to hold code which is used by
+  both ZSI and SOAPpy.  While this module is stored separately in CVS,
+  it will be distributed as an integral part of both ZSI and SOAPpy,
+  and will be included as an 'internal' module by both.  In the SOAPpy
+  source, it lives in the directory SOAPpy/wstools.   
+
+- The files XMLname.py, ieee754.py, have been moved into SOAPpy/wstools.
+
+- Added TODO file
+
+- Fix bug in getNS that caused loss of namespace by using better
+  pattern matching to find the namespace in the SOAP message.  Fixes bug 
+  678239 
+
+- Added Mark Bucciarelli's <mark@hubcapconsulting.com> patch to
+  provide wsdl code on properly structured .GET requests to the server.
+
+- Added client support for WSDL, ported from ZSI by Mark Bucciarelli
+  <mark@hubcapconsulting.com>
+
+- Added ThreadingSOAPServer which inherits from ThreadingTCPServer
+  server so that muliple clients will be automatically multiplexed.
+
+- Removed some files from /test for services that no longer exist.
+
 
 CHANGES SINCE VERSION 0.9.9-pre4
 
