@@ -112,7 +112,6 @@ BankCode  =  http://appserver.pepperzak.net/bankcode/BankCodeEJBHome/wsdl.jsp
 BarCode  =  http://www.webservicex.net/barcode.asmx?WSDL
 BibleWebservice  =  http://www.webservicex.net/BibleWebservice.asmx?wsdl
 Braille  =  http://www.webservicex.net/braille.asmx?WSDL
-CEqImage  =  http://www.quisque.com/fr/techno/eqimage/eqimage.asmx?WSDL
 CFRSearch  =  http://www.oakleaf.ws/cfrsearchws/cfrsearchws.asmx?wsdl
 CFRSect  =  http://www.oakleaf.ws/cfrsectws/cfrsectws.asmx?wsdl
 CFRToc  =  http://www.oakleaf.ws/cfrtocws/cfrtocws.asmx?wsdl
