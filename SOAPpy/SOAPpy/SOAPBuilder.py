@@ -38,7 +38,7 @@ ident = '$Id$'
 import cgi
 import copy
 from wstools.XMLname import toXMLname, fromXMLname
-from wstools import ieee754
+from wstools import fpconst
 
 # SOAPpy modules
 from Config import Config
@@ -316,11 +316,11 @@ class SOAPBuilder:
             "id": id, "attrs": a}
 
     def dump_float(self, obj, tag, typed = 1, ns_map = {}):
-        if ieee754.is_PosInf(obj):
+        if fpconst.is_PosInf(obj):
             obj = "INF"
-        elif ieee754.is_NegInf(obj):
+        elif fpconst.is_NegInf(obj):
             obj = "-INF"
-        elif ieee754.is_NaN(obj):
+        elif fpconst.is_NaN(obj):
             obj = "NaN"
         else:
             obj = str(obj)

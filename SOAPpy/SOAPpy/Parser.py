@@ -798,11 +798,11 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 s = d.strip().lower()
 
                 if s == "nan":
-                    return ieee754.NaN
+                    return fpconst.NaN
                 elif s == "inf":
-                    return ieee754.PosInf
+                    return fpconst.PosInf
                 elif s == "-inf":
-                    return ieee754.NegInf
+                    return fpconst.NegInf
 
                 d = float(s)
 
