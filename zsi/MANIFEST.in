@@ -1,0 +1,5 @@
+include CHANGES
+recursive-include ZSI *.py
+recursive-include doc *
+recursive-include test *.py README
+recursive-include interop *.py README *.wsdl

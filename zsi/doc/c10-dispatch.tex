@@ -1,0 +1,290 @@
+\chapter{Dispatching and Invoking}
+
+\versionadded{1.1}
+
+\ZSI{} is focused on parsing and generating SOAP messages, and provides
+limited facilities for dispatching to the appropriate message handler.
+This is because \ZSI{} works within many client and server environments,
+and the dispatching styles for these different environments can be
+very different.
+
+Nevertheless, \ZSI{} includes some dispatch and invocation functions.
+To use them, they must be explicitly imported, as shown in the example
+at the start of this document.
+
+The implementation (and names) of the these classes reflects the orientation
+of using SOAP for remote procedure calls (RPC).
+
+Both client and server share a class that defines the mechanism a
+client uses to authenticate itself.
+
+\begin{classdesc}{AUTH}{}
+This class defines constants used to identify how the client
+authenticated: \code{none} if no authentication was provided;
+\code{httpbasic} if HTTP basic authentication was used, or
+\code{zsibasic} if \ZSI{} basic authentication (see below)) was used.
+\end{classdesc}
+
+The \ZSI{} schema (see the last chapter of this manual)
+defines a SOAP header element, \code{BasicAuth}, that
+contains a name and password.
+This is similar to the HTTP basic authentication header, except
+that it can be used independently from an HTTP transport.
+
+\section{Dispatching}
+
+The \module{ZSI.dispatch} module allows you to expose Python functions as a
+web service.
+The module provides the infrastructure to parse the request, dispatch
+to the appropriate handler, and then serialize any return value
+back to the client.
+The value returned by the function will be serialized back to the client.
+To return multiple values, return a list.
+
+If an exception occurs, a SOAP fault will be sent back to the client.
+
+Two dispatch mechanisms are provided: one supports standard CGI
+scripts, and the other runs a dedicated server based on the
+\module{BaseHTTPServer} module.
+
+\begin{methoddesc}{AsCGI}{\optional{module_list}}
+This method parses the CGI input and invokes a function that has the
+same name as the top-level SOAP request element.
+The optional \code{module_list} parameter can specify a list of modules
+(already imported) to search for functions.
+If no modules are specified, only the \module{__main__} module will be searched.
+\end{methoddesc}
+
+\begin{methoddesc}{AsServer}{\optional{**keywords}}
+This creates a \class{HTTPServer} object with a request handler that only
+supports the ``POST'' method.
+Dispatch is based solely on the name of the root element in the
+incoming SOAP request;
+the request URL is ignored.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{modules}}{\code{(__main__,)}}{List of modules containing
+functions that can be invoked.}
+\lineiii{\code{port}}{\code{80}}{Port to listen on.}
+\end{tableiii}
+
+\end{methoddesc}
+
+\begin{methoddesc}{GetClientBinding}{}
+More sophisticated scripts may want to use access the client binding object,
+which encapsulates all information about the client invoking the script.
+This function returns \code{None} or the binding information, an
+object of type \class{ClientBinding}, described below.
+\end{methoddesc}
+
+\begin{classdesc}{ClientBinding}{...}
+This object contains information about the client.
+It is created internally by \ZSI{}.
+\end{classdesc}
+
+\begin{methoddesc}{GetAuth}{}
+This returns a tuple containing information about the client identity.
+The first element will be one of the constants from the \code{AUTH} class
+described above.
+For HTTP or \ZSI{} basic authentication, the next two elements will be
+the name and password provided by the client.
+\end{methoddesc}
+
+\begin{methoddesc}{GetNS}{}
+Returns the namespace URI that the client is using, or an empty string.
+This can be useful for versioning.
+\end{methoddesc}
+
+\begin{methoddesc}{GetRequest}{}
+Returns the \class{ParsedSoap} object of the incoming request.
+\end{methoddesc}
+
+The following attribute is read-only:
+
+\begin{memberdesc}{environ}
+A dictionary of the environment variables.
+This is most useful when \method{AsCGI()} is used.
+\end{memberdesc}
+
+\section{The \module{client} module --- sending SOAP messages}
+
+\ZSI{} includes a module to connect to a SOAP server over HTTP, send requests,
+and parse the response.
+It is built on the standard Python \module{httplib} module.
+It must be explicitly imported, as in
+\samp{from ZSI.client import AUTH,Binding}.
+
+\begin{classdesc}{Binding}{\optional{**keywords}}
+This class encapsulates a connection to a server, known as a \emph{binding}.
+A single binding may be used for multiple RPC calls.
+Between calls, modifiers may be used to change the URL being posted to,
+etc.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{auth}}{\code{(AUTH.none,)}}{A tuple with authentication
+    information; the first value should be one of the constants
+    from the \class{AUTH} class.}
+\lineiii{\code{host}}{\code{'localhost'}}{Host to connect to.}
+\lineiii{\code{ns}}{n/a}{Default namespace for the request.}
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
+    SOAP \code{Envelope}}
+\lineiii{\code{port}}{\code{80} or \code{443}}{Port to connect on.}
+\lineiii{\code{ssl}}{\code{0}}{Use SSL if non-zero.}
+\lineiii{\code{tracefile}}{\code{None}}{An object with a \code{write}
+    method, where packet traces will be recorded.}
+\lineiii{\code{url}}{n/a}{URL to post to.}
+\end{tableiii}
+
+If using SSL, the \code{cert_file} and \code{key_file} keyword parameters may
+also be used.
+For details see the documentation for the \module{httplib} module.
+
+\end{classdesc}
+
+Once a \class{Binding} object has been created, the following modifiers are
+available.
+All of them return the binding object, so that multiple modifiers can
+be chained together.
+
+\begin{methoddesc}{AddHeader}{header, value}
+Output the specified \code{header} and \code{value} with the HTTP
+headers.
+\end{methoddesc}
+
+\begin{methoddesc}{SetAuth}{style, name, password}
+The \code{style} should be one of the constants from the \code{AUTH}
+class described above.
+The remaining parameters will vary depending on the \code{style}.
+Currently only basic authentication data of name and password are
+supported.
+\end{methoddesc}
+
+\begin{methoddesc}{SetNS}{uri}
+Set the default namespace for the request to the specified \code{uri}.
+\end{methoddesc}
+
+\begin{methoddesc}{SetURL}{url}
+Set the URL where the post is made to \code{url}.
+\end{methoddesc}
+
+\begin{methoddesc}{ResetHeaders}{}
+Remove any headers that were added by \method{AddHeader()}.
+\end{methoddesc}
+
+The following attribute may also be modified:
+
+\begin{memberdesc}{trace}
+If this attribute is not \code{None}, it should be an object with a
+\code{write} method, where packet traces will be recorded.
+\end{memberdesc}
+
+Once the necessary parameters have been specified (at a minimum, the URL
+must have been given in the constructor are through \code{SetURL}),
+invocations can be made.
+
+\begin{methoddesc}{RPC}{url, opname, pyobj, replyclass\optional{, **keywords}}
+This is the highest-level invocation method.
+It calls \method{Send()} to send \code{pyobj} to the specified \code{url}
+to perform the \code{opname} operation,
+and calls \method{Receive()} expecting to get a reply of the specified
+\code{replyclass}.
+
+This method will raise a \exception{TypeError} if the response does not
+appear to be a SOAP message, or if is valid SOAP but contains a fault.
+\end{methoddesc}
+
+\begin{methoddesc}{Send}{url, opname, pyboj\optional{, **keywords}}
+This sends the specified \code{pyobj} to the specified \code{url}, invoking
+the \code{opname} method.
+The \code{url} can be \code{None} if it was specified in the \class{Binding}
+constructor or if \code{SetURL} has been called.
+See below for a shortcut version of this method.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
+    SOAP \code{Envelope}}
+\lineiii{\code{requestclass}}{n/a}{Python \code{class} object with a
+    \code{typecode} attribute specifying how to serialize the data.}
+\lineiii{\code{requesttypecode}}{n/a}{Typecode specifying how to serialize
+    the data.}
+\lineiii{\code{soapaction}}{\code{http://www.zolera.com}}{Value for the
+    \code{SOAPAction} HTTP header.}
+\end{tableiii}
+
+\end{methoddesc}
+
+Once a message has been sent, the following read-only attributes are
+available.
+Their values will remain unchanged until another message is sent.
+
+\begin{memberdesc}{reply_code}
+The HTTP reply code, a number.
+\end{memberdesc}
+
+\begin{memberdesc}{reply_headers}
+The HTTP headers, as a \class{mimetools} object.
+\end{memberdesc}
+
+\begin{memberdesc}{reply_msg}
+A text string containing the HTTP reply text.
+\end{memberdesc}
+
+Methods are available to determine the type of response that came back:
+
+\begin{methoddesc}{IsSOAP}{}
+Returns true if the message appears to be a SOAP message.
+(Some servers return an HTML page under certain error conditions.)
+\end{methoddesc}
+
+\begin{methoddesc}{IsAFault}{}
+Returns true if the message is a SOAP fault.
+\end{methoddesc}
+
+Having determined the type of the message (or, more likely, assuming
+it was good and catching an exception if not), the following methods
+are available to actually parse the data.
+They will continue to return the same value until
+another message is sent.
+
+\begin{methoddesc}{ReceiveRaw}{}
+Returns the unparsed message body.
+\end{methoddesc}
+
+\begin{methoddesc}{ReceiveSoap}{}
+Returns a \class{ParsedSOAP} object containing the parsed message.
+Raises a \exception{TypeError} if the message wasn't SOAP.
+\end{methoddesc}
+
+\begin{methoddesc}{ReceiveFault}{}
+Returns a \class{Fault} object containing the SOAP fault message.
+Raises a \exception{TypeError} if the message did not contain a fault.
+\end{methoddesc}
+
+\begin{methoddesc}{Receive}{replytype}
+Parses a SOAP message.
+The \code{replytype} specifies how to parse the data.
+If it s \code{None}, dynamic parsing will be used, usually resulting
+in a Python list.
+If \code{replytype} is a Python class, then the class's \code{typecode}
+attribute will be used, otherwise \code{replytype} is interpreted as
+the typecode to use for parsing the data.
+\end{methoddesc}
+
+Finally, if an attribute is fetched other than one of those described
+above, it is taken to be the \code{opname} of a remote procedure,
+and a callable object is returned.
+This object dynamically parses its arguments, receives the reply, and
+parses that.
+
+\begin{methoddesc}{\sl{opname}}{args...}
+Using this shortcut requires that the \method{SetURL()} was invoked first.
+This method is then equivalent to:
+\samp{RPC(None, opname, tuple(args), TC.Any())}
+\end{methoddesc}
+

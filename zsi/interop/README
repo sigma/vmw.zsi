@@ -1,0 +1,8 @@
+
+This directory includes a server that implements the SOAPBUILDERS
+interoperability test.  For details, see http://www.xmethods.net/ilab/
+
+The client.py program will send pre-formatted test packets to a server.
+I have not done generic client test, for a couple of reasons:
+    Too hard to keep track of all the endpoints; and
+    The server already exercises all the code -- it parses and serializes

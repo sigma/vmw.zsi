@@ -1,0 +1,3 @@
+These are "hand tests."  That is, you have to run the tests by hand
+and inspect the output.  As a general rule, it's bad if any of the tests
+exit with an exception. :)

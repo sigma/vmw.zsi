@@ -1,0 +1,63 @@
+Changes for 1.2, released xx-xxx-2001:
+    -	Use "raise x(a)" always, never "raise x, a" (that's oldschool:)
+    -	Don't delete tb in FaultFromException; add try/except for robustness
+    -	Ignore -1 values for DST, etc., in Python time tuples
+    -	Remove needless __init__ when just calling parent __init__
+    -	Added 'undeclared' parameter to TC.Array
+    -	Added 'repeatable' parameter to TC.TypeCode
+    -	Move 'unique' keyword from TC.String up to TC.TypeCode
+    -	Add 'wrapped' keyword to TC.XML
+    -	Added _find_attr lambda
+    -	Had path backwards in backtrace, add [1] to uniqify when needed
+    -	Complain if extra elements in TC.Struct and hasextras=0
+    -	Duration.lex_pattern was wrong (old schema) <grahamd@dscpl.com.au>
+    -	Newline after output gDateTime, not a space
+    -	Newline before Base64string
+    -	Incorrect test in RegisterType <grahamd@dscpl.com.au>
+    -	Add Boolean.serialize <grahamd@dscpl.com.au>
+    -	Anchor all TCtime lex_pattern's <grahamd@dscpl.com.au>
+    -	Allow class object (not just class name) in TC.seriallist
+    -	TC.Void can serialize None (useful for TC.Any)
+    -	Fix consistency and interop in dispatching <grahamd@dscpl.com.au>
+    -	Array interop fix <gisle@activestate.com>
+    -	SOAPAction header needs quotes <gisle@activestate.com>
+    -	Add Apache SOAPArray <gisle@activestate.com>
+    -	Properly use 'ns' in client to set default namespace
+    -	Sign isn't optional on numeric timezones in dates <grahamd@dscpl.com.au>
+    -	Document limits on date/time conversions.
+    -	Add TC.XML.copyit and 'copyit' keyword to constructor
+
+Changes for 1.1, released 14-Sep-2001:
+    -	Works with PyXML0.6 now!
+    -	Create this CHANGES file, include it in doc files
+    -	Lots of editing and new material in the documentation
+    -	Fix TC.String to handle empty strings
+    -	Renamed NodeBacktrace to _backtrace
+    -	Renamed HasValidEncoding to _valid_encoding
+    -	Add 'textprotect' keyword argument to TC.String
+    -	TC.Any() can now serialize dictionaries, lists, tuples
+    -	TC.Any() can now parse arrays
+    -	Add aslist to TC.Any()
+    -	Add TC.Apache.Map typecode
+    -	GetMyHeaderElements includes header with no actor attribute
+    -	Fix formatting of error message when TC.Struct caught eval exception
+    -	Fix TC.Struct for case when all kids are optional (could-be-zero-sized)
+    -	Fix SimpleHREF calling sequence; boolean, Gregorian, duration now work
+    -	Fix typo when generating backtrace on EvaluateException
+    -	Exception backtraces are now in XPath syntax
+    -	Fix zsi.xsd to conform to proper XSD-Rec style
+    -	Fix zsi.xsd nits found by free IBM schema quality checker
+    -	Added Z:BasicAuth to zsi.xsd
+    -	CIDResolver now takes an optional "next" parameter, instead of creating
+	a NetworkResolver automatically; the "prefixes" parameter is gone
+	from the CIDResolver constructor
+    -	Rename CIDResolver to MIMEResolver, and add Content-Location handling
+    -	Changed resolver.seekable default from 1 to 0
+    -	Resolvers raise EvaluateException, not TypeError
+    -	Fix FindLocalHREF to search the serialization root, too
+    -	Use and prefer Fault.AsSOAP, although Fault.AsSoap still exists
+    -	Change FindLocalHREF to cache all id's as it finds them
+    -	Add boolean, decimal, and hexbinary to interop server
+    -	Add simple CGI dispatching
+    -	Put version in setup.cfg and make newver use it for version.{py,tex}
+    -	Add ZSI.Version() to retrieve version tuple

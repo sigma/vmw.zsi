@@ -1,0 +1,149 @@
+\chapter{Examples}
+
+This section contains two examples.  The first shows how to use \ZSI{}
+to expose conventional CGI scripts through SOAP.
+The input parameters and return value are Python lists and the SOAP
+messages must contain all type information.
+This is appropriate for building simple schema-less applications.
+The second example shows how to to create a
+more comprehensive application that uses \ZSI{} to validate its input
+and output against a schema.
+
+\section{Simple example}
+
+Using the \module{ZSI.cgi} module, it is simple to expose Python
+functions as web services.
+Each function is invoked with all the input parameters specified in the
+client's SOAP request.
+Any value returned by the function will be serialized back to the client;
+multiple values can be returned by returning a tuple.
+
+The following code shows some simple services:
+
+\begin{verbatim}
+def hello():
+    return "Hello, world"
+
+def echo(*args):
+    return args
+
+def average(*args):
+    sum = 0
+    for i in args: sum += i
+    return sum / len(args)
+
+from ZSI import dispatch
+dispatch.AsCGI()
+\end{verbatim}
+
+Each function defines a SOAP request, so if this script is installed
+as a CGI script, a SOAP message can be posted to that script's URL with any of
+\code{hello}, \code{echo}, or \code{average} as the request element,
+and the value returned by the function will be sent back.
+
+The \ZSI{} CGI dispatcher catches exceptions and sends back a SOAP fault.
+For example, a fault will be sent if the  \code{hello} function is given any
+arguments, or if the \code{average} function is given a non-integer.
+
+If the above script is installed on the webserver running on the local
+host, and if the URL is \code{/cgi-bin/simple-test}, then the following
+code shows simple binding and access to the server:
+
+\begin{verbatim}
+from ZSI.client import Binding
+b = Binding(url='/cgi-bin/simple-test')
+a = apply(b.average, range(1,11))
+assert a == 5
+print b.hello()
+\end{verbatim}
+
+\section{More complex example}
+
+We will now show a more complete example of a robust web service.
+It takes as input a player name and array of integers, and returns
+the average.
+It is presented in sections, following the steps detailed above.
+
+The first section reads in a request, and parses the SOAP header.
+
+\begin{verbatim}
+from ZSI import *
+import sys
+IN, OUT = sys.stdin, sys.stdout
+
+try:
+    ps = ParsedSoap(IN)
+except ParseException, e:
+    FaultFromZSIException(e).AsSOAP(OUT)
+    sys.exit(1)
+except Exception, e:
+    # Faulted while processing; we assume it's in the header.
+    FaultFromException(e, 1).AsSOAP(OUT)
+    sys.exit(1)
+
+# We are not prepared to handle any actors or mustUnderstand elements,
+# so we'll arbitrarily fault back with the first one we found.
+a = ps.WhatActorsArePresent()
+if len(a):
+    FaultFromActor(a[0]).AsSOAP(OUT)
+    sys.exit(1)
+mu = ps.WhatMustIUnderstand()
+if len(mu):
+    uri, localname = mu[0]
+    FaultFromNotUnderstood(uri, localname).AsSOAP(OUT)
+    sys.exit(1)
+\end{verbatim}
+
+This section defines the mappings between Python objects and the SOAP
+data being transmitted.
+Recall that according to the SOAP specification, RPC input and output
+are modeled as a structure.
+
+\begin{verbatim}
+class Player:
+    def __init__(self, name):
+        pass
+Player.typecode = TC.Struct(Player, [
+                                TC.String('Name'),
+                                TC.Array('Scores', TC.Integer()),
+                                ], 'GetAverage')
+class Average:
+    def __init__(self, average):
+        self.average = average
+Average.typecode = TC.Struct(Average, [
+                                TC.Integer('average'),
+                                ], 'GetAverageResponse')
+\end{verbatim}
+
+This section parses the input, performs the application-level
+activity, and serializes the response.
+\begin{verbatim}
+try:
+    player = ps.Parse(Player.typecode)
+except EvaluateError, e:
+    FaultFromZSIException(e).AsSOAP(OUT)
+    sys.exit(1)
+
+try:
+    total = 0
+    for value in player.Scores: total = total + value
+    result = Average(total / len(player.Scores))
+    sw = SoapWriter(OUT)
+    sw.serialize(result, Average.typecode)
+    sw.close()
+except Exception, e:
+    FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
+    sys.exit(1)
+\end{verbatim}
+
+In the \method{serialize()} call above, the second parameter is optional,
+since \code{result} is an instance of the 
+\class{Average} class, and the \code{Average.typecode} attribute is
+the typecode for class instances.
+In addition, since the \class{SoapWriter} destructor will call \method{close()}
+if necessary, sending a SOAP response can often be written like
+this one-liner:
+\begin{verbatim}
+SoapWriter(OUT).serialize(result)
+\end{verbatim}
+
