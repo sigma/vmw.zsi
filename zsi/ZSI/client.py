@@ -210,7 +210,8 @@ class Binding:
         self.h.putrequest("POST", url or self.url)
         self.h.putheader("Content-length", "%d" % len(soapdata))
         self.h.putheader("Content-type", 'text/xml; charset=utf-8')
-        self.h.putheader("SOAPAction", soapaction or self.soapaction)
+        SOAPActionValue = '"%s"' % (soapaction or self.soapaction)
+        self.h.putheader("SOAPAction", SOAPActionValue)
         if self.auth_style & AUTH.httpbasic:
             val = _b64_encode(self.auth_user + ':' + self.auth_pass) \
                         .replace("\012", "")
