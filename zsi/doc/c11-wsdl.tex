@@ -300,16 +300,12 @@ If the user wishes to set authorization headers in a request, using the
 previous example, it would be accomplished like this:
 
 \begin{verbatim}
-
 def main():
-
     loc = TerraServiceLocator()
-
-    kw = { 'tracefile' : sys.stdout, 'auth' : ( soap.ZSI.AUTH.httpbasic,  'logname', 'password' ) }
-
-    portType = loc.getTerraServiceSoap( **kw ) 
-...
-
+    portType = loc.getTerraServiceSoap(
+        tracefile=sys.stdout,
+        auth=(soap.ZSI.AUTH.httpbasic, 'logname', 'password'))
+    # ...
 \end{verbatim}
 
 \section{WSDL objects}
