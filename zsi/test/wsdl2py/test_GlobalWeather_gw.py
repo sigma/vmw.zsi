@@ -6,8 +6,8 @@
 ###########################################################################
 import sys, unittest
 
-from utils import ServiceTestCase, TestProgram
 
+from ServiceTest import ServiceTestCase, ServiceTestSuite
 """
 Unittest for contacting the GlobalWeather portType for the
 GlobalWeather Web service.
@@ -25,41 +25,32 @@ class GlobalWeatherTest(ServiceTestCase):
     """Test case for GlobalWeather Web service, port type GlobalWeather
     """
 
-    service = None
-    portType = None
-
-    def __init__(self, methodName):
-        unittest.TestCase.__init__(self, methodName)
-
+    name = "test_GlobalWeather_gw"
+    
     def setUp(self):
-        if not GlobalWeatherTest.service:
-            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
-                                                CONFIG_SECTION, SERVICE_NAME)
-            GlobalWeatherTest.service, GlobalWeatherTest.portType = \
-                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
-        self.portType = GlobalWeatherTest.portType
-
-
-        # requires a floating point ZSI typecode; in progress
-    def notest_getWeatherReport(self):
-        request = self.portType.inputWrapper('getWeatherReport')
-            # airport code
+        self._portName = "GlobalWeather"
+        ServiceTestCase.setSection(self,self.name)
+        ServiceTestCase.setUp(self)
+        
+        
+    
+           # requires a floating point ZSI typecode; in progress
+    def test_getWeatherReport(self):
+        """
+        This test raises a ZSI.EvaluateException
+        """
+        operationName = "getWeatherReport"
+        request = self.getInputMessageInstance(operationName)
         request._code = 'SFO'
-        try:
-            self.failUnlessRaises(EvaluateException, self.portType.getWeatherReport, request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        """
-        self.handleResponse(self.portType.getWeatherReport,request)
-        """
+        self.RPC(operationName, request)    
+    
 
 
 def makeTestSuite():
-    suite = unittest.TestSuite()
+    suite = ServiceTestSuite()
     suite.addTest(unittest.makeSuite(GlobalWeatherTest, 'test_'))
     return suite
 
 
 if __name__ == "__main__" :
-    TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="makeTestSuite")

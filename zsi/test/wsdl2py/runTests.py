@@ -3,7 +3,7 @@
 # Joshua R. Boverhof, LBNL
 # See Copyright for copyright notice!
 ###########################################################################
-import sys, unittest
+import  unittest
 from ConfigParser import ConfigParser, NoOptionError
 from ServiceTest import CONFIG_PARSER, DOCUMENT, LITERAL, BROKE, TESTS
 
@@ -17,24 +17,26 @@ def makeTestSuite(document=None, literal=None, broke=None):
     """
     cp = CONFIG_PARSER
     testSections = []
-    for section in cp.sections():
-        try:
-            if (document is not None) and (cp.getboolean(section, DOCUMENT) is not document):
-                pass
-            elif (literal is not None) and (cp.getboolean(section, LITERAL) is not literal):
-                pass
-            elif (broke is not None) and (cp.getboolean(section, BROKE) is not broke):
-                pass
-            else:
-                testSections.append(section)
-        except NoOptionError, ex: 
+    sections = ['rpc_encoded' , 'rpc_encoded_broke', 'doc_encoded', \
+                'doc_encoded_broke', 'rpc_literal', 'rpc_literal_broke', \
+                'rpc_literal_broke_interop', 'doc_literal', \
+                'doc_literal_broke', 'doc_literal_broke_interop' ]
+    for section in sections:
+    
+        if (document is not None) and (cp.getboolean(section, DOCUMENT) is not document):
             pass
+        elif (literal is not None) and (cp.getboolean(section, LITERAL) is not literal):
+            pass
+        elif (broke is not None) and (cp.getboolean(section, BROKE) is not broke):
+            pass
+        else:
+            testSections.append(section)
+        
     suite = unittest.TestSuite()
     for section in testSections:
         moduleList = cp.get(section, TESTS).split()
         for module in  map(__import__, moduleList):
             s = module.makeTestSuite()
-            s.setSection(section)
             suite.addTest(s)
     return suite
 
@@ -47,11 +49,18 @@ def workingTestSuite():
 def docLitTestSuite():
     return makeTestSuite(document=True, literal=True)
 
+def collectTests():
+    suite = unittest.TestSuite()
+    suite.addTest(brokeTestSuite())
+    suite.addTest(workingTestSuite())
+    suite.addTest(docLitTestSuite())
+    return suite
+
 def main():
     """Gets tests to run from configuration file.
     """
-    unittest.TestProgram(defaultTest="brokeTestSuite")
-
+    unittest.TestProgram(defaultTest="collectTests")
+    
 if __name__ == "__main__" : main()
     
 

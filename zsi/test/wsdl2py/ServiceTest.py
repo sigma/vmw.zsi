@@ -6,6 +6,8 @@ import os, sys, unittest
 from ConfigParser import ConfigParser
 from ZSI.wstools.WSDLTools import WSDLReader
 from ZSI.wsdl2python import WriteServiceModule
+import StringIO, copy, getopt
+
 
 """Global Variables:
     CONFIG_FILE -- configuration file 
@@ -55,6 +57,8 @@ class ServiceTestCase(unittest.TestCase):
         instance variables:
            _moduleDict -- module dictionary
            _port -- soap port, proxy rpc instance.
+           _portName -- The name of the port to get using _getPort
+           _importTypeModule -- boolean indicating whether to import the types file 
            _typeModuleName -- key to the generated type module
            _serviceModuleName -- key to the generated service module
            _section -- if set, do a runtime check that test is correctly indexed.
@@ -62,6 +66,8 @@ class ServiceTestCase(unittest.TestCase):
         """
         self._moduleDict = {}
         self._port = None
+        self._portName = None
+        self._importTypeModule = True
         self._typeModuleName = None
         self._serviceModuleName = None
         self._wsm = None
@@ -72,6 +78,7 @@ class ServiceTestCase(unittest.TestCase):
         """Generate types and services modules if no record of them
            in the moduleDict variable.
         """
+        
         if not self.url_section or not self.name:
             raise TestException, 'section(%s) or name(%s) not defined' %(self.url_section,self.name)
         if not self._isSetModules():
@@ -92,11 +99,23 @@ class ServiceTestCase(unittest.TestCase):
             wsdl = reader.loadFromURL(url)
             self._wsm = WriteServiceModule(wsdl)
             self._wsm.write(False)
-            self._setModuleNames()
+            self._setModuleNames(self._importTypeModule)
             os.chdir(testDir)
             locator = self._getLocator()
             self._port = self._getPort(locator)
+        
 
+    def tearDown(self):
+        """
+        This must be deleted because it has reference to
+        a namespace hash object which keeps its dictionary in
+        a class variable.If we run multiple ServiceTestSuites then
+        namespaces in the first prior ServiceTestSuite will remain
+        in the hash, and the code generator will import them in the
+        We need a fresh namespace hash each time a unittest is run
+        """
+        del self._wsm
+        
     def _getPortOptions(self):
         kw = {}
         if CONFIG_PARSER.getboolean('configuration', 'tracefile'):
@@ -148,9 +167,16 @@ class ServiceTestCase(unittest.TestCase):
         """
         serviceAdapter = self._getServiceAdapter()
         portList = serviceAdapter.getPortList()
-        if len(portList) != 1:
+        if len(portList) != 1 and self._portName == None:
             raise TestException, 'Test framework expects service[%s] to define a single port, (%d) defined' \
                 %(serviceAdapter.getName(), len(portList))
+
+        if self._portName != None:
+            for port in portList:
+                if self._portName == port.getName():
+                    return port
+
+            raise TestException, 'Did not find the port specified by portName'
         return portList[0]
 
     def _getServiceAdapter(self):
@@ -175,13 +201,21 @@ class ServiceTestCase(unittest.TestCase):
             return True
         return False
 
-    def _setModuleNames(self):
+    def _setModuleNames(self, importTypes=True):
         """set service and types modules key names, and import them.
+
+           Some of the no schema tests do generate a types file
         """
         self._typeModuleName, self._serviceModuleName = self._wsm.get_module_names()
-        for name in (self._typeModuleName, self._serviceModuleName):
+        if importTypes:
+            moduleTuple = (self._typeModuleName, self._serviceModuleName)
+        else:
+            moduleTuple = (self._serviceModuleName,)
+
+        for name in moduleTuple:
             exec('import %s' %name)
             self._moduleDict[name] = eval(name)
+
 
     def checkSection(self):
         """Should the section be checked? If I know about it.
@@ -192,24 +226,29 @@ class ServiceTestCase(unittest.TestCase):
         """Check if test is in correctly indexed in the configuration file, 
            port operation must conform to the bindings.  
 
+           We check the style and use attributes from the soapOperation element.
+           
            portAdapter -- ZSIPortAdapter instance
            operationName -- WSDL port operation name
            port -- WSDLTools.Port instance
         """
         port = portAdapter._port
+        name = operationName
         if self.checkSection():
-            doc = CONFIG_PARSER.get(self.getSection(), DOCUMENT)
-            lit = CONFIG_PARSER.get(self.getSection(), LITERAL)
-            callinfo = callInfoFromWSDL(port, name)
-            if doc and callinfo.style != 'document':
+            doc = CONFIG_PARSER.getboolean(self.getSection(), DOCUMENT)
+            lit = CONFIG_PARSER.getboolean(self.getSection(), LITERAL)
+            operation = portAdapter.getBinding().getOperationDict().get(operationName)
+            use = operation.getInput().getSoapBody().getUse()
+            style = portAdapter.getBinding().getSoapBinding().getStyle()
+            if doc and style != 'document':
                 raise ConfigException, 'operation(%s) is not document style' %name
-            elif not doc and callinfo.style != 'rpc':
+            elif not doc and style != 'rpc':
                 raise ConfigException, 'operation(%s) is not rpc style' %name
-            if lit is True and callinfo.encodingStyle != 'literal':
+            if lit is True and use != 'literal':
                 raise ConfigException, 'operation(%s) is not literal encoding' %name
-            if lit is False and callinfo.encodingStyle != 'encoded':
+            if lit is False and use != 'encoded':
                 raise ConfigException, 'operation(%s) is not rpc style' %name
-
+    
     def setSection(self, section):
         """section -- this is the section the service is categorized in,
                if set STC will do a sanity check against the WSDL, etc.
@@ -248,7 +287,8 @@ class ServiceTestCase(unittest.TestCase):
         callMethod = getattr(self._port, operationName)
         if callMethod:
             callMethod(request)
-        raise TestException, 'Port instance is missing method %s' %operationName 
+        else:
+            raise TestException, 'Port instance is missing method %s' %operationName 
 
 
 class ServiceTestSuite(unittest.TestSuite):
@@ -265,10 +305,133 @@ class ServiceTestSuite(unittest.TestSuite):
         self._section = None
 
     def setSection(self, section):
-        self._section = section
+        self._section = __name__
 
     def addTest(self, test):
-        if isinstance(test, ServiceTestCase):
+        if isinstance(test, ServiceTestSuite):
             test.setSection(self._section)
         unittest.TestSuite.addTest(self, test)
+
+
+class CaseSensitiveConfigParser(ConfigParser):
+
+    def __init__(self):
+        ConfigParser.__init__(self)
+
+    def optionxform(self, optionstr):
+        """Overriding ConfigParser method allows configuration option
+           to contain both lower and upper case."""
+        return optionstr
+
+def handleExtraArgs(argv):
+    deleteFile = False
+    options, args = getopt.getopt(argv, 'hHdv')
+    for opt, value in options:
+        if opt == '-d':
+            deleteFile = True
+    return deleteFile
+    
+class TestDiff:
+    """TestDiff encapsulates comparing a string or StringIO object
+       against text in a test file.  Test files are located in a
+       subdirectory of the current directory, named diffs if a name
+       isn't provided.  If the sub-directory doesn't exist, it will
+       be created.  If a single test file is to be generated, the file
+       name is passed in.  If not, another sub-directory is created
+       below the diffs directory, in which a file is created for each
+       test.
+
+       The calling unittest.TestCase instance is passed
+       in on object creation.  Optional compiled regular expressions
+       can also be passed in, which are used to ignore strings
+       that one knows in advance will be different, for example
+       id="<hex digits>" .
+
+       The initial running of the test will create the test
+       files.  When the tests are run again, the new output
+       is compared against the old, line by line.  To generate
+       a new test file, remove the old one from the sub-directory.
+       The tests also allow this to be done automatically if the
+       -d option is passed in on the command-line.
+    """
+
+    def __init__(self, testInst, testFilePath='diffs', singleFileName='',
+                *ignoreList):
+        self.diffsFile = None
+        self.testInst = testInst
+        self.origStrFile = None
+        self.expectedFailures = copy.copy(ignoreList)
+
+        if not os.path.exists(testFilePath):
+            os.mkdir(testFilePath)
+
+        if not singleFileName:
+            #  if potentially multiple tests will be performed by
+            #  a test module, create a subdirectory for them.
+            testFilePath = testFilePath + os.sep + testInst.__class__.__name__
+            if not os.path.exists(testFilePath):
+                os.mkdir(testFilePath)
+
+                # get name of test method, and name the diffs file after
+                # it
+            f = inspect.currentframe()
+            fullName = testFilePath + os.sep + \
+                       inspect.getouterframes(f)[2][3] + '.diffs'
+        else:
+            fullName = testFilePath + os.sep + singleFileName
+
+        deleteFile = handleExtraArgs(sys.argv[1:])
+        if deleteFile:
+            try:
+                os.remove(fullName)
+            except OSError:
+                print fullName
+
+        try:
+            self.diffsFile = open(fullName, "r")
+            self.origStrFile = StringIO.StringIO(self.diffsFile.read())
+        except IOError:
+            try:
+                self.diffsFile = open(fullName, "w")
+            except IOError:
+                print "exception"
+
+
+    def failUnlessEqual(self, buffer):
+        """failUnlessEqual takes either a string or a StringIO
+           instance as input, and compares it against the original
+           output from the test file.  
+        """
+            # if not already a string IO 
+        if not isinstance(buffer, StringIO.StringIO):
+            testStrFile = StringIO.StringIO(buffer)
+        else:
+            testStrFile = buffer
+            testStrFile.seek(0)
+
+        hasContent = False
+        if self.diffsFile.mode == "r":
+            for testLine in testStrFile:
+                origLine = self.origStrFile.readline() 
+                if not origLine:
+                    break
+                else:
+                    hasContent = True
+
+                    # take out expected failure strings before
+                    # comparing original against new output
+                for cexpr in self.expectedFailures:
+                    origLine = cexpr.sub('', origLine)
+                    testLine = cexpr.sub('', testLine)
+
+                if origLine != testLine:
+                    self.testInst.failUnlessEqual(origLine, testLine)
+            return
+
+        if (self.diffsFile.mode == "w") or not hasContent:
+                # write new test file
+            for line in testStrFile:
+                self.diffsFile.write(line)
+
+        self.diffsFile.close()
 

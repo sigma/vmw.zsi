@@ -6,8 +6,7 @@
 ###########################################################################
 import sys, unittest
 
-from utils import ServiceTestCase, TestProgram
-
+from ServiceTest import ServiceTestCase, ServiceTestSuite
 """
 Unittest for contacting the StationInfo portType of the GlobalWeather
 Web service.
@@ -24,63 +23,63 @@ PORT_NAME = 'StationInfo'
 class StationInfoTest(ServiceTestCase):
     """Test case for GlobalWeather Web service, port type StationInfo
     """
-
-    service = None
-    portType = None
-
-    def __init__(self, methodName):
-        unittest.TestCase.__init__(self, methodName)
+    
+    name = "test_GlobalWeather_si"
 
     def setUp(self):
-        if not StationInfoTest.service:
-            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
-                                                CONFIG_SECTION, SERVICE_NAME)
-            StationInfoTest.service, StationInfoTest.portType = \
-                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
-        self.portType = StationInfoTest.portType
+        self._portName = "StationInfo"
+        ServiceTestCase.setSection(self,self.name)
+        ServiceTestCase.setUp(self)
 
     def test_getStation(self):
-        request = self.portType.inputWrapper('getStation')
+        operationName = "getStation"
+        request = self.getInputMessageInstance(operationName)    
         request._code = 'SFO'
-        self.handleResponse(self.portType.getStation,request,diff=True)
+        self.RPC(operationName, request)
     
     def test_isValidCode(self):
-        request = self.portType.inputWrapper('isValidCode')
+        operationName = "isValidCode"
+        request = self.getInputMessageInstance(operationName)
         request._code = 'SFO'
-        self.handleResponse(self.portType.isValidCode,request,diff=True)
+        self.RPC(operationName, request)
     
     def test_listCountries(self):
-        request = self.portType.inputWrapper('listCountries')
-        self.handleResponse(self.portType.listCountries,request,diff=True)
-
+        operationName = "listCountries"
+        request = self.getInputMessageInstance(operationName)
+        self.RPC(operationName, request)
+        
     def test_searchByCode(self):
-        request = self.portType.inputWrapper('searchByCode')
+        operationName = 'searchByCode'
+        request = self.getInputMessageInstance(operationName)
         request._code = 'SFO'
-        self.handleResponse(self.portType.searchByCode,request,diff=True)
+        self.RPC(operationName, request)
     
     def test_searchByCountry(self):
-        request = self.portType.inputWrapper('searchByCountry')
+        operationName = 'searchByCountry'
+        request = self.getInputMessageInstance(operationName)
         request._country = 'Australia'
-        self.handleResponse(self.portType.searchByCountry,request,diff=True)
+        self.RPC(operationName, request)
     
         # can't find what valid name is, returns empty result
-    def notest_searchByName(self):
-        request = self.portType.inputWrapper('searchByName')
+    def test_searchByName(self):
+        operationName = 'searchByName'
+        request = self.getInputMessageInstance(operationName)
         request._name = 'San Francisco Airport'
-        self.handleResponse(self.portType.searchByName,request,diff=True)
+        self.RPC(operationName, request)
     
         # can't find what valid region is, returns empty result
-    def notest_searchByRegion(self):
-        request = self.portType.inputWrapper('searchByRegion')
+    def test_searchByRegion(self):
+        operationName = 'searchByRegion'
+        request = self.getInputMessageInstance(operationName)
         request._region = 'Europe'
-        self.handleResponse(self.portType.searchByRegion,request,diff=True)
+        self.RPC(operationName, request)
 
 
 def makeTestSuite():
-    suite = unittest.TestSuite()
+    suite = ServiceTestSuite()
     suite.addTest(unittest.makeSuite(StationInfoTest, 'test_'))
     return suite
 
 
 if __name__ == "__main__" :
-    TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="makeTestSuite")

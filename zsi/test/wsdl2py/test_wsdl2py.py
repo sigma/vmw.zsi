@@ -11,13 +11,12 @@ from ZSI import wsdl2python
 from ZSI.wstools.TimeoutSocket import TimeoutError
 from ZSI.wstools.WSDLTools import WSDLReader
 from ZSI.wstools.Utility import HTTPResponse
-
-import utils
+from ServiceTest import CaseSensitiveConfigParser, TestDiff
 
 """
 Tests wsdl2python code generation against most of the XMethods WSDL's.
 """
-
+urlList = None
 CONFIG_FILE = 'config.txt'
 MODULE_DIR = 'generatedCode'
 
@@ -66,7 +65,7 @@ class Wsdl2pythonTest(unittest.TestCase):
         if hasSchema:
             strFile = StringIO.StringIO()
             typesFileName = f_types + ".py"
-            testdiff = utils.TestDiff(self, MODULE_DIR, typesFileName)
+            testdiff = TestDiff(self, MODULE_DIR, typesFileName)
             try:
                 codegen.write_service_types(f_types, strFile)
             except:
@@ -79,7 +78,7 @@ class Wsdl2pythonTest(unittest.TestCase):
 
         strFile = StringIO.StringIO()
         servicesFileName = f_services + ".py"
-        testdiff = utils.TestDiff(self, MODULE_DIR, servicesFileName)
+        testdiff = TestDiff(self, MODULE_DIR, servicesFileName)
         try:
             signatures = codegen.write_services(f_types,
                              f_services, strFile, hasSchema)
@@ -102,7 +101,7 @@ def getUrls():
         args = ['no_schemas', 'simple_types', 'complex_types']
 
     urlList = []
-    cp = utils.CaseSensitiveConfigParser()
+    cp = CaseSensitiveConfigParser()
     cp.read(CONFIG_FILE)
     for arg in args:
         if cp.has_section(arg):
@@ -123,7 +122,7 @@ def main():
     global urlList
 
     urlList = getUrls()
-    utils.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="makeTestSuite")
                   
 if __name__ == "__main__" :
     main()

@@ -5,8 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-
-from utils import ServiceTestCase, TestProgram
+from ServiceTest import ServiceTestCase, ServiceTestSuite
 
 """
 Unittest for contacting the XMethodsQuery Web service.
@@ -23,51 +22,46 @@ PORT_NAME = 'XMethodsQuerySoapPortType'
 class XMethodsQueryTest(ServiceTestCase):
     """Test case for XMethodsQuery Web service
     """
-
-    service = None
-    portType = None
-
-    def __init__(self, methodName):
-        unittest.TestCase.__init__(self, methodName)
-
+    name = "test_XMethodsQuery"
+    
     def setUp(self):
-        if not XMethodsQueryTest.service:
-            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
-                                                CONFIG_SECTION, SERVICE_NAME)
-            XMethodsQueryTest.service, XMethodsQueryTest.portType = \
-                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
-        self.portType = XMethodsQueryTest.portType
-
-
+        ServiceTestCase.setSection(self,self.name)
+        ServiceTestCase.setUp(self)
+        
     def test_getAllServiceNames(self):
-        request = self.portType.inputWrapper('getAllServiceNames')
-        self.handleResponse(self.portType.getAllServiceNames,request)   
+        operationName = 'getAllServiceNames'
+        request = self.getInputMessageInstance(operationName)
+        response = self.RPC(operationName, request)   
 
     def test_getAllServiceSummaries(self):
-        request = self.portType.inputWrapper('getAllServiceSummaries')
-        self.handleResponse(self.portType.getAllServiceSummaries,request)   
-
+        operationName = 'getAllServiceSummaries'
+        request = self.getInputMessageInstance(operationName)
+        response = self.RPC(operationName, request)
+          
     def test_getServiceDetail(self):
-        request = self.portType.inputWrapper('getServiceDetail')
+        operationName = 'getServiceDetail'
+        request = self.getInputMessageInstance(operationName)
         request._id = 'uuid:A29C0D6C-5529-0D27-A91A-8E02D343532B'
-        self.handleResponse(self.portType.getServiceDetail,request)   
+        response = self.RPC(operationName, request)   
     
     def test_getServiceNamesByPublisher(self):
-        request = self.portType.inputWrapper('getServiceNamesByPublisher')
+        operationName = 'getServiceNamesByPublisher'
+        request = self.getInputMessageInstance(operationName)
         request._publisherID = 'xmethods.net'
-        self.handleResponse(self.portType.getServiceNamesByPublisher,request)   
+        response = self.RPC(operationName, request)   
     
-    def notest_getServiceSummariesByPublisher(self):
-        request = self.portType.inputWrapper('getServiceSummariesByPublisher')
+    def test_getServiceSummariesByPublisher(self):
+        operationName = 'getServiceSummariesByPublisher'
+        request = self.getInputMessageInstance(operationName)
         request._publisherID = 'xmethods.net'
-        self.handleResponse(self.portType.getServiceSummariesByPublisher,request)   
+        response = self.RPC(operationName, request)  
 
 
 def makeTestSuite():
-    suite = unittest.TestSuite()
+    suite = ServiceTestSuite()
     suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_'))
     return suite
 
 
 if __name__ == "__main__" :
-    TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="makeTestSuite")

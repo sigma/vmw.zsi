@@ -21,7 +21,7 @@ The other set tests remote method calls on individual services.
 To add individual service tests, add an entry to the 
 individual_tests section in config.txt, and use one of the
 existing individual tests as a template.  To test all individual
-services, run testall.py
+services, run runTests.py
 
 Test result files are generated in the diffs sub-directory.
 Subsequent runs of the test are compared against previous output.
@@ -261,10 +261,3 @@ VersionInfo:
   response: global element containing sequence used as struct
 
 
-***********************************************
-
-test module:  test_noschemas.py
-binding:  rpc/encoded
-
-Tests services with no associated schemas in their
-WSDL description.

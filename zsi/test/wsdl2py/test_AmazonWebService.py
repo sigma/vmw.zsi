@@ -28,8 +28,12 @@ class AmazonServiceTest(ServiceTestCase):
           to make sure test belongs in this section.
 
     """
-    name = __module__
-
+    name = "test_AmazonWebService"
+    
+    def setUp(self):
+        ServiceTestCase.setSection(self,self.name)
+        ServiceTestCase.setUp(self)
+    
     def testAuthorSearchRequest(self):
         operationName = "AuthorSearchRequest"
         request = self.getInputMessageInstance(operationName)

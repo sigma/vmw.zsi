@@ -5,8 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-
-from utils import ServiceTestCase, TestProgram
+from ServiceTest import ServiceTestCase, ServiceTestSuite
 
 """
 Unittest for contacting the ZipCodeResolver Web service.
@@ -24,59 +23,54 @@ PORT_NAME = 'ZipCodeResolverSoap'
 class ZipCodeResolverTest(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
-
-    service = None
-    portType = None
-
-    def __init__(self, methodName):
-        unittest.TestCase.__init__(self, methodName)
-
+    name = "test_ZipCodeResolver"
     def setUp(self):
-        if not ZipCodeResolverTest.service:
-            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
-                                                CONFIG_SECTION, SERVICE_NAME)
-            ZipCodeResolverTest.service, ZipCodeResolverTest.portType = \
-                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
-        self.portType = ZipCodeResolverTest.portType
-
-    def notest_CorrectedAddressHtml(self):
-        request = self.portType.inputWrapper('CorrectedAddressHtml')
-        request._address = '636 Colusa Avenue'
-        request._city = 'Berkeley'
-        request._state = 'California'
-        self.handleResponse(self.portType.CorrectedAddressHtml,request)
-
-    def notest_CorrectedAddressXml(self):
-        request = self.portType.inputWrapper('CorrectedAddressXml')
-        request._address = '636 Colusa Avenue'
-        request._city = 'Berkeley'
-        request._state = 'California'
-        self.handleResponse(self.portType.CorrectedAddressXml,request,diff=True)
+        self._portName = PORT_NAME
+        ServiceTestCase.setSection(self,self.name)
+        ServiceTestCase.setUp(self)
     
+    def test_CorrectedAddressHtml(self):
+        operationName = 'CorrectedAddressHtml'
+        request = self.getInputMessageInstance(operationName)
+        request._address = '636 Colusa Avenue'
+        request._city = 'Berkeley'
+        request._state = 'California'
+        response = self.RPC(operationName, request)
+
+    def test_CorrectedAddressXml(self):
+        operationName = 'CorrectedAddressXml'
+        request = self.getInputMessageInstance(operationName)
+        request._address = '636 Colusa Avenue'
+        request._city = 'Berkeley'
+        request._state = 'California'
+        response = self.RPC(operationName, request)
+         
     def test_FullZipCode(self):
-        request = self.portType.inputWrapper('FullZipCode')
+        operationName= 'FullZipCode'
+        request = self.getInputMessageInstance(operationName)
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        self.handleResponse(self.portType.FullZipCode,request,diff=True)
+        response = self.RPC(operationName, request)
     
-    def notest_ShortZipCode(self):
-        request = self.portType.inputWrapper('ShortZipCode')
+    def test_ShortZipCode(self):
+        operationName = 'ShortZipCode'
+        request = self.getInputMessageInstance(operationName)
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        self.handleResponse(self.portType.ShortZipCode,request,diff=True)
+        response = self.RPC(operationName, request)
     
     def test_VersionInfo(self):
-        request = self.portType.inputWrapper('VersionInfo')
-        self.handleResponse(self.portType.VersionInfo,request,diff=True)   
-
+        operationName = 'VersionInfo'
+        request = self.getInputMessageInstance(operationName)
+        response = self.RPC(operationName, request)
 
 def makeTestSuite():
-    suite = unittest.TestSuite()
+    suite = ServiceTestSuite()
     suite.addTest(unittest.makeSuite(ZipCodeResolverTest, 'test_'))
     return suite
 
 
 if __name__ == "__main__" :
-    TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="makeTestSuite")

@@ -39,14 +39,14 @@ tracefile = True
 document = False
 literal = False
 broke = False
-tests = 
+tests = test_GlobalWeather_si test_ThreatService test_XMethodsQuery  test_TemperatureService
 
 #test_AmazonWebService: service expects locally declared elements to be in no namespace.
 [rpc_encoded_broke]
 document = False
 literal = False
 broke = True
-tests = AmazonWebService
+tests = test_AmazonWebService test_GlobalWeather_gw  
 
 ##########################################################################
 ########################## DOCUMENT/ENCODED
@@ -88,7 +88,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests = 
+tests =  test_TerraService test_FreeDBService test_ZipCodeResolver
 
 [doc_literal_broke]
 document = True
@@ -102,16 +102,58 @@ literal = True
 broke = True
 tests = 
 
+#
+# For each test case tell whether it is rpc/encoded or doc/literal
+# Here it is indexed by unittest,   
+#
+
+[test_FreeDBService]
+document = True
+literal = True
+
+[test_ZipCodeResolver]
+document = True
+literal = True
+
+[test_AmazonWebService]
+document = False
+literal = False
+
+[test_GlobalWeather_gw]
+document = False
+literal = False
+
+[test_GlobalWeather_si]
+document = False
+literal = False
+
+[test_TemperatureService]
+document = False
+literal = False
+
+[test_ThreatService]
+document = False
+literal = False
+
+[test_XMethodsQuery]
+document = False
+literal = False
 
 ##########################################################################
 # SECTION [WSDL] - test name(equivalent to module name) and URL.
 # 
 ##########################################################################
 [WSDL]
-AmazonWebService = http://soap.amazon.com/schemas/AmazonWebServices.wsdl
-
-
-
+test_AmazonWebService = http://soap.amazon.com/schemas/AmazonWebServices.wsdl
+test_FreeDBService = http://soap.systinet.net:6080/FreeDB/
+test_GlobalWeather_gw = http://live.capescience.com/wsdl/GlobalWeather.wsdl
+test_GlobalWeather_si = http://live.capescience.com/wsdl/GlobalWeather.wsdl
+test_TemperatureService = http://www.xmethods.net/sd/2001/TemperatureService.wsdl
+test_WorldTimeService = http://ws.digiposs.com/WorldTime.jws?wsdl
+test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
+test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
+test_XMethodsQuery = http://www.xmethods.net/wsdl/query.wsdl
+test_ZipCodeResolver = http://webservices.eraserver.net/zipcoderesolver/zipcoderesolver.asmx?WSDL
 ##########################################################################
 # SECTION [individual_tests] - tests to run and their associated services
 # 
@@ -125,7 +167,7 @@ test_GlobalWeather_si = complex_tests GlobalWeather
 #test_threatService = complex_tests threatService
 test_XMethodsQuery = complex_tests XMethodsQuery
 test_ZipCodeResolver = complex_tests ZipCodeResolver
-test_noschemas = no_schemas Unused
+#test_noschemas = no_schemas Unused
 
 
 ##########################################################################

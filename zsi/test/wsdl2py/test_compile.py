@@ -9,7 +9,7 @@ import sys, unittest
 import os
 import py_compile
 
-import utils
+#import utils
 
 """
 Tests compilation of wsdl2python generated code.
@@ -61,7 +61,7 @@ def getFiles():
          fnameList.append(fname[:-1])
     return fnameList
 
-def makeTestSuite(section=None):
+def makeTestSuite():
     suite = unittest.TestSuite()
     fnameList = getFiles()
     CompileCodeTest.environment = iter(fnameList)
@@ -72,7 +72,7 @@ def makeTestSuite(section=None):
 
 
 def main():
-    utils.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="makeTestSuite")
                   
 if __name__ == "__main__" :
     main()
