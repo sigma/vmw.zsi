@@ -9,6 +9,7 @@ Changes for 1.3, released xx-May-2002:
     -   Fix some typo's (thanks adalke)
     -   In TCCompound, include class name in exception, not just object name
     -   ZSI homepage is at pywebsvcs.sf.net now, not www.zolera.com (sigh...)
+    -   Add nsdict parameter to dispatch's AsServer()
 
 Changes for 1.2, released 05-Mar-2002:
     -	Replace with X copyright; GNU compatible now

@@ -147,3 +147,55 @@ this one-liner:
 SoapWriter(OUT).serialize(result)
 \end{verbatim}
 
+
+\section{A \code{mod_python} example}
+
+The Apache module \code{mod_python} (see
+\url{http://www.modpython.org}) embeds Python within the Apache server.
+It is fairly easy to use \ZSI{} with \code{mod_python}; the only ``trick''
+is that you have to serialize your output into a string before
+sending it to the client.
+
+The following is a complete example of a simple handler:
+
+\begin{verbatim}
+from mod_python import apache
+from ZSI import *
+import cStringIO
+
+class TestInput:
+    def __init__(self, name):
+        pass
+TestInput.typecode = TC.Struct(TestInput, [
+                                 TC.Integer('x'),
+                                 ], 'TestInput')
+
+class TestOutput:
+    def __init__(self, y):
+        self.y = y
+TestOutput.typecode = TC.Struct(TestOutput, [
+                                  TC.Integer('y'),
+                                  ], 'TestOutput')
+
+def handler(req):
+    # Parse the input
+    ps = ParsedSoap(req)
+    testinput = ps.Parse(TestInput.typecode)
+
+    # Calculate the output
+    result = TestOutput(testinput.x * 2)
+
+    # Serialize the output into a string
+    out_io = cStringIO.StringIO()
+    sw = SoapWriter(out_io)
+    sw.serialize(result)
+    sw.close()
+    out_str = out_io.getvalue()
+
+    # Set up the return values
+    req.content_type = "text/xml"
+    req.content_length = len(out_str)
+    req.send_http_header()
+    req.write(out_str)
+    return apache.OK
+\end{verbatim}

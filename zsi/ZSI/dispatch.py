@@ -149,6 +149,7 @@ def AsServer(port=80, modules=None, docstyle=0, nsdict={}, **kw):
     httpd.nsdict = nsdict
     httpd.modules = modules
     httpd.docstyle = docstyle
+    httpd.nsdict = nsdict
     httpd.serve_forever()
 
 if __name__ == '__main__': print _copyright
