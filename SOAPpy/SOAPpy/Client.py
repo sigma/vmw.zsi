@@ -385,7 +385,8 @@ class SOAPProxy:
             throw_struct = 0
 
         if throw_struct:
-            print p
+            if Config.debug:
+                print p
             raise p
 
         # If unwrap_results=1 and there is only element in the struct,
