@@ -1,0 +1,52 @@
+There are two sets of tests in this directory.
+One set of tests is contained in test_wsdl2py.py,
+and tests the generation and compilation of code
+(the services and types files).
+
+By default, tests are done against WSDL's in all
+relevant sections in config.txt (no_schemas,
+simple_types, and complex_types).  To run
+against just a specific section, run for
+example:  test_wsdl2py.py complex_types
+
+Note that since all services are not always
+available, connection timeouts and HTTP errors
+are not treated as test failures.
+
+Generated code is located in the sub-directory
+generatedCode.  Subsequent runs will do
+diff's against the currently generated code to
+see if there are any differences (this is
+primarily of interest to developers).
+
+------------------
+
+The other set tests remote method calls on
+individual services.  To add individual
+service tests, add an entry to the
+individual_tests section in config.txt, and
+use one of the existing individual tests as
+a template.  To test all individual services,
+run testall.py
+
+Test result files are generated in the diffs
+sub-directory.  Subsequent runs of the
+test are compared against previous output.
+An AssertionError may result for reasons other
+than test failure, for example, if the previous
+test did not complete properly.  In that case
+run with the -d option to skip the diff's test.
+
+In the case (often) where results from a
+test method vary, its section is not written
+to the results file.  Instead, the output
+is printed out.  In that case it may be useful
+to redirect the output to a file, since the
+output may be lengthy.
+
+Some remote method calls, particularly
+test_SBGGetAirFareQuote in SBGAirFareQuoteTest
+may take awhile to return.
+
+
+
