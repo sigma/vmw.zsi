@@ -11,6 +11,9 @@ blunck@python.org}
 \date{March 19, 2003}% edited date, not printed date
 \input{version}
 
+% tell latex2html to load the verbatim package so we get \verbatiminput
+\ifx\htmlonly\undefined\else\usepackage{verbatim}\fi
+
 \begin{document}
 
 \maketitle
@@ -106,8 +109,6 @@ the SOAP Fault \code{detail} element, and to report header errors.
 The other is used to define a header element containing a name and
 password, for a class of basic authentication.
 
-% tell latex2html to load the verbatim package so we get \verbatiminput
-\ifx\htmlonly\undefined\else\usepackage{verbatim}\fi
 \verbatiminput{zsixsd.tex}
 
 \end{document}
