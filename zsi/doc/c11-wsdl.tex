@@ -1,14 +1,23 @@
 \chapter{WSDL Services}
 
+The \module{ZSI.wsdl} module provides client tools for using WSDL 1.1
+(see \citetitle[http://www.w3.org/TR/wsdl]{WSDL 1.1 specification})
+files to access services.
 
-\section{Using Web Services}
+The \class{WSDLReader} class provides methods for loading WSDL service 
+descriptions from URLs or XML data and creating a \class{WSDL} object.
+\class{WSDL} instances represent WSDL service descriptions and provide 
+an object model for building and working with those descriptions.
 
-The \module{ZSI.wsdl} package provides a high-level client-side tool
-for working with remote web services. The \class{ServiceProxy} class acts 
-as a proxy for a service that has a WSDL description, and exposes methods 
-that reflect the methods of the remote service. \class{ServiceProxy} objects 
-are very straightforward - you initialize a proxy from a WSDL URL, then call 
-methods on the proxy corresponding to the methods of the remote service.
+The \class{ServiceProxy} uses a \class{WSDL} instance to send
+and receive messages.
+Once the proxy has been created, each remote operation is exposed
+as a method on the object.
+The methods can be called with either positional or keyword arguments;
+the argument types must be compatible with the types specified in the
+WSDL description.
+
+The following example shows a simple language translation service:
 
 \begin{verbatim}
 from ZSI.wsdl import ServiceProxy
@@ -17,12 +26,6 @@ service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl')
 value = service.BabelFish('en_de', 'This is a test!')
 \end{verbatim}
 
-The methods of \class{ServiceProxy} instances can be called with positional 
-arguments (where the argument positions match the message descriptions in the 
-associated WSDL) or keyword arguments (where the arguments match the message 
-descriptions by name). Arguments to \class{ServiceProxy} methods must be  
-compatible with the types required by the WSDL description.
-
 The return value from a proxy method depends on the SOAP signature. If the 
 remote service returns a single value, that value will be returned. If the 
 remote service returns multiple ``out'' parameters, the return value of the 
@@ -30,28 +33,17 @@ proxy method will be a dictionary containing the out parameters indexed by
 name.  Complex return types are also supported, meaning an aggregation of
 primitives can be returned from a service invocation.
 
-\section{\module{ZSI.wsdl.ServiceProxy}}
-\declaremodule{}{ZSI.wsdl.ServiceProxy}
-
-The \module{ServiceProxy} module provides a convenient way to call 
-remote web services that are described with WSDL. Service proxies 
-expose methods that reflect the methods of the remote web service. 
-
 
 \begin{classdesc}{ServiceProxy}{wsdl,\optional{, service\optional{, port}}}
-The \class{ServiceProxy} class provides a high-level Pythonic way to 
-call remote web services. A WSDL description must be available for the 
-remote service.
+The \class{ServiceProxy} class provides calls to
+web services. A WSDL description must be available for the 
+service.
 
 The \var{wsdl} argument may be either the URL of the service description 
 or an existing \class{WSDL} instance. The optional \var{service} and 
 \var{port} name the service and port within the WSDL description that 
 should be used. If not specified, the first defined service and port 
 will be used.
-\end{classdesc}
-
-
-\subsection{ServiceProxy Objects}
 
 A \class{ServiceProxy} instance, once instantiated, exposes callable 
 methods that reflect the methods of the remote web service it 
@@ -64,20 +56,640 @@ the parameter order defined in the WSDL description. If keyword
 arguments are passed, the arguments will be mapped based on their 
 names.
 
+\end{classdesc}
 
-\subsection{ServiceProxy Example}
+\begin{classdesc}{WSDLReader}{}
 
-This example demonstrates instantiating a \class{ServiceProxy} object 
-from a WSDL description to call a remote web service method.  It should be
-noted that \class{ServiceProxy} supports the passing and receiving of complex
-types.
+\class{WSDLReader} instances are used to load WSDL service descriptions
+from URLs, XML files or XML string data. The reader is implemented as a 
+separate class to make it easy to create custom readers that implement 
+caching policies or other optimizations.
 
-\begin{verbatim}
-from WebService.ServiceProxy import ServiceProxy
+The following methods are available:
 
-service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl')
-value = service.BabelFish('en_de', 'This is a test!')
-\end{verbatim}
+\begin{methoddesc}{loadFromStream}{file}
+Return a \class{WSDL} instance representing the service description 
+contained in \var{file}. The \var{file} argument must be a file-like 
+object.
+\end{methoddesc}
+
+\begin{methoddesc}{loadFromString}{data}
+Returns a \class{WSDL} instance loaded from the XML string \var{data}.
+\end{methoddesc}
+
+\begin{methoddesc}{loadFromFile}{filename}
+Returns a \class{WSDL} instance loaded from the file named by \var{filename}.
+\end{methoddesc}
+
+\begin{methoddesc}{loadFromURL}{url}
+Returns a \class{WSDL} instance loaded from the given \var{url}.
+\end{methoddesc}
+
+\end{classdesc}
+
+\section{Upper-Level WSDL objects}
+
+The following classes describe encapsulate the upper-level objects
+in a WSDL file.
+
+Note that there are quite many classes defined here to
+implement the WSDL object model. Instances of those classes are generally 
+accessed and created through container objects rather than instantiated 
+directly. Most of them simply implement a straightforward representation of 
+the WSDL elements they represent. The interfaces of these objects are 
+described in the next section.
+
+An exception is defined for errors that occur while creating WSDL objects.
+
+\begin{excdesc}{WSDLError}
+This exception is raised when errors occur in the parsing or building of 
+WSDL objects, usually indicating invalid structure or usage.
+It is a subtype of Python's \exception{Exception} class.
+\end{excdesc}
+
+\begin{classdesc}{WSDL}{}
+
+\class{WSDL} instances implement the WSDL object model. They are
+created by loading an XML source into a \class{WSDLReader} object.
+
+A \class{WSDL} object provides access to all of the structures that make 
+up a web service description. The various ``collections'' in the WSDL 
+object model (services, bindings, portTypes, etc.) are implemented as 
+\class{Collection} objects that behave like ordered mappings.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the service description (associated with the \emph{definitions} 
+element), or \code{None} if not specified.
+\end{memberdesc}
+
+\begin{memberdesc}{targetNamespace}
+The target namespace associated with the service description, or 
+\code{None} if not specified.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the \emph{definitions} element of the 
+service description, or the empty string if not specified.
+\end{memberdesc}
+
+\begin{memberdesc}{location}
+The URL from which the service description was loaded, or \code{None} 
+if the description was not loaded from a URL.
+\end{memberdesc}
+
+\begin{memberdesc}{services}
+A collection that contains \class{Service} objects that represent the 
+services that appear in the service description. The items of this 
+collection may be indexed by name or ordinal. 
+\end{memberdesc}
+
+\begin{memberdesc}{messages}
+A collection that contains \class{Message} objects that represent the 
+messages that appear in the service description. The items of this 
+collection may be indexed by name or ordinal. 
+\end{memberdesc}
+
+\begin{memberdesc}{portTypes}
+A collection that contains \class{PortType} objects that represent the 
+portTypes that appear in the service description. The items of this 
+collection may be indexed by name or ordinal. 
+\end{memberdesc}
+
+\begin{memberdesc}{bindings}
+A collection that contains \class{Binding} objects that represent the 
+bindings that appear in the service description. The items of this 
+collection may be indexed by name or ordinal. 
+\end{memberdesc}
+
+\begin{memberdesc}{imports}
+A collection that contains \class{ImportElement} objects that represent the 
+import elements that appear in the service description. The items of this 
+collection may be indexed by ordinal or the target namespace URI of the 
+import element.
+\end{memberdesc}
+
+\begin{memberdesc}{types}
+A \class{Types} instance that contains \class{XMLSchema} objects that 
+represent the schemas defined or imported by the WSDL description. The 
+\class{Types} object may be indexed by ordinal or by targetNamespace to 
+lookup schema objects.
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of objects that represent WSDL \emph{extension elements}. These 
+objects may be instances of classes that represent WSDL-defined extensions 
+(\class{SoapBinding}, \class{SoapBodyBinding}, etc.), or DOM \class{Element} 
+objects for unknown extensions.
+\end{memberdesc}
+
+\end{classdesc}
+
+\begin{classdesc}{Service}{}
+A \class{Service} object represents a WSDL \code{<service>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the service.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{ports}
+A collection that contains \class{Port} objects that represent the 
+ports defined by the service. The items of this collection may be indexed 
+by name or ordinal. 
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of any contained WSDL extensions.
+\end{memberdesc}
+
+The following method is available:
+
+\begin{methoddesc}{getWSDL}{}
+Return the parent \class{WSDL} instance of the object.
+\end{methoddesc}
+
+\end{classdesc}
 
 
-\end{document}
+\begin{classdesc}{Port}{}
+
+A \class{Port} object represents a WSDL \code{<port>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the port.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{binding}
+The name of the binding associated with the port.
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of any contained WSDL extensions.
+\end{memberdesc}
+
+The following methods are available:
+
+\begin{methoddesc}{getAddressBinding}{}
+A convenience method that returns the address binding extension for the 
+port, either a \class{SoapAddressBinding} or \class{HttpAddressBinding}.
+Raises \exception{WSDLError} if no address binding is found.
+\end{methoddesc}
+
+\begin{methoddesc}{getService}{}
+Return the parent \class{Service} instance of the object.
+\end{methoddesc}
+
+\begin{methoddesc}{getBinding}{}
+Return the \class{Binding} instance associated with the port.
+\end{methoddesc}
+
+\begin{methoddesc}{getPortType}{}
+Return the \class{PortType} instance associated with the port.
+\end{methoddesc}
+
+\end{classdesc}
+
+\begin{classdesc}{PortType}{}
+
+A \class{PortType} object represents a WSDL \code{<portType>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the portType.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{operations}
+A collection that contains \class{Operation} objects that represent the 
+operations in the portType. The items of this collection may be indexed 
+by name or ordinal. 
+\end{memberdesc}
+
+The following method is available:
+
+\begin{methoddesc}{getWSDL}{}
+Return the parent \class{WSDL} instance of the object.
+\end{methoddesc}
+
+\end{classdesc}
+
+\begin{classdesc}{Operation}{}
+
+A \class{Operation} object represents a WSDL \code{<operation>} element 
+within a \code{portType} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the operation.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{parameterOrder}
+A string representing the \code{parameterOrder} attribute of the operation, 
+or \code{None} if the attribute is not defined.
+\end{memberdesc}
+
+\begin{memberdesc}{input}
+A \class{MessageRole} instance representing the \code{<input>} element of 
+the operation binding, or \code{None} if no input element is present.
+\end{memberdesc}
+
+\begin{memberdesc}{output}
+A \class{MessageRole} instance representing the \code{<output>} element of 
+the operation, or \code{None} if no output element is present.
+\end{memberdesc}
+
+\begin{memberdesc}{faults}
+A collection of \class{MessageRole} instances representing the \code{<fault>} 
+elements of the operation.
+\end{memberdesc}
+
+The following methods are available:
+
+\begin{methoddesc}{getPortType}{}
+Return the parent \class{PortType} instance of the object.
+\end{methoddesc}
+
+\begin{methoddesc}{getInputMessage}{}
+Return \class{Message} object associated with the input to the operation.
+\end{methoddesc}
+
+\begin{methoddesc}{getOutputMessage}{}
+Return \class{Message} object associated with the output of the operation.
+\end{methoddesc}
+
+\begin{methoddesc}{getFaultMessage}{name}
+Return \class{Message} object associated with the named fault.
+\end{methoddesc}
+
+\end{classdesc}
+
+\begin{classdesc}{MessageRole}{}
+
+\class{MessageRole} objects represent WSDL \code{<input>}, \code{<output>} 
+and \code{<fault>} elements within an operation.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name attribute of the element.
+\end{memberdesc}
+
+\begin{memberdesc}{type}
+The type of the element, one of \code{'input'}, \code{'output'} or 
+\code{'fault'}.
+\end{memberdesc}
+
+\begin{memberdesc}{message}
+The name of the message associated with the object.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\end{classdesc}
+
+\begin{classdesc}{Binding}{}
+
+A \class{Binding} object represents a WSDL \code{<binding>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the binding.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{type}
+The name of the portType the binding is associated with.
+\end{memberdesc}
+
+\begin{memberdesc}{operations}
+A collection that contains \class{OperationBinding} objects that represent 
+the contained operation bindings.
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of any contained WSDL extensions.
+\end{memberdesc}
+
+The following methods are available:
+
+\begin{methoddesc}{getWSDL}{}
+Return the parent \class{WSDL} instance of the object.
+\end{methoddesc}
+
+\begin{methoddesc}{getPortType}{}
+Return the \class{PortType} object associated with the binding.
+\end{methoddesc}
+
+\begin{methoddesc}{findBinding}{kind}
+Find a binding extension in the binding. The \var{kind} can be a class 
+object if the wanted extension is one of the WSDL-defined types (such as 
+\class{SoapBinding} or \class{HttpBinding}). If the extension is not one of 
+the supported types, \var{kind} can be a tuple of the form 
+\code{(namespace-URI, localname)}, which will be used to try to find a 
+matching DOM \class{Element}.
+\end{methoddesc}
+
+\begin{methoddesc}{findBindings}{kind}
+The same as \method{findBinding()}, but will return multiple values of 
+the given \var{kind}.
+\end{methoddesc}
+
+\end{classdesc}
+
+\begin{classdesc}{OperationBinding}{}
+
+A \class{OperationBinding} object represents a WSDL \code{<operation>} 
+element within a binding element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the operation binding.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{input}
+A \class{MessageRoleBinding} instance representing the \code{<input>} 
+element of the operation binding, or \code{None} if no input element is 
+present.
+\end{memberdesc}
+
+\begin{memberdesc}{output}
+A \class{MessageRoleBinding} instance representing the \code{<output>} 
+element of the operation binding, or \code{None} if no output element is 
+present.
+\end{memberdesc}
+
+\begin{memberdesc}{faults}
+A collection of \class{MessageRoleBinding} instances representing the 
+\code{<fault>} elements of the operation binding.
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of any contained WSDL extensions.
+\end{memberdesc}
+
+The following methods are available:
+
+\begin{methoddesc}{getBinding}{}
+Return the parent \class{Binding} instance of the operation binding.
+\end{methoddesc}
+
+\begin{methoddesc}{getOperation}{}
+Return the abstract \class{Operation} associated with the operation binding.
+\end{methoddesc}
+
+\begin{methoddesc}{findBinding}{kind}
+Find a binding extension in the operation binding. The \var{kind} can be a 
+class object if the wanted extension is one of the WSDL-defined types (such 
+as \class{SoapOperationsBinding} or \class{HttpOperationBinding}). 
+
+If the extension is not one of the supported types, \var{kind} can be a
+tuple of the form \code{(namespace-URI, localname)}, which will be used to 
+try to find a matching DOM \class{Element}.
+\end{methoddesc}
+
+\begin{methoddesc}{findBindings}{kind}
+The same as \method{findBinding()}, but will return multiple values of 
+the given \var{kind}.
+\end{methoddesc}
+
+\end{classdesc}
+
+
+\begin{classdesc}{MessageRoleBinding}{}
+
+\class{MessageRoleBinding} objects represent WSDL \code{<input>}, 
+\code{<output>} and \code{<fault>} elements within an operation binding.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name attribute of the element, for fault elements. This is always 
+\code{None} for input and output elements.
+\end{memberdesc}
+
+\begin{memberdesc}{type}
+The type of the element, one of \code{'input'}, \code{'output'} or 
+\code{'fault'}.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of any contained WSDL extensions.
+\end{memberdesc}
+
+The following methods are available:
+
+\begin{methoddesc}{findBinding}{kind}
+Find a binding extension in the message role binding. The \var{kind} can be a 
+class object if the wanted extension is one of the WSDL-defined types.
+
+If the extension is not one of the supported types, \var{kind} can be a
+tuple of the form \code{(namespace-URI, localname)}, which will be used to 
+try to find a matching DOM \class{Element}.
+\end{methoddesc}
+
+\begin{methoddesc}{findBindings}{kind}
+The same as \method{findBinding()}, but will return multiple values of 
+the given \var{kind}.
+\end{methoddesc}
+
+\end{classdesc}
+
+
+\begin{classdesc}{Message}{}
+
+A \class{Message} object represents a WSDL \code{<message>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the message.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{parts}
+A collection that contains \class{MessagePart} objects that represent the 
+parts of the message. The items of this collection may be indexed 
+by name or ordinal. 
+\end{memberdesc}
+\end{classdesc}
+
+
+\begin{classdesc}{MessagePart}{}
+
+A \class{MessagePart} object represents a WSDL \code{<part>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{name}
+The name of the message part.
+\end{memberdesc}
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{type}
+A tuple of the form \code{(namespace-URI, localname)}, or \code{None} 
+if the \member{type} attribute is not defined.
+\end{memberdesc}
+
+\begin{memberdesc}{element}
+A tuple of the form \code{(namespace-URI, localname)}, or \code{None} 
+if the \member{element} attribute is not defined.
+\end{memberdesc}
+\end{classdesc}
+
+
+\begin{classdesc}{Types}{}
+
+The following attributes are read-only:
+
+A \class{Types} object represents a WSDL \code{<types>} element. It acts 
+as an ordered collection containing \class{XMLSchema} instances associated 
+with the service description (either directly defined in a \code{<types>} 
+element, or included via import). The \class{Types} object can be indexed 
+by ordinal or by the \code{targetNamespace} of the contained schemas.
+
+\begin{memberdesc}{documentation}
+The documentation associated with the element, or an empty string.
+\end{memberdesc}
+
+\begin{memberdesc}{extensions}
+A sequence of any contained WSDL extensions.
+\end{memberdesc}
+
+The following method is available:
+
+\begin{methoddesc}{getWSDL}{}
+Return the parent \class{WSDL} instance of the object.
+\end{methoddesc}
+\end{classdesc}
+
+\begin{classdesc}{ImportElement}{}
+
+A \class{ImportElement} object represents a WSDL \code{<import>} element.
+
+The following attributes are read-only:
+
+\begin{memberdesc}{namespace}
+The namespace attribute of the import element.
+\end{memberdesc}
+
+The following method is available:
+
+\begin{memberdesc}{location}
+The location attribute of the import element.
+\end{memberdesc}
+\end{classdesc}
+
+
+\section{Binding Classes}
+
+The \module{WSDLTools} module contains a number of classes that represent 
+the binding extensions defined in the WSDL specification. These classes 
+are straightforward, reflecting the attributes of the corresponding 
+XML elements, so they are not documented exhaustively here.
+
+\begin{classdesc}{SoapBinding}{transport\optional{, style}}
+Represents a \code{<soap:binding>} element.
+\end{classdesc}
+
+\begin{classdesc}{SoapAddressBinding}{location}
+Represents a \code{<soap:address>} element.
+\end{classdesc}
+
+\begin{classdesc}{SoapOperationBinding}{}
+Represents a \code{<soap:operation>} element.
+\end{classdesc}
+
+\begin{classdesc}{SoapBodyBinding}{}
+Represents a \code{<soap:body>} element.
+\end{classdesc}
+
+\begin{classdesc}{SoapFaultBinding}{}
+Represents a \code{<soap:fault>} element.
+\end{classdesc}
+
+\begin{classdesc}{SoapHeaderBinding}{}
+Represents a \code{<soap:header>} element.
+\end{classdesc}
+
+\begin{classdesc}{SoapHeaderFaultBinding}{}
+Represents a \code{<soap:headerfault>} element.
+\end{classdesc}
+
+\begin{classdesc}{HttpBinding}{}
+Represents a \code{<http:binding>} element.
+\end{classdesc}
+
+\begin{classdesc}{HttpAddressBinding}{}
+Represents a \code{<http:address>} element.
+\end{classdesc}
+
+\begin{classdesc}{HttpOperationBinding}{}
+Represents a \code{<http:operation>} element.
+\end{classdesc}
+
+\begin{classdesc}{HttpUrlReplacementBinding}{}
+Represents a \code{<http:urlReplacement>} element.
+\end{classdesc}
+
+\begin{classdesc}{HttpUrlEncodedBinding}{}
+Represents a \code{<http:urlEncoded>} element.
+\end{classdesc}
+
+\begin{classdesc}{MimeMultipartRelatedBinding}{}
+Represents a \code{<mime:multipartRelated>} element.
+\end{classdesc}
+
+\begin{classdesc}{MimePartBinding}{}
+Represents a \code{<mime:part>} element.
+\end{classdesc}
+
+\begin{classdesc}{MimeContentBinding}{}
+Represents a \code{<mime:content>} element.
+\end{classdesc}
+
+\begin{classdesc}{MimeXmlBinding}{}
+Represents a \code{<mime:mimeXml>} element.
+\end{classdesc}
