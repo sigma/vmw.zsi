@@ -4,7 +4,7 @@
 # David W. Robertson, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import sys, re, weakref
+import sys, re, weakref, string
 from xml.dom.ext import SplitQName
 from xml.ns import SOAP, SCHEMA
 import ZSI
@@ -995,7 +995,8 @@ class SchemaDescription:
                     self.class_dict[tw.precede] = [tw]
             else:
                 self.class_list.append(tw.name)
-                self.extractCode(tw)
+                #self.extractCode(tw)
+                self.body += tw.extractCode()
             self.typeDict.update(tw.typeDict)
 
 
@@ -1004,7 +1005,8 @@ class SchemaDescription:
         for indx in range(len(class_list)):
             if class_dict.has_key(class_list[indx]):
                 for tw in class_dict[class_list[indx]]:
-                    self.extractCode(tw)
+                    #self.extractCode(tw)
+                    self.body += tw.extractCode()
                     check_list.append(tw.name)
                 else:
                     del class_dict[class_list[indx]]
@@ -1013,7 +1015,8 @@ class SchemaDescription:
         else:
             for l in class_dict.values():
                 for tw in l:
-                    self.extractCode(tw)
+                    #self.extractCode(tw)
+                    self.body += tw.extractCode()
 
     def extractCode(self, tw):
         self.body += tw.prepend.getvalue()
@@ -1048,9 +1051,41 @@ class SchemaDescription:
             self.postpend = StringWriter()
             self.allOptional = False
             self.hasRepeatable = False
-            self.typeList = []
-            self.typeDict = {}
+            self.typeList  = []
+            self.typeDict  = {}
+            self.localDefs = []
 	    return
+
+        def extractCode(self):
+            formattedType = ''
+            formattedType += self.prepend.getvalue()
+            formattedType += self.classdef.getvalue()
+            formattedType += self.classvar.getvalue()
+            formattedType += self.initdef.getvalue()
+            formattedType += self.initcode.getvalue()
+            formattedType += self.basector.getvalue()
+            formattedType += self.postpend.getvalue()
+ 
+            formattedType += self.extractSubtypes()
+             
+            return formattedType
+
+        def extractSubtypes(self):
+            subTypes = ''
+ 
+            for t in self.localDefs:
+                print 'subtype'
+                subTypes += t.extractCode()
+
+            formatted = []
+
+            for l in string.split(subTypes, '\n'):
+                if l:
+                    formatted.append('%s%s' % (ID1, l))
+                else:
+                    formatted.append(l)
+                    
+            return '\n'.join(formatted)
 
 	def fromType(self, myType, parentRef):
             """myType -- Type representation
@@ -1467,6 +1502,15 @@ class SchemaDescription:
                         typecodelist +='%s(ns=ns%s), '\
                                         %(typeName, occurs)
 
+                    elif e.isDeclaration() and e.containsLocalDefinition():
+                        typeName = ''
+                        localType = self.__class__()
+                        localType._fromComplexType(e.getLocalDefinition())
+                        self.localDefs.append(localType)
+                        occurs = self._calculateOccurance(e)
+                        typecodelist += 'self.__class__.%s(name="%s",ns=ns%s), ' % (e.getName() + '_Def', e.getName(), occurs)
+
+
                     elif etp.isDefinition() and etp.isSimpleType():
                         occurs = self._calculateOccurance(e)
 
@@ -1670,5 +1714,10 @@ class SchemaDescription:
 
 
         def _getWildcardTypecode(self, e, occurs):
-            return 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
-                   %(e.getName(),e.getName(),occurs)
+            # this is totally dubious
+            if e.getName():
+                return 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
+                       %(e.getName(),e.getName(),occurs)
+            else:
+                return 'ZSI.TC.Any(pname=None,aname=None%s), '\
+                       %(occurs)
