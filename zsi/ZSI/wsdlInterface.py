@@ -3,6 +3,8 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 
+# $Id$
+
 import re
 import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
