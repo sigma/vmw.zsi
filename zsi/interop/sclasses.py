@@ -1,111 +1,207 @@
 #! /usr/bin/env python
 
+WSDL_DEFINITION = '''<?xml version="1.0"?>
+
+<definitions name="InteropTest"
+    targetNamespace="http://soapinterop.org/" 
+    xmlns="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:tns="http://soapinterop.org/">
+
+  <import
+      location="http://www.whitemesa.com/interop/InteropTest.wsdl"
+      namespace="http://soapinterop.org/xsd"/>
+  <import
+      location="http://www.whitemesa.com/interop/InteropTest.wsdl"
+      namespace="http://soapinterop.org/"/>
+  <import
+      location="http://www.whitemesa.com/interop/InteropTestB.wsdl"
+      namespace="http://soapinterop.org/"/>
+  <import
+      location="http://www.whitemesa.com/interop/echoHeaderBindings.wsdl"
+      namespace="http://soapinterop.org/"/>
+
+  <service name="interop">
+    <port name="TestSoap" binding="tns:InteropTestSoapBinding">
+      <soap:address location=">>>URL<<<"/>
+    </port>
+    <port name="TestSoapB" binding="tns:InteropTestSoapBindingB">
+      <soap:address location=">>>URL<<<"/>
+    </port>
+    <port name="EchoHeaderString" binding="tns:InteropEchoHeaderStringBinding">
+      <soap:address location=">>>URL<<<"/>
+    </port>
+    <port name="EchoHeaderStruct" binding="tns:InteropEchoHeaderStructBinding">
+      <soap:address location=">>>URL<<<"/>
+    </port>
+  </service>
+
+</definitions>
+'''
+
 from ZSI import *
-from ZSI import _copyright
+from ZSI import _copyright, _seqtypes
 import types
 
-_textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
-
-class Testclass:
+class SOAPStruct:
     def __init__(self, name):
-	self.name = name or '-Noname-'
+	pass
     def __str__(self):
-	'''String format -- XML-syntax dump of all attributes.'''
-	ret = '<%s>\n' % self.name
-	for k,v in self.__dict__.items():
-	    if k == 'name': continue
-	    t = type(v)
-	    tstr = str(t)
-	    if tstr[:6] == '<type ' and tstr[-1] == '>': tstr = tstr[6:-1]
-	    tstr = _textprotect(tstr)
-	    if t in [ types.ListType, types.TupleType]:
-		ret += '   <item name="%s" pytype="%s">\n' % (k, tstr)
-		for e in v: ret += str(e)
-		ret += '   </item>\n'
-	    else:
-		if t == types.UnicodeType: v = v.encode('utf-8')
-		ret += '   <item name="%s" pytype="%s">%s\n  </item>\n' % \
-		    (k, tstr, str(v))
-	ret += '</%s>\n' % self.name
-	return ret
+	return str(self.__dict__)
 
-TC_void = TC.Struct(Testclass, [
-])
+def SimpleTypetoStruct(*args):
+    s = SOAPStruct(None)
+    s.varString, s.varInteger, s.varFloat = args
+    return s
 
-TC_string = TC.Struct(Testclass, [
-    TC.String("inputString", strip=0),
-])
+class TC_SOAPStruct(TC.Struct):
+    def __init__(self, pname=None, **kw):
+	TC.Struct.__init__(self, SOAPStruct, [
+	    TC.String('varString', strip=0),
+	    TC.Integer('varInt'),
+	    TC.FPfloat('varFloat'),
+	], pname, **kw)
 
-TC_base64 = TC.Struct(Testclass, [
+class TC_SOAPStructStruct(TC.Struct):
+    def __init__(self, pname=None, **kw):
+	TC.Struct.__init__(self, SOAPStruct, [
+	    TC.String('varString', strip=0),
+	    TC.Integer('varInt'),
+	    TC.FPfloat('varFloat'),
+	    TC_SOAPStruct('varStruct'),
+	], pname, **kw)
+
+class TC_SOAPArrayStruct(TC.Struct):
+    def __init__(self, pname=None, **kw):
+	TC.Struct.__init__(self, SOAPStruct, [
+	    TC.String('varString', strip=0),
+	    TC.Integer('varInt'),
+	    TC.FPfloat('varFloat'),
+	    TC.Array('string', TC.String(), 'varArray'),
+	], pname, **kw)
+
+class TC_ArrayOfstring(TC.Array):
+    def __init__(self, pname=None, **kw):
+	TC.Array.__init__(self, 'string', TC.String(), pname, **kw)
+
+class TC_ArrayOfint(TC.Array):
+    def __init__(self, pname=None, **kw):
+	TC.Array.__init__(self, 'int', TC.Integer(), pname, **kw)
+
+class TC_ArrayOffloat(TC.Array):
+    def __init__(self, pname=None, **kw):
+	TC.Array.__init__(self, 'float', TC.FPfloat(), pname, **kw)
+
+class TC_ArrayOfSOAPStruct(TC.Array):
+    def __init__(self, pname=None, **kw):
+	TC.Array.__init__(self, 'Z:SOAPStruct', TC_SOAPStruct(), pname, **kw)
+
+#class TC_ArrayOfstring2D(TC.Array):
+#    def __init__(self, pname=None, **kw):
+#	TC.Array.__init__(self, 'string', TC.String(), pname, **kw)
+
+class RPCParameters:
+    def __init__(self, name):
+	pass
+    def __str__(self):
+	t = str(self.__dict__)
+	if hasattr(self, 'inputStruct'):
+	    t += '\n'
+	    t += str(self.inputStruct)
+	return t
+
+class Operation:
+    dispatch = {}
+    SOAPAction = '''"http://soapinterop.org/"'''
+    ns = "http://soapinterop.org/"
+
+    def __init__(self, name, tcin, tcout, **kw):
+	self.name = name
+	if type(tcin) not in _seqtypes: tcin = tcin,
+	self.TCin = TC.Struct(RPCParameters, tuple(tcin), name)
+	if type(tcout) not in _seqtypes: tcout = tcout,
+	self.TCout = TC.Struct(RPCParameters, tuple(tcout), name + 'Response')
+	self.convert = kw.get('convert', None)
+	self.headers = kw.get('headers', [])
+	Operation.dispatch[name] = self
+
+Operation("echoString",
+    TC.String('inputString'),
+    TC.String('inputString', oname='return')
+)
+Operation("echoStringArray",
+    TC_ArrayOfstring('inputStringArray'),
+    TC_ArrayOfstring('inputStringArray', oname='return')
+)
+Operation("echoInteger",
+    TC.Integer('inputInteger'),
+    TC.Integer('inputInteger', oname='return'),
+)
+Operation("echoIntegerArray",
+    TC_ArrayOfint('inputIntegerArray'),
+    TC_ArrayOfint('inputIntegerArray', oname='return'),
+)
+Operation("echoFloat",
+    TC.FPfloat('inputFloat'),
+    TC.FPfloat('inputFloat', oname='return'),
+)
+Operation("echoFloatArray",
+    TC_ArrayOffloat('inputFloatArray'),
+    TC_ArrayOffloat('inputFloatArray', oname='return'),
+)
+Operation("echoStruct",
+    TC_SOAPStruct('inputStruct'),
+    TC_SOAPStruct('inputStruct', oname='return'),
+)
+Operation("echoStructArray",
+    TC_ArrayOfSOAPStruct('inputStructArray'),
+    TC_ArrayOfSOAPStruct('inputStructArray', oname='return'),
+)
+Operation("echoVoid",
+    [],
+    []
+)
+Operation("echoBase64",
     TC.Base64String('inputBase64'),
-])
-
-TC_hexBinary = TC.Struct(Testclass, [
-    TC.HexBinaryString('inputhexBinary'),
-])
-
-
-TC_date = TC.Struct(Testclass, [
-    TC.gDateTime("inputDate"),
-])
-
-TC_boolean = TC.Struct(Testclass, [
+    TC.Base64String('inputBase64', oname='return'),
+)
+Operation("echoDate",
+    TC.gDateTime('inputDate'),
+    TC.gDateTime('inputDate', oname='return'),
+)
+Operation("echoHexBinary",
+    TC.HexBinaryString('inputHexBinary'),
+    TC.HexBinaryString('inputHexBinary', oname='return'),
+)
+Operation("echoDecimal",
+    TC.Decimal('inputDecimal'),
+    TC.Decimal('inputDecimal', oname='return'),
+)
+Operation("echoBoolean",
     TC.Boolean('inputBoolean'),
-])
-
-TC_integer = TC.Struct(Testclass, [
-    TC.Integer("inputInteger"),
-])
-
-TC_float = TC.Struct(Testclass, [
-    TC.FPfloat("inputFloat"),
-])
-
-TC_stringarray = TC.Struct(Testclass, [
-    TC.Array("SOAP-ENC:string[]", TC.String(strip=0), "inputStringArray"),
-])
-
-TC_integerarray = TC.Struct(Testclass, [
-    TC.Array("SOAP-ENC:integer[]", TC.Integer(), "inputIntegerArray"),
-])
-
-TC_floatarray = TC.Struct(Testclass, [
-    TC.Array("SOAP-ENC:float[]", TC.FPfloat(), "inputFloatArray"),
-])
-
-TC_soapstruct = TC.Struct(Testclass, [
-    TC.Struct(Testclass, [
-	TC.Integer("varInt"),
-	TC.FPfloat("varFloat"),
-	TC.String("varString", strip=0),
-    ], "inputStruct", type=("http://soapinterop.org/xsd", "SOAPStruct"))
-])
-
-TC_soapstructarray = TC.Struct(Testclass, [
-    TC.Array("Z:SOAPStruct[]",
-	TC.Struct(Testclass, [
-	    TC.Integer("varInt"),
-	    TC.FPfloat("varFloat"),
-	    TC.String("varString", strip=0),
-	]), "inputStructArray")
-])
-
-OPDICT = {
-    'echoVoid':		TC_void,
-    'echoDate':		TC_date,
-    'echoString':	TC_string,
-    'echoStringArray':	TC_stringarray,
-    'echoBoolean':	TC_boolean,
-    'echoInteger':	TC_integer,
-    'echoDecimal':	TC_integer,
-    'echoIntegerArray':	TC_integerarray,
-    'echoFloat':	TC_float,
-    'echoFloatArray':	TC_floatarray,
-    'echoStruct':	TC_soapstruct,
-    'echoStructArray':	TC_soapstructarray,
-    'echoBase64':	TC_base64,
-    'echohexBinary':	TC_hexBinary,
-    'echoHexBinary':	TC_hexBinary,
-}
-
-if __name__ == '__main__': print _copyright
+    TC.Boolean('inputBoolean', oname='return'),
+)
+Operation("echoStructAsSimpleTypes",
+    TC_SOAPStruct('inputStruct'),
+    ( TC.String('outputString'), TC.Integer('outputInteger'),
+	TC.FPfloat('outputFloat') ),
+    convert=lambda s: (s.varString, s.varInt, s.varFloat),
+)
+Operation("echoSimpleTypesAsStruct",
+    ( TC.String('inputString'), TC.Integer('inputInteger'),
+	TC.FPfloat('inputFloat') ),
+    TC_SOAPStruct('return'),
+    convert=SimpleTypetoStruct
+)
+#Operation("echo2DStringArray",
+#    TC_ArrayOfstring2D('input2DStringArray'),
+#    TC_ArrayOfstring2D('return')
+#),
+Operation("echoNestedStruct",
+    TC_SOAPStructStruct('inputStruct'),
+    TC_SOAPStructStruct('inputStruct', oname='return'),
+)
+Operation("echoNestedArray",
+    TC_SOAPArrayStruct('inputStruct'),
+    TC_SOAPArrayStruct('inputStruct', oname='return'),
+)

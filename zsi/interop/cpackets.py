@@ -36,9 +36,9 @@ phalanx_b64_test = '''<SOAP-ENV:Envelope xmlns:SOAP-ENV='http://schemas.xmlsoap.
 
 hexbin_test = '''<SOAP-ENV:Envelope xmlns:SOAP-ENV='http://schemas.xmlsoap.org/soap/envelope/' xmlns:m='http://soapinterop.org/' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:SOAP-ENC='http://schemas.xmlsoap.org/soap/encoding/' xmlns:xsd='http://www.w3.org/2001/XMLSchema' SOAP-ENV:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'>
   <SOAP-ENV:Body>
-    <m:echohexBinary>
-      <inputhexBinary xsi:type='xsd:hexBinary'>656174206d792073686f72747321</inputhexBinary>
-    </m:echohexBinary>
+    <m:echoHexBinary>
+      <inputHexBinary xsi:type='xsd:hexBinary'>656174206d792073686f72747321</inputHexBinary>
+    </m:echoHexBinary>
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>'''
 
@@ -162,11 +162,11 @@ testlist = (
     ( 'struct test', pocketsoap_struct_test, None),
     ( 'base64 test', phalanx_b64_test, None),
     ( 'hexBinary', hexbin_test, None),
-    ( 'bad href test', phalanx_badhref_test, None),
     ( 'big base64 test', someones_b64_test, None),
     ( 'echovoid', phalanx_void_test, None),
     ( 'multipart', multipart_test,
 	'Content-type: multipart/related; boundary="sep"\r\n' ),
+    ( 'int href test', phalanx_int_href_test, None),
+    ( 'bad href test', phalanx_badhref_test, None),
     ( 'bad type attr on struct', phalanx_badstructtype_test, None),
-    ( 'int href test', phalanx_int_href_test, None)
 )

@@ -1,19 +1,17 @@
 #! /usr/bin/env python
 from ZSI import *
-from ZSI import _copyright, resolvers
+from ZSI import _copyright, resolvers, _child_elements
 import sys, time, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-from sclasses import Testclass, OPDICT, _textprotect
+from sclasses import Operation, WSDL_DEFINITION
 
 config = {
-    'uri': '"urn:soapinterop"',
-    'ns': 'http://soapinterop.org/',
     'echons': 'http://soapinterop.org/echoheader/'
 }
 
 class InteropRequestHandler(BaseHTTPRequestHandler):
-    server_version = 'ZSI/1.1 ' + BaseHTTPRequestHandler.server_version
+    server_version = 'ZSI/1.2 ' + BaseHTTPRequestHandler.server_version
 
     def send_xml(self, text, code=200):
 	'''Send some XML.'''
@@ -46,16 +44,27 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
 	sys.stderr.flush()
 	raise SystemExit
 
+    def do_GET(self):
+	'''The GET command.  Always returns the WSDL.'''
+	self.send_xml(WSDL_DEFINITION.replace('>>>URL<<<', self.server.url))
+
     def do_POST(self):
 	'''The POST command.'''
-	try:
-	    action = self.headers.get('soapaction', None)
-	    if not action:
-		raise TypeError, "SOAPAction header missing"
-	    if action != config['uri']:
-		raise TypeError, '''SOAPAction "%s" isn't "%s"''' \
-			% (action, config['uri'])
 
+	# SOAPAction header.
+	action = self.headers.get('soapaction', None)
+	if not action:
+	    self.send_fault(Fault(Fault.Client,
+				'SOAPAction HTTP header missing.'))
+	    return
+	if action != Operation.SOAPAction:
+	    self.send_fault(Fault(Fault.Client,
+		'SOAPAction is "%s" not "%s"' % \
+		(action, Operation.SOAPAction)))
+	    return
+
+	# Parse the message.
+	try:
 	    ct = self.headers['content-type']
 	    if ct.startswith('multipart/'):
 		cid = resolvers.MIMEResolver(ct, self.rfile)
@@ -74,74 +83,61 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
 	    self.send_fault(FaultFromException(e, 1, sys.exc_info()[2]))
 	    return
 
-	echohdr = (config['echons'], 'echoMeStringRequest')
-
-	# Header tests.
+	# Actors?
 	a = ps.WhatActorsArePresent()
 	if len(a):
 	    self.send_fault(FaultFromActor(a[0]))
 	    return
-	mu = ps.WhatMustIUnderstand()
-	if echohdr in mu:
-	    mu.remove(echohdr)
-	if len(mu):
-	    uri, localname = mu[0]
-	    self.send_fault(FaultFromNotUnderstood(uri, localname))
+
+	# Is the operation defined?
+	elt = ps.body_root
+	if elt.namespaceURI != Operation.ns:
+	    self.send_fault(Fault(Fault.Client,
+		'Incorrect namespace "%s"' % elt.namespaceURI))
+	    return
+	n = elt.localName
+	op = Operation.dispatch.get(n, None)
+	if not op:
+	    self.send_fault(Fault(Fault.Client,
+		'Undefined operation "%s"' % n))
 	    return
 
+	# Any headers that must be understood that we don't understand?
+	for mu in ps.WhatMustIUnderstand():
+	    if mu not in op.headers:
+		uri, localname = mu[0]
+		self.send_fault(FaultFromNotUnderstood(uri, localname))
+		return
+
+	# Get all headers intended for us, ignore ones we don't
+	# understand since we don't have to understand them.
+	# Understand? :)
+	headers = [ e for e in ps.GetMyHeaderElements()
+		    if (e.namespaceURI, e.localName) in op.headers ]
+	if headers: self.process_headers(headers)
+
 	try:
-	    # Echo?
-	    echo_elts = [ h for h in ps.header_elements
-			    if (h.namespaceURI, h.localName) == echohdr ]
-	    i = len(echo_elts)
-	    if i > 1:
-		self.send_fault(Fault(Fault.Client, 'Duplicate echo header.'))
-		return
-	    if i == 0:
-		echoval = None
-	    else:
-		data = TC.String(echohdr[1]).parse(h, ps)
-		echoval = \
-	'<E:echoMeStringResponse xmlns:E="%s">%s</E:echoMeStringResponse>\n' % \
-			(echohdr[0], _textprotect(data))
-
-	    # What operation?
-	    elt = ps.body_root
-	    if elt.namespaceURI != config['ns']:
-		self.send_fault(Fault(Fault.Client,
-			'Wrong namespace (wanted "%s" got "%s")' % \
-			(config['ns'], elt.namespaceURI)))
-		return
-	    n = str(elt.localName)
-	    if not OPDICT.has_key(n):
-		self.send_fault(Fault(Fault.Client,
-		    'Unknown operation "%s"' % n))
-		return
-
-	    # Do the work.
+	    try:
+		results = op.TCin.parse(ps.body_root, ps)
+	    except ParseException, e:
+		self.send_fault(FaultFromZSIException(e))
+	    self.trace(str(results), 'PARSED')
 	    reply = StringIO.StringIO()
-	    if n == 'echoVoidxxx':
-		SoapWriter(reply, None, echoval).close()
-	    else:
-		try:
-		    data = ps.Parse(OPDICT[n])
-		except ParseException, e:
-		    self.send_fault(FaultFromZSIException(e))
-		self.trace(str(data), 'PARSED')
-		sw = SoapWriter(reply, nsdict={ 'Z': config['ns'] }, header=echoval)
-		sw.serialize(data, OPDICT[n],
-			name = 'Z:' + n + 'Response', inline=1)
-		sw.close()
+	    sw = SoapWriter(reply, nsdict={ 'Z': Operation.ns })
+	    sw.serialize(results, op.TCout,
+		    name = 'Z:' + n + 'Response', inline=1)
+	    sw.close()
 	    self.send_xml(reply.getvalue())
 	except Exception, e:
 	    self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
 
 
-class QuittableHTTPServer(HTTPServer):
-    def __init__(self, me, **kw):
+class InteropHTTPServer(HTTPServer):
+    def __init__(self, me, url, **kw):
 	HTTPServer.__init__(self, me, InteropRequestHandler)
 	self.quitting = 0
 	self.tracefile = kw.get('tracefile', None)
+	self.url = url
     def handle_error(self, req, client_address):
 	if self.quitting: sys.exit(0)
 	HTTPServer.handle_error(self, req, client_address)
@@ -150,7 +146,7 @@ class QuittableHTTPServer(HTTPServer):
 import getopt
 try:
     (opts, args) = getopt.getopt(sys.argv[1:],
-		    'l:p:t:', ( 'log=', 'port=', 'tracefile='))
+		    'l:p:t:u:', ( 'log=', 'port=', 'tracefile=', 'url='))
 except getopt.GetoptError, e:
     print >>sys.stderr, sys.argv[0] + ': ' + str(e)
     sys.exit(1)
@@ -158,8 +154,9 @@ if args:
     print sys.argv[0] + ': Usage error.'
     sys.exit(1)
 
-portnum = 7000
+portnum = 1122
 tracefile = None
+url = None
 for opt, val in opts:
     if opt in [ '-l', '--logfile' ]:
 	sys.stderr = open(val, 'a')
@@ -170,10 +167,18 @@ for opt, val in opts:
 	    tracefile = sys.stdout
 	else:
 	    tracefile = open(val, 'a')
+    elif opt in [ '-u', '--url' ]:
+	url = val
 ME = ( '', portnum )
 
-try:
-    QuittableHTTPServer(ME, tracefile=tracefile).serve_forever()
-except SystemExit:
-    sys.exit(0)
+if not url:
+    import socket
+    url = 'http://' + socket.getfqdn()
+    if portnum != 80: url += ':%d' % portnum
+    url += '/interop'
 
+try:
+    InteropHTTPServer(ME, url, tracefile=tracefile).serve_forever()
+except SystemExit:
+    pass
+sys.exit(0)

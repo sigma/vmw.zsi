@@ -15,7 +15,7 @@ if args:
     sys.exit(1)
 
 hostname, portnum, tests, quitting, verbose = \
-	'localhost', 7000, [0,1], 0, 1
+	'localhost', 1122, [0,1], 0, 1
 for opt, val in opts:
     if opt in [ '--help' ]:
 	print '''Options include:
@@ -66,7 +66,7 @@ for T in tests:
 
     print '-' * 60, '\n\n\n', T, descr
     f.write('POST / HTTP/1.0\r\n')
-    f.write('SOAPAction: "urn:soapinterop"\r\n')
+    f.write('SOAPAction: "http://soapinterop.org/"\r\n')
     if header == None:
 	f.write('Content-type: text/xml; charset="utf-8"\r\n')
 	f.write('Content-Length: %d\r\n\r\n' % len(IN))
