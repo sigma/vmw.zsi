@@ -86,6 +86,13 @@ class ClientTestCase(unittest.TestCase):
         s = 'Hello World'
         self.assertEquals(server.echo(s), s+s)
 
+    def testNamedEcho(self):
+        '''Test echo function.'''
+
+        server = SOAPpy.Client.SOAPProxy('127.0.0.1:8000')
+        s = 'Hello World'
+        self.assertEquals(server.echo(s=s), s+s)
+
     def testEchoDateTime(self):
         '''Test passing DateTime objects.'''
 
