@@ -437,7 +437,14 @@ class String(TypeCode):
             idstr = ' id="%s"' % objid
         if self.textprotect: pyobj = _textprotect(pyobj)
         print >>sw, \
-            '<%s%s%s%s>%s</%s>' % (n, attrtext, idstr, tstr, pyobj, n)
+            '<%s%s%s%s>%s' % (n, attrtext, idstr, tstr, pyobj)
+
+        # ignore the xmlns if it was explicitly stated
+        i = n.find('xmlns')
+        if i > 0:
+            print >>sw, '</%s>' % n[:i - 1]
+        else:
+            print >>sw, '</%s>' % n
 
 class URI(String):
     '''A URI.
