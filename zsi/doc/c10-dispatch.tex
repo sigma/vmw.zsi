@@ -43,9 +43,10 @@ To return multiple values, return a list.
 
 If an exception occurs, a SOAP fault will be sent back to the client.
 
-Two dispatch mechanisms are provided: one supports standard CGI
-scripts, and the other runs a dedicated server based on the
-\module{BaseHTTPServer} module.
+Three dispatch mechanisms are provided: one supports standard CGI
+scripts, one runs a dedicated server based on the
+\module{BaseHTTPServer} module, and the third uses the JonPY package,
+\url{http://jonpy.sourceforge.net}, to support FastCGI.
 
 \begin{methoddesc}{AsCGI}{\optional{module_list}}
 This method parses the CGI input and invokes a function that has the
@@ -73,6 +74,33 @@ functions that can be invoked.}
     SOAP \code{Envelope}}
 \lineiii{\code{port}}{\code{80}}{Port to listen on.}
 \end{tableiii}
+
+\end{methoddesc}
+
+\begin{methoddesc}{AsJonPy}{request=req\optional{, **keywords}}
+
+This method is used within a JonPY handler to do dispatch.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{request}}{\code{(__main__,)}}{List of modules containing
+functions that can be invoked.}
+\end{tableiii}
+
+The following code shows a sample use:
+
+\begin{verbatim}
+import jon.fcgi
+from ZSI import dispatch
+import MyHandler
+
+class Handler(cgi.Handler):
+    def process(self, req):
+        dispatch.AsJonPy(modules=(MyHandler,), request=req)
+
+jon.fcgi.Server({jon.fcgi.FCGI_RESPONDER: Handler}).run() 
+\end{verbatim}
 
 \end{methoddesc}
 

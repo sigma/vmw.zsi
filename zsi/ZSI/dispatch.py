@@ -88,6 +88,15 @@ def _ModPythonSendXML(text, code=200, **kw):
 def _ModPythonSendFault(f, **kw):
     _ModPythonSendXML(f.AsSOAP(), 500, **kw)
 
+def _JonPySendFault(f, **kw):
+    _JonPySendXML(f.AsSOAP(), 500, **kw)
+
+def _JonPySendXML(text, code=200, **kw):
+    req = kw['request']
+    req.set_header("Content-Type", 'text/xml; charset="utf-8"')
+    req.set_header("Content-Length", str(len(text)))
+    req.write(text)
+
 def _CGISendXML(text, code=200, **kw):
     print 'Status: %d' % code
     print 'Content-Type: text/xml; charset="utf-8"'
@@ -181,6 +190,29 @@ def AsHandler(request=None, modules=None, nsdict={}, rpc=None, **kw):
     kw['request'] = request
     _Dispatch(ps, modules, _ModPythonSendXML, _ModPythonSendFault,
               nsdict=nsdict, rpc=rpc, **kw)
+
+def AsJonPy(nsdict={}, typesmodule=None, rpc=None, modules=None, request=None, **kw):
+    '''Dispatch within a jonpy CGI/FastCGI script.
+    '''
+
+    kw['request'] = request
+    if request.environ.get('REQUEST_METHOD') != 'POST':
+        _JonPySendFault(Fault(Fault.Client, 'Must use POST'), **kw)
+        return
+    ct = request.environ['CONTENT_TYPE']
+    try:
+        if ct.startswith('multipart/'):
+            cid = resolvers.MIMEResolver(ct, request.stdin)
+            xml = cid.GetSOAPPart()
+            ps = ParsedSoap(xml, resolver=cid.Resolve)
+        else:
+            length = int(request.environ['CONTENT_LENGTH'])
+            ps = ParsedSoap(request.stdin.read(length))
+    except ParseException, e:
+        _JonPySendFault(FaultFromZSIException(e), **kw)
+        return
+    _Dispatch(ps, modules, _JonPySendXML, _JonPySendFault, nsdict=nsdict,
+              typesmodule=typesmodule, rpc=rpc, **kw)
 
 
 if __name__ == '__main__': print _copyright

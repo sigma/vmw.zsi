@@ -1,4 +1,6 @@
 Changes for xxx released xxx:
+    -   Add support for jonpy (http://jonpy.sourceforge.net) FastCGI
+        courtesy of Guan Yang
 
 Changes for 1.5, released 10-Mar-2004:
     -   TypeCode honoring for response parameters
