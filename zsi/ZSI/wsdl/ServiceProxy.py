@@ -267,7 +267,7 @@ class ServiceProxy:
         url = callinfo.location
         (protocol, host, uri, query, fragment, identifier) = urlparse(url)
         port = 80
-        if host.find(':'):
+        if host.find(':') >= 0:
             host, port = host.split(':')
 
         params = callinfo.getInParameters()
@@ -277,7 +277,7 @@ class ServiceProxy:
                           port=port, url=uri)
         apply(getattr(binding, callinfo.methodName), '')
 
-        #print binding.ReceiveRaw()
+	#print binding.ReceiveRaw()
 
         return binding.Receive()
 
