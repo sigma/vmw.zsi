@@ -1,7 +1,12 @@
 
 SOAP.py
 
-CHANGES SINCE VERSION 0.9.8-pre1
+CHANGES SINCE VERSION 0.9.9-pre2
+
+- Fixed trivial compilation bug on Win32: Only define
+  SOAPUnixSocketServer if the Unix domain sockets are supported
+
+CHANGES SINCE VERSION 0.9.9-pre1
 
 - Added request for nested scopes, should now work properly in python
   2.1 with named argument calls.
