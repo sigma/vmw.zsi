@@ -300,6 +300,12 @@ class Array(TypeCode):
         return int(o[-1:1])
 
     def parse(self, elt, ps):
+        href = _find_href(elt)
+        if href:
+            if _children(elt):
+                raise EvaluateException('Array has content and HREF',
+                        ps.Backtrace(elt))
+            elt = ps.FindLocalHREF(href, elt)
         if not _find_arraytype(elt) and not self.undeclared:
             raise EvaluateException('Array expected', ps.Backtrace(elt))
         t = _find_type(elt)
