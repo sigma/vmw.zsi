@@ -193,14 +193,19 @@ class Binding:
         '''Read a server reply, unconverted to any format and return it.
         '''
         if self.data: return self.data
-        response = self.h.getresponse()
-        self.reply_code, self.reply_msg, self.reply_headers, self.data = \
-            response.status, response.reason, response.msg, response.read()
-        if self.trace:
-            print >>self.trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
-            print >>self.trace, str(self.reply_headers)
-            print >>self.trace, self.data
-        return self.data
+	trace = self.trace
+	while 1:
+	    response = self.h.getresponse()
+	    self.reply_code, self.reply_msg, self.reply_headers, self.data = \
+		response.status, response.reason, response.msg, response.read()
+	    if trace:
+		print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
+		print >>trace, str(self.reply_headers)
+		print >>trace, self.data
+	    if response.status != 100: break
+	    self.h._HTTPConnection__state = httplib._CS_REQ_SENT
+	    self.h._HTTPConnection__response = None
+	return self.data
 
     def IsSOAP(self):
         if self.ps: return 1

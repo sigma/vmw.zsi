@@ -1,4 +1,4 @@
-Changes for 1.2, released xx-xxx-2001:
+Changes for 1.2, released 05-Mar-2002:
     -	Replace with X copyright; GNU compatible now
     -	newver writes date into version.tex
     -	Use "raise x(a)" always, never "raise x, a" (that's oldschool:)
@@ -59,6 +59,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Document other tests to-do in interop/README
     -	Document ZSI typecode naming better.
     -	Add 'docstyle' to AsServer
+    -	Handle HTTP 100 responses (httplib should...) (aspinei@internal.metawings.com)
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!

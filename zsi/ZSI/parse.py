@@ -52,8 +52,8 @@ class ParsedSoap:
                 self.dom = self.reader.fromString(input)
             else:
                 self.dom = self.reader.fromStream(input)
-            if not kw.get('keepdom', 0):
-                self.dtor = lambda S=self: S.reader.releaseNode(S.dom)
+            if kw.get('keepdom', 0) == 0:
+		self.dom.ZSI_reader = self.reader
         except Exception, e:
             # Is this in the header?  Your guess is as good as mine.
             raise ParseException("Can't parse document (" + \
@@ -182,7 +182,9 @@ class ParsedSoap:
 
     def __del__(self):
         try:
-            if hasattr(self, 'dtor'): self.dtor()
+	    if hasattr(self.dom, 'ZSI_reader'):
+		self.dom.ZSI_reader.releaseNode(self.dom)
+		del self.dom.ZSI_reader
         except:
             pass
 

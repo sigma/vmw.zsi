@@ -43,7 +43,8 @@ class ClientBinding:
                 ba = _b64_decode(ba[1])
                 self.auth = (AUTH.httpbasic,) + tuple(ba.split(':'))
                 return self.auth
-        return (AUTH.none,)
+        self.auth = (AUTH.none,)
+        return self.auth
 
     def GetNS(self):
         '''Return namespace for the top main request element.
