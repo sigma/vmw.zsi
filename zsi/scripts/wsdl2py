@@ -1,0 +1,69 @@
+#!/bin/env python
+############################################################################
+# Joshua Boverhof<JRBoverhof@lbl.gov>, LBNL
+# Monte Goode <MMGoode@lbl.gov>, LBNL
+# See Copyright for copyright notice!
+###########################################################################
+import sys, getopt
+import ZSI
+from ZSI.wsdl2python import WriteServiceModule
+from ZSI.wstools import WSDLTools
+
+USAGE = """Usage: ./wsdl2py -f wsdl [-h]
+  where:
+    wsdl        -> wsdl file to generate typecodes from.
+    -h          -> prints this message and exits.
+"""
+"""
+wsdl2py
+
+A utility for automatically generating client interface code from a wsdl
+definition, and a set of classes representing element declarations and
+type definitions.  This will produce two files in the current working 
+directory named after the wsdl definition name.
+
+eg. <definition name='SampleService'>
+    SampleService.py
+    SampleService_types.py
+
+"""
+
+def doCommandLine():
+    """ Get command line options, print usage message if incorrect.
+    """
+    args_d = {}
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'f:h')
+    except getopt.GetoptError, e:
+        print >>sys.stderr, sys.argv[0] + ': ' + str(e)
+        sys.exit(-1)
+
+    if not opts: 
+        print USAGE
+        sys.exit(-1)
+
+    for opt, val in opts:
+        if opt in [ '-h']:
+            print USAGE
+            sys.exit(0)
+        elif opt in ['-f']:
+            args_d['wsdl'] = val
+        else:
+            print USAGE
+            sys.exit(-1)
+    return args_d
+
+
+def main():
+    """ From a wsdl definition create a wsdl object and run the wsdl2python 
+        generator.  
+    """
+    args_d = doCommandLine()
+    reader = WSDLTools.WSDLReader()
+    wsdl = reader.loadFromFile(args_d['wsdl'])
+    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl)
+    wsm.write()
+    return
+
+if __name__ == '__main__':
+    main()
