@@ -1520,7 +1520,9 @@ class arrayType(UserList.UserList, compoundType):
                 self._poss[i + 1] += 1
 
             if self._dims[-1] and self._poss[-1] >= self._dims[-1]:
-                self._full = 1
+                #self._full = 1
+                #FIXME: why is this occuring?
+                pass
 
     def _placeItem(self, name, value, pos, subpos, attrs = None):
         curpos = [0] * len(self._dims)

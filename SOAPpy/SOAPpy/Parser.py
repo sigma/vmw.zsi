@@ -201,7 +201,8 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             if href:
                 if href[0] != '#':
                     raise Error, "Non-local hrefs are not yet suppported."
-                if self._data != None and string.join(self._data, "").strip() != '':
+                if self._data != None and \
+                   string.join(self._data, "").strip() != '':
                     raise Error, "hrefs can't have data"
 
                 href = href[1:]
@@ -234,6 +235,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                         kind = (self._prem[kind[:i]], kind[i + 1:])
                     else:
 # XXX What to do here? (None, kind) is just going to fail in convertType
+                        #print "Kind with no NS:", kind
                         kind = (None, kind)
 
             null = 0
@@ -288,25 +290,41 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                     self._next = None # allow followons
                     break
 
+            #print "\n"
+            #print "data=", self._data
+            #print "kind=", kind
+            #print "cur.kind=", cur.kind
+            #print "cur.rules=", cur.rules
+            #print "\n"
+                        
+
             if cur.rules != None:
                 rule = cur.rules
 
                 if type(rule) in (StringType, UnicodeType):
-# XXX Need a namespace here
-                    rule = (None, rule)
+                    rule = (None, rule) # none flags special handling
                 elif type(rule) == ListType:
                     rule = tuple(rule)
+
+                #print "kind=",kind
+                #print "rule=",rule
+
 
 # XXX What if rule != kind?
                 if callable(rule):
                     data = rule(string.join(self._data, ""))
                 elif type(rule) == DictType:
                     data = structType(name = (ns, name), attrs = attrs)
+                elif rule[1][:9] == 'arrayType':
+                    data = self.convertType(cur.contents,
+                                            rule, attrs)
                 else:
                     data = self.convertType(string.join(self._data, ""),
                                             rule, attrs)
 
                 break
+
+            #print "No rules, using kind or cur.kind..."
 
             if (kind == None and cur.kind != None) or \
                 (kind == (NS.ENC, 'Array')):
@@ -783,6 +801,27 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
 
     def convertType(self, d, t, attrs, config=Config):
+        if t[0] is None and t[1] is not None:
+            type = t[1].strip()
+            if type[:9] == 'arrayType':
+                index_eq = type.find('=')
+                index_obr = type.find('[')
+                index_cbr = type.find(']')
+                elemtype = type[index_eq+1:index_obr]
+                elemnum  = type[index_obr+1:index_cbr]
+                if elemtype=="ur-type":
+                    return(d)
+                else:
+                    newarr = map( lambda(di):
+                                  self.convertToBasicTypes(d=di,
+                                                       t = ( NS.XSD, elemtype),
+                                                       attrs=attrs,
+                                                       config=config),
+                                  d)
+                    return newarr
+            else:
+                t = (NS.XSD, t[1])
+
         return self.convertToBasicTypes(d, t, attrs, config)
 
 
@@ -792,6 +831,11 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
     def convertToBasicTypes(self, d, t, attrs, config=Config):
         dnn = d or ''
+
+        #if Config.debug:
+            #print "convertToBasicTypes:"
+            #print "   requested_type=", t
+            #print "   data=", d
 
         if t[0] in NS.EXSD_L:
             if t[1] == "integer":
@@ -957,7 +1001,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             if t[1] == "CDATA":
                 return collapseWhiteSpace(d)
 
-        raise UnknownTypeError, "unknown type `%s'" % (t[0] + ':' + t[1])
+        raise UnknownTypeError, "unknown type `%s'" % (str(t[0]) + ':' + t[1])
 
 
 ################################################################################
@@ -1001,7 +1045,6 @@ def parseSOAP(xml_str, attrs = 0):
 
 
 def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None):
-                 #config=Config, unwrap_outer=1):
 
     t = _parseSOAP(xml_str, rules = rules)
     p = t.body[0]
