@@ -1130,6 +1130,23 @@ class SchemaDescription:
                 # ie: not in a default namespace
                 if dt.getDerivation():
                     # XXX: this will need more work
+
+                    # ok, i'm totally cheating here.  getDerivedContent
+                    # returns a ModelGroupAdapter even tho it's not
+                    # technically a model group.  however, i can then
+                    # feed it to the complex type generation methods to
+                    # harvest a type code list.  to end the cheat,
+                    # self.initdef|classdef are re-assigned to here and
+                    # off we go.
+                    self.initdef = ''
+                    if dt.contentIsSequence() or dt.contentIsAll():
+                        tclist = self._complexTypeAllOrSequence(tp,
+                                                                dt.getContent())
+                    elif dt.contentIsChoice():
+                        tclist = self._complexTypeChoice(tp,
+                                                         dt.getContent())
+                    # end cheating....
+                    
                     self.precede  = '%s%s' % ( dt.getDerivation(), '_Def' )
                     nsp = self.nsh.getAlias(tp.getTargetNamespace())
                     self.classdef = '\n\n%sclass %s(%s):' %(ID1,
@@ -1143,10 +1160,20 @@ class SchemaDescription:
                     self.initdef += "\n%stype = '%s'" % (ID2,tp.getName())
                     self.initdef += '\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2
                     self.initdef += '\n%sif name:' % ID3
-                    self.initdef += '\n%sTCList = []' % ID4
+                    self.initdef += '\n%sTCList = [%s]' % (ID4, tclist)
                     self.initdef += '\n%s%s.%s.__init__(self, name=name, ns=ns, **kw)' % (ID4, nsp, dt.getDerivation() + '_Def' )
-                    self.initdef += '\n%sself.ofwhat += tuple(TCList)' % ID4
-                    self.initdef += '\n%sself.lenofwhat += len(TCList)' % ID4
+                    if dt.isExtension():
+                        self.initdef += '\n%s# extending....' % ID4
+                        self.initdef += '\n%sself.ofwhat += tuple(TCList)' \
+                                        % ID4
+                        self.initdef += '\n%sself.lenofwhat += len(TCList)' \
+                                        % ID4
+                    elif dt.isRestriction():
+                        self.initdef += '\n%s# restricting....' % ID4
+                        self.initdef += '\n%sself.ofwhat = tuple(TCList)' \
+                                        % ID4
+                        self.initdef += '\n%sself.lenofwhat = len(TCList)' \
+                                        % ID4
                 else:
                     self.classdef   = '\n\n%sclass %s:' % (ID1,
                                                            tp.getName() \

@@ -661,6 +661,36 @@ class DerivedTypesInterface:
         """
         raise NotImplementedError, 'abstract method not implemented'
 
+    def isRestriction(self):
+        """boolean - a restriction?
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
+    def isExtension(self):
+        """boolean - an extension?
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
+    def contentIsSequence(self):
+        """boolean - is the content derivation a sequence?
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
+    def contentIsAll(self):
+        """boolean - is the content derivation an all type?
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
+    def contentIsChoice(self):
+        """boolean - is the content derivation a choice?
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
+    def getContent(self):
+        """return a defintion adapter of the extended/restricted
+        content"""
+        raise NotImplementedError, 'abstract method not implemented'
+
     def getTypeclass(self):
         """get the typeclass of the derived type
         """
@@ -1445,7 +1475,7 @@ class ZSISchemaDefinitionAdapter(SchemaDefinitionInterface):
         """returns a model group adapter
         """
 
-        if self.isComplexType() and not self.isComplexContent():
+        if self.isComplexType():
 
             group = []
 
@@ -1687,6 +1717,23 @@ class ZSIModelGroupAdapter(ModelGroupInterface):
 
 class ZSIDerivedTypesAdapter(DerivedTypesInterface):
 
+    def __adapterWrap(self, tp):
+        if isinstance( tp, ZSI.wstools.XMLSchema.ComplexType ) or \
+               isinstance( tp, ZSI.wstools.XMLSchema.SimpleType ):
+            return ZSISchemaDefinitionAdapter(tp)
+        elif isinstance( tp, ZSI.wstools.XMLSchema.ElementDeclaration ) or \
+             isinstance( tp, ZSI.wstools.XMLSchema.ElementWildCard ) or \
+             isinstance( tp, ZSI.wstools.XMLSchema.\
+                         LocalElementDeclaration ) or \
+             isinstance(tp, ZSI.wstools.XMLSchema.\
+                        LocalAttributeDeclaration) or \
+             isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference):
+            return ZSISchemaDeclarationAdapter(tp)
+        if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
+            return self.__adapterWrap( tp.getElementDeclaration('ref') )
+        else:
+            raise TypeError, 'unknown adapter type: %s' % tp
+
     def isComplexContent(self):
         """boolean - is it complex content?
         """
@@ -1753,7 +1800,68 @@ class ZSIDerivedTypesAdapter(DerivedTypesInterface):
                 derivation = self._content.derivation.attributes['base'][1]
 
         return derivation
+
+    def isRestriction(self):
+
+        return self._content.derivation.isRestriction()
+
+    def isExtension(self):
+
+        return self._content.derivation.isExtension()
+
+    def contentIsSequence(self):
+        """boolean - is the content derivation a sequence?
+        """
+        if self.getDerivation():
+            if hasattr(self._content.derivation, 'content'):
+                if isinstance( self._content.derivation.content,
+                               ZSI.wstools.XMLSchema.Sequence ):
+                    return True
+            
+        return False
+
+    def contentIsAll(self):
+        """boolean - is the content derivation an all type?
+        """
+        if self.getDerivation():
+            if hasattr(self._content.derivation, 'content'):
+                if isinstance( self._content.derivation.content,
+                               ZSI.wstools.XMLSchema.All ):
+                    return True
+            
+        return False
+
+    def contentIsChoice(self):
+        """boolean - is the content derivation a choice?
+        """
+        if self.getDerivation():
+            if hasattr(self._content.derivation, 'content'):
+                if isinstance( self._content.derivation.content,
+                               ZSI.wstools.XMLSchema.Choice ):
+                    return True
+            
+        return False
+
+    def getContent(self):
+        """return a model group adapters of the extended or restricted
+        content for typecode list generation"""
         
+        content = []
+
+        if self.getDerivation():
+            for c in self._content.derivation.content.content:
+                content.append( self.__adapterWrap(c) )
+
+        if self.contentIsSequence():
+            return ZSIModelGroupAdapter( content, sequence=True )
+        elif self.contentIsAll():
+            return ZSIModelGroupAdapter( content, all=True )
+        elif self.contentIsChoice():
+            return ZSIModelGroupAdapter( content, choice=True )
+        else:
+            raise WsdlInterfaceError, 'could not determine derived type'
+
+        return content
 
     def getTypeclass(self):
         """get the typeclass of the derived type
