@@ -31,8 +31,7 @@ class ServiceTestCase(unittest.TestCase):
         cp = CaseSensitiveConfigParser()
         cp.read(configFile)
         serviceLoc = cp.get(configSection, serviceName)
-        useTracefile = cp.get('configuration', 'tracefile') 
-        if useTracefile == '1':
+        if cp.getboolean('configuration', 'tracefile') is True:
             kw['tracefile'] = sys.stdout
         try:
             snifferHost = setUp.get('configuration', 'host')
