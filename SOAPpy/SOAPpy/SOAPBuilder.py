@@ -109,7 +109,8 @@ class SOAPBuilder:
 
         if self.header:
             # Create a header.
-            self.dump(self.header, "Header", typed = typed)
+            header_ns = self.genns(ns_map, NS.ENV)[0]
+            self.dump(self.header, "%sHeader" % header_ns, typed = typed)
             self.header = None # Wipe it out so no one is using it.
 
         if self.body:
@@ -457,6 +458,9 @@ class SOAPBuilder:
 
                 # For Python 2.2+
                 if type(sample) == StringType: typename = 'string'
+
+                # HACK: unicode is a SOAP string
+                if type(sample) == UnicodeType: typename = 'string'
                 
 		# HACK: python 'float' is actually a SOAP 'double'.
 		if typename=="float": typename="double"  
