@@ -543,11 +543,13 @@ class ServiceDescription:
                                          % ( ID2, p.getName() )
                     else:
                         qualifiedtc = tp.typecode[0:]
+                        idx = qualifiedtc[0].find('(')
                         qualifiedtc[0] = self.nsh.getAlias(namespace) + \
-                                         '.' + qualifiedtc[0]
+                                         '.' + qualifiedtc[0][0:idx] + \
+                                         '_Def' + qualifiedtc[0][idx:]
                         l += qualifiedtc
                         defclass = tp.typecode[0][0:]
-                        defclass = defclass[0:defclass.find('(')] + '()'
+                        defclass = defclass[0:defclass.find('(')] + '_Def()'
                         self.typecode += '\n%sself._%s = %s.%s'\
                                          % ( ID2, p.getName(),
                                              self.nsh.getAlias(namespace),
@@ -606,14 +608,15 @@ class ServiceDescription:
                                                 getTargetNamespace())
                         self.typecode = '\n\nclass %s(%s.%s): ' %\
                                          (message.getName(),nsp,
-                                          tp.name)
-                        self.typecode += '\n%sif not hasattr( %s.%s(), "typecode" ):' % (ID1, nsp, tp.name)
+                                          tp.name + '_Dec')
+                        self.typecode += '\n%sif not hasattr( %s.%s(), "typecode" ):' % (ID1, nsp, tp.name + '_Dec')
                         self.typecode += '\n%stypecode = %s.%s()' \
-                                         % (ID2, nsp, tp.name )
+                                         % (ID2, nsp, tp.name + \
+                                            '_Dec' )
 			self.typecode += '\n\n%sdef __init__(self, name=None, ns=None):'\
                                          %(ID1)
                         self.typecode += '\n%s%s.%s.__init__(self, name=None, ns=None)'\
-                                         % (ID2, nsp, tp.name)
+                                         % (ID2, nsp, tp.name + '_Dec')
 		    else:
 			self.typecode = '\n\nclass %s: ' % (message.getName())
 			self.typecode += '\n%sdef __init__(self, name=None, ns=None): pass' %(ID1)
@@ -865,12 +868,14 @@ class SchemaDescription:
                 if tpc:
                     self.precede  = '%s' % (tpc)
                     self.classdef = '\n\n%sclass %s(%s):' % (ID1,
-                                                             tp.getName(), tpc)
+                                                             tp.getName() \
+                                                             + '_Def',
+                                                             tpc)
                     self.initdef  += '\n%s%s.__init__(self,pname="%s",optional=1,repeatable=1)' % (ID3,tpc,tp.getName())
                 else:
                     # XXX: currently, unions will get shuffled thru here.
                     self.classdef = '\n\n%sclass %s(ZSI.TC.Any):' % (ID1,
-                                                                     tp.getName())
+                                                                     tp.getName() + '_Def')
                     self.initdef  += '\n%s# probably a union - dont trust it'\
                                      % ID3
                     self.initdef  += '\n%sZSI.TC.Any.__init__(self,pname=name,aname="_%%s" %% name , optional=1,repeatable=1, **kw)' % ID3
@@ -920,7 +925,9 @@ class SchemaDescription:
             tpc = etp.getTypeclass()
             self.precede   = '%s' % (tpc)
 
-            self.classdef = '\n\n%sclass %s(%s):' % (ID1, tp.getName(),
+            self.classdef = '\n\n%sclass %s(%s):' % (ID1,
+                                                     tp.getName() \
+                                                     + '_Dec',
                                                      tpc)
             self.classdef += '\n%sliteral = "%s"' % ( ID2,
                                                       tp.getName())
@@ -942,13 +949,16 @@ class SchemaDescription:
 
                     nsp = etp.getTargetNamespace()
                     self.classdef = '\n\n%sclass %s(%s.%s):' \
-                                    % (ID1, tp.getName(),
+                                    % (ID1, tp.getName() + '_Dec',
                                        self.nsh.getAlias(nsp),
-                                       etp.getName())
+                                       etp.getName() + '_Def')
                 else:
 
-                    self.classdef = '\n\n%sclass %s(%s):' % (ID1, tp.getName(),
-                                                             etp.getName())
+                    self.classdef = '\n\n%sclass %s(%s):' % (ID1,
+                                                             tp.getName() \
+                                                             + '_Dec',
+                                                             etp.getName() \
+                                                             + '_Def')
                 self.classdef += '\n%sliteral = "%s"' % ( ID2,
                                                           tp.getName())
                 self.classdef += '\n%sschema = "%s"' % ( ID2,
@@ -965,8 +975,8 @@ class SchemaDescription:
                 self.initdef += '\n\n%s%s.%s.__init__(self)' \
                                 %(ID3,
                                   self.nsh.getAlias(nsp),
-                                  etp.getName())
-                self.initdef += '\n%sself.typecode = %s.%s(name=name, ns=ns)' % (ID3, self.nsh.getAlias(nsp), etp.getName())
+                                  etp.getName() + '_Def')
+                self.initdef += '\n%sself.typecode = %s.%s(name=name, ns=ns)' % (ID3, self.nsh.getAlias(nsp), etp.getName() + '_Def')
             else:
                 # at this point what we have is an element with
                 # local complex type definition.
@@ -976,9 +986,9 @@ class SchemaDescription:
 
                 self._fromComplexType(etp.expressLocalAsGlobal(tp))
                 self.initdef += '\n\n%sclass %s(%s):' % (ID1,
-                                                         tp.getName(),
+                                                         tp.getName() + '_Dec',
                                                          tp.getName()\
-                                                         + 'LOCAL' )
+                                                         + 'LOCAL_Def' )
                 self.initdef += '\n%sliteral = "%s"' % ( ID2,
                                                          tp.getName())
                 self.initdef += '\n%sschema = "%s"' % ( ID2,
@@ -994,9 +1004,9 @@ class SchemaDescription:
                 nsp = self.nsh.getAlias(tp.getTargetNamespace())
 
                 self.initdef += '\n\n%s%s.%s.__init__(self, name=name, ns=ns)'\
-                                %(ID3, nsp, tp.getName() + 'LOCAL')
+                                %(ID3, nsp, tp.getName() + 'LOCAL_Def')
                 
-                self.initdef += '\n%sself.typecode = %s.%s(name=name, ns=ns)' % (ID3, nsp, tp.getName() + 'LOCAL' )
+                self.initdef += '\n%sself.typecode = %s.%s(name=name, ns=ns)' % (ID3, nsp, tp.getName() + 'LOCAL_Def' )
                         
                 
 
@@ -1025,7 +1035,8 @@ class SchemaDescription:
             # ok, it's not derived content and therefore has a model group
             # write out the class def and class variables
 
-            self.classdef   = '\n\n%sclass %s:' %(ID1, tp.getName())
+            self.classdef   = '\n\n%sclass %s:' %(ID1,
+                                                  tp.getName() + '_Def')
             self.initdef    = ''
             
             if self._complexTypeHandleAttributes(tp):
@@ -1055,7 +1066,7 @@ class SchemaDescription:
                 #  <xsd:complexType/>
                 # </xsd:element>
                 self.classdef = '\n\n%sclass %s(ZSI.TCcompound.Struct):'\
-                                %(ID1, tp.getName())
+                                %(ID1, tp.getName() + '_Def')
                 pass
 
 
@@ -1073,8 +1084,10 @@ class SchemaDescription:
             if not tc:
                 # ie: not in a default namespace
                 if dt.getDerivation():
-                    # this will need more work
-                    self.classdef = '\n\n%sclass %s(%s):' %(ID1, tp.getName(),
+                    # XXX: this will need more work
+                    self.classdef = '\n\n%sclass %s(%s):' %(ID1,
+                                                            tp.getName() \
+                                                            + '_Def',
                                                             dt.getDerivation())
                     self.initdef  = '\n%s# rudimentary - more soon' % ID2
                     self.initdef += "\n%sschema = '%s'" % (ID2,
@@ -1086,14 +1099,18 @@ class SchemaDescription:
                     self.initdef += '\n%s%s.__init__(self, name=name, ns=ns, **kw)' % (ID4, dt.getDerivation())
                     self.initdef += '\n%sself.ofwhat += TCList' % ID4
                 else:
-                    self.classdef   = '\n\n%sclass %s:' % (ID1, tp.getName())
+                    self.classdef   = '\n\n%sclass %s:' % (ID1,
+                                                           tp.getName() \
+                                                           + '_Dec')
                     self.initdef    = '\n%s# not yet implemented' % ID2
                     self.initdef   += '\n%s# non array complexContent' % ID2
                     self.initdef   += '\n%spass\n' % ID2
             elif '%s' % tc == 'ZSI.TCcompound.Array':
                 # ladies and gents, we have an array
                 self.classdef   = '\n\n%sclass %s(%s):' % (ID1,
-                                                           tp.getName(),tc)
+                                                           tp.getName() \
+                                                           + '_Def',
+                                                           tc)
                 self.initdef    = "\n%sdef __init__(self, name = None, ns = None, **kw):" % ID2
 
                 arrayinfo = dt.getArrayType()
@@ -1103,10 +1120,13 @@ class SchemaDescription:
                     if arrayinfo[2]:
                         nsp  = self.nsh.getAlias(tp.getTargetNamespace())
                         nsp += '.'
+                        atype = arrayinfo[1] + '_Def'
+                    else:
+                        atype = arrayinfo[1]
                     self.initdef +=\
                                  "\n%s%s.__init__(self, '%s', %s%s(name='element'), pname=name, aname='_%%s' %% name, oname='%%s xmlns=\"%s\"' %% name, **kw)" \
                                  % (ID3, tc, arrayinfo[0], nsp,
-                                    arrayinfo[1],
+                                    atype,
                                     tp.getTargetNamespace())
                 else:
                     raise WsdlGeneratorError, 'failed to handle array!'
@@ -1118,7 +1138,9 @@ class SchemaDescription:
         def _complexTypeSimpleContent(self, tp):
             # XXX: this needs work (in progress)
             dt = tp.getDerivedTypes()
-            self.classdef   = '\n\n%sclass %s:' % (ID1, tp.getName())
+            self.classdef   = '\n\n%sclass %s:' % (ID1,
+                                                   tp.getName() \
+                                                   + '_Def')
             self.initdef    = '\n%s# not yet implemented' % ID2
             self.initdef   += '\n%s# simpleContent' % ID2
             self.initdef   += '\n%spass\n' % ID2
@@ -1128,7 +1150,7 @@ class SchemaDescription:
         def _complexTypeAllOrSequence(self, tp, mg):
 
             self.classdef = '\n\n%sclass %s(ZSI.TCcompound.Struct):'\
-                            %(ID1, tp.getName())
+                            %(ID1, tp.getName() + '_Def')
 
             typecodelist = ''
 
@@ -1173,7 +1195,7 @@ class SchemaDescription:
                             nsp = self.nsh.getAlias(etp.getTargetNamespace())
                             
                             typecodelist +='%s.%s(name="%s",ns=ns%s), '\
-                                            %(nsp,etp.getName(),
+                                            %(nsp,etp.getName() + '_Def',
                                               e.getName(), occurs)
 
                     elif etp.isDefinition() and etp.isComplexType():
@@ -1181,7 +1203,7 @@ class SchemaDescription:
 
                         nsp = self.nsh.getAlias(etp.getTargetNamespace())
                         typecodelist  += '%s.%s(name="%s", ns=ns%s), ' \
-                                         %(nsp,etp.getName(),
+                                         %(nsp,etp.getName() + '_Def',
                                            e.getName(), occurs)
 
                     elif etp:
@@ -1208,6 +1230,8 @@ class SchemaDescription:
             return typecodelist
 
         def _complexTypeChoice( self, tp, mg ):
+
+            # XXX: this has been somewhat neglected
 
             typecodelist = 'ZSI.TCcompound.Choice(['
 		    
