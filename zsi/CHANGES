@@ -9,6 +9,7 @@ Changes for ??, released ???:
     -   Tuple returned from dates and times (instead of a list)
     -   Arrays of ComplexTypes can now be deserialized
     -   User can specify which module contains complex type definitions
+    -   Mod_Python support for dispatch to multiple functions within a module
 
 Changes for 1.3, released xx-May-2002:
     -	Fixed parsing bug evidenced by dW article
