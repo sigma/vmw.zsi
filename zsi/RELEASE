@@ -23,7 +23,10 @@ information on getting and setting up those tools.
 
 4.  Commit all changes to CVS.
 
-5.  Tag the CVS repository.  Release tags are of the form::
+5.  Run all the tests; they must all pass.  See `Running Tests`_ for
+    details.
+
+6.  Tag the CVS repository.  Release tags are of the form::
 
         "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
 
@@ -36,33 +39,37 @@ information on getting and setting up those tools.
     You'll need to tag the ``wstools`` package separately, but using
     the same tag.
 
-6.  Export the tagged sources from CVS.  You'll need to run the
+7.  Export the tagged sources from CVS.  You'll need to run the
     commands::
 
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG zsi
         cd zsi/ZSI/
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG wstools
 
-7.  Build the release from the export.  Switch to the export directory
+8.  Build the release from the export.  Switch to the export directory
     (the one containing setup.py) and run **make kit**.
 
-8.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
+9.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
     0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
     it to dist/zsi-$MAJOR.$MINOR.$PATCHLEVEL.pdf.  This will leave you
     with all the files you need to upload in a single directory
     (dist/).
 
-9.  Use the SourceForge tools to create a release and upload the
+10. Using the constructed distribution (usually the .tar.gz version),
+    build and test the software; they must all pass.  See `Running
+    Tests`_ for details.
+
+11. Use the SourceForge tools to create a release and upload the
     files.  If appropriate, hide obsolete releases.  Hiding old
     releases is normally only done if the older release contains
     security bugs or other critical bugs that render it unusable.
 
-10. The web pages are in pywebsvcs.sourceforge.net, at the same level
+12. The web pages are in pywebsvcs.sourceforge.net, at the same level
     as the zsi directory.  Copy zsi.html from zsi/doc into there.
     Update index.html to refer (and link) to the new release.  Commit
     those changes.  The cron job will update it every couple of hours.
 
-11. Announce the release:
+13. Announce the release:
 
     - Freshmeat.  The details of how to do this have been lost to the
       travesties of time, but there is a ZSI package there.
@@ -113,3 +120,38 @@ checkout, you can just point to that instead of typing the full path
 to the **mkhowto** script::
 
   make PYSRCDIR=...
+
+
+Running Tests
+-------------
+
+Before a release, all the tests must run to completion and pass.  This
+entails running several scripts:
+
+- test/test_zsi.py
+
+- test/test_zsi_net.py
+
+- test/wsdl2py/runTests.py
+
+This is most easily done by setting the PYTHONPATH environment
+variable to point to the directory containing the version of the ZSI
+package that you want to test.
+
+Before testing, build the software::
+
+  python setup.py build
+
+Set PYTHONPATH to point to the built package::
+
+  PYTHONPATH=`pwd`/build/lib
+
+The first two scripts can easily be run from any directory; once your
+PYTHONPATH is set, just run the scripts::
+
+  python test/test_zsi.py
+
+  python test/test_zsi_net.py
+
+The third script depends on a configuration file; see the
+test/wsdl2py/README file for more information on running these tests.
