@@ -24,9 +24,9 @@ class _Caller:
         self.binding, self.name = binding, name
 
     def __call__(self, *args):
-        return self.binding.RPC(None, self.name, args, TC.Any(aslist=1),
-                requesttypecode=TC.Any(self.name, aslist=1))
-
+        return self.binding.RPC(None, self.name, args, 
+                                requesttypecode=TC.Any(self.name, aslist=1))
+    
 
 class _NamedParamCaller:
     '''Similar to _Caller, expect that there are named parameters
