@@ -8,6 +8,8 @@ from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
 from ZSI.auth import AUTH
 import base64, httplib, cStringIO as StringIO, types, time
 
+import string
+
 _b64_encode = base64.encodestring
 
 _AuthHeader = '<BasicAuth xmlns="' + ZSI_SCHEMA_URI + '''">
@@ -260,7 +262,7 @@ class Binding:
                 import ComplexTypes
                 instance = eval('ComplexTypes.%s' % type)
                 return instance.typecode.parse(data[0], self.ps)
-            except Exception:
+            except:
                 return tc.parse(data[0], self.ps)
         elif hasattr(replytype, 'typecode'):
             tc = replytype.typecode
