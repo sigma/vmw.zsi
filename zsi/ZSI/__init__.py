@@ -189,6 +189,5 @@ TC.RegisterType(TC.gMonthDay)
 TC.RegisterType(TC.gDay)
 TC.RegisterType(TC.gTime)
 TC.RegisterType(TC.Apache.Map)
-TC.RegisterType(TC.Apache.SOAPStruct)
 
 if __name__ == '__main__': print _copyright
