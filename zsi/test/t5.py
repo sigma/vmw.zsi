@@ -10,7 +10,7 @@ Content-type: text/xml
 <foo xmlns='www.zolera.com'>hello world</foo>
 --sep
 Content-Type: text/plain
-content-id: part111
+content-id: <part111@example.zolera.com>
 
 this is some plain text
 --sep
@@ -20,7 +20,7 @@ do not see this
 okay?
 --sep
 Content-Type: text/xml
-Content-ID: part2
+Content-ID: <part2@example.zolera.com>
 
 <xml>spoken</xml>
 --sep--

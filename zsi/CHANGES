@@ -47,6 +47,9 @@ Changes for 1.2, released xx-xxx-2001:
     -	Fix TC.Decimal to work where float('INF') doesn't
     -	Add samples directory
     -	Binding() omits typing from the outermost RPC wrapper
+    -	Fix HTML docs to include the ZSI schema
+    -	Add readerclass parameter to client Binding
+    -	Ignore <> around Content-ID in resolver; fix test to have it
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!

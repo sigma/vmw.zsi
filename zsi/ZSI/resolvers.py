@@ -94,7 +94,9 @@ class MIMEResolver:
 	    part = (head, body)
 	    self.parts.append(part)
 	    key = head.get('content-id')
-	    if key: self.id_dict[key] = part
+	    if key:
+		if key[0] == '<' and key[-1] == '>': key = key[1:-1]
+		self.id_dict[key] = part
 	    key = head.get('content-location')
 	    if key: self.loc_dict[key] = part
 	mf.pop()

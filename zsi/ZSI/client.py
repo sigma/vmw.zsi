@@ -46,12 +46,15 @@ class Binding:
 	    nsdict -- namespace entries to add
 	    tracefile -- file to dump packet traces
 	    cert_file, key_file -- SSL data (q.v.)
+	    readerclass -- DOM reader class
 	'''
 	self.data, self.ps, self.ns, self.user_headers = \
 	    None, None, None, []
-	self.nsdict, self.ssl, self.url, self.trace, self.host = \
+	self.nsdict, self.ssl, self.url, self.trace, self.host, \
+	self.readerclass = \
 	    kw.get('nsdict', {}), kw.get('ssl', 0), kw.get('url'), \
-	    kw.get('tracefile'), kw.get('host', 'localhost')
+	    kw.get('tracefile'), kw.get('host', 'localhost'), \
+	    kw.get('readerclass')
 	self.soapaction = kw.get('soapaction', '"http://www.zolera.com"')
 	if kw.has_key('auth'):
 	    self.SetAuth(*kw['auth'])
@@ -192,7 +195,8 @@ class Binding:
 		'Response is "%s", not "text/xml"' % self.reply_headers.type)
 	if len(self.data) == 0:
 	    raise TypeError('Received empty response')
-	self.ps = ParsedSoap(self.data)
+	self.ps = ParsedSoap(self.data, 
+			readerclass=kw.get('readerclass', self.readerclass))
 	return self.ps
 
     def IsAFault(self):

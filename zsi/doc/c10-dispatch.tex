@@ -135,6 +135,9 @@ The following keyword arguments may be used:
 \lineiii{\code{port}}{\code{80} or \code{443}}{Port to connect on.}
 \lineiii{\code{soapaction}}{\code{http://www.zolera.com}}{Value for the
     \code{SOAPAction} HTTP header.}
+\lineiii{\code{readerclass}}{\code{None}}{Class used to create DOM-creating
+XML readers; see the description in the \class{ParsedSoap} class.
+\versionadded{1.2}}
 \lineiii{\code{ssl}}{\code{0}}{Use SSL if non-zero.}
 \lineiii{\code{tracefile}}{\code{None}}{An object with a \code{write}
     method, where packet traces will be recorded.}
@@ -284,7 +287,7 @@ and a callable object is returned.
 This object dynamically parses its arguments, receives the reply, and
 parses that.
 
-\begin{methoddesc}{\sl{opname}}{args...}
+\begin{methoddesc}{opname}{args...}
 Using this shortcut requires that the \method{SetURL()} was invoked first.
 This method is then equivalent to:
 \samp{RPC(None, opname, tuple(args), TC.Any())}
