@@ -125,11 +125,8 @@ class HeaderHandler:
 
             if fault:
                 raise faultType, ("%s:MustUnderstand" % NS.ENV_T,
-                    "Don't understand `%s' header element but "
-                    "mustUnderstand attribute is set." % i)
-
-
-
+                                  "Required Header Misunderstood",
+                                  "%s" % i)
 
 ################################################################################
 # SOAP Server
@@ -333,16 +330,11 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     for i in l:
                         f = getattr(f, i)
             except:
-                info = sys.exc_info()
-                try:
-                    resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
-                                               "No method %s found" % nsmethod,
-                                               "%s %s" % tuple(info[0:2])),
-                                     encoding = self.server.encoding,
-                                     config = self.server.config)
-                finally:    
-                    del info
-                    
+                resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
+                                           "Method Not Found",
+                                           "%s" % nsmethod),
+                                 encoding = self.server.encoding,
+                                 config = self.server.config)
                 status = 500
             else:
                 try:
@@ -371,8 +363,8 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         if not apply(a, (), {"_SOAPContext" :
                                              _contexts[thread_id] }):
                             raise faultType("%s:Server" % NS.ENV_T,
-                                            "Method %s failed." % nsmethod,
-                                            "Authorization failed.")
+                                            "Authorization failed.",
+                                            "%s" % nsmethod)
                     
                     # If it's wrapped, some special action may be needed
                     if isinstance(f, MethodSig):
@@ -439,7 +431,8 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                             f = e
                         else:
                             f = faultType("%s:Server" % NS.ENV_T,
-                                          "Method %s failed." % nsmethod)
+                                          "Method Failed",
+                                          "%s" % nsmethod)
 
                         if self.server.config.returnFaultInfo:
                             f._setDetail("".join(traceback.format_exception(
