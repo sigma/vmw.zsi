@@ -1,8 +1,5 @@
 
-This release fixes the version string problem Mark Bucciarelli pointed
-out, as well as a couple of other bugs.
-
-There are 2 important changes:
+Release 0.10.0 of SOAPpy sports these enhancements:
 
 1) The new name handling mechanism has been enabled by default.  
 
@@ -17,9 +14,26 @@ There are 2 important changes:
 
 2) MS-Windows systems should now be fully supported.  
 
-   This required implmenting a new module, ieee754, which provides
+   This required implementing a new module, ieee754, which provides
    functions for detecting and generating IEEE 754 special floating
    point values (+Inf, -Inf, NaN) which are not properly handled by
    the Windows implementation of the float() function.
+
+3) Code reorganization: The huge file SOAPpy/SOAP.py (4,122 lines,
+   131K) has been split into 10 separate files. In addition code
+   shared with ZSI has been moved into a separate subdirectory and a
+   separate CVS module.
+
+4) Fixed bug 678239 which caused loss of namespace information in the
+   client.
+
+5) Mark Bucciarelli's <mark@hubcapconsulting.com> has ported client
+   support for WSDL from ZSI, as well as providing a mechanism for
+   SOAPpy servers to provide WSDL on properly structured .GET
+   requests.
+
+6) Added ThreadingSOAPServer which inherits from ThreadingTCPServer
+   server so that multiple clients will be automatically multiplexed.
+
 
 See the changelog for a detailed list of changes from previous releases.
