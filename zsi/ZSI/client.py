@@ -197,7 +197,7 @@ class Binding:
         # are most likely unicode format, which httplib does not care for
         if isinstance(self.host, unicode):
             self.host = str(self.host)
-        if isinstance(self.port, unicode):
+        if not isinstance(self.port, int):
             self.port = int(self.port)
             
         if not self.ssl:

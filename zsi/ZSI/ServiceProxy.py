@@ -66,13 +66,16 @@ class ServiceProxy:
         callinfo = getattr(self, name).callinfo
         soapAction = callinfo.soapAction
         url = callinfo.location
-        (protocol, host, uri, query, fragment, identifier) = urlparse(url)
-        port = '80'
+        (scheme, host, uri, query, fragment, identifier) = urlparse(url)
+        port = 80
         if host.find(':') >= 0:
             host, port = host.split(':')
+            port = int(port)
+        elif scheme == 'https':
+            port = 443
 
         binding = Binding(host=host, tracefile=self._tracefile,
-                          ssl=(protocol == 'https'),
+                          ssl=(scheme == 'https'),
                           port=port, url=None, typesmodule=self._typesmodule,
                           nsdict=self._nsdict, soapaction=self._soapAction,
                           ns=self._ns, op_ns=self._op_ns)
