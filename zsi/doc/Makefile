@@ -4,9 +4,9 @@
 # is installed)
 PYSRCDIR=	
 ifeq ($(PYSRCDIR),)
-MKHOWTO=	$(PYSRCDIR)/Doc/tools/mkhowto
-else
 MKHOWTO=	mkhowto
+else
+MKHOWTO=	$(PYSRCDIR)/Doc/tools/mkhowto
 endif
 #PAPER=		a4
 PAPER=		letter
