@@ -963,8 +963,12 @@ class ZSIInputAdapter(InputInterface):
     def getMessage(self):
         """return message obj
         """
-        return ZSIMessageAdapter(self._ws,
-                                 self._ws.messages[self._input.message])
+        if self._input and \
+           hasattr(self._input, 'message'):
+            return ZSIMessageAdapter(self._ws,
+                                     self._ws.messages[self._input.message])
+        else:
+            return None
 
     def getExtensions(self):
         """return extensions
