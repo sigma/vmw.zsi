@@ -24,6 +24,8 @@ html:	$M.html
 .PHONY: all dvi pdf ps html
 
 $M.ps: $(SOURCES)
+	@if test -x $(MKHOWTO) ; then exit 0 ; else \
+	echo $(MKHOWTO) not found ; exit 1 ; fi
 	$(MKHOWTO) --dvi $M.tex
 	dvips -N0 -t $(PAPER) -o $@ $M.dvi
 	@rm $M.dvi
