@@ -1,14 +1,15 @@
-'''Parse web services description language to get SOAP methods.
+"""Parse web services description language to get SOAP methods.
 
-Rudimentary support.'''
+Rudimentary support."""
 
 ident = '$Id$'
 
 import wstools
 from Client import SOAPProxy, SOAPAddress
+from Config import Config
 
 class Proxy:
-    '''WSDL Proxy.
+    """WSDL Proxy.
     
     SOAPProxy wrapper that parses method names, namespaces, soap actions from
     the web service description language (WSDL) file passed into the
@@ -27,9 +28,11 @@ class Proxy:
 
 
     See WSDLTools.SOAPCallinfo for more info on each method's attributes.
-    '''
+    """
 
-    def __init__(self, wsdlsource):
+    def __init__(self, wsdlsource,
+                 throw_faults = 1, unwrap_results = 1,
+                 http_proxy=None, config = Config,noroot = 0):
 
         reader = wstools.WSDLTools.WSDLReader()
         self.wsdl = None
@@ -78,7 +81,11 @@ class Proxy:
             callinfo = wstools.WSDLTools.callInfoFromWSDL(port, operation.name)
             self.methods[callinfo.methodName] = callinfo
 
-        self.soapproxy = SOAPProxy('http://localhost/dummy.webservice')
+        self.soapproxy = SOAPProxy('http://localhost/dummy.webservice',
+                                   throw_faults = throw_faults,
+                                   unwrap_results = unwrap_results,
+                                   http_proxy=http_proxy,
+                                   config = config)
 
     def __str__(self): 
         s = ''
@@ -87,9 +94,9 @@ class Proxy:
         return s
 
     def __getattr__(self, name):
-        '''Set up environment then let parent class handle call.
+        """Set up environment then let parent class handle call.
 
-        Raises AttributeError is method name is not found.'''
+        Raises AttributeError is method name is not found."""
 
         if name not in self.methods.keys(): raise AttributeError, name
 
