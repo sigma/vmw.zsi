@@ -3119,7 +3119,9 @@ class SOAPBuilder:
             obj = str(obj).upper()
         elif obj == 'nan':
             obj = 'NaN'
-        self.out.append(self.dumper(None, "float", obj, tag, typed, ns_map,
+
+	# Note: python 'float' is actually a SOAP 'double'.
+        self.out.append(self.dumper(None, "double", obj, tag, typed, ns_map,
                                     self.genroot(ns_map)))
 
     def dump_string(self, obj, tag, typed = 0, ns_map = {}):
@@ -3205,8 +3207,12 @@ class SOAPBuilder:
                 else:
                     t = 'ur-type'
             else:
+		typename = type(sample).__name__
+		# HACK: python 'float' is actually a SOAP 'double'.
+		if typename=="float": typename="double"  
                 t = self.genns(ns_map, self.config.typesNamespaceURI)[0] + \
-                    type(sample).__name__
+		    typename
+
         else:
             t = self.genns(ns_map, self.config.typesNamespaceURI)[0] + \
                 "ur-type"
