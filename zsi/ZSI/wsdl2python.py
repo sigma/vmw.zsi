@@ -69,12 +69,8 @@ def nonColonizedName_to_moduleName(name):
 
 def textProtect(s):
     """process any strings we cant have illegal chracters in"""
-    tmp = s[0:]
-    tmp = re.sub('-', '_', tmp)
-    tmp = re.sub('\.', '_', tmp)
-    tmp = re.sub('/', '_', tmp)
-    tmp = re.sub(':', '_', tmp)
-    return tmp
+    # Seems like maketrans/translate would be worthwhile here.
+    return re.sub('[-./:]', '_', tmp)
 
 class WsdlGeneratorError(Exception):
     pass
