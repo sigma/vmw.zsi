@@ -3,6 +3,11 @@
 # Change this to point to your Python2 exectuable
 PYTHON = python
 
+# This should be the Python that generated RPMs depend on and install
+# into; this may be different from the Python used to build the RPM.
+RPM_TARGET_PYTHON=/usr/bin/python2
+
+
 all:	rpm
 
 ins:
@@ -12,7 +17,7 @@ kit:	doc rpm	# make a kit
 
 rpm:	ZSI/version.py
 	rm -f dist/*
-	$(PYTHON) setup.py bdist_rpm --python=$(PYTHON)
+	$(PYTHON) setup.py bdist_rpm --python=$(RPM_TARGET_PYTHON)
 
 doc:	doc/version.tex		# build the docs
 	$(MAKE) -C doc
