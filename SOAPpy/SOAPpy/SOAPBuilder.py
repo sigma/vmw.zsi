@@ -46,6 +46,14 @@ from Config import Config
 from NS     import NS
 from Types  import *
 
+# Test whether this Python version has Types.BooleanType
+# If it doesn't have it, then False and True are serialized as integers
+try:
+    BooleanType
+    pythonHasBooleanType = 1
+except NameError:
+    pythonHasBooleanType = 0
+
 ################################################################################
 # SOAP Builder
 ################################################################################
@@ -276,6 +284,8 @@ class SOAPBuilder:
         except AttributeError:
             if type(obj) == LongType:
                 obj_type = "integer"
+            elif pythonHasBooleanType and type(obj) == BooleanType:
+                obj_type = "boolean"
             else:
                 obj_type = type(obj).__name__
 
