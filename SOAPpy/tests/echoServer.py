@@ -128,6 +128,13 @@ def echo_wkw(**kw):
 def echo_simple(*arg):
     return arg
 
+def echo_header(s, _SOAPContext):
+    global Config
+    
+    c = _SOAPContext
+    return s, c.header
+
+
 
 addr = ('localhost', 9900)
 GSI = 0
@@ -173,6 +180,7 @@ server.registerKWFunction(echo_wkw, path = "/pathtest")
 server.registerKWFunction(echo_wkw)
 
 server.registerFunction(echo_simple)
+server.registerFunction(MethodSig(echo_header, keywords=0, context=1))
 
 # Start the server
 try:
