@@ -94,7 +94,7 @@ class Proxy:
 
         Raises AttributeError is method name is not found."""
 
-        if name not in self.methods.keys(): raise AttributeError, name
+        if not self.methods.has_key(name): raise AttributeError, name
 
         callinfo = self.methods[name]
         self.soapproxy.proxy = SOAPAddress(callinfo.location)
