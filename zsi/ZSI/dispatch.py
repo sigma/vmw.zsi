@@ -3,7 +3,7 @@
 '''Simple CGI dispatching.
 '''
 
-import os, sys, cStringIO as StringIO
+import types, os, sys, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ZSI import *
 from ZSI import _child_elements, _copyright, _seqtypes, resolvers
@@ -59,9 +59,22 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                     return
             result = [ handler(*arg) ]
         reply = StringIO.StringIO()
-        SoapWriter(reply, nsdict=nsdict).serialize(result,
-            TC.Any(aslist=1, pname=what + 'Response')
-        )
+
+        
+        # if the result is not an instance (and thus is a primitive),
+        # respond with an rpc-style body
+        if type(result[0]) != types.InstanceType:
+            tc = TC.Any(aslist=1, pname=what + 'Response')
+                                                       
+        else:
+            # if the typecode defined what the rpc response should be, use it
+            if hasattr(result[0].typecode, 'rpc'):
+                tc = TC.Any(aslist=1, pname=result[0].typecode.rpc,
+                            rpc=result[0].typecode.rpc)
+            else:
+                tc = TC.Any(aslist=1, pname=None)
+
+        SoapWriter(reply, nsdict=nsdict).serialize(result, tc)
         SendResponse(reply.getvalue())
         return
     except Exception, e:
