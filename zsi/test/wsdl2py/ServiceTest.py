@@ -232,7 +232,6 @@ class ServiceTestCase(unittest.TestCase):
            operationName -- WSDL port operation name
            port -- WSDLTools.Port instance
         """
-        port = portAdapter._port
         name = operationName
         if self.checkSection():
             doc = CONFIG_PARSER.getboolean(self.getSection(), DOCUMENT)
@@ -305,7 +304,7 @@ class ServiceTestSuite(unittest.TestSuite):
         self._section = None
 
     def setSection(self, section):
-        self._section = __name__
+        self._section = section
 
     def addTest(self, test):
         if isinstance(test, ServiceTestSuite):
