@@ -41,6 +41,10 @@ try:
     print server.echo("MOO")
 except Exception, e:
     print "Caught exception: ", e
+try:
+    print pathserver.echo("MOO")
+except Exception, e:
+    print "Caught exception: ", e
     
 # ...in an object
 try:
