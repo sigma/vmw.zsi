@@ -1,4 +1,4 @@
-############################################################################
+###########################################################################
 # Joshua R. Boverhof, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
@@ -25,13 +25,14 @@ def print_debug(msg, level=1, *l, **kw):
             msg += '\n**\t%s: %s' %(k,v)
         print 'TYPECODES(%d): %s' %(level,msg)
 
-############################################################################
+###########################################################################
 # Module Classes: BaseTypeInterpreter
 ###########################################################################
 
 TC.Boolean.tag = 'boolean'
 TCcompound.Array.tag = 'array'
 TC.Decimal.tag = 'decimal'
+TC.Base64String.tag = 'base64Binary'
 
 class NamespaceException(Exception): pass
 class BaseTypeInterpreter:
@@ -107,6 +108,8 @@ class BaseTypeInterpreter:
     def __get_soapenc_typecode(self, msg_type):
         if msg_type == 'Array':
             return TCcompound.Array
+        if msg_type == 'base64':
+            return TC.Base64String
         else:
             raise NamespaceException
 
