@@ -737,16 +737,16 @@ class recurringInstantType(anyType):
             e = list(d)
             neg = ''
 
-            if e[0] < 0:
-                neg = '-'
-                e[0] = abs(e[0])
-
             if not e[0]:
                 e[0] = '--'
-            elif e[0] < 100:
-                e[0] = '-' + "%02d" % e[0]
             else:
-                e[0] = "%04d" % e[0]
+                if e[0] < 0:
+                    neg = '-'
+                    e[0] = abs(e[0])
+                if e[0] < 100:
+                    e[0] = '-' + "%02d" % e[0]
+                else:
+                    e[0] = "%04d" % e[0]
 
             for i in range(1, len(e)):
                 if e[i] == None or (i < 3 and e[i] == 0):
