@@ -1579,10 +1579,11 @@ def simplify(object, level=0):
     """
     Convert the SOAPpy objects and thier contents to simple python types.
 
-    This function converts the passed 'container' object, and all public
-    subobjects (private subobjects have names that start with '_').
+    This function recursively converts the passed 'container' object,
+    and all public subobjects. (Private subobjects have names that
+    start with '_'.)
     
-    Currently handles
+    Conversions:
     - faultType    --> raise python exception
     - arrayType    --> array
     - compoundType --> dictionary
@@ -1623,17 +1624,13 @@ def simplify_contents(object, level=0):
     """
     Convert the contents of SOAPpy objects to simple python types.
 
-    This function converts the sub-objects contained in a 'container'
-    object to simple python types.
+    This function recursively converts the sub-objects contained in a
+    'container' object to simple python types.
     
-    Currently handles
+    Conversions:
     - faultType    --> raise python exception
     - arrayType    --> array
     - compoundType --> dictionary
-    """
-    
-    """
-    Unwrap the *contents* of a SOAPpy object
     """
     
     if level>10: return object

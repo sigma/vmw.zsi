@@ -38,12 +38,6 @@ ident = '$Id$'
 import copy, socket
 from types import *
 
-try: from M2Crypto import SSL
-except: pass
-
-try: from pyGlobus import io
-except: pass
-
 from NS import NS 
 
 ################################################################################
@@ -89,34 +83,55 @@ class SOAPConfig:
             # README.MethodParameterNaming for details
             self.specialArgs = 1
 
-            # If set and there is only element in the struct,
+            # If unwrap_results=1 and there is only element in the struct,
             # SOAPProxy will assume that this element is the result
             # and return it rather than the struct containing it.
             # Otherwise SOAPproxy will return the struct with all the
             # elements as attributes.
             self.unwrap_results = 1
 
-            # Automatically simplfy SOAP complex types into the
-            # corresponding python types. (structType --> dict,
-            # arrayType --> array)
+            # Automatically convert SOAP complex types, and
+            # (recursively) public contents into the corresponding
+            # python types. (Private subobjects have names that start
+            # with '_'.)
+            #
+            # Conversions:
+            # - faultType    --> raise python exception
+            # - arrayType    --> array
+            # - compoundType --> dictionary
+            #
             self.simplify_objects = 0
 
-            # Per-class authorization method
+            # Per-class authorization method.  If this is set, before
+            # calling a any class method, the specified authorization
+            # method will be called.  If it returns 1, the method call
+            # will proceed, otherwise the call will throw with an
+            # authorization error.
             self.authMethod = None
 
-            # Globus Support
-            try: io; d['GSIserver'] = 1
-            except: d['GSIserver'] = 0
-                        
-            try: io; d['GSIclient'] = 1
-            except: d['GSIclient'] = 0
+            # Globus Support if pyGlobus.io available
+            try:
+                from pyGlobus import io;
+                d['GSIserver'] = 1
+                d['GSIclient'] = 1
+            except:
+                d['GSIserver'] = 0
+                d['GSIclient'] = 0
+                
 
-            # SSL Support
-            try: SSL; d['SSLserver'] = 1
-            except: d['SSLserver'] = 0
+            # Server SSL support if M2Crypto.SSL available
+            try:
+                from M2Crypto import SSL
+                d['SSLserver'] = 1
+            except:
+                d['SSLserver'] = 0
 
-            try: socket.ssl; d['SSLclient'] = 1
-            except: d['SSLclient'] = 0
+            # Client SSL support if socket.ssl available
+            try:
+                from socket import ssl
+                d['SSLclient'] = 1
+            except:
+                d['SSLclient'] = 0
 
         for k, v in kw.items():
             if k[0] != '_':

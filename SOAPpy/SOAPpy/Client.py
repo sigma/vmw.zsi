@@ -54,7 +54,7 @@ from Config      import Config
 from Parser      import parseSOAPRPC
 from SOAPBuilder import buildSOAP
 from Utilities   import *
-from Types       import faultType
+from Types       import faultType, simplify
 
 ident = '$Id$'
 
@@ -259,12 +259,25 @@ class HTTPTransport:
 class SOAPProxy:
     def __init__(self, proxy, namespace = None, soapaction = '',
                  header = None, methodattrs = None, transport = HTTPTransport,
-                 encoding = 'UTF-8', throw_faults = 1, unwrap_results = 1,
-                 http_proxy=None, config = Config, noroot = 0):
+                 encoding = 'UTF-8', throw_faults = 1, unwrap_results = None,
+                 http_proxy=None, config = Config, noroot = 0,
+                 simplify_objects=None):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
             ''.encode(encoding)
+
+        # get default values for unwrap_results and simplify_objects
+        # from config
+        if unwrap_results is None:
+            self.unwrap_results=config.unwrap_results
+        else:
+            self.unwrap_results=unwrap_results
+
+        if simplify_objects is None:
+            self.simplify_objects=config.simplify_objects
+        else:
+            self.simplify_objects=simplify_objects
 
         self.proxy          = SOAPAddress(proxy, config)
         self.namespace      = namespace
@@ -274,7 +287,6 @@ class SOAPProxy:
         self.transport      = transport()
         self.encoding       = encoding
         self.throw_faults   = throw_faults
-        self.unwrap_results = unwrap_results
         self.http_proxy     = http_proxy
         self.config         = config
         self.noroot         = noroot
@@ -335,10 +347,11 @@ class SOAPProxy:
             print p
             raise p
 
-        # Bubble a regular result up, if there is only element in the
-        # struct, assume that is the result and return it.
-        # Otherwise it will return the struct with all the elements
-        # as attributes.
+        # If unwrap_results=1 and there is only element in the struct,
+        # SOAPProxy will assume that this element is the result
+        # and return it rather than the struct containing it.
+        # Otherwise SOAPproxy will return the struct with all the
+        # elements as attributes.
         if self.unwrap_results:
             try:
                 count = 0
@@ -352,8 +365,8 @@ class SOAPProxy:
 
         # Automatically simplfy SOAP complex types into the
         # corresponding python types. (structType --> dict,
-        # arrayType --> array)
-        if config.simplify_objects:
+        # arrayType --> array, etc.)
+        if self.simplify_objects:
             p = simplify(p)
 
         if self.config.returnAllAttrs:
