@@ -876,6 +876,7 @@ class SchemaDescription:
 	    self.precede = None
 	    self.initdef  = None
 	    self.classdef = None
+            self.allOptional = False
             self.hasRepeatable = False
 	    return
 
@@ -1322,6 +1323,15 @@ class SchemaDescription:
 
             # XXX: this has been somewhat neglected
 
+            self.allOptional = True
+
+            return self._complexTypeAllOrSequence( tp, mg )
+
+            # the rest of this is pending further work, using
+            # the All/Sequence gives us immediate functionality.
+
+            # we shall get back to this....
+
             typecodelist = 'ZSI.TCcompound.Choice(['
 		    
             for e in mg.getContent():
@@ -1420,7 +1430,7 @@ class SchemaDescription:
                 self.hasRepeatable = True
                                 
             if int(e.getMinOccurs()) == 0 or \
-                   e.isNillable():
+                   e.isNillable() or self.allOptional:
                 occurs += ', optional=1'
 
             return occurs
