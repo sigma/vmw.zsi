@@ -57,7 +57,7 @@ class TypeCode:
             unique -- data item is not aliased (no href/id needed)
         '''
         if type(pname) in _seqtypes:
-            self.nspname, self.pname = None, pname
+            self.nspname, self.pname = pname
         else:
             self.nspname, self.pname = None, pname
         # Set oname before splitting pname, and aname after.
