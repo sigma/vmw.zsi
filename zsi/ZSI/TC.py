@@ -71,6 +71,7 @@ class TypeCode:
         self.repeatable = repeatable
         self.unique = unique
         if kw.has_key('default'): self.default = kw['default']
+        if kw.has_key('rpc'): self.rpc = kw['rpc']
 
     def parse(self, elt, ps):
         '''elt -- the DOM element being parsed
