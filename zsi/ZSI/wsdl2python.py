@@ -701,7 +701,7 @@ class ServiceDescription:
             self.typecode +=\
                           "%stypecode = %s(name=%s, ns='%s')"\
                           % ( ID1, message.getName(), name, namespace )
-            self.typecode += '\n%sdef __init__( self, name=None, ns=None ):'\
+            self.typecode += '\n%sdef __init__( self, name=None, ns=None, **kw ):'\
                              % ( ID1 )
             self.typecode += "\n%s%s.__init__( self, name=%s, ns='%s' )"\
                              % (ID2, message.getName(), name, namespace)
@@ -786,7 +786,7 @@ class ServiceDescription:
 
             self.typecode += '%stypecode = %s( name=%s, ns=None ).typecode'\
                              % (ID1, message.getName(), name )
-            self.typecode += '\n%sdef __init__( self, name=None, ns=None ):'\
+            self.typecode += '\n%sdef __init__( self, name=None, ns=None, **kw ):'\
                              % ID1
             self.typecode += '\n%s%s.__init__( self, name=%s, ns=None )' \
                              % (ID2, message.getName(), name )
