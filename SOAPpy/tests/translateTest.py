@@ -10,8 +10,8 @@ import SOAP
 
 ident = '$Id$'
 
-server = SOAP.SOAPProxy("http://services.xmethods.com/perl/soaplite.cgi")
-babel = server._ns('urn:xmethods#BabelFish')
+server = SOAP.SOAPProxy("http://services.xmethods.com:80/perl/soaplite.cgi")
+babel = server._ns('urn:xmethodsBabelFish#BabelFish')
 
 print babel.BabelFish(translationmode = "en_fr",
     sourcedata = "The quick brown fox did something or other")
