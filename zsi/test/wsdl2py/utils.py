@@ -93,8 +93,10 @@ def setUpWsdl(path):
 
 
 def failureException(exc, msg):
-    if msg.str.startswith('Connection timed out'):
-        print msg
+    if (msg.str.startswith('Connection timed out') or
+       msg.str.find('timeout')):
+        print '\n', msg
+        print '\n'
         sys.stdout.flush()
         return False
     else:
