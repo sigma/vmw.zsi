@@ -247,16 +247,22 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         ordered_args[i] = v
                     else:
                         named_args[str(k)] = v
-                        
-                if len(self.path) == 1:
-                    ns = None
-                else:
-                    ns = self.path.replace("/", ":")
-                    if ns[0] == ":": ns = ns[1:]
-                # get order
+
+            # We have to decide namespace precedence
+            # I'm happy with the following scenario
+            # if r._ns is specified use it, if not check for
+            # a path, if it's specified convert it and use it as the
+            # namespace. If both are specified, use r._ns.
+            
+            ns = r._ns
+
+            if len(self.path) > 1 and not ns:
+                ns = self.path.replace("/", ":")
+                if ns[0] == ":": ns = ns[1:]
             
             # authorization method
             a = None
+
             keylist = ordered_args.keys()
             keylist.sort()
 
@@ -268,8 +274,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             #print '<-> Ordered Arguments:' + str(ordered_args)
             #print '<-> Named Arguments  :' + str(named_args)
              
-
-            ns = r._ns
             resp = ""
             # For fault messages
             if ns:
@@ -289,7 +293,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         if self.server.funcmap.has_key(ns) and \
                                self.server.funcmap[ns].has_key(authmethod):
                             a = self.server.funcmap[ns][authmethod]
-                            print "Found function %s" % authmethod
                 else:
                     # Now look at registered objects
                     # Check for nested attributes. This works even if
@@ -302,7 +305,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         authmethod = self.server.config.authMethod
                         if hasattr(f, authmethod):
                             a = getattr(f, authmethod)
-                            print "Found object %s" % authmethod
 
                     # then continue looking for the method
                     l = method.split(".")
@@ -327,7 +329,8 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         c = SOAPContext(header, body, attrs, data,
                                         self.connection, self.headers,
                                         self.headers["soapaction"])
-                        if not apply(a, (), {"_SOAPContext" : c}):
+                        if not apply(a, (), {"_SOAPContext" : c,
+                                             "method" : nsmethod }):
                             raise faultType("%s:Server" % NS.ENV_T,
                                             "Method %s failed." % nsmethod,
                                             "Authorization failed.")
@@ -353,9 +356,11 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 strkw[str(k)] = v
                             if c:
                                 strkw["_SOAPContext"] = c
+                                strkw["method"] = nsmethod
                             fr = apply(f, (), strkw)
                         elif c:
-                            fr = apply(f, args, {'_SOAPContext':c})
+                            fr = apply(f, args, {'_SOAPContext':c,
+                                                 'method' : nsmethod})
                         else:
                             fr = apply(f, args, {})
 

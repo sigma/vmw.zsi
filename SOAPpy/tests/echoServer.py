@@ -7,14 +7,18 @@ sys.path.insert(1, "..")
 
 from SOAPpy import *
 
+import gc
+
+gc.set_debug(gc.DEBUG_LEAK)
+
 # Uncomment to see outgoing HTTP headers and SOAP and incoming
 #Config.dumpSOAPIn = 1
 #Config.dumpSOAPOut = 1
 #Config.debug = 1
 
-
 # specify name of authorization function
 Config.authMethod = "_authorize"
+
 # Set this to 0 to test authorization
 allowAll = 1
 
@@ -25,12 +29,15 @@ if Config.SSLserver:
     from M2Crypto import SSL
     
 def _authorize(*args, **kw):
-    global allowAll
+    global allowAll, Config
+
+    if Config.debug:
+        print "Authorize (function) called! (result = %d)" % allowAll
+        print "Method: %s" % kw['method']
+    
     if allowAll:
-        print "Authorize (function) called! (approved)"
         return 1
     else:
-        print "Authorize (function) called! (denied)"
         return 0
 
 # Simple echo
@@ -50,19 +57,18 @@ class echoBuilder:
     def echo_ino(self, val):
         return val + val
     def _authorize(self, *args, **kw):
-        global allowAll
-        
-        print "Authorize (method) called with arguments:"
-        print "*args=%s" % str(args)
-        print "**kw =%s" % str(kw)
+        global allowAll, Config
+
+        if Config.debug:
+            print "Authorize (method) called with arguments:"
+            print "*args=%s" % str(args)
+            print "**kw =%s" % str(kw)
+            print "Approved -> %d" % allowAll
         
         if allowAll:
-            print "--> Approved."
             return 1
         else:
-            print "--> Denied."
             return 0
-
 
 # Echo with context
 def echo_wc(s, _SOAPContext):
@@ -116,13 +122,18 @@ if len(sys.argv) > 1 and sys.argv[1] == '-s':
     ssl_context = SSL.Context()
     ssl_context.load_cert('validate/server.pem')
     server = SOAPServer(addr, ssl_context = ssl_context)
+    prefix = 'https'
 elif len(sys.argv) > 1 and sys.argv[1] == '-g':
     GSI = 1
     from SOAPpy.GSIServer import GSISOAPServer
     server = GSISOAPServer(addr)
+    prefix = 'httpg'
 else:
     server = SOAPServer(addr)
+    prefix = 'http'
 
+print "Server listening at: %s://%s:%d/" % (prefix, addr[0], addr[1])
+    
 server.registerFunction(echo, path = "/pathtest")
 server.registerFunction(_authorize)
 server.registerFunction(_authorize, path = "/pathtest")
