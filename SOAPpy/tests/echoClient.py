@@ -12,6 +12,8 @@ from SOAPpy import *
 #Config.dumpHeadersIn = 1
 #Config.dumpSOAPIn = 1
 #Config.dumpSOAPOut = 1
+
+# ask for returned SOAP responses to be converted to basic python types
 Config.simplify_objects = 1
 
 #Config.BuildWithNoType = 1
@@ -25,12 +27,8 @@ if len(sys.argv) > 1 and sys.argv[1] == '-s':
 elif len(sys.argv) > 1 and sys.argv[1] == '-g':
     # use Globus for communication
     import pyGlobus 
-
-    Config.channel_mode = 1
-    Config.delegation_mode = 1
-
-    server = SOAPProxy("httpg://localhost:9900")
     pathserver = SOAPProxy("httpg://localhost:9900/pathtest")
+    server = SOAPProxy("httpg://localhost:9900")
     
 else: 
     # Default: use standard http
@@ -39,14 +37,16 @@ else:
 
 # Echo...
 
+try:
+    print server.echo("MOO")
+except Exception, e:
+    print "Caught exception: ", e
+    
 # ...in an object
 try:
     print server.echo_ino("moo")
-except KeyboardInterrupt:
-    pass
-#except Exception, e:
-#    print "Caught exception: ", e
-#    print "Got unexpected exception: %s %s %s" % sys.exc_info()
+except Exception, e:
+    print "Caught exception: ", e
 try:
     print pathserver.echo_ino("cow")
 except Exception, e:
