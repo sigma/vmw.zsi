@@ -3,7 +3,16 @@ SOAP.py
 
 CHANGES SINCE VERSION 0.9.8
 
-- *** New argument handling method (via SOAPpy.SOAP.Config.specialArgs=1)
+- SOAPpy should now work properly on Microsoft Windows systems.
+
+  Previously, supporting platforms for which float('Inf') and similar
+  produced an error message ( notably Microsoft Windows) required an
+  ugly hack in the code which fails entirely under recent versions of
+  Python.  A new module, ieee754 has been implemented which provides
+  functions to handle NaN, Inf, and -Inf, so SOAPPy should now work on
+  all platforms that use IEEE 754 double-precision floating point.
+
+- *** The new argument handling method (via SOAPpy.SOAP.Config.specialArgs=1)
   is now enabled by default.***
 
 - Changed all references to actzero.com in SOAP.py to pywebscvs.sf.net.
