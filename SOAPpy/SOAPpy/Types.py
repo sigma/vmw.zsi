@@ -1608,10 +1608,12 @@ class RequiredHeaderMismatch(Exception):
 
 class MethodNotFound(Exception):
     def __init__(self, value):
-        self.value = value
+        (val, detail) = value.split(":")
+        self.value = val
+        self.detail = detail
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.value, self.detail)
 
 class AuthorizationFailed(Exception):
     def __init__(self, value):
