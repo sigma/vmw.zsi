@@ -11,6 +11,8 @@ import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.wsdlInterface import ZSIWsdlAdapter, ZSISchemaAdapter
 
+# $Id$
+
 """
 wsdl2python:
     This module generates an client interface module and a module containing
