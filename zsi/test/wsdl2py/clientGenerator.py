@@ -2,14 +2,15 @@ import os, os.path
 import shutil, sys
 
 from ZSI import wsdl2python
-from ZSI.wstools.test import utils
 from ZSI.wstools.TimeoutSocket import TimeoutError
+
+import utils
 
 class ClientGenerator:
 
     def getModule(self, section, serviceName, subdirPath,
                  schemaOnly=False, explicitPath=None):
-        sys.path.append('generatedCode')
+        sys.path.append(subdirPath)
         try:
             # fix
             service = __import__(serviceName + '_services')
