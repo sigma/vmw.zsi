@@ -186,17 +186,34 @@ def handler(req):
 
 \section{Client Side Examples}
 \subsection{Simple Example}
-If the simple server side example shown above is installed on the webserver 
-running on the local host, and if the URL is \code{/cgi-bin/simple-test}, then
-the following code shows simple binding and access to the server:
+There are two mechanisms by which your client can interact with a server:
+\class{Binding} and \class{ServiceProxy}.  Binding should be used in cases 
+where the operations you wish to perform are not defined (published) using
+WSDL format.  If your operations are defined using WSDL, use the ServiceProxy
+class to access your WSDL and provide remote procedure call functionality.
+
+The first example provided below demonstrates how to use the \class{Binding}
+class to connect to a remote service and perform an operation.  It assumes
+that the simple server side example shown above is installed on the webserver 
+running on the local host, and if the URL is \code{/cgi-bin/simple-test}:
 
 \begin{verbatim}
 from ZSI.client import Binding
-b = Binding(url='/cgi-bin/simple-test')
-a = apply(b.average, range(1,11))
+fp = open('debug.out', 'a')
+b = Binding(url='/cgi-bin/simple-test', tracefile=fp)
+fp.close()
+a = b.average(range(1,11))
 assert a == 5
 print b.hello()
 \end{verbatim}
+
+A best practice during development is to exploit the tracefile capability built
+into the \class{Binding} class.  Using a tracefile instructs \module{ZSI} to
+log all information sent and received from the server.  When debugging the
+causes of SOAP Faults, this information is extremely important and will lead
+to numerous speedups in development time.  It is highly recommended that you
+make use of this feature until such time that your remote procedure calls are
+working and stable.
 
 \subsection{Complex Example}
 If the operation invoked returns a ComplexType, typecode information must
@@ -215,9 +232,16 @@ Person.typecode = TC.Struct(Person,
 			     TC.InonNegativeInteger('age')],
 			    'myApp:Person')
 
-# my web service
-def getPerson():
-  return Person('Christopher', 26)
+# my web service that returns a complex structure
+def getPerson(name):
+  fp = open('%s.person.pickle', % name, 'r')
+  return pickle.load(fp)
+
+# my web service that accepts a complex structure
+def savePerson(person):
+  fp = open('%s.person.pickle' % person.name, 'w')
+  pickle(person, fp)
+  fp.close()
 \end{verbatim}
 
 In order for \ZSI{} to properly deserialize the returned complex type into
@@ -225,15 +249,18 @@ a Person instance, you must do one of two things: define the Person class (and
 typecode) in a module named \module{ComplexTypes}, or pass the expected return
 type to the \code{Binding.Receive} method.  The former is recommended, as it
 makes your code easier to read.  Below you'll find client side code that
-interacts with the operation described above (this assumes that you have
-defined the Person class and typecode in a module named \module{ComplexTypes}
-which is present in \code{sys.path}:
+interacts with the \method{getPerson} operation described above (this assumes
+that you have defined the Person class and typecode in a module named 
+\module{ComplexTypes} which is present in \code{sys.path}:
 
 \begin{verbatim}
 from ZSI.client import Binding
 b = Binding(url='/cgi-bin/complex-test')
-a = apply(b.getPerson, '')
-person = b.Receive()    # you could also write: person = b.Receive(Person)
+person = b.getPerson('christopher')
+
+# you can also be explicit about what comes back
+a = apply(b.getPerson, 'christopher')
+person = b.Receive(Person)
 \end{verbatim}
 
 The person returned is an instance of Person.  The deserialization in this
@@ -241,3 +268,16 @@ case was possible because \ZSI{} was able to locate the typecode information
 for the returned Person and properly re-assemble the instance.  If you would
 like to explicitly tell \ZSI{} which class to use for deserialization, you
 may do so by providing the class as an argument to the \code{Receive} method.
+
+You can also pass complex types to a web service as long as the instance you
+pass contains a typecode definition.  Serialization is transparent to the
+user both on the client and server side:
+
+\begin{verbatim}
+from ZSI.client import Binding
+b = Binding(url='/cgi-bin/complex-test')
+person = Person('christopher', 26)
+b.savePerson(person)
+\end{verbatim}
+
+
