@@ -159,11 +159,12 @@ class WriteServiceModule:
            depenedencies.
         """
 
-        f_types, f_services, f_client = self.get_module_names()
+        f_types, f_services = self.get_module_names()
         hasSchema = len(self._wa.getSchemaDict())
         if hasSchema:
-            typesFd = open(f_types + ".py", 'w+')
-            self.write_service_types(f_types, typesFd)
+            fd = open(f_types + ".py", 'w+')
+            self.write_service_types(f_types, fd)
+            fd.close()
 
         fd = open(f_services + ".py", 'w+')
         self.write_services(f_types, f_services, fd, hasSchema)
@@ -184,8 +185,7 @@ class WriteServiceModule:
         else:
             f_types = '%s_services_types' % name
             f_services = '%s_services' % name
-        f_client = '%s_client' % name
-        return f_types, f_services, f_client
+        return f_types, f_services
 
 
     def write_service_types(self, f_types, fd):
@@ -301,7 +301,7 @@ class ServiceDescription:
 	fd.write(self.serviceLocator)
         fd.write(self.serviceBindings)
         keys = self.messages.keys()
-        # keys.sort()
+        keys.sort()
         [fd.write(str(self.messages[k])) for k in keys]
             
     def fromWsdl(self, service):
