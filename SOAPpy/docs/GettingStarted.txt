@@ -1,5 +1,15 @@
 
-HOWTO:
+Getting Started
+===============
+
+NEW: 
+
+   Mark Pilgrims' online book _Dive Into Python_ at
+   http://diveintopython.org includes a nice tutorial for SOAPpy in
+   Chapter 12. "SOAP Web Services" at
+   http://diveintopython.org/soap_web_services.
+
+
 
 The easiest way to get up to speed is to run and read the scripts in the
 tests directory. Better documentation is coming.
@@ -173,8 +183,4 @@ accepting SSL connections at localhost:8443. Ng Pheng Siong's M2Crypto
 package (available at <http://www.pobox.org.sg/home/ngps/m2/>) must be
 installed. Also see tests/silabserver.py.
 
-
-Copyright (c) 2002-2003, Pfizer, Inc.
-Copyright (c) 2001, Cayce Ullman.
-Copyright (c) 2001, Brian Matthews.
-All rights reserved, see the file LICENSE for conditions of use.
+$Id$

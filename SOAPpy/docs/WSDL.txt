@@ -19,7 +19,4 @@ description language (WSDL) files.
     debug=FALSE. Add example here when working]
 
 
-Copyright (c) 2002-2003, Pfizer, Inc.
-Copyright (c) 2001, Cayce Ullman.
-Copyright (c) 2001, Brian Matthews.
-All rights reserved.  See the file LICENSE for 
+$Id$
