@@ -1,4 +1,8 @@
 include README*
+include LICENSE
+include RELEASE_INFO
+include TODO  
+include ChangeLog
 recursive-include SOAPpy   *.py
 recursive-include bid      *.py
 recursive-include contrib  *.py
