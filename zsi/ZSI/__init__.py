@@ -163,6 +163,7 @@ from fault import Fault, \
     FaultFromActor, FaultFromException, FaultFromFaultMessage, \
     FaultFromNotUnderstood, FaultFromZSIException
 import TC
+TC.RegisterType(TC.Void)
 TC.RegisterType(TC.String)
 TC.RegisterType(TC.URI)
 TC.RegisterType(TC.Base64String)

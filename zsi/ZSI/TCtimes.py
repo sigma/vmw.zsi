@@ -118,7 +118,7 @@ class Gregorian(TypeCode):
 	    tstr = ' xsi:type="xsd:%s"' % self.tag
 	else:
 	    tstr = ''
-	print >>sw, '<%s%s%s>%sZ</%s>' % \
+	print >>sw, '<%s%s%s>%s</%s>' % \
 		    (n, kw.get('attrtext', ''), tstr, val, n)
 
 class gDateTime(Gregorian):
@@ -129,7 +129,7 @@ class gDateTime(Gregorian):
 			'(?P<Y>\d{4,})-' r'(?P<M>\d\d)-' r'(?P<D>\d\d)' 'T' \
 			r'(?P<h>\d\d):' r'(?P<m>\d\d):' r'(?P<s>\d*(\.\d+)?)' \
 			r'(?P<tz>(Z|([-+]\d\d:\d\d))?)' '$')
-    tag, format = 'dateTime', '%(Y)d-%(M)d-%(D)dT%(h)d:%(m)d:%(s)dZ'
+    tag, format = 'dateTime', '%(Y)04d-%(M)02d-%(D)02dT%(h)02d:%(m)02d:%(s)02dZ'
 
 class gDate(Gregorian):
     '''A date.
@@ -138,7 +138,7 @@ class gDate(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			'(?P<Y>\d{4,})-' r'(?P<M>\d\d)-' r'(?P<D>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'date', '%(Y)d-%(M)d-%(D)dZ'
+    tag, format = 'date', '%(Y)04d-%(M)02d-%(D)02dZ'
 
 class gYearMonth(Gregorian):
     '''A date.
@@ -147,7 +147,7 @@ class gYearMonth(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			'(?P<Y>\d{4,})-' r'(?P<M>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gYearMonth', '%(Y)d-%(M)dZ'
+    tag, format = 'gYearMonth', '%(Y)04d-%(M)02dZ'
 
 class gYear(Gregorian):
     '''A date.
@@ -156,7 +156,7 @@ class gYear(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			'(?P<Y>\d{4,})' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gYear', '%(Y)dZ'
+    tag, format = 'gYear', '%(Y)04dZ'
 
 class gMonthDay(Gregorian):
     '''A gMonthDay.
@@ -165,7 +165,7 @@ class gMonthDay(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			r'--(?P<M>\d\d)-' r'(?P<D>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gMonthDay', '%(M)d-%(D)dZ'
+    tag, format = 'gMonthDay', '%(M)02d-%(D)02dZ'
 
 class gDay(Gregorian):
     '''A gDay.
@@ -174,7 +174,7 @@ class gDay(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			r'---(?P<D>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gDay', '%(D)dZ'
+    tag, format = 'gDay', '%(D)02dZ'
 
 class gTime(Gregorian):
     '''A time.
@@ -183,6 +183,6 @@ class gTime(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			r'(?P<h>\d\d):' r'(?P<m>\d\d):' r'(?P<s>\d*(\.\d+)?)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'time', '%(h)d:%(m)d:%(s)dZ'
+    tag, format = 'time', '%(h)02d:%(m)02d:%(s)02dZ'
 
 if __name__ == '__main__': print _copyright

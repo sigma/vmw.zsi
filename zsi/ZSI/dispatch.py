@@ -55,11 +55,11 @@ def _Dispatch(ps, modules, SendResponse, SendFault):
 	    try:
 		tc = TC.Any()
 		arg = [ tc.parse(e, ps) for e in data ]
-	    except EvaluateError, e:
+	    except EvaluateException, e:
 		SendFault(FaultFromZSIException(e))
 		return
 
-	result = [ handler(*arg) or [] ]
+	result = [ handler(*arg) ]
 	reply = StringIO.StringIO()
 	SoapWriter(reply).serialize(result,
 	    TC.Any(aslist=1, pname=what + 'Response')

@@ -236,6 +236,9 @@ class Binding:
 	'''Return a callable object that will invoke the RPC method
 	named by the attribute.
 	'''
+	if a[:2] == '__' and len(a) > 5 and a[-2:] == '__':
+	    if self.__dict__.has_key(name): return self._dict__[name]
+	    return self.__class__.__dict__[name]
 	return _Caller(self, name)
 
 if __name__ == '__main__': print _copyright

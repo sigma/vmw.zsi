@@ -204,6 +204,10 @@ class Any(TypeCode):
     def __init__(self, pname=None, **kw):
 	TypeCode.__init__(self, pname, **kw)
 	self.aslist = kw.get('aslist', 0)
+	# If not derived, and optional isn't set, make us optional
+	# so that None can be parsed.
+	if self.__class__ == Any and not kw.has_key('optional'):
+	    self.optional = 1
 
     def parse_into_dict(self, elt, ps):
 	c = _child_elements(elt)
@@ -224,7 +228,7 @@ class Any(TypeCode):
 
     def parse(self, elt, ps):
 	(ns,type) = self.checkname(elt, ps)
-	if self.nilled(elt, ps): return None
+	if not type and self.nilled(elt, ps): return None
 	if not elt.hasChildNodes():
 	    href = _find_href(elt)
 	    if not href:
@@ -332,7 +336,7 @@ class Void(TypeCode):
 
     def serialize(self, sw, pyobj, **kw):
 	n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
-	print >>sw, '''<%s%s xsi:null="1"/>''' % \
+	print >>sw, '''<%s%s xsi:nil="1"/>''' % \
 	    (n, kw.get('attrtext', ''))
 
 class String(TypeCode):

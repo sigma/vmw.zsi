@@ -18,6 +18,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Anchor all TCtime lex_pattern's <grahamd@dscpl.com.au>
     -	Allow class object (not just class name) in TC.seriallist
     -	TC.Void can serialize None (useful for TC.Any)
+    -	RegisterType(TC.Void) <grahamd@dscpl.com.au>
     -	Fix consistency and interop in dispatching <grahamd@dscpl.com.au>
     -	Array interop fix <gisle@activestate.com>
     -	SOAPAction header needs quotes <gisle@activestate.com>
@@ -26,6 +27,11 @@ Changes for 1.2, released xx-xxx-2001:
     -	Sign isn't optional on numeric timezones in dates <grahamd@dscpl.com.au>
     -	Document limits on date/time conversions.
     -	Add TC.XML.copyit and 'copyit' keyword to constructor
+    -	Spelt EvaluateException wrong in dispatch.py <grahamd@dscpl.com.au>
+    -	xsi:nil not xsi:null in TC.Void <grahamd@dscpl.com.au>
+    -	Address issues with client/dispatch and None <grahamd@dscpl.com.au>
+    -	Use formatted output, not strftime
+    -	TC.Any defaults to optional if not set, for None <grahamd@dscpl.com.au>
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!
