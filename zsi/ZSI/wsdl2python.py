@@ -127,6 +127,11 @@ class NamespaceHash:
     def dump(self):
         print NamespaceHash.NSDICT
 
+    def reset(self):
+        NamespaceHash.NSCOUNT = 1
+        NamespaceHash.NSDICT = {}
+        NamespaceHash.NSORDER = []
+
 class WriteServiceModule:
     """Takes a wsdl object and creates the client interface and typecodes for 
        the service.
@@ -268,6 +273,9 @@ class WriteServiceModule:
                 sd = SchemaDescription()
                 sd.fromWsdl(schema, alternateWriter)
                 sd.write(fd)
+
+    def __del__(self):
+        self.nsh.reset()
  
 class ServiceDescription:
     """Generates client interface.  Writes out an abstract interface, 
