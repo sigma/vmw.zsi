@@ -104,7 +104,7 @@ except: pass
 
 ident = '$Id$'
 
-__version__ = "0.9.9-pre6"
+__version__ = "0.9.9-pre6-CVS"
 
 
 ################################################################################
@@ -2808,9 +2808,10 @@ def _parseSOAP(xml_str, rules = None):
 
     try:
         parser.parse(inpsrc)
-    except xml.sax.SAXParseException:
+    except xml.sax.SAXParseException, e:
         parser._parser = None
-
+        raise e
+    
     return t
 
 ################################################################################
