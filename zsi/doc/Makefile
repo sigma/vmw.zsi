@@ -1,7 +1,8 @@
 # $Header$
 
-# Where is the doc-builder program?
-PYSRCDIR=	/opt/sources/Python-2.2.1
+# put the path to where the Python source was untar'd here (not where it
+# is installed)
+PYSRCDIR=	
 MKHOWTO=	$(PYSRCDIR)/Doc/tools/mkhowto
 #PAPER=		a4
 PAPER=		letter
