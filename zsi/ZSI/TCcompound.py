@@ -235,6 +235,7 @@ class Choice(TypeCode):
 class Array(TypeCode):
     '''An array.
         mutable -- object could change between multiple serializations
+        undeclared -- do not serialize/parse arrayType attribute.
     '''
 
     def __init__(self, atype, ofwhat, pname=None, dimensions=1, fill=None,
@@ -243,7 +244,7 @@ class Array(TypeCode):
         TypeCode.__init__(self, pname, **kw)
         self.dimensions = dimensions
         self.atype = atype
-        if self.atype[-1] != ']': self.atype = self.atype + '[]'
+        if not undeclared and self.atype[-1] != ']': self.atype = self.atype + '[]'
         # Support multiple dimensions
         if self.dimensions != 1:
             raise TypeError("Only single-dimensioned arrays supported")
@@ -265,8 +266,8 @@ class Array(TypeCode):
                 raise TypeError('Size must be integer or list, not ' + str(t))
 
         if TypeCode.typechecks:
-            if type(atype) not in _stringtypes:
-                raise TypeError("Array type must be a string.")
+            if not self.undeclared and type(atype) not in _stringtypes:
+                raise TypeError("Array type must be a string or None.")
             t = type(ofwhat)
             if t != types.InstanceType:
                 raise TypeError(
@@ -349,8 +350,12 @@ class Array(TypeCode):
             idtext = ''
         else:
             idtext = ' id="%s"' % objid
-        print >>sw, '<%s%s%s%s SOAP-ENC:arrayType="%s">' % \
-                (n, attrtext, offsettext, idtext, self.atype)
+        if self.undeclared:
+            print >>sw, '<%s%s%s%s>' % \
+                    (n, attrtext, offsettext, idtext)
+        else:
+            print >>sw, '<%s%s%s%s SOAP-ENC:arrayType="%s">' % \
+                    (n, attrtext, offsettext, idtext, self.atype)
         d = {}
         kn = childnames or self.childnames
         if kn:

@@ -1962,15 +1962,15 @@ class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
                 ns, atype = SplitQName(t)
                 atype = atype[:-2]
                 
-            arrayinfo = ( t, atype, isDefined )
+            arrayinfo = ( t, atype, isDefined, namespaceURI )
 
         else:
             raise WsdlInterfaceError, 'has no derivation base'
         
         if arrayinfo:
             return arrayinfo
-        else:
-            raise WsdlInterfaceError, 'could not determine array type'
+
+        raise WsdlInterfaceError, 'could not determine array type'
 
     def getDerivation(self):
 

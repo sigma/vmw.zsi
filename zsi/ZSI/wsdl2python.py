@@ -1417,12 +1417,21 @@ class SchemaDescription:
                 self.initdef.set("\n%sdef __init__(self, name = None, ns = None, **kw):" % ID2)
 
                 arrayinfo = dt.getArrayType()
-                
+                atypePrefix = 'arrayTypeNS'
+                atypeNS = arrayinfo[3]
                 if arrayinfo:
                     nsp = ''
+                    # 
+                    # if arrayinfo[2] is around, then type is defined in schema 
+                    # instance.
+                    # 
                     if arrayinfo[2]:
-                        nsp  = self.nsh.getAlias(tp.getTargetNamespace())
-                        nsp += '.'
+                        try:
+                            nsp  = '%s.' %self.nsh.getAlias(atypeNS)
+                        except:
+                            raise WsdlGeneratorError, \
+                                'LIMITATION:  can not process Array("%s","%s") of arrayType ("%s","%s") because they are in different targetNamespaces'\
+                                %(tp.getTargetNamespace(), tp.getName(), atypeNS,arrayinfo[1])
                         atype = arrayinfo[1] + '_Def'
                         typeName = '%s%s' % (nsp, atype)
                     else:
@@ -1431,9 +1440,17 @@ class SchemaDescription:
                         if not typeName:
                             typeName = 'Any'
 
-                    self.basector.set("\n%s%s.__init__(self, '%s', %s%s(name=None), pname=name, aname='_%%s' %% name, oname='%%s xmlns=\"%s\"' %% name, **kw)" \
-                                      % (ID3, tc, arrayinfo[0], nsp,
-                                         atype, tp.getTargetNamespace()))
+                    try:
+                        arrayType = SplitQName(arrayinfo[0])
+                        if len(arrayType) == 2:
+                            arrayType = '%s:%s' %(atypePrefix,arrayType[1])
+                        else:
+                            arrayType = '%s:%s' %(atypePrefix,arrayType[0])
+                    except:
+                        raise WsdlGeneratorError, 'arrayType must be specified.'
+                    self.basector.set(\
+                        "\n%s%s.__init__(self, '%s', %s%s(name=None,typed=0), pname=name, aname='_%%s' %% name, oname='%%s xmlns:%s=\"%s\"' %% name, **kw)" %(ID3, tc, arrayType, nsp, atype, atypePrefix, atypeNS)
+                    )
                         
                     self.typeDoc('', '_element', typeName)
                 elif hasattr(tp, '_def'):
