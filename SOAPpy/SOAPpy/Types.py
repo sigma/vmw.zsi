@@ -1609,12 +1609,6 @@ def simplify(object, level=0):
     if isinstance( object, faultType ):
         se = SOAPException(object.faultcode, object.faultstring, object.detail)
         raise se
-        # this is the old implementation in case greg decides the above isn't
-        # what we want.
-#         for k in object._keys():
-#             if isPublic(k):
-#                 setattr(object, k, simplify(object[k], level=level+1))
-#         raise object
     elif isinstance( object, arrayType ):
         data = object._aslist()
         for k in range(len(data)):
