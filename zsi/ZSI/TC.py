@@ -441,8 +441,6 @@ class URI(String):
     def serialize(self, sw, pyobj, **kw):
         String.serialize(self, sw, urlencode(pyobj), **kw)
 
-_transtable = string.maketrans('','')
-_WS = string.whitespace
 
 class Base64String(String):
     '''A Base64 encoded string.
@@ -469,6 +467,24 @@ class HexBinaryString(String):
 
     def serialize(self, sw, pyobj, **kw):
         String.serialize(self, sw, hexencode(pyobj).upper(), **kw)
+
+class XMLString(String):
+    '''A string that represents an XML document
+    '''
+
+    def __init__(self, pname=None, readerclass=None, **kw):
+        String.__init__(self, pname, **kw)
+        self.readerclass = readerclass
+
+    def parse(self, elt, ps):
+        if not self.readerclass:
+            from xml.dom.ext.reader import PyExpat
+            self.readerclass = PyExpat.Reader
+        v = String.parse(self, elt, ps)
+        return self.readerclass().fromString(v)
+
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+        String.serialize(self, sw, Canonicalize(pyobj), name, attrtext, **kw)
 
 class Enumeration(String):
     '''A string type, limited to a set of choices.
