@@ -351,7 +351,7 @@ class SOAPBuilder:
         elif fpconst.isNaN(obj):
             obj = "NaN"
         else:
-            obj = str(obj)
+            obj = repr(obj)
 
 	# Note: python 'float' is actually a SOAP 'double'.
         self.out.append(self.dumper(None, "double", obj, tag, typed, ns_map,
