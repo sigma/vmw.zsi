@@ -163,7 +163,7 @@ class WriteServiceModule:
         hasSchema = len(self._wa.getSchemaDict())
         if hasSchema:
             typesFd = open(f_types + ".py", 'w+')
-            self.write_service_types(f_types, fd)
+            self.write_service_types(f_types, typesFd)
 
         fd = open(f_services + ".py", 'w+')
         self.write_services(f_types, f_services, fd, hasSchema)
