@@ -62,6 +62,10 @@ class Results:
         return self
 
     def __repr__(self):
+        '''Calls recurse_fields to generate string giving
+           parameter names and their values.
+        '''
+
         resultList = ['method:  ' + self.methodName + '\n\n']
         value = self.resultDict.values()[0]
         if ((len(self.resultDict) == 1) and
@@ -85,6 +89,7 @@ class Results:
                 objName = obj.aname
         pyclass = getattr(obj, 'pyclass', None)
         arrayType = False
+            # check to see whether element is an array
         if pyclass:
             className = pyclass.__name__
             if className.find('ArrayOf') == 0:
@@ -92,6 +97,7 @@ class Results:
         if (type(obj) is list):
             ctr = 0
             for item in obj:
+                    # include list subscript
                 appendStr = '%s[%d].' % (name, ctr)
                 self.recurse_fields(fieldStr + appendStr, name, obj, item,
                                     resultList, level+1)
@@ -100,14 +106,18 @@ class Results:
         if arrayType:
             ctr = 0
             for item in obj.ofwhat:
+                    # include list subscript
                 appendStr = '%s[%d].%s' % (objName, ctr, item.aname)
                 testStr = '%s.%s' % (objName, item.aname)
+                    # don't go any further is field is None
                 result = eval(fieldStr + testStr)
                 if result:
                     self.recurse_fields(fieldStr + appendStr + '.', name, obj,
                                         item, resultList, level+1)
                 ctr += 1
             return
+                # Get name of previous field, stripping off any list
+                # subscripts or trailing periods.
         indx = fieldStr[:-1].rfind('.')
         testName = fieldStr[indx+1:]
         indx = testName.find('[')
@@ -115,10 +125,13 @@ class Results:
             testName = testName[:indx]
         if testName[-1] == '.':
             testName = testName[:-1]
+                # if compound element, recurse
         if isinstance(obj, ZSI.TC.Struct):
             if type(obj.ofwhat) is tuple:
                 for tc in obj.ofwhat:
                     if isinstance(tc, ZSI.TC.Struct):
+                            # make sure previous field is printed, if not
+                            # already
                         if testName == name:
                             appendStr = tc.aname + '.'
                         else:
@@ -126,23 +139,25 @@ class Results:
                         self.recurse_fields(fieldStr + appendStr, tc.aname,
                                         obj, tc, resultList, level+1)
                     else:
+                            # at leaf, get final value
                         if testName == name:
                             fname = fieldStr + tc.aname
                         else:
                             fname = fieldStr + name + '.' + tc.aname
-                        print fname
                         resultList.append('%s = %s\n' % (fname, eval(fname)))
-            else:
+            else:   # this happens in some cases, ofwhat not always a tuple
                 if testName == name:
                     appendStr = obj.ofwhat.aname + '.'
-                else:
+                else:       # make sure previous field printed
                     appendStr = name + '.' + obj.ofwhat.aname + '.'
                 self.recurse_fields(fieldStr + appendStr, obj.ofwhat.aname,
                                     obj, obj.ofwhat, resultList, level+1)
             return
 
+            # at leaf, may be typecode or Python type
         if isinstance(obj, ZSI.TC.TypeCode):
             fname = fieldStr + objName
+                # print name and its value
             resultList.append('%s = %s\n' % (fname, eval(fname)))
 
         else:
