@@ -334,8 +334,10 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
                                                "Method Not Found",
-                                               "%s : %s %s" % (nsmethod,
-                                                                 info[0:2])),
+                                               "%s : %s %s %s" % (nsmethod,
+                                                                  info[0],
+                                                                  info[1],
+                                                                  info[2])),
                                      encoding = self.server.encoding,
                                      config = self.server.config)
                 finally:
