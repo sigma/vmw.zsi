@@ -31,6 +31,7 @@ def print_debug(msg, level=1, *l, **kw):
 
 TC.Boolean.tag = 'boolean'
 TCcompound.Array.tag = 'array'
+TC.Decimal.tag = 'decimal'
 
 class NamespaceException(Exception): pass
 class BaseTypeInterpreter:
@@ -50,7 +51,8 @@ class BaseTypeInterpreter:
                             TC.HexBinaryString, TC.IunsignedByte, \
                             TC.gMonthDay, TC.InonPositiveInteger, \
                             TC.Ibyte, TC.FPdouble, TC.gTime, TC.gYear, \
-                            TC.Ilong, TC.IunsignedLong, TC.Ishort]
+                            TC.Ilong, TC.IunsignedLong, TC.Ishort, \
+                            TC.Decimal]
 
         self.__tc_to_int = [
             ZSI.TCnumbers.IEnumeration,
