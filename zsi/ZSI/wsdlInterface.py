@@ -1467,7 +1467,8 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                          LocalElementDeclaration )or \
              isinstance(tp, ZSI.wstools.XMLSchema.\
                         LocalAttributeDeclaration) or \
-             isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference):
+             isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference) or \
+             isinstance(tp, ZSI.wstools.XMLSchema.AttributeWildCard):
             return ZSISchemaDeclarationAdapter(tp)
         if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
             return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'),
@@ -1672,7 +1673,8 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
     def isWildCard(self):
         """boolean - wild card declaration?
         """
-        if isinstance(self._dec, ZSI.wstools.XMLSchema.ElementWildCard):
+        if isinstance(self._dec, ZSI.wstools.XMLSchema.ElementWildCard) or \
+               isinstance(self._dec, ZSI.wstools.XMLSchema.AttributeWildCard):
             return True
         else:
             return False
@@ -1699,9 +1701,16 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
             if hasattr( self._dec, 'content' ):
                 if isinstance( self._dec.content,
                                ZSI.wstools.XMLSchema.LocalComplexType):
+                    print self.getName()
                     return True
 
         return False
+
+    def getLocalDefinition(self):
+        localDef = ZSISchemaDefinitionAdapter(self._dec.content)
+        # massage the contents of the object to match up with wsdl2python
+        localDef._def.attributes['name'] = self.getName()
+        return localDef
 
     def isLocalElement(self):
         """boolean - an element?
