@@ -202,7 +202,7 @@ class WriteServiceModule:
         else:
             csuffix = "_Def"
             
-        f_types, f_services = self.get_module_names(output_dir)
+        f_types, f_services = self.get_module_names(output_dir, types=types)
         hasSchema = len(self._wa.getSchemaDict())
         
         if hasSchema:
@@ -217,7 +217,7 @@ class WriteServiceModule:
         self.write_services(f_types, f_services, fd, hasSchema,csuffix=csuffix)
         fd.close()
         
-    def get_module_names(self, output_dir=""):
+    def get_module_names(self, output_dir="", types=None):
         if self._wa.getName():
             name = nonColonizedName_to_moduleName( self._wa.getName() )
         else:
@@ -225,7 +225,11 @@ class WriteServiceModule:
 
         name = SplitQName(name)[1]
 
-        f_types = os.path.join(output_dir, '%s_services_types' % name)
+        if not types:
+            f_types = os.path.join(output_dir, '%s_services_types' % name)
+        else:
+            f_types = os.path.join(output_dir, types)
+
         f_services = os.path.join(output_dir, '%s_services' % name)
 
         return f_types, f_services
@@ -506,7 +510,7 @@ class ServiceDescription:
 		# Methods
                 # -----------------------------
 
-                if op.getInput():
+                if op.getInput() and op.getInput().getMessage():
                     inputName = op.getInput().getMessage().getName()
                     # these have been moved here to build up the typecodes
                     # needed to generate types in the docstrings

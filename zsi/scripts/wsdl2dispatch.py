@@ -248,8 +248,11 @@ class ServerCallbackDescription:
                                string.join(self.methods, '\n')], '\n') + '\n'
         return gen_str
 
-    def getStubName(self):
-        return '%s_server' % self.service
+    def getStubName(self, do_extended=0):
+        if do_extended:
+            return '%s_interface' % self.service[:-len("_services")]
+        else:
+            return '%s_server' % self.service
 
     def write(self, fd=sys.stdout):
         fd.write( self.getContents() )
@@ -274,7 +277,8 @@ def doCommandLine():
         'fromfile': False,
         'fromurl': False,
         'extended' : False,
-        'output_directory' : '.'
+        'output_directory' : '.',
+        'types' : None
         }
     
     try:
@@ -325,7 +329,8 @@ def main():
 
     ss.fromWsdl(wsdl, do_extended = args_d['extended'])
 
-    fd = open(os.path.join(args_d['output_directory'], ss.getStubName()+'.py'),
+    fd = open(os.path.join(args_d['output_directory'],
+                           ss.getStubName(args_d['extended'])+'.py'),
               'w+' )
 
     ss.write(fd)

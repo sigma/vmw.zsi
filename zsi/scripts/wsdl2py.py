@@ -77,7 +77,10 @@ def doCommandLine():
         elif opt in ['-d']:
             args_d['output_directory'] = val
         elif opt in ['-t']:
-            args_d['types'] = val
+            if val.endswith(".py"):
+                args_d['types'] = val[:-3]
+            else:
+                args_d['types'] = val
         else:
             print USAGE
             sys.exit(-1)
