@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-VERSION="0.9.9-pre6"
+VERSION="0.9.9pre6"
 CVS=1
 
 from distutils.core import setup, Command, Extension
@@ -13,7 +13,7 @@ long_description="SOAPpy provides tools for building SOAP clients and servers.  
 
 if CVS:
     import time
-    VERSION += "-CVS-"  + time.strftime('%Y-%m-%d')
+    VERSION += "_CVS_"  + time.strftime('%Y_%m_%d')
 
 
 setup(name="SOAPpy",
