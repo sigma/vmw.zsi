@@ -88,41 +88,6 @@ def setUpWsdl(path):
     return wsdl
 
 
-class ClientGenerator:
-
-    def generateCode(self, section, serviceName, subdirPath='.',
-                     schemaOnly=False, explicitPath=None):
-        subdirPath = os.path.dirname(thisFileName) + os.sep + subdirPath
-        if not os.path.exists(subdirPath):
-            os.mkdir(subdirPath)
-        if not os.path.exists(subdirPath + os.sep + '__init__.py'):
-            try:
-                shutil.copy('test.init.py', subdirPath + os.sep + '__init__.py')
-            except:
-                shutil.copy(os.path.dirname(thisFileName) + os.sep + 'test.init.py', subdirPath + os.sep + '__init__.py')
-        if section:
-            ch = ConfigHandler()
-            path = ch.get(section, serviceName)
-        else:
-            path = explicitPath
-        wsdl = setUpWsdl(path)
-        codegen = wsdl2python.WriteServiceModule(wsdl)
-        f_types, f_services = codegen.get_module_names()
-        hasSchema = len(codegen._wa.getSchemaDict())
-
-        if hasSchema:
-            fd = open(subdirPath + os.sep + f_types + '.py', 'w+')
-            codegen.write_service_types(f_types, fd)
-            fd.close()
-
-        if schemaOnly:
-            return
-
-        fd = open(subdirPath + os.sep + f_services + '.py', 'w+')
-        codegen.write_services(f_types, f_services, fd, hasSchema)
-        fd.close()
-
-
 class TestDiff:
     """TestDiff encapsulates comparing a string or StringIO object
        against text in a test file.  Test files are expected to
