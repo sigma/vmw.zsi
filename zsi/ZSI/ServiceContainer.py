@@ -5,19 +5,20 @@
 
 import urlparse, types, os, sys, thread, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+
 from ZSI import ParseException, FaultFromException, Fault
-from ZSI import _copyright, _seqtypes, resolvers
+from ZSI import _copyright, _seqtypes, resolvers, Version
 from ZSI.parse import ParsedSoap
 from ZSI.writer import SoapWriter
-from ZSI.dispatch import _ModPythonSendXML, _ModPythonSendFault, _CGISendXML, _CGISendFault
-from ZSI.dispatch import SOAPRequestHandler as BaseSOAPRequestHandler
 
 """
 Functions:
     _Dispatch
     AsServer
-
+    GetSOAPContext
+    
 Classes:
+    SOAPContext
     NoSuchService
     PostNotSpecified
     SOAPActionNotSpecified
@@ -128,9 +129,26 @@ class ServiceSOAPBinding:
         return self.soapAction[action]
 
 
-class SOAPRequestHandler(BaseSOAPRequestHandler):
+class SOAPRequestHandler(BaseHTTPRequestHandler):
     '''SOAP handler.
     '''
+    server_version = 'ZSI/%s ' % ".".join(map(str, Version())) + BaseHTTPRequestHandler.server_version
+
+    def send_xml(self, text, code=200):
+        '''Send some XML.
+        '''
+        self.send_response(code)
+        self.send_header('Content-type', 'text/xml; charset="utf-8"')
+        self.send_header('Content-Length', str(len(text)))
+        self.end_headers()
+        self.wfile.write(text)
+        self.wfile.flush()
+
+    def send_fault(self, f, code=500):
+        '''Send a fault.
+        '''
+        self.send_xml(f.AsSOAP(), code)
+    
     def do_POST(self):
         '''The POST command.
         '''
@@ -174,6 +192,19 @@ class SOAPRequestHandler(BaseSOAPRequestHandler):
             if _contexts.has_key(thread_id):
                 del _contexts[thread_id]
 
+
+#     def do_GET(self):
+#         '''The GET command.
+#         '''
+#         if self.path.endswith("?wsdl"):
+#             service_path = self.path[:-5]
+#             service = self.server.getNode(service_path)
+#             if hasattr(service, "_wsdl"):
+#                 self.send_xml(service._wsdl)
+#             else:
+#                 self.send_error(404)
+#         else:
+#             self.send_error(404)
 
 class ServiceContainer(HTTPServer):
     '''HTTPServer that stores service instances according 
