@@ -85,6 +85,7 @@ class Duration(TypeCode):
 class Gregorian(TypeCode):
     '''Gregorian times.
     '''
+    lex_pattern =tag = format = None
 
     def parse(self, elt, ps):
         self.checkname(elt, ps)
