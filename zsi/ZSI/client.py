@@ -4,7 +4,7 @@
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
 from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
-    FaultFromFaultMessage, _child_elements
+    FaultFromFaultMessage, _child_elements, _attrs
 from ZSI.auth import AUTH
 import base64, httplib, cStringIO as StringIO, types, time
 
@@ -252,17 +252,41 @@ class Binding:
         if self.ps.IsAFault():
             msg = FaultFromFaultMessage(self.ps)
             raise TypeError("Unexpected SOAP fault: " + msg.string)
+
         if replytype is None:
             tc = TC.Any(aslist=1)
             data = _child_elements(self.ps.body_root)
             if len(data) == 0: return None
 
+            # check for array type, loop and process if found
+            for attr in _attrs(data[0]):
+                if attr._get_localName().find('arrayType') >= 0:
+                    data = _child_elements(data[0])
+
+                    toReturn = []
+                    for node in data:
+                        type = node._get_localName()
+
+                        # handle case where multiple elements are returned
+                        if type.find('element') >= 0:
+                            node = _child_elements(node)[0]
+                            type = node._get_localName()
+                        try:
+                            # yes this is duplicated code and needs clean-up
+                            import ComplexTypes
+                            clazz = eval('ComplexTypes.%s' % type)
+                            instance = clazz.typecode.parse(node, self.ps)
+                            toReturn.append(instance)
+                        except Exception, e:
+                            toReturn.append(tc.parse(node, self.ps))
+                    return toReturn
+            
             type = data[0]._get_localName()
             try:
                 import ComplexTypes
                 instance = eval('ComplexTypes.%s' % type)
                 return instance.typecode.parse(data[0], self.ps)
-            except:
+            except Exception, e:
                 return tc.parse(data[0], self.ps)
         elif hasattr(replytype, 'typecode'):
             tc = replytype.typecode
