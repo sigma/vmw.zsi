@@ -1389,8 +1389,7 @@ class SchemaDescription:
                         self.postpend.set('\n%s# restricting....' % ID4)
                         self.postpend.write('\n%sself.ofwhat = tuple(TCList)' \
                                             % ID4)
-                        #self.postpend.write('\n%sself.lenofwhat = len(TCList)'\
-                                            % ID4)
+                        #self.postpend.write('\n%sself.lenofwhat = len(TCList)' % ID4)
                 else:
                     self.classdef.set('\n\n%sclass %s:' \
                                       % (ID1, tp.getName() + '_Dec'))
