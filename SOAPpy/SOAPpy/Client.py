@@ -46,6 +46,7 @@ from __future__ import nested_scopes
 import urllib
 from types import *
 import re
+import base64
 
 # SOAPpy modules
 from Errors      import *
