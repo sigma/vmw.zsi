@@ -13,6 +13,6 @@ setup(name="SOAPpy",
       maintainer_email="gregory_r_warnes@groton.pfizer.com",
       url = url,
       long_description=long_description,
-      packages=['SOAPpy','wstools'],
+      packages=['SOAPpy','SOAPpy/wstools'],
      )
 
