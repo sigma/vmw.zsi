@@ -5,7 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import FaultException
+from ZSI import EvaluateException, FaultException
 
 import utils
 from paramWrapper import ResultsToStr
@@ -34,16 +34,25 @@ class GlobalWeatherTest(unittest.TestCase):
             testdiff = utils.TestDiff(self, 'diffs')
 
         # requires a floating point ZSI typecode; in progress
-    def p_getWeatherReport(self):
+    def test_getWeatherReport(self):
         request = portType.inputWrapper('getWeatherReport')
             # airport code
         request._code = 'SFO'
         try:
+            self.failUnlessRaises(EvaluateException, portType.getWeatherReport, request)
+        except FaultException, msg:
+            if utils.failureException(FaultException, msg):
+                raise
+        """
+        try:
             response = portType.getWeatherReport(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
+        """
+
 
 def makeTestSuite():
     global service, portType, testdiff

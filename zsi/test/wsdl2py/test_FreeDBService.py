@@ -29,45 +29,50 @@ class FreeDBServiceTest(unittest.TestCase):
         try:
             response = portType.getDetails(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_search(self):
         try:
             response = portType.search('Ted Nugent and the Amboy Dukes')
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_searchByTitle(self):
         try:
             response = portType.searchByTitle('Ummagumma')
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_searchByTrack(self):
         try:
             response = portType.searchByTrack('Species of Animals')
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_searchByArtist(self):
         try:
             response = portType.searchByArtist('Steppenwolf')
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
     
 
 def makeTestSuite():

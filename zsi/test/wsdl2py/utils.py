@@ -93,12 +93,17 @@ def setUpWsdl(path):
 
 
 def failureException(exc, msg):
+    print 'called ', msg
     if msg.str.startswith('Connection timed out'):
         print msg
         sys.stdout.flush()
         return False
     else:
+        return True
+    """
+    else:
         raise
+    """
         
 
 class TestSetUp(ConfigParser.ConfigParser):

@@ -26,9 +26,10 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getAllServiceNames(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_getAllServiceSummaries(self):
@@ -36,9 +37,10 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getAllServiceSummaries(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_getServiceDetail(self):
@@ -47,9 +49,10 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getServiceDetail(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
     
     def test_getServiceNamesByPublisher(self):
@@ -58,9 +61,10 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getServiceNamesByPublisher(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
     
     def test_getServiceSummariesByPublisher(self):
@@ -69,9 +73,10 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getServiceSummariesByPublisher(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
 def makeTestSuite():

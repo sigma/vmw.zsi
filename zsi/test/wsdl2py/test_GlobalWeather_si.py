@@ -39,9 +39,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.getStation(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_isValidCode(self):
@@ -50,9 +51,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.isValidCode(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_listCountries(self):
@@ -60,9 +62,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.listCountries(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
     
 
     def test_searchByCode(self):
@@ -71,9 +74,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByCode(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_searchByCountry(self):
@@ -82,9 +86,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByCountry(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
     
         # can't find what valid name is, returns empty result
     def test_searchByName(self):
@@ -93,9 +98,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByName(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
         # can't find what valid region is, returns empty result
@@ -105,9 +111,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByRegion(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
     
 
 def makeTestSuite():

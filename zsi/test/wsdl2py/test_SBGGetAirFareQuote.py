@@ -45,9 +45,10 @@ class SBGAirFareQuoteTest(unittest.TestCase):
         try:
             response = portType.getAirFareQuote(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
 
 
     def test_getAirlines(self):
@@ -55,9 +56,10 @@ class SBGAirFareQuoteTest(unittest.TestCase):
         try:
             response = portType.getAirlines(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
     
 
 def makeTestSuite():

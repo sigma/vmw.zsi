@@ -43,9 +43,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.CorrectedAddressHtml(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        print ResultsToStr(response)
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print ResultsToStr(response)
     
 
     def test_CorrectedAddressXml(self):
@@ -56,9 +57,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.CorrectedAddressXml(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_FullZipCode(self):
@@ -69,9 +71,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.FullZipCode(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_ShortZipCode(self):
@@ -82,9 +85,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.ShortZipCode(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_VersionInfo(self):
@@ -92,9 +96,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.VersionInfo(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
 
 def makeTestSuite():

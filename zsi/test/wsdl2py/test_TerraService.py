@@ -42,9 +42,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.ConvertPlaceToLonLatPt(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_ConvertPlaceToLonLatPt_x1(self):
         request = portType.inputWrapper('ConvertPlaceToLonLatPt')
@@ -55,8 +56,8 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             self.failUnlessRaises(Exception, portType.ConvertPlaceToLonLatPt, request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
+            if utils.failureException(FaultException, msg):
+                raise
 
     def test_ConvertLonLatPtToNearestPlace(self):
         request = portType.inputWrapper('ConvertLonLatPtToNearestPlace')
@@ -66,9 +67,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.ConvertLonLatPtToNearestPlace(request)   
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_ConvertLonLatPtToUtmPt(self):
@@ -79,9 +81,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.ConvertLonLatPtToUtmPt(request)  
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_ConvertUtmPtToLonLatPt(self):
@@ -93,9 +96,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.ConvertUtmPtToLonLatPt(request)  
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_CountPlacesInRect(self):
         request = portType.inputWrapper('CountPlacesInRect')
@@ -109,9 +113,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.CountPlacesInRect(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     
     def test_GetAreaFromPt(self):
@@ -126,13 +131,13 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetAreaFromPt(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
 
-        '''service no longer likes these parameters'''
-    def badparams_GetAreaFromRect(self):
+    def test_GetAreaFromRect(self):
         request = portType.inputWrapper('GetAreaFromRect')
         request._upperLeft = service.ns1.LonLatPt_Def()
         request._upperLeft._Lon = -122.64
@@ -145,13 +150,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetAreaFromRect(request)
         except FaultException, msg:
-            if msg == 'Connection timed out':
-                print msg
-                sys.stdout.flush()
-                return
-            else:
+            if utils.failureException(FaultException, msg):
                 raise
-        testdiff.failUnlessEqual(ResultsToStr(response))
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
 
     def test_GetAreaFromTileId(self):
@@ -168,9 +170,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetAreaFromTileId(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetLatLonMetrics(self):
         request = portType.inputWrapper('GetLatLonMetrics')
@@ -180,42 +183,60 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetLatLonMetrics(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
 
         # derived type (enum) problem
-    def later_GetPlaceFacts(self):
+    def test_GetPlaceFacts(self):
         request = portType.inputWrapper('GetPlaceFacts')
         request._place = service.ns1.Place_Def()
         request._place._City = 'Seattle'
         request._place._State = 'Washington'
         request._place._Country = 'United States'
         try:
+            self.failUnlessRaises(EvaluateException, portType.GetPlaceFacts, request)
+        except FaultException, msg:
+            if utils.failureException(FaultException, msg):
+                raise
+        """
+        try:
             response = portType.GetPlaceFacts(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
+        """
 
 
         # derived type (enum) problem
-        # also consistent timeout problem for this call
-    def later_GetPlaceList(self):
+        # also inconsistent timeout problem for this call
+    def test_GetPlaceList(self):
         request = portType.inputWrapper('GetPlaceList')
         request._placeName = 'New York'
         request._MaxItems = 5
         request._imagePresence = 0
-        #response = portType.GetPlaceList(request)
-        #testdiff.failUnlessEqual(ResultsToStr(response))
         try:
             self.failUnlessRaises(EvaluateException, portType.GetPlaceList, request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
+            if utils.failureException(FaultException, msg):
+                raise
+        """
+        try:
+            response = portType.GetPlaceList(request)
+        except FaultException, msg:
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
+        """
 
-    def timingout_GetPlaceListInRect(self):
+
+        # consistent timeout problem for this call
+    def test_GetPlaceListInRect(self):
         request = portType.inputWrapper('GetPlaceListInRect')
         request._upperleft = service.ns1.LonLatPt_Def()
         request._upperleft._Lon = -123.0
@@ -223,16 +244,19 @@ class TerraServiceSoapTest(unittest.TestCase):
         request._lowerright = service.ns1.LonLatPt_Def()
             # needs to be small, otherwise different items
             # returned each time
-        request._lowerright._Lon = -122.5
-        request._lowerright._Lat = 43.5
+        request._lowerright._Lon = -122.7
+        request._lowerright._Lat = 43.7
         request._ptype = "HillMountain"
         request._MaxItems = 3
         try:
             response = portType.GetPlaceListInRect(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            print 'got timeout'
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            print 'no exception'
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTheme(self):
         request = portType.inputWrapper('GetTheme')
@@ -240,9 +264,10 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetTheme(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
-        testdiff.failUnlessEqual(ResultsToStr(response))
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
 
     def test_GetTile(self):
@@ -256,10 +281,11 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetTile(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
-        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTileMetaFromLonLatPt(self):
         request = portType.inputWrapper('GetTileMetaFromLonLatPt')
@@ -271,10 +297,11 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetTileMetaFromLonLatPt(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
-        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTileMetaFromTileId(self):
         request = portType.inputWrapper('GetTileMetaFromTileId')
@@ -287,10 +314,11 @@ class TerraServiceSoapTest(unittest.TestCase):
         try:
             response = portType.GetTileMetaFromTileId(request)
         except FaultException, msg:
-            if not utils.failureException(FaultException, msg):
-                return
+            if utils.failureException(FaultException, msg):
+                raise
+        else:
+            testdiff.failUnlessEqual(ResultsToStr(response))
 
-        testdiff.failUnlessEqual(ResultsToStr(response))
 
 def makeTestSuite():
     global service, portType, testdiff
