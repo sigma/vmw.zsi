@@ -48,6 +48,7 @@ class ServiceProxy:
         self._ns = ns
         self._op_ns = op_ns
         self._use_wsdl = use_wsdl
+        self.methods = {}
         
         binding = self._port.getBinding()
         portType = binding.getPortType()
@@ -56,6 +57,7 @@ class ServiceProxy:
                 callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
                 method = MethodProxy(self, callinfo)
                 setattr(self, item.name, method)
+                self.methods.setdefault(item.name, []).append(method)
 
     def _call(self, name, *args, **kwargs):
         """Call the named remote web service method."""
@@ -64,7 +66,18 @@ class ServiceProxy:
                 'Use positional or keyword argument only.'
                 )
 
+
+        # use the callinfo based upon the name of the method
         callinfo = getattr(self, name).callinfo
+
+        # go through the list of defined methods, and look for the one with
+        # the same number of arguments as what was passed.  this is a weak
+        # check that should probably be improved in the future to check the
+        # types of the arguments to allow for polymorphism
+        for method in self.methods[name]:
+            if len(method.callinfo.inparams) == len(kwargs):
+                callinfo = method.callinfo
+                
         soapAction = callinfo.soapAction
         url = callinfo.location
         (scheme, host, uri, query, fragment, identifier) = urlparse(url)
