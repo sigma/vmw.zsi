@@ -144,7 +144,8 @@ The only trick is to use __import__ to load the XML encodings your service
 expects.  This is a required workaround to avoid the pitfalls of restricted
 execution with respect to XML parsing.
 
-The following is a complete example of a simple handler named MyHandler:
+The following is a complete example of a simple handler.  The soap operations
+are implemented in the MyHandler module:
 
 \begin{verbatim}
 def hello():
@@ -157,7 +158,13 @@ def average(*args):
     sum = 0
     for i in args: sum += i
     return sum / len(args)
+\end{verbatim}
 
+Dispatching from within mod_python is achieved by passing the aforementined
+MyHandler module to \code{dispatch.AsHandler()}.  The following code exposes
+the operations defined in MyHandler via SOAP:
+
+\begin{verbatim}
 from ZSI import dispatch
 from mod_python import apache
 
