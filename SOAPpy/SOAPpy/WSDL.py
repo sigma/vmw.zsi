@@ -7,6 +7,7 @@ ident = '$Id$'
 import wstools
 from Client import SOAPProxy, SOAPAddress
 from Config import Config
+import urllib
 
 class Proxy:
     """WSDL Proxy.
@@ -30,9 +31,7 @@ class Proxy:
     See WSDLTools.SOAPCallinfo for more info on each method's attributes.
     """
 
-    def __init__(self, wsdlsource,
-                 throw_faults = 1, unwrap_results = 1,
-                 http_proxy=None, config = Config,noroot = 0):
+    def __init__(self, wsdlsource, config=Config, **kw ):
 
         reader = wstools.WSDLTools.WSDLReader()
         self.wsdl = None
@@ -57,10 +56,10 @@ class Proxy:
                 pass
 
         if self.wsdl is None:
-            import urllib
-            try: 
+            try:
                 stream = urllib.urlopen(wsdlsource)
-                self.wsdl = reader.loadFromURL(wsdlsource)
+                self.wsdl = reader.loadFromStream(stream)
+
                 #print 'url'
             except (IOError, OSError): pass
 
@@ -82,10 +81,7 @@ class Proxy:
             self.methods[callinfo.methodName] = callinfo
 
         self.soapproxy = SOAPProxy('http://localhost/dummy.webservice',
-                                   throw_faults = throw_faults,
-                                   unwrap_results = unwrap_results,
-                                   http_proxy=http_proxy,
-                                   config = config)
+                                   config=config, **kw)
 
     def __str__(self): 
         s = ''
