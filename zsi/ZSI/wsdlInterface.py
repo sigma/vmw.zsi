@@ -1771,10 +1771,11 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
     def getName(self):
         """returns name
         """
-        if self._dec.attributes.has_key('name'):
-            return self.mangle(self._dec.attributes['name'])
-        else:
-            return None
+        if hasattr( self._dec, 'attributes'):
+            if self._dec.attributes.has_key('name'):
+                return self.mangle(self._dec.attributes['name'])
+            
+        return None
 
     def getTargetNamespace(self):
         """return namespace
@@ -1830,6 +1831,14 @@ class ZSIElementReferenceAdapter(AdapterBase, ZSISchemaDeclarationAdapter):
     def isElementReference(self):
         return True
 
+    def getName(self):
+        if not ZSISchemaDeclarationAdapter.getName(self):
+            if hasattr( self._ref, 'attributes'):
+                if self._ref.attributes.has_key('ref'):
+                    return self._ref.attributes['ref'][1]
+        else:
+            return ZSISchemaDeclarationAdapter.getName(self)
+
     def getMinOccurs(self):
         """min occurs in local element dec
         """
@@ -1853,6 +1862,9 @@ class ZSIElementReferenceAdapter(AdapterBase, ZSISchemaDeclarationAdapter):
             return self._ref.attributes['nillable']
         else:
             return 0
+
+    def getTargetNamespace(self):
+        return self._ref.getTargetNamespace()
 
 class ZSIModelGroupAdapter(AdapterBase, ModelGroupInterface):
     def isAll(self):
