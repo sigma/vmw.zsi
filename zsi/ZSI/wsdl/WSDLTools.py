@@ -147,6 +147,7 @@ class WSDL:
                 break
             for element in imports:
                 self._import(document, element)
+                location = DOM.getAttr(element, 'location')
                 imported[location] = 1
 
         for element in DOM.getElements(definitions, None, None):
