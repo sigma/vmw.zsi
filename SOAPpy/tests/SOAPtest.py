@@ -679,6 +679,8 @@ class SOAPTestCase(unittest.TestCase):
    <item xsi:type="xsd:int">-31</item>
    </param>
    <param1 xsi:null="1"></param1>
+   <param2 xsi:null="true"></param2>
+   <param3 xsi:type="xsd:int" xsi:null="false">7</param3>
    </Bounds>
    </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
@@ -690,12 +692,16 @@ class SOAPTestCase(unittest.TestCase):
             self.assertEquals(s['param'][2], 0)
             self.assertEquals(s['param'][3], -31)
             self.assertEquals(s['param1'], None)
+            self.assertEquals(s['param2'], None)
+            self.assertEquals(s['param3'], 7)
         else:
             self.assertEquals(s.param[0], 12)
             self.assertEquals(s.param[1], "Egypt")
             self.assertEquals(s.param[2], 0)
             self.assertEquals(s.param[3], -31)
             self.assertEquals(s.param1, None)
+            self.assertEquals(s.param2, None)
+            self.assertEquals(s.param3, 7)
 
     def testFault(self):
         my_xml5 = '''
