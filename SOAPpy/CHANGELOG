@@ -1,6 +1,17 @@
 
 SOAP.py
 
+CHANGES SINCE VERSION 0.9.9-pre4
+
+- Added client support for WSDL, ported from ZSI by Mark Bucciarelli
+  <mark@hubcapconsulting.com>.
+
+CHANGES SINCE VERSION 0.9.9-pre3
+
+- Code shared between SOAPpy and ZSI now lives in
+  SOAPpy/SOAPpy/wstools and is stored in a separate CVS package.  This
+  will allow ZSI and SOAPpy to keep these files synchronized.
+
 CHANGES SINCE VERSION 0.9.9-pre2
 
 - Fixed trivial compilation bug on Win32: Only define
