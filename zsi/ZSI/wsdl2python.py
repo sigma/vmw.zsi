@@ -172,7 +172,8 @@ class WriteServiceModule:
     """Takes a wsdl object and creates the client interface and typecodes for 
        the service.
     """
-    def __init__(self, wsdl, importlib=None, typewriter=None):
+    def __init__(self, wsdl, importlib=None, typewriter=None,
+                 aname_func=lambda x: "_%s" % x):
         """wsdl - wsdl.Wsdl instance
         """
         self.wsdl  = wsdl
@@ -185,6 +186,7 @@ class WriteServiceModule:
         self._importlib  = importlib
         self._typewriter = typewriter
         self.typeDict = {}
+        self.aname_func = aname_func
 
     def write(self, schemaOnly=False):
         """Write schema instance contents w/respect to dependency requirements, 
@@ -247,7 +249,7 @@ class WriteServiceModule:
 	fd.write(header)
         
         for service in self._wa.getServicesList():
-            sd = ServiceDescription()
+            sd = ServiceDescription(self.aname_func)
             if hasSchema:
                 sd.imports += ['\nfrom %s import *' % f_types]
                 for ns in self.nsh.getNSList():
@@ -316,7 +318,7 @@ class WriteServiceModule:
                     alternateWriter = ( self._importlib, self._typewriter )
                 else:
                     alternateWriter = None
-                sd = SchemaDescription()
+                sd = SchemaDescription(aname_func = self.aname_func)
                 sd.fromWsdl(schema, alternateWriter)
                 sd.write(fd)
                     # typeDict used when generating 'services' file
@@ -330,8 +332,9 @@ class ServiceDescription:
     """Generates client interface.  Writes out an abstract interface, 
        a locator class, and port classes.
     """
-    def __init__(self):
+    def __init__(self, aname_func=lambda x: "_%s" % x):
 	self.imports = []
+        self.aname_func = aname_func
 
     def write(self, fd=sys.stdout):
         """Write service instance contents.  Must call fromWsdl with
@@ -491,7 +494,8 @@ class ServiceDescription:
                     inputName = op.getInput().getMessage().getName()
                     # these have been moved here to build up the typecodes
                     # needed to generate types in the docstrings
-                    self.messages[inputName] = self.__class__.MessageWriter()
+                    self.messages[inputName] = \
+                               self.__class__.MessageWriter(self.aname_func)
                 
                     self.messages[inputName].\
                                   fromMessage(op.getInput().getMessage(), 
@@ -501,7 +505,8 @@ class ServiceDescription:
                     if op.getOutput() and op.getOutput().getMessage():
                         outputName = op.getOutput().getMessage().getName()
                         self.messages[outputName] = \
-                                      self.__class__.MessageWriter()
+                                                  self.__class__.MessageWriter(
+                                                    aname_func=self.aname_func)
                         self.messages[outputName].\
                                       fromMessage(op.getOutput().getMessage(), 
                                                   outputName,
@@ -610,10 +615,11 @@ class ServiceDescription:
     class MessageWriter:
         """Generates a class representing a message.
         """
-	def __init__(self):
+        def __init__(self, aname_func=lambda x: "_%s" % x ):
             self.nsh = NamespaceHash()
 	    self.typecode = None
             self.typeList = []
+            self.aname_func = aname_func
 
 	def __str__(self):
 	    return self.typecode
@@ -653,11 +659,11 @@ class ServiceDescription:
 	    for p in message.getPartList():
                 if p.getType():
                     tns = p.getType().getTargetNamespace()
-                    tp = self.__class__.PartWriter()
+                    tp = self.__class__.PartWriter(self.aname_func)
                     tp.fromPart(p)
                     if tp.typecode[0][0:3] == 'ZSI':
                         l += tp.typecode
-                        self.typecode += '\n%sself._%s = None'\
+                        self.typecode += '\n%sself.%s = None'\
                                          % ( ID2, p.getName() )
                             # for later use in docstring generation
                         self.typeList.append(['_' + tp.docCode[0], tp.docCode[1], False])
@@ -670,8 +676,8 @@ class ServiceDescription:
                         l += qualifiedtc
                         defclass = tp.typecode[0][0:]
                         defclass = defclass[0:defclass.find('(')] + '_Def()'
-                        self.typecode += '\n%sself._%s = %s.%s'\
-                                         % ( ID2, p.getName(),
+                        self.typecode += '\n%sself.%s = %s.%s'\
+                                         % ( ID2, self.aname(p.getName()),
                                              self.nsh.getAlias(tns),
                                              defclass )
                         self.typeList.append(['_' + tp.docCode[0],
@@ -687,9 +693,14 @@ class ServiceDescription:
                 self.typecode += '\n%sif ns:' % ID3
                 self.typecode += "\n%soname += ' xmlns=\"%%s\"' %% ns" % ID4
 		tcs = ''
-		for i in l: tcs += (i + ',')
-                self.typecode += '\n%sZSI.TC.Struct.__init__(self, %s, [%s], pname=name, aname="_%%s" %% name, oname=oname )'\
-                                 %( ID3, message.getName(), tcs )
+		for i in l:
+                    tcs += (i + ',')
+
+                if self.aname_func:
+                    f = self.aname_func
+                    name = f(name)
+
+                self.typecode += '\n%sZSI.TC.Struct.__init__(self, %s, [%s], pname=name, aname="%%s" %% name, oname=oname )' %( ID3, message.getName(), tcs )
 
             # do the wrapper do go with the message
 
@@ -725,7 +736,7 @@ class ServiceDescription:
 
 	    for p in message.getPartList():
 		if p.getElement():
-		    tp = self.__class__.PartWriter()
+		    tp = self.__class__.PartWriter(self.aname_func)
 		    tp.fromPart(p)
 		    if tp.name:
                         nsp = self.nsh.getAlias(p.getElement().\
@@ -750,7 +761,7 @@ class ServiceDescription:
 		    break
 		else:
 		    if p.getType():
-			tp = self.__class__.PartWriter()
+			tp = self.__class__.PartWriter(self.aname_func)
 			tp.fromPart(p)
                         if tp.typecode[0][0:3] != 'ZSI':
                             qualifiedtc = tp.typecode[0:]
@@ -773,7 +784,7 @@ class ServiceDescription:
                     namespace = ''
                 if style == 'rpc':
                     namespace = ''
-		self.typecode += '\n%s%s.typecode = Struct(%s,[%s], pname=name, aname="_%%s" %% name, oname="%%s  xmlns=\\"%s\\"" %% name )'\
+		self.typecode += '\n%s%s.typecode = Struct(%s,[%s], pname=name, aname="%%s" %% name, oname="%%s  xmlns=\\"%s\\"" %% name )'\
 			     %(ID2,message.getName(),message.getName(),
                                tcs,namespace)
 
@@ -865,12 +876,13 @@ class ServiceDescription:
             """Generates a string representation of a typecode representing
                a <message><part>
             """
-	    def __init__(self):
+            def __init__(self, aname_func):
 		self.typecode = None
                 self.tns = None
 		self.name = None
                 self.docCode = []
-
+                self.aname_func = aname_func
+                
 	    def __recurse_tdc(self, tp):
                 """tp -- schema.TypeDescriptionComponent instance
                 """
@@ -917,15 +929,16 @@ class ServiceDescription:
                         else:
                             t = tpc
 
-			self.typecode.append('%s(pname="%s",aname="_%s",optional=1)' \
+			self.typecode.append('%s(pname="%s",aname="%s",optional=1)' \
                                              %(t, part.getName(mangle=False),
-                                               part.getName()))
+                                               self.aname_func(part.getName())))
 		    elif tp.getName():
 
                         self.docCode.append(part.getName())
                         self.docCode.append(tp.getName())
-			self.typecode.append('%s(pname="%s",aname="_%s",optional=1)' \
-                                             %(tp.getName(mangle=False), part.getName(),
+			self.typecode.append('%s(pname="%s",aname="%s",optional=1)' \
+                                             %(tp.getName(mangle=False),
+                                               self.aname_func(part.getName()),
                                                part.getName()))
 		    else:
 			raise WsdlGeneratorError, 'shouldnt happen'
@@ -944,10 +957,11 @@ class SchemaDescription:
     """Generates classes for all global definitions and declarations in 
        a schema instance.
     """
-    def __init__(self):
+    def __init__(self, aname_func = None):
         self.nsh = NamespaceHash()
         self.typeDict = {}
-
+        self.aname_func = aname_func
+        
     def fromWsdl(self, schema, alternateWriter):
         """schema -- schema.Schema instance
         """
@@ -987,12 +1001,12 @@ class SchemaDescription:
 
         if alternateWriter:
             exec( 'import %s' % alternateWriter[0] )
-            alternateWriter = '%s.%s()' % (alternateWriter[0],
+            alternateWriter = '%s.%s(self.aname_func)' % (alternateWriter[0],
                                            alternateWriter[1] )
         
 	for name, tp in sdict.items():
             
-            defaultWriter = 'self.__class__.TypeWriter()'
+            defaultWriter = 'self.__class__.TypeWriter(self.aname_func)'
             
             if alternateWriter:
                 exec( 'tw = %s' % alternateWriter )
@@ -1051,7 +1065,8 @@ class SchemaDescription:
         """Generates a string representation of a typecode representing
            a schema declaration or definition.
         """
-	def __init__(self):
+	def __init__(self, aname_func = None):
+            self.aname_func = aname_func
 	    self.bti = BaseTypeInterpreter()
             self.nsh = NamespaceHash()
 	    self.name = None
@@ -1156,7 +1171,7 @@ class SchemaDescription:
                     self.initcode.write('\n%sif name:' % ID3)
                     self.initcode.write('\n%skw["pname"] = name' \
                                         % ID4)
-                    self.initcode.write('\n%skw["aname"] = "_%%s" %% name' \
+                    self.initcode.write('\n%skw["aname"] = "%%s" %% name' \
                                         % ID4)
                     self.initcode.write('\n%(INDENT)skw["oname"] = \'%%s xmlns:tns="%%s"\' %%(name,%(ALIAS)s.targetNamespace)' %{"INDENT":ID4, "ALIAS":alias})
                     self.basector.set('\n%s%s.__init__(self, **kw)'\
@@ -1167,7 +1182,7 @@ class SchemaDescription:
                     self.classdef.set('\n\n%sclass %s(ZSI.TC.Any):' \
                                       % (ID1, tp.getName() + '_Def'))
                     self.initcode.write('\n%s# probably a union - dont trust it' % ID3)
-                    self.basector.set('\n%sZSI.TC.Any.__init__(self,pname=name,aname="_%%s" %% name , optional=1,repeatable=1, **kw)' % ID3)
+                    self.basector.set('\n%sZSI.TC.Any.__init__(self,pname=name,aname="%%s" %% name , optional=1,repeatable=1, **kw)' % ID3)
 
                 self.typeDoc('optional=1', objName, typeName)
             elif hasattr(tp, '_def'):
@@ -1206,7 +1221,7 @@ class SchemaDescription:
                 self.classdef.set('\n\n%sclass %s_Dec(Struct):' \
                                   % (ID1, tp.getName()))
                 self.initdef.set('\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2))
-                self.basector.set('\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="_%s", inline=1)' % (ID3,tp.getName(mangle=False),tp.getName()))
+                self.basector.set('\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="%s", inline=1)' % (ID3,tp.getName(mangle=False),self.aname_func(tp.getName())))
             else:
                 raise WsdlGeneratorError, 'Expecting a type definition: ' \
                       % (etp.getItemTrace())
@@ -1230,7 +1245,7 @@ class SchemaDescription:
                               % ID3)
             self.initcode.write('\n%sns = ns or self.__class__.schema' % ID3)
 
-            self.basector.set('\n\n%s%s.__init__(self,pname=name, aname="_%%s" %% name,  **kw)' % (ID3,tpc))
+            self.basector.set('\n\n%s%s.__init__(self,pname=name, aname="%%s" %% name,  **kw)' % (ID3,tpc))
             typeName = self.bti.get_pythontype(None, None, tpc)
             self.typeDoc('', '__param', typeName)
                   
@@ -1449,7 +1464,7 @@ class SchemaDescription:
                     except:
                         raise WsdlGeneratorError, 'arrayType must be specified.'
                     self.basector.set(\
-                        "\n%s%s.__init__(self, '%s', %s%s(name=None,typed=0), pname=name, aname='_%%s' %% name, oname='%%s xmlns:%s=\"%s\"' %% name, **kw)" %(ID3, tc, arrayType, nsp, atype, atypePrefix, atypeNS)
+                        "\n%s%s.__init__(self, '%s', %s%s(name=None,typed=0), pname=name, aname='%%s' %% name, oname='%%s xmlns:%s=\"%s\"' %% name, **kw)" %(ID3, tc, arrayType, nsp, atype, atypePrefix, atypeNS)
                     )
                         
                     self.typeDoc('', '_element', typeName)
@@ -1548,12 +1563,14 @@ class SchemaDescription:
                         etp = e.getType()
          
                     if e.getName():
-                        self.initcode.write('\n%sself._%s = None' \
-                                            % (ID3, e.getName()))
+                        self.initcode.write('\n%sself.%s = None' \
+                                            % (ID3,
+                                               self.aname_func(e.getName())))
                     elif etp and etp.getName():
                         # element references
-                        self.initcode.write('\n%sself._%s = None' \
-                                            % (ID3, etp.getName()))
+                        self.initcode.write('\n%sself.%s = None' \
+                                            % (ID3,
+                                               self.aname_func(etp.getName())))
 
                     if e.getName():
                         objName = '_' + e.getName()
@@ -1569,8 +1586,9 @@ class SchemaDescription:
 
                     elif e.isDeclaration() and e.isAnyType():
                         typeName = 'XML'
-                        typecodelist  += 'ZSI.TC.XML(pname="%s",aname="_%s"), '\
-                                         %(e.getName(mangle=False),e.getName())
+                        typecodelist  += 'ZSI.TC.XML(pname="%s",aname="%s"), '\
+                                         %(e.getName(mangle=False),
+                                           self.aname_func(e.getName()))
 
                     elif e.isDeclaration() and e.isElementReference():
                         occurs = self._calculateOccurance(e)
@@ -1600,8 +1618,9 @@ class SchemaDescription:
                                 typeName = 'Any'
                                             
                             typecodelist +=\
-                                         '%s(pname="%s",aname="_%s"%s), ' \
-                                         %(tpc,e.getName(mangle=False),e.getName(),
+                                         '%s(pname="%s",aname="%s"%s), ' \
+                                         %(tpc,e.getName(mangle=False),
+                                           self.aname_func(e.getName()),
                                            occurs)
                         else:
                             nsp = self.nsh.getAlias(etp.getTargetNamespace())
@@ -1677,7 +1696,7 @@ class SchemaDescription:
 
 
             self.initcode.write('\n\n%sif name:' % ID3)
-            self.initcode.write("\n%saname = '_%%s' %% name" % ID4)
+            self.initcode.write("\n%saname = '%%s' %% name" % ID4)
             self.initcode.write('\n%sif ns:' % ID4)
             self.initcode.write("\n%soname += ' xmlns=\"%%s\"' %% ns" % ID5)
             self.initcode.write('\n%selse:' % ID4)
@@ -1745,8 +1764,9 @@ class SchemaDescription:
         def _getWildcardTypecode(self, e, occurs):
             # this is totally dubious
             if e.getName():
-                return 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
-                       %(e.getName(mangle=False),e.getName(),occurs)
+                return 'ZSI.TC.Any(pname="%s",aname="%s"%s), '\
+                       %(e.getName(mangle=False),
+                         self.aname_func(e.getName()),occurs)
             else:
                 return 'ZSI.TC.Any(pname=None,aname=None%s), '\
                        %(occurs)
