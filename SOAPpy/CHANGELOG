@@ -3,6 +3,9 @@ SOAP.py
 
 CHANGES SINCE VERSION 0.9.8-pre1
 
+- Added request for nested scopes, should now work properly in python
+  2.1 with named argument calls.
+
 - Fixed bug caused by omission of the ieee754 module from __init__.py.
 
 - SOAPpy now provides a SOAPUnixSocketServer class, which uses a unix
