@@ -53,7 +53,16 @@ ws = ' \t\r\n'
 N = None
                    
 class SOAPTestCase(unittest.TestCase):
-        # test struct
+    # test arrayType
+    def testArrayType(self):
+        x = structType( {"name":"widg1","quantity":200,
+                              "price":decimalType(45.99),
+                              "_typename":"LineItem"})
+        y = buildSOAP([x, x])
+        # could be parsed using an XML parser?
+        self.failUnless(string.find(y, "LineItem")>-1)
+    
+    # test arguments ordering
     def testOrdering(self):
         x = buildSOAP(method="newCustomer", namespace="urn:customer", \
                       kw={"name":"foo1", "address":"bar"}, \
@@ -66,6 +75,7 @@ class SOAPTestCase(unittest.TestCase):
         # could be parsed using an XML parser?
         self.failUnless(string.find(x, "<address ")>string.find(x, "<name "))
 
+    # test struct
     def testStructIn(self):
         x = '''<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">

@@ -3160,7 +3160,7 @@ class SOAPBuilder:
                 ns, ndecl = self.genns(ns_map, tns)
 
                 try:
-                    typename = last._typename
+                    typename = sample._typename
                 except:
                     typename = "SOAPStruct"
 
