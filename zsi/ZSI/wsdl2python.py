@@ -402,7 +402,7 @@ class ServiceDescription:
                                              % ( ID3 )
             myBinding['defs']['__init__'] += '\n%sif not kw.has_key("url"):'\
                                              % ID2
-            myBinding['defs']['__init__'] += '\n%skw["url"] = addr' %(ID3)
+            myBinding['defs']['__init__'] += '\n%skw["url"] =  urlparse.urlparse(addr)[2]' %(ID3)
             myBinding['defs']['__init__'] += '\n%sself.binding = client.Binding(**kw)' %(ID2)
 
             
