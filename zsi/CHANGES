@@ -5,6 +5,7 @@ Changes for ??, released ???:
     -   TypeCode enabled classes now support parameters in the constructor
     -   Automatic parsing of ComplexTypes in response messages 
     -   WSDL Parsing and operation invocation via ServiceProxy
+    -   Tuple returned from dates and times (instead of a list)
 
 Changes for 1.3, released xx-May-2002:
     -	Fixed parsing bug evidenced by dW article
