@@ -17,7 +17,6 @@ from SOAPpy import *
 config=Config
 config.unwrap_results=1
 config.strict_range=1
-#config.debug=True
 
 # as borrowed from jake.soapware.org for float compares.
 def nearlyeq(a, b, prec = 1e-7):
@@ -799,6 +798,7 @@ class SOAPTestCase(unittest.TestCase):
             except faultType:
                 pass
         else:
+            z = parseSOAPRPC(y)
             self.assertEquals( x.faultcode ,  z.faultcode)
             self.assertEquals( x.faultstring ,  z.faultstring)
             self.assertEquals( x.detail ,  z.detail)
