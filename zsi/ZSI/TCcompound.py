@@ -106,7 +106,7 @@ class Struct(TypeCode):
                         raise e
                     if what.repeatable:
                         if v.has_key(what.aname):
-                            v[what.aname] = v[what.aname].append(value)
+                            v[what.aname].append(value)
                         else:
                             v[what.aname] = [value]
                     else:
