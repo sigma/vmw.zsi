@@ -75,7 +75,10 @@ def formatSchemaObject(fname, schemaObj):
 
     f = fake()
 
-    tmp = fname.split('.')
+    if fname.rfind('/'):
+        tmp = fname[fname.rfind('/') + 1 :].split('.')
+    else:
+        tmp = fname.split('.')
 
     f.name  = tmp[0] + '_' + tmp[1]
     f.types = { schemaObj.targetNamespace : schemaObj }
