@@ -26,10 +26,10 @@ setup(
     packages=[ "ZSI", "ZSI.wstools" ],
     scripts=["scripts/wsdl2py.py", "scripts/wsdl2dispatch.py"],
     description="Zolera SOAP Infrastructure",
-    author="Rich Salz",
+    author="Rich Salz, et al",
     author_email="rsalz@datapower.com",
-    maintainer="Rich Salz",
-    maintainer_email="rsalz@datapower.com",
+    maintainer="Rich Salz, et al",
+    maintainer_email="pywebsvcs-talk@lists.sf.net",
     url=_url,
     long_description='For additional information, please see ' + _url
 )
