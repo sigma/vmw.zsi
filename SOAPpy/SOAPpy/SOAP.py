@@ -1,7 +1,7 @@
 #!/usr/bin/python
 ################################################################################
 #
-# SOAP.py 0.9.7 - Cayce Ullman       (cayce@actzero.com)
+# SOAP.py 0.9.8 - Cayce Ullman       (cayce@actzero.com)
 #                 Brian Matthews     (blm@actzero.com)
 #                 Gregory Warnes     (gregory_r_warnes@groton.pfizer.com)
 #                 Christopher Blunck (blunck@gst.com)
@@ -3484,7 +3484,7 @@ class HTTPTransport:
             debugHeader(s)
             print "POST %s %s" % (real_path, r._http_vsn_str)
             print "Host:", addr.host
-            print "User-agent: SOAP.py " + __version__ + " (actzero.com)"
+            print "User-agent: SOAP.py " + __version__ + " (http://pywebsvcs.sf.net)"
             print "Content-type:", t
             print "Content-length:", len(data)
             print 'SOAPAction: "%s"' % soapaction
@@ -3762,7 +3762,7 @@ class SOAPServer(SocketServer.TCPServer):
 
     class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         def version_string(self):
-            return '<a href="http://www.actzero.com/solution.html">' + \
+            return '<a href="http://pywebsvcs.sf.net">' + \
                 'SOAP.py ' + __version__ + '</a> (Python ' + \
                 sys.version.split()[0] + ')'
 
