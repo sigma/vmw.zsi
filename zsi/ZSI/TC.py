@@ -321,7 +321,7 @@ class Any(TypeCode):
             serializer = Any.serialmap.get(tc)
             if not serializer and isinstance(pyobj, time.struct_time):
                 from ZSI.TCtimes import gDateTime
-                serializer = gDateTime();
+                serializer = gDateTime()
         if not serializer:
             # Last-chance; serialize instances as dictionary
             if type(pyobj) != types.InstanceType:
@@ -330,11 +330,12 @@ class Any(TypeCode):
             self.serialize(sw, pyobj.__dict__, **kw)
         else:
             # Try to make the element name self-describing
-            tag = getattr(serializer, 'tag', None)
-            if tag:
-                if tag.find(':') == -1: tag = 'SOAP-ENC:' + tag
-                kw['name'] = kw['oname'] = tag
-                kw['typed'] = 0
+            if not name and not self.oname:
+                tag = getattr(serializer, 'tag', None)
+                if tag:
+                    if tag.find(':') == -1: tag = 'SOAP-ENC:' + tag
+                    kw['name'] = kw['oname'] = tag
+                    kw['typed'] = 0
             serializer.serialize(sw, pyobj, **kw)
 
 
