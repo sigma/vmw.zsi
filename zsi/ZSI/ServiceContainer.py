@@ -35,7 +35,6 @@ def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw
         server -- ServiceContainer instance
 
     '''
-    print "_Dispatch POST", post
     try:
         result = server(ps, post, action)
     except Exception, e:
@@ -70,8 +69,10 @@ class PostNotSpecified(Exception): pass
 class SOAPActionNotSpecified(Exception): pass
 
 class ServiceSOAPBinding:
-    """Binding defines the set of wsdl:binding operations, it takes as input a
-    ParsedSoap instance and parses it into a pyobj.  It returns a response pyobj.
+    """
+    Binding defines the set of wsdl:binding operations, it takes as input
+    a ParsedSoap instance and parses it into a pyobj.  It returns a
+    response pyobj.
  
     class variables:
         soapAction -- dictionary of soapAction keys, and operation name values.
@@ -80,16 +81,12 @@ class ServiceSOAPBinding:
 
     """
     soapAction = {}
-    auth_method = None
     
     def __init__(self, post):
         self.post = post
 
     def authorize(self, auth_info, post, action):
-        if self.auth_method:
-            return getattr(self, self.auth_method)(auth_info, post, action)
-        else:
-            return 1
+        return 1
 
     def __call___(self, action, ps):
         return self.getOperation(action)(ps)
@@ -163,7 +160,8 @@ class ServiceContainer(HTTPServer):
         def getNode(self, url):
             path = urlparse.urlsplit(url)[2]
 
-            if self.__dict.has_key(path):
+            if self.__dict.has_key(path):                
+
                 return self.__dict[path]
             else:
                 raise NoSuchService, 'No service(%s) in ServiceContainer' %path
@@ -227,8 +225,9 @@ class ServiceContainer(HTTPServer):
         if node is None:
             raise NoSuchMethod, "Method (%s) not found at path (%s)" % (action,
                                                                         path)
+
         if node.authorize(None, post, action):
-        	return node.getOperation(action)
+            return node.getOperation(action)
         else:
             raise NotAuthorized, "Authorization failed for method %s" % action
 

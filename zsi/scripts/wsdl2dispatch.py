@@ -62,6 +62,10 @@ class ServerCallbackDescription:
 
         self.classdef = self.getClassdef(ws)
         self.initdef  = self.getInitdef(do_extended=do_extended)
+        if do_extended:
+            self.authdef = self.getAuthdef()
+        else:
+            self.authdef = ""
 
     def getImports(self):
         i  = 'from %s import *' % self.service
@@ -93,8 +97,20 @@ class ServerCallbackDescription:
             d += '\n%sif kw.has_key(\'impl\'):' % ID2
             d += '\n%sself.impl = kw[\'impl\']' % ID3
 
+            d += '\n%sif kw.has_key(\'auth_method_name\'):' % ID2
+            d += '\n%sself.auth_method_name = kw[\'auth_method_name\']' % ID3
+
         return d
 
+    def getAuthdef(self):
+        e = "\n%sdef authorize(self, auth_info, post, action):" % ID1
+        e += "\n%sif self.auth_method_name and hasattr(self.impl, self.auth_method_name):" % ID2
+        e += "\n%sreturn getattr(self.impl, self.auth_method_name)(auth_info, post, action)" % ID3
+        e += "\n%selse:" % ID2
+        e += "\n%sreturn 1" % ID3
+
+        return e
+    
     def generateMethods(self, op, port, do_extended=0):
         # generate soapactions while we're here
         operation = port.getBinding().getOperationDict().get(op.getName())
@@ -223,10 +239,12 @@ class ServerCallbackDescription:
         self.methods.append(o)
         
     def getContents(self):
-        return string.join([self.imports,
-                            self.classdef,
-                            self.initdef,
-                            string.join(self.methods, '\n')], '\n') + '\n'
+        gen_str = string.join([self.imports,
+                               self.classdef,
+                               self.initdef,
+                               self.authdef,
+                               string.join(self.methods, '\n')], '\n') + '\n'
+        return gen_str
 
     def getStubName(self):
         return '%s_server' % self.service
