@@ -185,11 +185,14 @@ class SOAPServerBase:
         self.registerFunction(MethodSig(function,keywords=1), namespace,
         funcName)
 
-    def unregisterObject(self, object):
-        for n, o in self.objmap.items():
-            if o == object:
-                del self.objmap[n]
+    def unregisterObject(self, object, namespace = '', path = ''):
+        if namespace == '' and path == '': namespace = self.namespace
+        if namespace == '' and path != '':
+            namespace = path.replace("/", ":")
+            if namespace[0] == ":": namespace = namespace[1:]
 
+        del self.objmap[namespace]
+        
 class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def version_string(self):
         return '<a href="http://pywebsvcs.sf.net">' + \
