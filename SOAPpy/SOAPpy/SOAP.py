@@ -27,7 +27,7 @@
 # - Encodings
 # - SSL clients (with OpenSSL configured in to Python)
 # - SSL servers (with OpenSSL configured in to Python and M2Crypto installed)
-# - Encodes XML tags per SOAP 1.2 name mangling specification
+# - Encodes XML tags per SOAP 1.2 name mangling specification (Gregory Warnes)
 # - Automatic stateful SOAP server support (Apache v2.x) (blunck2)
 #
 # TODO:
@@ -2863,7 +2863,7 @@ class SOAPBuilder:
 
     def __init__(self, args = (), kw = {}, method = None, namespace = None,
         header = None, methodattrs = None, envelope = 1, encoding = 'UTF-8',
-        use_refs = 0, config = Config):
+        use_refs = 0, config = Config,noroot = 0):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
@@ -2889,6 +2889,7 @@ class SOAPBuilder:
         self.multirefs  = []
         self.multis     = 0
         self.body       = not isinstance(args, bodyType)
+        self.noroot     = noroot
 
     def build(self):
         ns_map = {}
@@ -3013,6 +3014,9 @@ class SOAPBuilder:
             return ('', ' xmlns="%s"' % (nsURI))
 
     def genroot(self, ns_map):
+        if self.noroot:
+            return ''
+
         if self.depth != 2:
             return ''
 
@@ -3368,10 +3372,10 @@ class SOAPBuilder:
 # SOAPBuilder's more public interface
 ################################################################################
 def buildSOAP(args=(), kw={}, method=None, namespace=None, header=None,
-              methodattrs=None,envelope=1,encoding='UTF-8',config=Config):
+              methodattrs=None,envelope=1,encoding='UTF-8',config=Config,noroot = 0):
     t = SOAPBuilder(args=args,kw=kw, method=method, namespace=namespace,
         header=header, methodattrs=methodattrs,envelope=envelope,
-        encoding=encoding, config=config)
+        encoding=encoding, config=config,noroot=noroot)
     return t.build()
 
 ################################################################################
@@ -3528,12 +3532,15 @@ class HTTPTransport:
         if code == 500 and not startswith(content_type, "text/xml"):
             raise HTTPError(code, msg)
 
+        # get the new namespace
+        if namespace is None:
+            new_ns = None
+        else:
+            new_ns = self.getNS(namespace, data)
+        
         if not config.dumpSOAPIn:
             data = r.getfile().read()
 
-        # get the new namespace
-        new_ns = self.getNS(namespace, data)
-        
         # return response payload
         return data, new_ns
 
@@ -3544,7 +3551,7 @@ class SOAPProxy:
     def __init__(self, proxy, namespace = None, soapaction = '',
                  header = None, methodattrs = None, transport = HTTPTransport,
                  encoding = 'UTF-8', throw_faults = 1, unwrap_results = 1,
-                 http_proxy=None, config = Config):
+                 http_proxy=None, config = Config,noroot = 0):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
@@ -3561,6 +3568,7 @@ class SOAPProxy:
         self.unwrap_results = unwrap_results
         self.http_proxy     = http_proxy
         self.config         = config
+        self.noroot         = noroot
         
 
     def invoke(self, method, args):
@@ -3593,7 +3601,7 @@ class SOAPProxy:
 
         m = buildSOAP(args = args, kw = kw, method = name, namespace = ns,
             header = hd, methodattrs = ma, encoding = self.encoding,
-            config = self.config)
+            config = self.config,noroot = self.noroot)
 
         r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
                                                 encoding = self.encoding,

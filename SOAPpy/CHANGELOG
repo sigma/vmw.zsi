@@ -3,6 +3,50 @@ SOAP.py
 
 CHANGES: 
 
+SINCE VERSION 0.9.7
+
+- Added noroot parameter to the SOAPBuilder and SOAPProxy objects
+  in order to provide compatibility with an older version of
+  EasySOAP (v0.2) that balked if the SOAP-ENC:root parameter was
+  included.(Brad Knotwell)
+
+- Added support for namespace-rewriting (used by Apache v2.x SOAP server for
+  error conditions as well as stateful communication) (Christopher Blunck)
+
+- Added string <-> str conversion for array types (Python 2.2+)
+  (Christopher Blunck)
+
+- Added convenience method (invoke) to SOAPProxy that calls __call (not sure
+  if it is necessary - feel free to remove if you want) (Christopher Blunck)
+
+- Python 'float' are equivalent to SOAP 'double'.  Modified dump_float
+  and dump_list to use SOAP type string 'double'
+  appropriately. (Gregory R. Warnes)
+
+- Add basic authentication (Brad Knotwell)
+
+- Fixes to enble proper handling of SOAP faults by the client:
+  - Fixed test of whether message content is text/xml when recieving a fault.
+  - Added __call__ method to exception classes to match the current API.
+  - The faultType.__repr__() method now print details if present
+  (Gregory R. Warnes)
+
+- Added XMLnam.py which provides toXMLname() and fromXMLname() for
+  properly encoding xml tag names per the SOAP 2.1 (draft)
+  specification. (Gregory R. Warnes)
+
+- Added calls to toXMLname() and fromXMLname() so that tags names are
+  properly encoded.  This resolves bug [ 548785 ] 'Error passing dict
+  keys containing space.'  (Gregory R. Warnes)
+
+- Added code to cgi encode contents of tags when they are not a
+  recognized type.  Fixes bug [ 549551 ] 'Error when passing
+  non-standard types'. (Gregory R. Warnes)
+
+- Added __init__.py, so that SOAPpy can be used like a standard python
+  module. (Gregory R. Warnes)
+
+
 VERSION 0.9.7 (6/27/01)
 - Fixed the unamed ordered parameters bug
 - Added the ability to specify a http_proxy

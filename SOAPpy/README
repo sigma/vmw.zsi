@@ -1,10 +1,28 @@
 Copyright (c) 2001
 
-SOAP.py 0.9.7 - Cayce Ullman   (c_ullman@yahoo.com)
-                Brian Matthews (blm@blmatthews.com)
+SOAP.py 0.9.8 
+
+Current Maintainers: 	
+
+	Gregory R. Warnes <greg@warnes.net>
+	Christopher Blunck <blunck2@gst.com>
+
+
+Original Authors: 
+
+	Cayce Ullman <c_ullman@yahoo.com>
+        Brian Matthews <blm@blmatthews.com>
+
+Contributions by:
+
+	Brad Knotwell <b.knotwell@f5.com>
+
 
 MANIFEST:
-README
+
+README	      
+CHANGELOG     
+__init__.py   initialization code for use as python module
 SOAP.py       the library
 SOAPtest.py   tests the builder and parser
 echoClient.py an example client
@@ -31,6 +49,14 @@ for how to customize Modules/Setup, and make sure the socket module with
 SSL support lines are uncommented). If you want to use an SSL server, in
 addition to building your Python for OpenSSL, you'll need to build and
 install M2Crypto (http://www.pobox.org.sg/home/ngps/m2/).
+
+COMPATIBILITY WITH BROKEN EasySOAP SOAP SERVERS:
+
+Some older SOAP servers, e.g. EasySOAP (v0.2) balk if the
+"SOAP-ENC:root" parameter is included.  To permit interaction with
+such servers, an optional 'noroot' argument is provided to the
+SOAPProxy constructor.  Use 'noroot=1' to force the "SOAP-ENC:root"
+parameter to be ommited.
 
 HOWTO:
 
