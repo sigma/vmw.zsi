@@ -807,7 +807,7 @@ class ZSIPortAdapter(AdapterBase, PortInterface):
         self._ws = ws
         
     def getName(self):
-        return self._port.name
+        return self.mangle(self._port.name)
     
     def getExtensions(self):
         """returns extensions obj
@@ -1085,7 +1085,7 @@ class ZSIPartAdapter(AdapterBase, PartInterface):
     def getName(self):
         """return name of part, or None
         """
-        return (self._part.name or None)
+        return (self.mangle(self._part.name) or None)
 
     def getElement(self):
         """return part's element or None
@@ -1113,7 +1113,7 @@ class ZSITypeAdapter(AdapterBase, TypeInterface):
     def getName(self):
         """return name of type, or None
         """
-        return self._type[1]
+        return self.mangle(self._type[1])
 
     def getTargetNamespace(self):
         """return targetnamespace of type

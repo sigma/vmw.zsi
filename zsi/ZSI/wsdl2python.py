@@ -512,7 +512,7 @@ class ServiceDescription:
 
 		    myBinding['defs'][op.getName()] = \
                                                     '\n%sdef %s(self, request):' % \
-                                                    (ID1, op.getName())
+                                                    (ID1, textProtect(op.getName()))
                     myBinding['defs'][op.getName()] += '\n%s"""\n' % ID2
                     myBinding['defs'][op.getName()] += self.messages[inputName].\
                                          docString(typeDict, inputName, True)
