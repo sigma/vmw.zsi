@@ -226,6 +226,8 @@ class SOAPConfig:
             self.buildWithNamespacePrefix = 1
             self.returnAllAttrs = 0
 
+            self.specialArgs = 0
+
             try: SSL; d['SSLserver'] = 1
             except: d['SSLserver'] = 0
 
@@ -2983,7 +2985,8 @@ class SOAPBuilder:
 
     def gentag(self):
         self.tcounter += 1
-        return "v%d" % self.tcounter
+        #return "v%d" % self.tcounter
+        return "_%d" % self.tcounter
 
     def genns(self, ns_map, nsURI):
         if nsURI == None:
@@ -3794,6 +3797,37 @@ class SOAPServer(SocketServer.TCPServer):
                 method = r._name
                 args   = r._aslist
                 kw     = r._asdict
+                
+                # Handle mixed named and unnamed arguments by assuming
+                # that all arguments with names of the form "_[0-9]+"
+                # are unnamed and should be passed in numeric order,
+                # other arguments are named and should be passed using
+                # this name.  This is a custom exension to the SOAP
+                # protocol, and is thus disabled by default.  To
+                # enable, set Config.specialArgs to a true value.
+
+                if Config.specialArgs: 
+                    
+                    ordered_args = {}
+                    named_args   = {}
+                    
+                    for (k,v) in  kw.items():
+                        m = re.match("_([0-9]+)", k)
+                        if m is None:
+                            named_args[str(k)] = v
+                        else:
+                            ordered_args[int(m.group(1))] = v
+                            
+                    keylist = ordered_args.keys()
+                    keylist.sort()
+                    tmp = map( lambda x: ordered_args[x], keylist)
+
+                    ordered_args = tmp
+
+                    #print '<-> Argument Matching Yielded:'
+                    #print '<-> Ordered Arguments:' + str(ordered_args)
+                    #print '<-> Named Arguments  :' + str(named_args)
+                 
 
                 ns = r._ns
                 resp = ""
@@ -3829,21 +3863,25 @@ class SOAPServer(SocketServer.TCPServer):
                             x = HeaderHandler(header, attrs)
 
                         # If it's wrapped, some special action may be needed
-
+                        
                         if isinstance(f, MethodSig):
                             c = None
-
+                        
                             if f.context:  # Build context object
                                 c = SOAPContext(header, body, attrs, data,
                                     self.connection, self.headers,
                                     self.headers["soapaction"])
 
-                            if f.keywords:
+                            if Config.specialArgs:
+                                if c:
+                                    named_args["_SOAPContext"] = c
+                                fr = apply(f, ordered_args, named_args)
+                            elif f.keywords:
                                 # This is lame, but have to de-unicode
                                 # keywords
-
+                                
                                 strkw = {}
-
+                                
                                 for (k, v) in kw.items():
                                     strkw[str(k)] = v
                                 if c:
@@ -3853,9 +3891,14 @@ class SOAPServer(SocketServer.TCPServer):
                                 fr = apply(f, args, {'_SOAPContext':c})
                             else:
                                 fr = apply(f, args, {})
-                        else:
-                            fr = apply(f, args, {})
 
+                        else:
+                            if Config.specialArgs:
+                                fr = apply(f, ordered_args, named_args)
+                            else:
+                                fr = apply(f, args, {})
+
+                        
                         if type(fr) == type(self) and \
                             isinstance(fr, voidType):
                             resp = buildSOAP(kw = {'%sResponse' % method: fr},
