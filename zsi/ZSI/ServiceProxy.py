@@ -11,6 +11,7 @@ from xml.dom.ext import SplitQName
 from xml.ns import WSDL
 from ZSI import *
 from ZSI.client import *
+from ZSI.TC import Any
 from ZSI.typeinterpreter import BaseTypeInterpreter
 import wstools
 from wstools.Utility import DOM
@@ -79,6 +80,8 @@ class ServiceProxy:
         if self._use_wsdl:
             request, response = self._getTypeCodes(callinfo)
             if len(kwargs): args = kwargs
+            if request is None:
+                request = Any(oname=name)
             binding.Send(url=uri, opname=None, obj=args,
                          nsdict=self._nsdict, soapaction=soapAction, requesttypecode=request)
             return binding.Receive(replytype=response)
@@ -205,9 +208,10 @@ class ServiceProxy:
 
         if not (tp or element.content):
             nsuriType,localName = element.getAttribute('type')
-            minOccurs = element.getAttribute('minOccurs')
-            maxOccurs = element.getAttribute('maxOccurs')
+            minOccurs = int(element.getAttribute('minOccurs'))
+            maxOccurs = int(element.getAttribute('maxOccurs'))
             typeClass = self._getTypeClass(nsuriType,localName)
+            
             return typeClass(elementName, repeatable=maxOccurs>1, optional=not minOccurs)
         elif not tp:
             tp = element.content
