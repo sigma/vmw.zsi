@@ -6,7 +6,7 @@ GSIServer - Contributed by Ivan R. Judson <judson@mcs.anl.gov>
 #
 # SOAPpy - Cayce Ullman       (cayce@actzero.com)
 #          Brian Matthews     (blm@actzero.com)
-#          Gregory Warnes     (gregory_r_warnes@groton.pfizer.com)
+#          Gregory Warnes     (Gregory.R.Warnes@Pfizer.com)
 #          Christopher Blunck (blunck@gst.com)
 #
 ################################################################################

@@ -66,6 +66,6 @@ impossible to return named parameters in a specified order using
 SOAPpy. SOAP applications or implementations which require this
 feature are simply not compatible with SOAPpy.
 
--Greg Warnes <gregory_r_warnes@groton.pfizer.com>
+-Greg Warnes <Gregory.R.Warnes@Pfizer.com>
 2003-03-07 (updated 2003-11-14)
 
