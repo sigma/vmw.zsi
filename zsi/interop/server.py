@@ -142,7 +142,6 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
 	self.headertext = ''
 	for h in headers:
 	    if h.localName == 'echoMeStringRequest':
-		print h
 		s = TC.String().parse(h, ps)
 		self.headertext += \
     '<E:echoMeStringResponse>%s</E:echoMeStringResponse>\n' % _textprotect(s)
@@ -179,7 +178,7 @@ except getopt.GetoptError, e:
     print >>sys.stderr, sys.argv[0] + ': ' + str(e)
     sys.exit(1)
 if args:
-    print sys.argv[0] + ': Usage error.'
+    print >>sys.stderr, sys.argv[0] + ': Usage error.'
     sys.exit(1)
 
 portnum = 1122
