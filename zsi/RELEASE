@@ -1,0 +1,62 @@
+Making a ZSI Release
+--------------------
+
+The following instructions tell how to go about making a ZSI release.
+The Makefile automates many of the more mechanical aspects of the
+process.
+
+1. Announce your intent to make a release on the mailing list.  This
+   gives folks a day or so to respond with info or last-minute
+   checkins.
+
+2. Edit setup.cfg to set the version number in the [version] section,
+   if appropriate.  If you change the version number, set the
+   "release" in the [bdist_rpm] section to 1.
+
+3. Commit all changes to CVS.
+
+4. Tag the CVS repository.  Release tags are of the form
+
+       "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
+
+   where the optional segment containing PATCHLEVEL is included only
+   if PATCHLEVEL is non-zero.  The modifier segment has only been used
+   for release candidates (so far), for which the modifier is "RC" and
+   the serial is the number of the candidate for this particular
+   software version ("1", "2", etc.).
+
+5. Export the tagged sources from CVS:
+
+       cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co zsi
+
+6. Build the release from the export.  Switch to the export directory
+   (the one containing setup.py) and run "make kit".
+
+4. Rename the PDF documentation.  If the patchlevel from setug.cfg is
+   0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
+   it to dist/zsi-$MAJOR.$MINOR.$PATCHLEVEL.pdf.  This will leave you
+   with all the files you need to upload in a single directory
+   (dist/).
+
+5. Use the SourceForge tools to create a release and upload the files.
+   If appropriate, "hide" obsolete releases.  Hiding old releases is
+   normally only done if the older release contains security bugs or
+   other critical bugs that render it unusable.
+
+6. The web pages are in pywebsvcs.sourceforge.net, at the same level
+   as the zsi directory.  Copy zsi.html from zsi/doc into there.
+   Update index.html to refer (and link) to the new release.  Commit
+   those changes.  The cron job will update it every couple of hours.
+
+7. Announce the release:
+
+   - Freshmeat.  The details of how to do this have been lost to the
+     travesties of time, but there is a ZSI package there.
+
+   - SourceForge.net news:  Create a news item in the project
+     announcing the release.
+
+   - Register the release with the Python Package Index (PyPI).  This
+     can be done using "python setup.py register".
+
+   - comp.lang.python.announce
