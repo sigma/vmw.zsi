@@ -114,7 +114,7 @@ class HTTPTransport:
         SOAP message."""
 
         if type(original_namespace) == StringType:
-            pattern="xmlns:\w+=['\"](" + original_namespace + ".*)['\"]"
+            pattern="xmlns:\w+=['\"](" + original_namespace + "[^'\"]*)['\"]"
             match = re.search(pattern, data)
             if match:
                 return match.group(1)
