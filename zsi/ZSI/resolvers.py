@@ -122,7 +122,7 @@ class MIMEResolver:
 
     def Opaque(self, uri, tc, ps, **keywords):
 	content = self.get(uri)
-	if content: return content
+	if content: return content.getvalue()
 	if not self.next: raise EvaluateException("Unresolvable URI " + uri)
 	return self.next.Opaque(uri, tc, ps, **keywords)
 
