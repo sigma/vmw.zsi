@@ -9,7 +9,7 @@ Release 0.11.0 of SOAPpy
   Config.simplify_objects=0 for backward compatibility.
 
   - Config.dict_encoding='ascii' converts the keys of dictionaries
-  (e.g. created when Config.unwrap_results=1) to ascii == plain python
+  (e.g. created when Config.simplify_objects=1) to ascii == plain python
   strings instead of unicode strings.  This variable can be set to any
   encoding known to string.encode().
 
@@ -26,7 +26,7 @@ Release 0.11.0 of SOAPpy
 
   - Verbose debugging messages have been turned off..
 
-  - SOAPtest.py now functions when Config.unwrap_results=1
+  - SOAPtest.py now functions when Config.simplify_objects=1
 
   - SOAPtest.py now sets Config.strict_range=1 so that range
     checks are be properly tested.
