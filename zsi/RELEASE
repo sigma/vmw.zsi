@@ -40,7 +40,7 @@ getting and setting up those tools.
 
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG zsi
         cd zsi/ZSI/
-        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs exp -r TAG wstools
+        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG wstools
 
 7.  Build the release from the export.  Switch to the export directory
     (the one containing setup.py) and run "make kit".
