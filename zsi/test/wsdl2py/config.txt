@@ -1,20 +1,115 @@
 ############################################################################
-# David W. Robertson, Joshua R. Bovernof, LBNL
+# Joshua R. Bovernof, LBNL
 # See Copyright for copyright notice!
-###########################################################################
-
-###########################################################################
-# Config file for the unit test framework. 
-# Sections below.
-###########################################################################
-
-##########################################################################
-# SECTION [configuration] - configuration of the individual service tests.
+#
+# CONFIGURATION SECTIONS 
+#  [configuration] - global configuration of service tests.
 #
 ##########################################################################
 [configuration]
+tracefile = True
 
-tracefile = 1
+##########################################################################
+# URL SECTIONS: All SOAP-1.1
+#    document -- document style True/False
+#    literal  -- literal encoding True/False
+#    broke -- broke True/False
+#    tests -- whitespace separated list of test modules, referenced in 
+#        section WSDL.
+#
+#  [rpc_encoded] -- these are rpc/encoded services that WORK.
+#  [rpc_encoded_broke] -- these are rpc/encoded services that DONT WORK.
+#
+#  [doc_encoded] -- these are document/encoded services that WORK.
+#  [doc_encoded_broke] -- these are document/encoded services that DONT WORK.
+#
+#  [rpc_literal] -- these are rpc/literal services that WORK.
+#  [rpc_literal_broke] -- these are rpc/literal services that DONT WORK.
+#  [rpc_literal_broke_interop] -- these are broke BP-1.0 compliant rpc/literal services.
+#
+#  [doc_literal] -- these are doc/literal services that WORK.
+#  [doc_literal_broke] -- these are doc/literal services that DONT WORK.
+#  [doc_literal_broke_interop] -- these are broke BP-1.0 compliant doc/literal services.
+#
+##########################################################################
+
+##########################################################################
+########################## RPC/ENCODED
+[rpc_encoded]
+document = False
+literal = False
+broke = False
+tests = 
+
+#test_AmazonWebService: service expects locally declared elements to be in no namespace.
+[rpc_encoded_broke]
+document = False
+literal = False
+broke = True
+tests = AmazonWebService
+
+##########################################################################
+########################## DOCUMENT/ENCODED
+[doc_encoded]
+document = True
+literal = False
+broke = False
+tests = 
+
+[doc_encoded_broke]
+document = True
+literal = False
+broke = True
+tests = 
+
+##########################################################################
+########################## RPC/LITERAL
+[rpc_literal]
+document = False
+literal = True
+broke = False
+tests = 
+
+[rpc_literal_broke]
+document = False
+literal = True
+broke = True
+tests = 
+
+[rpc_literal_broke_interop]
+document = False
+literal = True
+broke = True
+tests = 
+
+##########################################################################
+########################## DOCUMENT/LITERAL
+[doc_literal]
+document = True
+literal = True
+broke = False
+tests = 
+
+[doc_literal_broke]
+document = True
+literal = True
+broke = True
+tests = 
+
+[doc_literal_broke_interop]
+document = True
+literal = True
+broke = True
+tests = 
+
+
+##########################################################################
+# SECTION [WSDL] - test name(equivalent to module name) and URL.
+# 
+##########################################################################
+[WSDL]
+AmazonWebService = http://soap.amazon.com/schemas/AmazonWebServices.wsdl
+
 
 
 ##########################################################################
