@@ -53,7 +53,7 @@ import BaseHTTPServer
 # SOAPpy modules
 from Parser      import parseSOAPRPC
 from Config      import Config
-from Types       import faultType, voidType
+from Types       import faultType, voidType, simplify
 from NS          import NS
 from SOAPBuilder import buildSOAP
 from Utilities   import debugHeader, debugFooter
@@ -197,34 +197,53 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             (r, header, body, attrs) = \
                 parseSOAPRPC(data, header = 1, body = 1, attrs = 1)
 
+            print "r=", r
+            for k,v in r.__dict__.items():
+                print "   ", k,'=',v
+
             method = r._name
-            args   = r._aslist
-            kw     = r._asdict
-            
+            args   = r._aslist()
+            kw     = r._asdict()
+
+            if Config.unwrap_results:
+                args = simplify(args)
+                kw = simplify(kw)
+
             # Handle mixed named and unnamed arguments by assuming
-            # that all arguments with names of the form "_[0-9]+"
+            # that all arguments with names of the form "v[0-9]+"
             # are unnamed and should be passed in numeric order,
             # other arguments are named and should be passed using
-            # this name.  This is a custom exension to the SOAP
-            # protocol, and is thus disabled by default.  To
-            # enable, set Config.specialArgs to a true value.
+            # this name.
+
+            # This is a non-standard exension to the SOAP protocol,
+            # but is supported by Apache AXIS.
+
+            # It is enabled by default.  To disable, set
+            # Config.specialArgs to False.
 
             if Config.specialArgs: 
-                
+
                 ordered_args = {}
                 named_args   = {}
                 
                 for (k,v) in  kw.items():
-                    m = re.match("_([0-9]+)", k)
-                    if m is None:
-                        named_args[str(k)] = v
+
+                    if k[0]=="v":
+                        try:
+                            i = int(k[1:])
+                        except ValueError:
+                            named_args[str(k)] = v
+
+                        ordered_args[i] = v
                     else:
-                        ordered_args[int(m.group(1))] = v
+                        named_args[str(k)] = v
                         
+                # get order
                 keylist = ordered_args.keys()
                 keylist.sort()
-                tmp = map( lambda x: ordered_args[x], keylist)
 
+                # create list in proper order w/o names
+                tmp = map( lambda x: ordered_args[x], keylist)
                 ordered_args = tmp
 
                 #print '<-> Argument Matching Yielded:'
