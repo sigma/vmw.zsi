@@ -1,6 +1,6 @@
 \chapter{WSDL Services}
 
-The \module{ZSI.wsdl} module provides client tools for using WSDL 1.1
+The \module{ZSI.wstools} module provides client tools for using WSDL 1.1
 (see \citetitle[http://www.w3.org/TR/wsdl]{WSDL 1.1 specification})
 files to access services.
 
@@ -21,7 +21,7 @@ The following example shows a simple language translation service that makes
 use of the complex type structures defined in the module BabelTypes:
 
 \begin{verbatim}
-from ZSI.wsdl import ServiceProxy
+from ZSI.wstools import ServiceProxy
 import BabelTypes
 
 service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
