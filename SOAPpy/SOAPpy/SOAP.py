@@ -13,7 +13,7 @@
 #
 # FEATURES:
 # - Handles all of the types in the BDG
-# - Handles faults on the *server* side
+# - Handles faults 
 # - Allows namespace specification
 # - Allows SOAPAction specification
 # - Homogeneous typed arrays
@@ -40,7 +40,6 @@
 # - medusa example - MCU
 # - Documentation - JAG
 # - Look at performance
-# - Handle faults on the *client* side
 # - Put into standard 'setup.py' module format to ease installation
 #
 ################################################################################
@@ -118,6 +117,8 @@ class Error(exceptions.Exception):
     def __str__(self):
         return "<Error : %s>" % self.msg
     __repr__ = __str__
+    def __call__(self):
+        return (msg,)
 
 class RecursionError(Error):
     pass
@@ -133,6 +134,8 @@ class HTTPError(Error):
     def __str__(self):
         return "<HTTPError %s %s>" % (self.code, self.msg)
     __repr__ = __str__
+    def __call___(self):
+        return (self.code, self.msg, )
 
 ##############################################################################
 # Namespace Class
@@ -1746,9 +1749,17 @@ class faultType(structType, Error):
             except AttributeError: pass
 
     def __repr__(self):
-        return "<Fault %s: %s>" % (self.faultcode, self.faultstring)
+        if self.detail:
+            return "<Fault %s: %s: %s>" % (self.faultcode,
+                                           self.faultstring,
+                                           self.detail)
+        else:
+            return "<Fault %s: %s>" % (self.faultcode, self.faultstring)
 
     __str__ = __repr__
+
+    def __call__(self):
+        return (self.faultcode, self.faultstring, self.detail)        
 
 ################################################################################
 class RefHolder:
@@ -3483,8 +3494,13 @@ class HTTPTransport:
 
         if code not in (200, 500):
             raise HTTPError(code, msg)
+
+        def startswith(string, val):
+            return string[0:len(val)] == val
+
+        content_type = headers.get("content-type","text/xml")
         
-        if code == 500 and headers.get("content-type","text/xml") != "text/xml":
+        if code == 500 and not startswith(content_type, "text/xml"):
             raise HTTPError(code, msg)
 
         if not config.dumpSOAPIn:
