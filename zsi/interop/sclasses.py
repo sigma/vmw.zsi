@@ -58,7 +58,7 @@ class TC_SOAPStruct(TC.Struct):
     def __init__(self, pname=None, **kw):
 	TC.Struct.__init__(self, SOAPStruct, [
 	    TC.String('varString', strip=0, inline=1),
-	    TC.Integer('varInt'),
+	    TC.Iint('varInt'),
 	    TC.FPfloat('varFloat'),
 	], pname, **kw)
 
@@ -66,7 +66,7 @@ class TC_SOAPStructStruct(TC.Struct):
     def __init__(self, pname=None, **kw):
 	TC.Struct.__init__(self, SOAPStruct, [
 	    TC.String('varString', strip=0),
-	    TC.Integer('varInt'),
+	    TC.Iint('varInt'),
 	    TC.FPfloat('varFloat'),
 	    TC_SOAPStruct('varStruct'),
 	], pname, **kw)
@@ -75,7 +75,7 @@ class TC_SOAPArrayStruct(TC.Struct):
     def __init__(self, pname=None, **kw):
 	TC.Struct.__init__(self, SOAPStruct, [
 	    TC.String('varString', strip=0),
-	    TC.Integer('varInt'),
+	    TC.Iint('varInt'),
 	    TC.FPfloat('varFloat'),
 	    TC.Array('string', TC.String(), 'varArray'),
 	], pname, **kw)
@@ -86,7 +86,7 @@ class TC_ArrayOfstring(TC.Array):
 
 class TC_ArrayOfint(TC.Array):
     def __init__(self, pname=None, **kw):
-	TC.Array.__init__(self, 'int', TC.Integer(), pname, **kw)
+	TC.Array.__init__(self, 'int', TC.Iint(), pname, **kw)
 
 class TC_ArrayOffloat(TC.Array):
     def __init__(self, pname=None, **kw):
@@ -138,8 +138,8 @@ Operation("echoStringArray",
     TC_ArrayOfstring('inputStringArray', oname='return')
 )
 Operation("echoInteger",
-    TC.Integer('inputInteger'),
-    TC.Integer('inputInteger', oname='return'),
+    TC.Iint('inputInteger'),
+    TC.Iint('inputInteger', oname='return'),
 )
 Operation("echoIntegerArray",
     TC_ArrayOfint('inputIntegerArray'),
@@ -189,12 +189,12 @@ Operation("echoBoolean",
 )
 Operation("echoStructAsSimpleTypes",
     TC_SOAPStruct('inputStruct'),
-    ( TC.String('outputString'), TC.Integer('outputInteger'),
+    ( TC.String('outputString'), TC.Iint('outputInteger'),
 	TC.FPfloat('outputFloat') ),
     convert=lambda s: (s.varString, s.varInt, s.varFloat),
 )
 Operation("echoSimpleTypesAsStruct",
-    ( TC.String('inputString'), TC.Integer('inputInteger'),
+    ( TC.String('inputString'), TC.Iint('inputInteger'),
 	TC.FPfloat('inputFloat') ),
     TC_SOAPStruct('return'),
     convert=SimpleTypetoStruct

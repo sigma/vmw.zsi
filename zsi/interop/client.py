@@ -4,9 +4,9 @@ from cpackets import testlist
 
 try:
     (opts, args) = getopt.getopt(sys.argv[1:],
-		    'h:lp:qst:',
+		    'h:lp:qst:w',
 		    ( 'host=', 'list', 'port=',
-			'quit', 'statusonly', 'test=', 'help'))
+			'quit', 'statusonly', 'test=', 'wsdl', 'help'))
 except getopt.GetoptError, e:
     print >>sys.stderr, sys.argv[0] + ': ' + str(e)
     sys.exit(1)
@@ -14,8 +14,8 @@ if args:
     print sys.argv[0] + ': Usage error; try --help.'
     sys.exit(1)
 
-hostname, portnum, tests, quitting, verbose = \
-	'localhost', 1122, [0,1], 0, 1
+hostname, portnum, tests, quitting, getwsdl, verbose = \
+	'localhost', 1122, [0,1], 0, 0, 1
 for opt, val in opts:
     if opt in [ '--help' ]:
 	print '''Options include:
@@ -25,6 +25,7 @@ for opt, val in opts:
     --testnum 1,2,3 (-t ...)	Run comma-separated tests; use * or all for all
     --list (-l)			List tests (brief description)
     --statusonly (-s)		Do not output reply packets; just status code
+    --wsdl (-w)			Get the WSDL file
 Default is -h%s -p%d -t%s''' % \
     (hostname, portnum, ','.join([str(x) for x in tests]))
 	sys.exit(0)
@@ -45,6 +46,8 @@ Default is -h%s -p%d -t%s''' % \
 	for i in range(len(testlist)):
 	    print i, testlist[i][0]
 	sys.exit(0)
+    elif opt in [ '-w', '--wsdl' ]:
+	getwsdl = 1
 
 if quitting:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,6 +59,20 @@ if quitting:
     f = s.makefile('r+')
     f.write('QUIT / HTTP/1.0\r\n')
     f.flush()
+    sys.exit(0)
+
+if getwsdl:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((hostname, portnum))
+    f = s.makefile('r+')
+    f.write('GET /wsdl HTTP/1.0\r\n\r\n')
+    f.flush()
+    status = f.readline()
+    print status,
+    while 1:
+	l = f.readline()
+	if l == '': break
+	print l,
     sys.exit(0)
 
 for T in tests:
