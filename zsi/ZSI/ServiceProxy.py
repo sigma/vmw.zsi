@@ -206,16 +206,26 @@ class ServiceProxy:
         elementName = element.getAttribute('name')
         tp = element.getTypeDefinition('type')
 
+        typeObj = None
         if not (tp or element.content):
             nsuriType,localName = element.getAttribute('type')
-            minOccurs = int(element.getAttribute('minOccurs'))
-            maxOccurs = int(element.getAttribute('maxOccurs'))
             typeClass = self._getTypeClass(nsuriType,localName)
             
-            return typeClass(elementName, repeatable=maxOccurs>1, optional=not minOccurs)
+            typeObj = typeClass(elementName)
         elif not tp:
             tp = element.content
-        return self._getType(tp, elementName, literal, local, namespaceURI)
+
+        if not typeObj:
+            typeObj = self._getType(tp, elementName, literal, local, namespaceURI)
+
+        minOccurs = int(element.getAttribute('minOccurs'))
+        typeObj.optional = not minOccurs
+
+        maxOccurs = element.getAttribute('maxOccurs')
+        if maxOccurs == 'unbounded':
+            typeObj.repeatable = True
+
+        return typeObj
 
     def _getType(self, tp, name, literal, local, namespaceURI):
         """Returns a typecode instance representing the passed in type and name.
