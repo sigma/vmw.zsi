@@ -509,7 +509,7 @@ class ServiceDescription:
 			myBinding['defs'][op.getName()] +=\
 			    '\n%sraise TypeError, %s' %(ID3, r'"%s incorrect response type" %(response.__class__)')
 		        myBinding['defs'][op.getName()] += '\n%sreturn response' %(ID2)
-
+                        
                         self.messages[op.getOutput().\
                                       getMessage().getName()] = \
                                       self.__class__.MessageWriter()
@@ -520,7 +520,7 @@ class ServiceDescription:
                                                   getName(), 
                                                   namespace,
                                                   style,
-                                                  use)
+                                                  use, op)
 
 		    else:
 			myBinding['defs'][op.getName()] += '\n%sself.binding.Send(None, None, request )' %(ID2)
@@ -566,7 +566,7 @@ class ServiceDescription:
 	def __str__(self):
 	    return self.typecode
 
-	def fromMessage(self, message, name, namespace, style, use):
+	def fromMessage(self, message, name, namespace, style, use, op=None):
 	    """message -- wsdl.Message instance
                name -- operation name
                namespace -- soap binding namespace
@@ -574,15 +574,24 @@ class ServiceDescription:
                use -- 'document' or 'literal'
             """
             if use == 'encoded':
-                self.fromMessageEncoded(message, name, namespace, style)
+                self.fromMessageEncoded(message, name, namespace, style, op)
             elif use == 'literal':
                 self.fromMessageLiteral(message, name, namespace, style)
             else:
                 raise WsdlGeneratorError, 'unsupported use=%s' %(use)
 
 
-        def fromMessageEncoded(self, message, name, namespace, style):
+        def fromMessageEncoded(self, message, name, namespace, style, op):
 	    l = []
+
+            classname = ''
+
+            if message.isOutput() and style == 'rpc':
+                if not op:
+                    # this is mostly a temp bulletproofing exception.
+                    raise WsdlGeneratorError, 'operation object is none - bad'
+                else:
+                    name = op.getName() + 'Response'
 
 	    self.typecode = '\n\nclass %s (ZSI.TCcompound.Struct): '\
                             %(message.getName())
