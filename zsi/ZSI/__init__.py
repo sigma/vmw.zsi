@@ -65,8 +65,20 @@ _child_elements = lambda E: [ n for n in (E.childNodes or [])
 
 _find_arraytype = lambda E: E.getAttributeNS(_SOAP.ENC, "arrayType")
 _find_encstyle = lambda E: E.getAttributeNS(_SOAP.ENV, "encodingStyle")
-_find_attr = lambda E, attr: \
-		E.getAttributeNS(None, attr) or E.getAttributeNS("", attr)
+try:
+    from xml.dom import EMPTY_NAMESPACE
+    _empty_nsuri_list = [ EMPTY_NAMESPACE ]
+    if '' not in _empty_nsuri_list: __empty_nsuri_list.append('')
+    if None not in _empty_nsuri_list: __empty_nsuri_list.append(None)
+except:
+    _empty_nsuri_list = [ None, '' ]
+def _find_attr(E, attr):
+    for nsuri in _empty_nsuri_list:
+	try:
+	    v = E.getAttributeNS(nsuri, attr)
+	    if v: return v
+	except: pass
+    return None
 _find_href = lambda E: _find_attr(E, "href")
 _find_xsi_attr = lambda E, attr: \
 		E.getAttributeNS(_SCHEMA.XSI3, attr) \

@@ -4,7 +4,8 @@
 '''
 
 from ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
-	_backtrace, EvaluateException, ParseException, _valid_encoding, _Node
+	_backtrace, EvaluateException, ParseException, _valid_encoding, \
+	_Node, _find_attr
 import types
 try:
     from xml.ns import SOAP, XMLNS
@@ -14,9 +15,7 @@ except:
 _find_actor = lambda E: E.getAttributeNS(SOAP.ENV, "actor") or None
 _find_mu = lambda E: E.getAttributeNS(SOAP.ENV, "mustUnderstand")
 _find_root = lambda E: E.getAttributeNS(SOAP.ENC, "root")
-_find_id = lambda E: \
-		E.getAttributeNS(None, "id") or E.getAttributeNS("", "id") \
-		or None
+_find_id = lambda E: _find_attr(E, 'id')
 
 class ParsedSoap:
     '''A Parsed SOAP object.
@@ -40,6 +39,7 @@ class ParsedSoap:
 	    trailers -- allow trailer elments (default is zero)
 	    resolver -- function (bound method) to resolve URI's
 	    readerclass -- factory class to create a reader
+	    keepdom -- do not release the DOM
 	'''
 
 	self.readerclass = kw.get('readerclass')
@@ -52,6 +52,8 @@ class ParsedSoap:
 		self.dom = self.reader.fromString(input)
 	    else:
 		self.dom = self.reader.fromStream(input)
+	    if not kw.get('keepdom', 0):
+		self.dtor = lambda S=self: S.reader.releaseNode(S.dom)
 	except Exception, e:
 	    # Is this in the header?  Your guess is as good as mine.
 	    raise ParseException("Can't parse document (" + \
@@ -180,7 +182,7 @@ class ParsedSoap:
 
     def __del__(self):
 	try:
-	    if self.reader and self.dom: self.reader.releaseNode(self.dom)
+	    if hasattr(self, 'dtor'): self.dtor()
 	except:
 	    pass
 

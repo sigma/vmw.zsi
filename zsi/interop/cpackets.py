@@ -180,6 +180,15 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 </SOAP-ENV:Envelope>
 '''
 
+apache_float_test = '''<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <SOAP-ENV:Body>
+   <ns1:echoFloat xmlns:ns1="http://soapinterop.org/">
+      <inputFloat xsi:type="xsd:float">3.7</inputFloat>
+	</ns1:echoFloat>
+	 </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>'''
+
 testlist = (
     ( 'struct test', pocketsoap_struct_test, None),
     ( 'base64 test', phalanx_b64_test, None),
@@ -190,6 +199,7 @@ testlist = (
     ( 'multipart', multipart_test,
 	'Content-type: multipart/related; boundary="sep"\r\n' ),
     ( 'int href test', phalanx_int_href_test, None),
+    ( 'apache float', apache_float_test, None),
     ( 'bad href test', phalanx_badhref_test, None),
     ( 'bad type attr on struct', phalanx_badstructtype_test, None),
 )

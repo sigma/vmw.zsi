@@ -562,10 +562,12 @@ except:
 try:
     _magicnums['NaN'] = float('NaN')
     _magicnums['-NaN'] = float('-NaN')
+    _check_for_nan = 0
 except:
     # The standard says NaN > INF; oh well, close enough.
     _magicnums['NaN'] = _magicnums['INF'] - _magicnums['INF']
     _magicnums['-NaN'] = _magicnums['-INF'] - _magicnums['-INF']
+    _check_for_nan = 0
 
 class Decimal(TypeCode):
     '''Parent class for floating-point numbers.
@@ -629,17 +631,21 @@ class Decimal(TypeCode):
 	    tstr = ' xsi:type="xsd:%s"' % (self.tag or 'decimal')
 	else:
 	    tstr = ''
-	fmt = self.format
 	if pyobj == _magicnums['INF']:
-	    fmt, pyobj = "%s", "INF"
+	    print >>sw, ('<%s%s%s>INF</%s>') % \
+		    (n, kw.get('attrtext', ''), tstr, n)
 	elif pyobj == _magicnums['-INF']:
-	    fmt, pyobj = "%s", "-INF"
-	elif pyobj == _magicnums['NaN']:
-	    fmt, pyobj = "%s", "NaN"
-	elif pyobj == _magicnums['-NaN']:
-	    fmt, pyobj = "%s", "-NaN"
-	print >>sw, ('<%s%s%s>' + fmt + '</%s>') % \
-		(n, kw.get('attrtext', ''), tstr, pyobj, n)
+	    print >>sw, ('<%s%s%s>-INF</%s>') % \
+		    (n, kw.get('attrtext', ''), tstr, n)
+	elif _check_for_nan and pyobj == _magicnums['NaN']:
+	    print >>sw, ('<%s%s%s>NaN</%s>') % \
+		    (n, kw.get('attrtext', ''), tstr, n)
+	elif _check_for_nan and pyobj == _magicnums['-NaN']:
+	    print >>sw, ('<%s%s%s>-NaN</%s>') % \
+		    (n, kw.get('attrtext', ''), tstr, n)
+	else:
+	    print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
+		    (n, kw.get('attrtext', ''), tstr, pyobj, n)
 
 class Boolean(TypeCode):
     '''A boolean.

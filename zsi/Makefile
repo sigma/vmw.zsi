@@ -11,6 +11,7 @@ ins:	ZSI/version.py	# install new version
 kit:	ver doc rpm	# make a kit
 
 rpm:	ZSI/version.py
+	@rm -f dist/*
 	$(PYTHON) setup.py bdist_rpm --python=$(PYTHON)
 
 doc:			# build the docs
