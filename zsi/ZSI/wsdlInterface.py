@@ -3,6 +3,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 
+import re
 import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.wstools.Utility import Collection
@@ -717,8 +718,17 @@ class WsdlInterfaceError(Exception):
 class WsdlInterfaceLimitation(Exception):
     pass
 
+class AdapterBase:
+    """mixin class for universal functionaltiy"""
+    def mangle(self, s):
+        """process any strings we cant have illegal chracters in"""
+        if s:
+            return re.sub('[-./:]', '_', s)
+        else:
+            return None
 
-class ZSIWsdlAdapter(WsdlInterface):
+
+class ZSIWsdlAdapter(AdapterBase, WsdlInterface):
     def getName(self):
         """return name of definition, or None
         """
@@ -756,7 +766,7 @@ class ZSIWsdlAdapter(WsdlInterface):
             
         return schemas
 
-class ZSIServiceAdapter(ServiceInterface):
+class ZSIServiceAdapter(AdapterBase, ServiceInterface):
     def __init__(self, ws, s):
         ServiceInterface.__init__(self, s)
         self._ws = ws
@@ -777,7 +787,7 @@ class ZSIServiceAdapter(ServiceInterface):
             ports.append(ZSIPortAdapter(self._ws, p))
         return ports
 
-class ZSIPortAdapter(PortInterface):
+class ZSIPortAdapter(AdapterBase, PortInterface):
     def __init__(self, ws, p):
         PortInterface.__init__(self, p)
         self._ws = ws
@@ -801,13 +811,13 @@ class ZSIPortAdapter(PortInterface):
         """
         return ZSIBindingAdapter(self._ws, self._port.getBinding())
 
-class ZSIBindingAdapter(BindingInterface):
+class ZSIBindingAdapter(AdapterBase, BindingInterface):
     def __init__(self, ws, b):
         BindingInterface.__init__(self, b)
         self._ws = ws
         
     def getName(self):
-        return self._binding.name
+        return self.mangle(self._binding.name)
     
     def getOperationDict(self):
         """returns list of operation objs
@@ -844,7 +854,7 @@ class ZSIBindingAdapter(BindingInterface):
 
         return sb
 
-class ZSIPortTypeAdapter(PortTypeInterface):
+class ZSIPortTypeAdapter(AdapterBase, PortTypeInterface):
     def __init__(self, ws, p):
         PortTypeInterface.__init__(self, p)
         self._ws = ws
@@ -868,7 +878,7 @@ class ZSIPortTypeAdapter(PortTypeInterface):
             
         return operations
 
-class ZSIOperationAdapter(OperationInterface):
+class ZSIOperationAdapter(AdapterBase, OperationInterface):
     """Inteface to operation class
     """
     def __init__(self, ws, op):
@@ -937,7 +947,7 @@ class ZSIOperationAdapter(OperationInterface):
 
         return so
 
-class ZSIFaultAdapter(FaultInterface):
+class ZSIFaultAdapter(AdapterBase, FaultInterface):
     def getName(self):
         """fault name
         """
@@ -953,7 +963,7 @@ class ZSIFaultAdapter(FaultInterface):
         """
         raise NotImplementedError, 'abstract method not implemented'
 
-class ZSIInputAdapter(InputInterface):
+class ZSIInputAdapter(AdapterBase, InputInterface):
     """Interface to input class
     """
     def __init__(self, ws, i):
@@ -992,7 +1002,7 @@ class ZSIInputAdapter(InputInterface):
 
         return sb
     
-class ZSIOutputAdapter(OutputInterface):
+class ZSIOutputAdapter(AdapterBase, OutputInterface):
     """Inteface to output class
     """
     def __init__(self, ws, o):
@@ -1020,7 +1030,7 @@ class ZSIOutputAdapter(OutputInterface):
         
         return extensions
 
-class ZSIMessageAdapter(MessageInterface):
+class ZSIMessageAdapter(AdapterBase, MessageInterface):
     """Inteface to message class
     """
     def __init__(self, ws, m, i=False, o=False):
@@ -1048,7 +1058,7 @@ class ZSIMessageAdapter(MessageInterface):
     def isOutput(self):
         return self._isOutput
 
-class ZSIPartAdapter(PartInterface):
+class ZSIPartAdapter(AdapterBase, PartInterface):
     """Inteface to part class
     """
     def __init__(self, ws, p):
@@ -1076,7 +1086,7 @@ class ZSIPartAdapter(PartInterface):
         else:
             return None
 
-class ZSITypeAdapter(TypeInterface):
+class ZSITypeAdapter(AdapterBase, TypeInterface):
     """Inteface to type class
     """
     def __init__(self, ws, t):
@@ -1163,7 +1173,7 @@ class ZSITypeAdapter(TypeInterface):
 
 
 
-class ZSIExtensionFactory(ExtensionFactory):
+class ZSIExtensionFactory(AdapterBase, ExtensionFactory):
     """Extension Factory class
     """
     
@@ -1193,7 +1203,7 @@ class ZSIExtensionFactory(ExtensionFactory):
             raise WsdlInterfaceError, \
                   'extension factory failed for: %s' % self._extObj
         
-class ZSISoapAddressAdapter(SoapAddressInterface):
+class ZSISoapAddressAdapter(AdapterBase, SoapAddressInterface):
     """Interface to soap address class
     """
     def getLocation(self):
@@ -1201,7 +1211,7 @@ class ZSISoapAddressAdapter(SoapAddressInterface):
         """
         return self._address.location
 
-class ZSISoapBindingAdapter(SoapBindingInterface):
+class ZSISoapBindingAdapter(AdapterBase, SoapBindingInterface):
     """Interface to soap binding class
     """
     def getStyle(self):
@@ -1214,13 +1224,13 @@ class ZSISoapBindingAdapter(SoapBindingInterface):
         """
         return self._binding.transport
 
-class ZSISoapOperationAdapter(SoapOperationInterface):
+class ZSISoapOperationAdapter(AdapterBase, SoapOperationInterface):
     def getAction(self):
         """Operation action
         """
         return self._operation.soapAction
 
-class ZSISoapBodyAdapter(SoapBodyInterface):
+class ZSISoapBodyAdapter(AdapterBase, SoapBodyInterface):
     """Interface to soap body class
     """
     def getUse(self):
@@ -1243,7 +1253,7 @@ class ZSISoapBodyAdapter(SoapBodyInterface):
 ###########################################################################
 
 
-class ZSISchemaAdapter(SchemaInterface):
+class ZSISchemaAdapter(AdapterBase, SchemaInterface):
     def getImports(self):
         """return list of imports
         """
@@ -1296,7 +1306,7 @@ class ZSISchemaAdapter(SchemaInterface):
         return elementdict
 
 
-class ZSISchemaTypeAdapter(SchemaTypeInterface):
+class ZSISchemaTypeAdapter(AdapterBase, SchemaTypeInterface):
     """Adapter to schema types
     """
     def __adapterWrap(self, tp):
@@ -1342,7 +1352,7 @@ class ZSISchemaTypeAdapter(SchemaTypeInterface):
         """
 
         if self._type.attributes.has_key('name'):
-            return self._type.attributes['name']
+            return self.mangle(self._type.attributes['name'])
         else:
             return None
 
@@ -1421,7 +1431,7 @@ class ZSISchemaTypeAdapter(SchemaTypeInterface):
         return ZSISchemaDeclarationAdapter(self._type)
 
 
-class ZSISchemaDefinitionAdapter(SchemaDefinitionInterface):
+class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
 
     def __adapterWrap(self, tp):
         if isinstance( tp, ZSI.wstools.XMLSchema.ComplexType ) or \
@@ -1455,7 +1465,7 @@ class ZSISchemaDefinitionAdapter(SchemaDefinitionInterface):
         """get name
         """
         if self._def.attributes.has_key('name'):
-            return self._def.attributes['name']
+            return self.mangle(self._def.attributes['name'])
         else:
             return None
 
@@ -1598,7 +1608,7 @@ class ZSISchemaDefinitionAdapter(SchemaDefinitionInterface):
         return g
 
 
-class ZSISchemaDeclarationAdapter(SchemaDeclarationInterface):
+class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
 
     class DefinitionContainer:
         def __init__(self):
@@ -1659,7 +1669,7 @@ class ZSISchemaDeclarationAdapter(SchemaDeclarationInterface):
         """returns name
         """
         if self._dec.attributes.has_key('name'):
-            return self._dec.attributes['name']
+            return self.mangle(self._dec.attributes['name'])
         else:
             return None
 
@@ -1709,7 +1719,7 @@ class ZSISchemaDeclarationAdapter(SchemaDeclarationInterface):
         else:
             return 0
 
-class ZSIModelGroupAdapter(ModelGroupInterface):
+class ZSIModelGroupAdapter(AdapterBase, ModelGroupInterface):
     def isAll(self):
         """boolean - is complexType 'all'
         """
@@ -1730,7 +1740,7 @@ class ZSIModelGroupAdapter(ModelGroupInterface):
         """
         return self._model
 
-class ZSIDerivedTypesAdapter(DerivedTypesInterface):
+class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
 
     def __adapterWrap(self, tp):
         if isinstance( tp, ZSI.wstools.XMLSchema.ComplexType ) or \
