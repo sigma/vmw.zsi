@@ -505,26 +505,28 @@ class ServiceDescription:
 		    myBinding['defs'][op.getName()] = \
                                                     '\n%sdef %s(self, request):' % \
                                                     (ID1, op.getName())
+                    myBinding['defs'][op.getName()] += '\n%s"""\n' % ID2
+                    myBinding['defs'][op.getName()] += self.messages[inputName].\
+                                         docString(typeDict, inputName, True)
+                    myBinding['defs'][op.getName()] += '\n'
+                    if outputName:
+                        myBinding['defs'][op.getName()] += self.messages[outputName].\
+                                         docString(typeDict, outputName, False)
+                    myBinding['defs'][op.getName()] += '%s"""\n' % ID2
+                    
                     # checking to handle the special case of an
                     # element declaration of a primitive type.
                     # you will find these in document/literal ops.
                     kwstring = None
-                    
-                    if self.isSimpleElementDeclaration(op):
+                    simpleType = self.isSimpleElementDeclaration(op)
+                    if simpleType:
                         kwstring = "\n%skw = {'requestclass': %sWrapper}" \
                                    % (ID2, inputName )
                         myBinding['defs'][op.getName()] +=\
-                                                        '\n%sif not type(request) == %s:' %( ID2, self.isSimpleElementDeclaration(op) )
+                                                        '\n%sif not type(request) == %s:' %( ID2, simpleType)
                     else:
                         kwstring = '\n%skw = {}' % ID2
-                        myBinding['defs'][op.getName()] += '\n%s"""\n' % ID2
-                        myBinding['defs'][op.getName()] += self.messages[inputName].\
-                                         docString(typeDict, inputName, True)
-                        myBinding['defs'][op.getName()] += '\n'
-                        if outputName:
-                            myBinding['defs'][op.getName()] += self.messages[outputName].\
-                                         docString(typeDict, outputName, False)
-                        myBinding['defs'][op.getName()] += '%s"""\n' % ID2
+
                         myBinding['defs'][op.getName()] +=\
                                                         '\n%sif not isinstance(request, %s) and\\\n%snot issubclass(%s, request.__class__):'\
                                                         %(ID2, inputName,
@@ -771,14 +773,8 @@ class ServiceDescription:
                parameter sub-fields.
             """
             docList = []
-            if isInput:
-                docList.append('%s@param: request to %s' % (ID2, messageName))
-            else:
-                docList.append('%s@return: response from %s' % (ID2, messageName))
             if self.typeList:
                 self.typeList.sort()
-                docList.append('::')
-            docList.append('\n')
 
             for item in self.typeList:
                 if item[1]:
@@ -786,9 +782,24 @@ class ServiceDescription:
                 else:
                     item[1] = 'Any'
             alreadyListed = []
-            docList.extend(self.recurseTypeList(allTypeDict, self.typeList,
-                                                1, alreadyListed))
+            paramList = self.recurseTypeList(allTypeDict, self.typeList,
+                                                       1, alreadyListed)
+            if paramList:
+                if paramList[0].startswith('*Simple*'):
+                    startIndex = len('*Simple*') + 1
+                    if isInput:
+                        docList.append('%s@param: request is %s\n' % (ID2, paramList[0][startIndex:]))
+                    else:
+                        docList.append('%s@return: response is %s\n' % (ID2, paramList[0][startIndex:]))
+                    return ''.join(docList)
 
+            if isInput:
+                docList.append('%s@param: request to %s' % (ID2, messageName))
+            else:
+                docList.append('%s@return: response from %s' % (ID2, messageName))
+            if self.typeList:
+                docList.append('::\n')
+            docList.extend(paramList)
             return ''.join(docList)
 
 
@@ -801,11 +812,14 @@ class ServiceDescription:
             strList = []
             for item in typeList:
                 if item[0].startswith('_'):
-                    indent = ID2 + IDSP2*level
-                    strList.append('%s%s: %s' % (indent, item[0], item[1]))
-                    if item[2]:
-                        strList.append(', optional')
-                    strList.append('\n')
+                    if not item[0].startswith('__param'):
+                        indent = ID2 + IDSP2*level
+                        strList.append('%s%s: %s' % (indent, item[0], item[1]))
+                        if item[2]:
+                            strList.append(', optional')
+                        strList.append('\n')
+                    else:
+                        return ['*Simple* %s' % item[1]]
                 if allTypeDict.has_key(item[1]):
                     if item[1] not in alreadyListed:
                         alreadyListed.append(item[1])
@@ -1136,6 +1150,8 @@ class SchemaDescription:
             self.initcode.write('\n%sns = ns or self.__class__.schema' % ID3)
 
             self.basector.set('\n\n%s%s.__init__(self,pname=name)' % (ID3,tpc))
+            typeName = self.bti.get_pythontype(None, None, tpc)
+            self.typeDoc('', '__param', typeName)
                   
 
         def _elementComplexType(self, tp, etp):
@@ -1169,10 +1185,10 @@ class SchemaDescription:
 
                 nsp = etp.getTargetNamespace()
                 
-                self.basector.set('\n\n%s%s.%s.__init__(self)' \
-                                  %(ID3, self.nsh.getAlias(nsp),
-                                    etp.getName() + '_Def'))
-                self.postpend.set('\n%sself.typecode = %s.%s(name=name, ns=ns)' % (ID3, self.nsh.getAlias(nsp), etp.getName() + '_Def'))
+                typeName = '%s.%s_Def' % (self.nsh.getAlias(nsp), etp.getName())
+                self.basector.set('\n\n%s%s.__init__(self)'  % (ID3, typeName))
+                self.postpend.set('\n%sself.typecode = %s(name=name, ns=ns)' % (ID3, typeName))
+                self.typeDoc('', '_' + tp.getName(), typeName)
             else:
                 # at this point what we have is an element with
                 # local complex type definition.
