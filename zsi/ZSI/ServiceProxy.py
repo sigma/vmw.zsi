@@ -96,6 +96,9 @@ class ServiceProxy:
             request = requestTC[0]
             response = replyTC[0]
 
+        if callinfo.use == 'encoded':
+            request.oname += ' xmlns="%s"' %callinfo.namespace
+
         return request, response
 
     def _getTypeCode(self, parameters):
