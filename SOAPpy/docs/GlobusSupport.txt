@@ -51,12 +51,8 @@ For a client:
 =============
 import pyGlobus
 
-Config.channel_mode = 1
-Config.delegation_mode = 1
-
-# The httpg distinguishes this as a GSI TCP connection, so after this you
-can use the 
-# SOAP proxy as you would any other SOAP Proxy.
+# The httpg distinguishes this as a GSI TCP connection, so after 
+# this you can use the SOAP proxy as you would any other SOAP Proxy.
 
 server = SOAPProxy("httpg://localhost:9900/")
 print server.echo("moo")
