@@ -38,7 +38,7 @@ class _Map(TypeCode):
     def serialize(self, sw, pyobj, **kw):
 	n = kw.get('name', self.oname) or 'E%x' % id(pyobj)
 	if self.typed:
-	    tstr = ' A:Map xmlns:A="%s"' % Apache.NS
+	    tstr = ' xsi:type="A:Map" xmlns:A="%s"' % Apache.NS
 	else:
 	    tstr = ''
 	print >>sw, "<%s%s%s>" % (n, kw.get('attrtext', ''), tstr)
@@ -51,30 +51,6 @@ class _Map(TypeCode):
 	print >>sw, "</%s>" % n
 
 
-class _SOAPStruct(TypeCode):
-    '''Apache's "SOAPStruct" type.
-    '''
-    parselist = [ (Apache.NS, 'SOAPStruct') ]
-
-    def __init__(self, pname=None, **kw):
-	TypeCode.__init__(self, pname, **kw)
-	self.aslist = kw.get('aslist', 0)
-	self.tc = _Any(optional=1)
-
-    def parse(self, elt, ps):
-	self.checkname(elt, ps)
-	if self.nilled(elt, ps): return None
-	p = self.tc.parse
-	if self.aslist:
-	    v = [ p(c, ps) for c in _child_elements(elt) ]
-	else:
-	    v = {}
-	    for c in _child_elements(elt):
-		v[c.localName] = p(c, ps)
-	return v
-
-
 Apache.Map = _Map
-Apache.SOAPStruct = _SOAPStruct
 
 if __name__ == '__main__': print _copyright

@@ -650,12 +650,12 @@ specifies the maximum array dimensions.}
 need not appear.}
 \end{tableiii}
 
-\section{Apache Datatypes}
+\section{Apache Datatype}
 
 The Apache SOAP project, url{http://xml.apache.org/soap/index.html},
-has defined two SOAP datatypes in the 
-\code{http://xml.apache.org/xml-soap} namespace.
-They are \class{Map} and \class{SOAPStruct}.
+has defined a popular SOAP datatype in the 
+\code{http://xml.apache.org/xml-soap} namespace, a
+\class{Map}.
 
 The \code{Map} type is encoded as a list of \code{item} elements.
 Each \code{item} has a \code{key} and \code{value} child element; these
@@ -672,25 +672,5 @@ The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
 \lineiii{\code{aslist}}{\code{0}}{Use a list of tuples rather than
-a dictionary.}
-\end{tableiii}
-
-The \code{SOAPStruct} type is similar to a \class{TC.Struct}, except that
-it is typed as a \code{SOAPStruct}.
-This datatype can usually be processed by using the \code{type} keyword in a
-\class{TC.Struct} instance.
-A separate Apache \class{SOAPStruct} class is also available; when used,
-a \code{SOAPStruct} is either a list of values or a dictionary of name
-and value pairs.
-
-\begin{classdesc}{Apache.SOAPStruct}{name\optional{, **keywords}}
-An Apache SOAPStruct.
-Note that the class name is dotted.
-\end{classdesc}
-
-The following keyword arguments may be used:
-
-\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{aslist}}{\code{0}}{Use a list of values rather than
 a dictionary.}
 \end{tableiii}
