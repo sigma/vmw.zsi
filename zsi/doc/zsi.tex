@@ -1,17 +1,15 @@
 % $Header$
+\def\ZSI{\module{ZSI}}
 \documentclass{manual}
 \title{ZSI: The Zolera Soap Infrastructure}
-\author{Rich Salz\\
-        Brian Lloyd\\
+\author{Rich Salz,\\
         Christopher Blunck}
 \authoraddress{
 \strong{DataPower Technology, \url{http://www.datapower.com}}\\
-\strong{Zope Corporation, \url{http://www.zope.com}}\\
 E-mail: \email{rsalz@datapower.com\\
-brian.lloyd@zope.com\\
 blunck@gst.com}
 }
-\date{\today}
+\date{March 19, 2003}% edited date, not printed date
 \input{version}
 
 \begin{document}
@@ -20,30 +18,32 @@ blunck@gst.com}
 
 \centerline{\strong{ABSTRACT}}
 
-\module{ZSI}, the Zolera SOAP Infrastructure, is a Python package that
+\ZSI{}, the Zolera SOAP Infrastructure, is a Python package that
 provides an implementation of SOAP messaging, as described in
 \citetitle[http://www.w3.org/TR/soap]{The SOAP 1.1 Specification}.
-In particular, \module{ZSI} parses and generates SOAP messages, and
+In particular, \ZSI{} parses and generates SOAP messages, and
 converts between native Python datatypes and SOAP syntax.
 It can also be used to build applications using
 \citetitle[http://www.w3.org/TR/SOAP-attachments]{SOAP Messages with
 Attachments}.
-\module{ZSI} is ``transport neutral'', and provides only a simple
+\ZSI{} is ``transport neutral'', and provides only a simple
 I/O and dispatch framework; a more complete solution is the
-responsibility of the application using \module{ZSI}.
+responsibility of the application using \ZSI{}.
 As usage patterns emerge, and common application frameworks are
 more understood, this may change.
 
-\module{ZSI} requires Python 2.0 or later and PyXML version 0.6.6 or later.
+\ZSI{} requires Python 2.0 or later and PyXML version 0.6.6 or later.
 
-The \module{ZSI} homepage is at
-\url{http://pywebsvcs.sf.net/}.
+The \ZSI{} homepage is at \url{http://pywebsvcs.sf.net/}.
 
 \vfill
 
 \centerline{\strong{COPYRIGHT}}
 
 Copyright \copyright{} 2001, Zolera Systems, Inc.\\
+All Rights Reserved.
+
+Copyright \copyright{} 2002-2003, Rich Salz.\\
 All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -80,11 +80,13 @@ mailing list (see \url{http://groups.yahoo.com/soapbuilders}),
 Frederick Lundh for his \code{soaplib} package (see
 \url{http://www.secretlabs.com/downloads/index.htm\#soap}),
 Cayce Ullman and Brian Matthews for their \code{SOAP.py} package
-(see \url{http://sourceforge.net/projects/pywebsvcs}),
-and Brian Lloyd for his numerous WSDL contributions.
+(see \url{http://sourceforge.net/projects/pywebsvcs}).
+
+We are particularly grateful to Brian Lloyd and the Zope Corporation
+(\url{http://www.zope.com}) for letting us incorporate his ZOPE
+WebServices package and documentation into \ZSI{}.
 
 \tableofcontents{}
-\def\ZSI{\module{ZSI}}
 
 \input{c01-intro}
 \input{c02-samples}
