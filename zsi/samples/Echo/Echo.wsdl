@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions 
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:tns="urn:ZSI:examples"
+  targetNamespace="urn:ZSI:examples" >
+
+  <message name="EchoRequest">
+    <part name="in_str" type="xsd:string"/>
+  </message>
+  <message name="EchoResponse">
+    <part name="result" type="xsd:string"/>
+  </message>
+
+  <portType name="EchoServer">
+    <operation name="Echo">
+      <input message="tns:EchoRequest"/>
+      <output message="tns:EchoResponse"/>
+    </operation>
+  </portType>
+
+  <binding name="EchoServer" type="tns:EchoServer">
+    <soap:binding style="document" 
+                  transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="Echo">
+      <soap:operation soapAction="Echo"/>
+	<input>
+   	  <soap:body use="literal"/> 
+	</input>
+	<output>
+	  <soap:body use="literal"/> 
+	</output>
+    </operation>
+  </binding>
+
+  <service name="EchoServer">
+    <port name="EchoServer" binding="tns:EchoServer">
+      <soap:address location="http://localhost:7000"/>
+    </port>
+  </service>
+
+</definitions>
