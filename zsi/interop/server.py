@@ -6,12 +6,8 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from sclasses import Operation, WSDL_DEFINITION, TC_SOAPStruct
 
-config = {
-    'echons': 'http://soapinterop.org/echoheader/'
-}
-
 class InteropRequestHandler(BaseHTTPRequestHandler):
-    server_version = 'ZSI/1.2 ' + BaseHTTPRequestHandler.server_version
+    server_version = 'ZSI/1.2 OS390/VM5.4 ' + BaseHTTPRequestHandler.server_version
 
     def send_xml(self, text, code=200):
 	'''Send some XML.'''
@@ -125,6 +121,9 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
 	    except ParseException, e:
 		self.send_fault(FaultFromZSIException(e))
 	    self.trace(str(results), 'PARSED')
+	    if op.convert:
+		results = op.convert(results)
+	    if op.nsdict: nsdict.update(op.nsdict)
 	    reply = StringIO.StringIO()
 	    sw = SoapWriter(reply, nsdict=nsdict, header=self.headertext)
 	    sw.serialize(results, op.TCout,
@@ -146,8 +145,7 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
 		self.headertext += \
     '<E:echoMeStringResponse>%s</E:echoMeStringResponse>\n' % _textprotect(s)
 	    elif h.localName == 'echoMeStructRequest':
-		# Using mutable/inline to avoid a callback is a hack.
-		tc = TC_SOAPStruct('echoMeStructRequest', mutable=1, inline=1)
+		tc = TC_SOAPStruct('echoMeStructRequest', inline=1)
 		data = tc.parse(h, ps)
 		s = StringIO.StringIO()
 		sw = SoapWriter(s, envelope=0)

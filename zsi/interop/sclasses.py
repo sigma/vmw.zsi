@@ -49,17 +49,12 @@ class SOAPStruct:
     def __str__(self):
 	return str(self.__dict__)
 
-def SimpleTypetoStruct(*args):
-    s = SOAPStruct(None)
-    s.varString, s.varInteger, s.varFloat = args
-    return s
-
 class TC_SOAPStruct(TC.Struct):
     def __init__(self, pname=None, **kw):
 	TC.Struct.__init__(self, SOAPStruct, [
 	    TC.String('varString', strip=0, inline=1),
 	    TC.Iint('varInt'),
-	    TC.FPfloat('varFloat'),
+	    TC.FPfloat('varFloat', format='%.18g'),
 	], pname, **kw)
 
 class TC_SOAPStructStruct(TC.Struct):
@@ -67,7 +62,7 @@ class TC_SOAPStructStruct(TC.Struct):
 	TC.Struct.__init__(self, SOAPStruct, [
 	    TC.String('varString', strip=0),
 	    TC.Iint('varInt'),
-	    TC.FPfloat('varFloat'),
+	    TC.FPfloat('varFloat', format='%.18g'),
 	    TC_SOAPStruct('varStruct'),
 	], pname, **kw)
 
@@ -76,29 +71,30 @@ class TC_SOAPArrayStruct(TC.Struct):
 	TC.Struct.__init__(self, SOAPStruct, [
 	    TC.String('varString', strip=0),
 	    TC.Iint('varInt'),
-	    TC.FPfloat('varFloat'),
-	    TC.Array('string', TC.String(), 'varArray'),
+	    TC.FPfloat('varFloat', format='%.18g'),
+	    TC.Array('xsd:string', TC.String(string=0), 'varArray'),
 	], pname, **kw)
 
 class TC_ArrayOfstring(TC.Array):
     def __init__(self, pname=None, **kw):
-	TC.Array.__init__(self, 'string', TC.String(), pname, **kw)
+	TC.Array.__init__(self, 'xsd:string', TC.String(string=0), pname, **kw)
 
 class TC_ArrayOfint(TC.Array):
     def __init__(self, pname=None, **kw):
-	TC.Array.__init__(self, 'int', TC.Iint(), pname, **kw)
+	TC.Array.__init__(self, 'xsd:int', TC.Iint(), pname, **kw)
 
 class TC_ArrayOffloat(TC.Array):
     def __init__(self, pname=None, **kw):
-	TC.Array.__init__(self, 'float', TC.FPfloat(), pname, **kw)
+	TC.Array.__init__(self, 'xsd:float', TC.FPfloat(format='%.18g'),
+		    pname, **kw)
 
 class TC_ArrayOfSOAPStruct(TC.Array):
     def __init__(self, pname=None, **kw):
-	TC.Array.__init__(self, 'Z:SOAPStruct', TC_SOAPStruct(), pname, **kw)
+	TC.Array.__init__(self, 'Za:SOAPStruct', TC_SOAPStruct(), pname, **kw)
 
 #class TC_ArrayOfstring2D(TC.Array):
 #    def __init__(self, pname=None, **kw):
-#	TC.Array.__init__(self, 'string', TC.String(), pname, **kw)
+#	TC.Array.__init__(self, 'xsd:string', TC.String(string=0), pname, **kw)
 
 class RPCParameters:
     def __init__(self, name):
@@ -112,6 +108,12 @@ class RPCParameters:
 	    t += '\ninputStructArray\n'
 	    t += str(self.inputStructArray)
 	return t
+    def frominput(self, arg):
+	self.v = s = SOAPStruct(None)
+	self.v.varString = arg.inputString
+	self.v.varInt = arg.inputInteger
+	self.v.varFloat = arg.inputFloat
+	return self
 
 class Operation:
     dispatch = {}
@@ -127,11 +129,12 @@ class Operation:
 	self.TCout = TC.Struct(RPCParameters, tuple(tcout), name + 'Response')
 	self.convert = kw.get('convert', None)
 	self.headers = kw.get('headers', [])
+	self.nsdict = kw.get('nsdict', {})
 	Operation.dispatch[name] = self
 
 Operation("echoString",
-    TC.String('inputString'),
-    TC.String('inputString', oname='return')
+    TC.String('inputString', strip=0),
+    TC.String('inputString', oname='return', strip=0)
 )
 Operation("echoStringArray",
     TC_ArrayOfstring('inputStringArray'),
@@ -146,8 +149,8 @@ Operation("echoIntegerArray",
     TC_ArrayOfint('inputIntegerArray', oname='return'),
 )
 Operation("echoFloat",
-    TC.FPfloat('inputFloat'),
-    TC.FPfloat('inputFloat', oname='return'),
+    TC.FPfloat('inputFloat', format='%.18g'),
+    TC.FPfloat('inputFloat', format='%.18g', oname='return'),
 )
 Operation("echoFloatArray",
     TC_ArrayOffloat('inputFloatArray'),
@@ -160,6 +163,7 @@ Operation("echoStruct",
 Operation("echoStructArray",
     TC_ArrayOfSOAPStruct('inputStructArray'),
     TC_ArrayOfSOAPStruct('inputStructArray', oname='return'),
+    nsdict={'Za': 'http://soapinterop.org/xsd'}
 )
 Operation("echoVoid",
     [],
@@ -189,15 +193,15 @@ Operation("echoBoolean",
 )
 Operation("echoStructAsSimpleTypes",
     TC_SOAPStruct('inputStruct'),
-    ( TC.String('outputString'), TC.Iint('outputInteger'),
-	TC.FPfloat('outputFloat') ),
+    ( TC.String('outputString', strip=0), TC.Iint('outputInteger'),
+	TC.FPfloat('outputFloat', format='%.18g') ),
     convert=lambda s: (s.varString, s.varInt, s.varFloat),
 )
 Operation("echoSimpleTypesAsStruct",
-    ( TC.String('inputString'), TC.Iint('inputInteger'),
+    ( TC.String('inputString', strip=0), TC.Iint('inputInteger'),
 	TC.FPfloat('inputFloat') ),
-    TC_SOAPStruct('return'),
-    convert=SimpleTypetoStruct
+    TC_SOAPStruct('v', opname='return'),
+    convert=lambda arg: RPCParameters(None).frominput(arg),
 )
 #Operation("echo2DStringArray",
 #    TC_ArrayOfstring2D('input2DStringArray'),

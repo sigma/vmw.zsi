@@ -19,11 +19,11 @@ def _dict_to_tuple(d):
     '''
     retval = _niltime[:]
     for k,i in ( ('Y', 0), ('M', 1), ('D', 2), ('h', 3), ('m', 4), ):
-	v = d.get(k, None)
+	v = d.get(k)
 	if v: retval[i] = int(v)
-    v = d.get('s', None)
+    v = d.get('s')
     if v: retval[5] = int(float(v))
-    v = d.get('tz', None)
+    v = d.get('tz')
     if v and v != 'Z':
 	h,m = map(int, v.split(':'))
 	if h < 0:
@@ -106,13 +106,14 @@ class Gregorian(TypeCode):
 	if type(pyobj) in _floattypes or type(pyobj) in _inttypes:
 	    pyobj = time.gmtime(pyobj)
 	n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
-	d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
-	    'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
+	d = {}
 	if 1 in map(lambda x: x < 0, pyobj[0:6]):
 	    pyobj = map(abs, pyobj)
 	    d['neg'] = '-'
 	else:
 	    d['neg'] = ''
+	d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
+	    'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
 	val = self.format % d
 	if kw.get('typed', self.typed):
 	    tstr = ' xsi:type="xsd:%s"' % self.tag

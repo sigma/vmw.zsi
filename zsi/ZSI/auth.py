@@ -36,7 +36,7 @@ class ClientBinding:
 		d = _auth_tc.parse(elt, self.ps)
 		self.auth = (AUTH.zsibasic, d['Name'], d['Password'])
 		return self.auth
-	ba = self.environ.get('HTTP_AUTHENTICATION', None)
+	ba = self.environ.get('HTTP_AUTHENTICATION')
 	if ba:
 	    ba = ba.split(' ')
 	    if len(ba) == 2 and ba[0].lower() == 'basic':

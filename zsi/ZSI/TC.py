@@ -93,8 +93,8 @@ class TypeCode:
 	it's used in error messages).
 	'''
 	d = self.__class__.__dict__
-	parselist = d.get('parselist', None)
-	errorlist = d.get('errorlist', None)
+	parselist = d.get('parselist')
+	errorlist = d.get('errorlist')
 	if parselist and not errorlist:
 	    errorlist = []
 	    for t in parselist:
@@ -143,7 +143,7 @@ class TypeCode:
 	if len(list) != 2:
 	    raise EvaluateException('Malformed type attribute (not two colons)',
 		    ps.Backtrace(elt))
-	uri = ps.GetElementNSdict(elt).get(list[0], None)
+	uri = ps.GetElementNSdict(elt).get(list[0])
 	if uri == None:
 	    raise EvaluateException('Malformed type attribute (bad NS)',
 		    ps.Backtrace(elt))
@@ -247,9 +247,9 @@ class Any(TypeCode):
 		raise EvaluateException("Any cannot parse untyped element",
 			ps.Backtrace(elt))
 	    return self.parse_into_dict(elt, ps)
-	parser = Any.parsemap.get((ns,type), None)
+	parser = Any.parsemap.get((ns,type))
 	if not parser and _is_xsd_or_soap_ns(ns):
-	    parser = Any.parsemap.get((None,type), None)
+	    parser = Any.parsemap.get((None,type))
 	if not parser:
 	    raise EvaluateException('''Any can't parse element''',
 		    ps.Backtrace(elt))
@@ -279,12 +279,12 @@ class Any(TypeCode):
 	    return
 	if tc == types.InstanceType:
 	    tc = pyobj.__class__
-	    serializer = Any.serialmap.get(tc, None)
+	    serializer = Any.serialmap.get(tc)
 	    if not serializer:
 		tc = (types.ClassType, pyobj.__class__.__name__)
-		serializer = Any.serialmap.get(tc, None)
+		serializer = Any.serialmap.get(tc)
 	else:
-	    serializer = Any.serialmap.get(tc, None)
+	    serializer = Any.serialmap.get(tc)
 	if not serializer:
 	    # Last-chance; serialize instances as dictionary
 	    if type(pyobj) != types.InstanceType:
@@ -298,7 +298,7 @@ class Any(TypeCode):
 def RegisterType(C, clobber=0, *args, **keywords):
     instance = apply(C, args, keywords)
     for t in C.__dict__.get('parselist', []):
-	prev = Any.parsemap.get(t, None)
+	prev = Any.parsemap.get(t)
 	if prev:
 	    if prev.__class__ == C: continue
 	    if not clobber:
@@ -313,7 +313,7 @@ def RegisterType(C, clobber=0, *args, **keywords):
 	    key = (types.ClassType, t)
 	else:
 	    raise TypeError(str(t) + ' is not a class name')
-	prev = Any.serialmap.get(key, None)
+	prev = Any.serialmap.get(key)
 	if prev:
 	    if prev.__class__ == C: continue
 	    if not clobber:
@@ -348,7 +348,7 @@ class String(TypeCode):
 
     def __init__(self, pname=None, **kw):
 	TypeCode.__init__(self, pname, **kw)
-	self.resolver = kw.get('resolver', None)
+	self.resolver = kw.get('resolver')
 	self.strip = kw.get('strip', 1)
 	self.textprotect = kw.get('textprotect', 1)
 
@@ -496,11 +496,15 @@ class Integer(TypeCode):
     seriallist = [ types.IntType, types.LongType ]
     tag = None
 
+    def __init__(self, pname=None, **kw):
+	TypeCode.__init__(self, pname, **kw)
+	self.format = kw.get('format', '%d')
+
     def parse(self, elt, ps):
 	(ns,type) = self.checkname(elt, ps)
 	elt = self.SimpleHREF(elt, ps, 'integer')
 	if not elt: return None
-	tag = self.__class__.__dict__.get('tag', None)
+	tag = self.__class__.__dict__.get('tag')
 	if tag:
 	    if type == None:
 		type = tag
@@ -533,7 +537,7 @@ class Integer(TypeCode):
 	    tstr = ' xsi:type="xsd:%s"' % (self.tag or 'integer')
 	else:
 	    tstr = ''
-	print >>sw, '''<%s%s%s>%d</%s>''' % \
+	print >>sw, '<%s%s%s>' + self.format + '</%s>' % \
 		(n, kw.get('attrtext', ''), tstr, pyobj, n)
 
 class Decimal(TypeCode):
@@ -544,10 +548,10 @@ class Decimal(TypeCode):
     seriallist = _floattypes
     tag = None
     specials = {
-	'nan': float('NaN'),
-	'-nan': float('-NaN'),
-	'inf': float('INF'),
-	'-inf': float('-INF'),
+	'NaN': float('NaN'),
+	'-NaN': float('-NaN'),
+	'INF': float('INF'),
+	'-INF': float('-INF'),
     }
     ranges =  {
 	'float': ( 7.0064923216240861E-46,
@@ -557,11 +561,15 @@ class Decimal(TypeCode):
     }
     zeropat = re.compile('[1-9]')
 
+    def __init__(self, pname=None, **kw):
+	TypeCode.__init__(self, pname, **kw)
+	self.format = kw.get('format', '%f')
+
     def parse(self, elt, ps):
 	(ns,type) = self.checkname(elt, ps)
 	elt = self.SimpleHREF(elt, ps, 'floating-point')
 	if not elt: return None
-	tag = self.__class__.__dict__.get('tag', None)
+	tag = self.__class__.__dict__.get('tag')
 	if tag:
 	    if type == None:
 		type = tag
@@ -571,7 +579,7 @@ class Decimal(TypeCode):
 
 	if self.nilled(elt, ps): return None
 	v = self.simple_value(elt, ps).lower()
-	m = Decimal.specials.get(v, None)
+	m = Decimal.specials.get(v)
 	if m: return m
 
 	try:
@@ -600,7 +608,7 @@ class Decimal(TypeCode):
 	    tstr = ' xsi:type="xsd:%s"' % (self.tag or 'decimal')
 	else:
 	    tstr = ''
-	print >>sw, '<%s%s%s>%f</%s>' % \
+	print >>sw, '<%s%s%s>' + self.format + '</%s>' % \
 		(n, kw.get('attrtext', ''), tstr, pyobj, n)
 
 class Boolean(TypeCode):

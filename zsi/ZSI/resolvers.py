@@ -85,7 +85,7 @@ class MIMEResolver:
 	self.base = kw.get('uribase', 'thismessage:/')
 
 	self.id_dict, self.loc_dict, self.parts = {}, {}, []
-	self.next = kw.get('next', None)
+	self.next = kw.get('next')
 	mf = multifile.MultiFile(f, kw.get('seekable', 0))
 
 	mf.push(boundary)
@@ -96,9 +96,9 @@ class MIMEResolver:
 	    body.seek(0)
 	    part = (head, body)
 	    self.parts.append(part)
-	    key = head.get('content-id', None)
+	    key = head.get('content-id')
 	    if key: self.id_dict[key] = part
-	    key = head.get('content-location', None)
+	    key = head.get('content-location')
 	    if key: self.loc_dict[key] = part
 	mf.pop()
 

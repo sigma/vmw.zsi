@@ -89,12 +89,12 @@ class _implementation:
         '''Create and run the implementation.'''
 
         self.write = write
-        self.subset = kw.get('subset', None)
+        self.subset = kw.get('subset')
         if self.subset:
             self.comments = kw.get('comments', 1)
         else:
             self.comments = kw.get('comments', 0)
-        self.unsuppressedPrefixes = kw.get('unsuppressedPrefixes', None)
+        self.unsuppressedPrefixes = kw.get('unsuppressedPrefixes')
         nsdict = kw.get('nsdict', { 'xml': XMLNS.XML, 'xmlns': XMLNS.BASE })
 
         # Processing state.
@@ -265,7 +265,7 @@ class _implementation:
             # Create list of NS attributes to render.
             ns_to_render = []
             for n,v in ns_local.items():
-                pval = ns_parent.get(n, None)
+                pval = ns_parent.get(n)
 
                 # IF default namespace is XMLNS.BASE or empty, skip
                 if n == "xmlns" \

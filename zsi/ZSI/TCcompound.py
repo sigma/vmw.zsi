@@ -52,7 +52,7 @@ class Struct(TypeCode):
 	self.mutable = kw.get('mutable', 0)
 	if self.mutable: self.inline = 1
 	self.hasextras = kw.get('hasextras', 0)
-	self.type = kw.get('type', None)
+	self.type = kw.get('type')
 	t = type(ofwhat)
 	if t not in _seqtypes:
 	    raise TypeError(
@@ -163,7 +163,7 @@ class Struct(TypeCode):
 	    if TypeCode.typechecks and type(d) != types.DictType:
 		raise TypeError("Classless struct didn't get dictionary")
 	for what in self.ofwhat:
-	    v = d.get(what.pname, None)
+	    v = d.get(what.pname)
 	    if what.optional and v == None: continue
 	    try:
 		if what.repeatable and type(v) in _seqtypes:
@@ -224,14 +224,14 @@ class Array(TypeCode):
 	# Support multiple dimensions
 	if self.dimensions != 1:
 	    raise TypeError("Only single-dimensioned arrays supported")
-	self.fill = kw.get('fill', None)
+	self.fill = kw.get('fill')
 	self.sparse = kw.get('sparse', 0)
 	if self.sparse: ofwhat.optional = 1
 	self.mutable = kw.get('mutable', 0)
-	self.size = kw.get('size', None)
+	self.size = kw.get('size')
 	self.nooffset = kw.get('nooffset', 0)
 	self.undeclared = kw.get('undeclared', 0)
-	self.childnames = kw.get('childnames', None)
+	self.childnames = kw.get('childnames')
 	if self.size:
 	    t = type(self.size)
 	    if t in _inttypes:

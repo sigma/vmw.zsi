@@ -11,8 +11,6 @@ esac
 ./client.py $* -q
 rm -f nohup.out
 sleep 1
-# temporary until DNS catches up
-url="-u http://63.142.188.184/"
-nohup ./server.py $url -t debuglog -l accesslog $* &
+nohup ./server.py -t debuglog -l accesslog $* &
 sleep 1
 cat nohup.out

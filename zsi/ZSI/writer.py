@@ -41,10 +41,10 @@ class SoapWriter:
 	    ' xmlns:xsd="%(xsd)s"\n' \
 	    ' xmlns:ZSI="%(ZSI)s"' % _reserved_ns,
 	if self.encoding:
-	    print >>self, ' %s:encodingStyle="%s"' % (SOAP.ENC, self.encoding),
+	    print >>self, '\n SOAP-ENC:encodingStyle="%s"' % self.encoding,
 	if nsdict: self.writeNSdict(nsdict)
 	print >>self, '>'
-	header = kw.get('header', None)
+	header = kw.get('header')
 	if header:
 	    print >>self, '<SOAP-ENV:Header>'
 	    if type(header) in _stringtypes:
@@ -89,7 +89,7 @@ class SoapWriter:
 	'''
 	for k,v in nsdict.items():
 	    if (k,v) in _standard_ns: continue
-	    rv = _reserved_ns.get(k, None)
+	    rv = _reserved_ns.get(k)
 	    if rv:
 		if rv != v:
 		    raise KeyError("Reserved namespace " + str((k,v)) + " used")
@@ -134,7 +134,7 @@ class SoapWriter:
 	'''
 	for func,arglist in self.callbacks:
 	    apply(func, (self,) + arglist)
-	print >>self, '</SOAP-ENV:Body>'
+	if self.envelope: print >>self, '</SOAP-ENV:Body>'
 	if type(trailer) in _stringtypes:
 	    print >>self, trailer
 	elif trailer != None:

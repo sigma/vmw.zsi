@@ -310,6 +310,13 @@ SOAP integers are Python integers.
 \begin{classdesc}{Integer}{name\optional{, **keywords}}
 The parent type of all integers.
 This class handles any of the several types (and ranges) of SOAP integers.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{format}}{\code{\%d}}{Format string for serializing.
+\versionadded{1.2}}
+\end{tableiii}
 \end{classdesc}
 
 \begin{classdesc}{IEnumeration}{value_list, name\optional{, **keywords}}
@@ -375,6 +382,13 @@ SOAP floating point numbers are Python floats.
 The parent type of all floating point numbers.
 This class handles any of the several types (and ranges) of SOAP
 floating point numbers.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{format}}{\code{\%f}}{Format string for serializing.
+\versionadded{1.2}}
+\end{tableiii}
 \end{classdesc}
 
 \begin{classdesc}{FPEnumeration}{value_list, name\optional{, **keywords}}

@@ -38,8 +38,10 @@ Changes for 1.2, released xx-xxx-2001:
     -	SoapWriter's self.memo always uses id() (even for strings)
     -	Add SoapWriter.Forget()
     -	Add 'envelope' and 'encoding' keywords to SoapWriter
-    -	Added 'mutable' paramter to TC.Struct
+    -	Added 'mutable' parameter to TC.Struct
     -	TC.oname now properly defaults to TC.pname
+    -	Remove "None" if it was second arg to dictionary get() method
+    -	Add 'format' parameter to TC.Decimal and TC.Integer
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!

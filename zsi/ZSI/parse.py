@@ -62,7 +62,7 @@ class ParsedSoap:
 	    }
 	}
 	self.trailers, self.resolver, self.id_cache = \
-	    kw.get('trailers', 0), kw.get('resolver', None), {}
+	    kw.get('trailers', 0), kw.get('resolver'), {}
 
 	# Exactly one child element
 	c = [ E for E in _children(self.dom)
@@ -229,7 +229,7 @@ class ParsedSoap:
 		self.Backtrace(elt))
 	frag = href[1:]
 	# Already found?
-	e = self.id_cache.get(frag, None)
+	e = self.id_cache.get(frag)
 	if e: return e
 	# Do a breadth-first search, in the data first.  Most likely
 	# to find multi-ref targets shallow in the data area.
@@ -247,7 +247,7 @@ class ParsedSoap:
 		self.Backtrace(elt))
 
     def ResolveHREF(self, uri, tc, **keywords):
-	r = getattr(tc, 'resolver', None) or self.resolver
+	r = getattr(tc, 'resolver', self.resolver)
 	if not r:
 	    raise EvaluateException('No resolver for "' + uri + '"')
 	try:
@@ -273,7 +273,7 @@ class ParsedSoap:
 	element.  The dictionaries are cached, and we recurse up the tree
 	as necessary.
 	'''
-	d = self.ns_cache.get(id(elt), None)
+	d = self.ns_cache.get(id(elt))
 	if not d:
 	    if elt != self.dom: d = self.GetElementNSdict(elt.parentNode)
 	    for a in _attrs(elt):

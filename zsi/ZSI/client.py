@@ -50,8 +50,8 @@ class Binding:
 	self.data, self.ps, self.ns, self.user_headers = \
 	    None, None, None, []
 	self.nsdict, self.ssl, self.url, self.trace, self.host = \
-	    kw.get('nsdict', {}), kw.get('ssl', 0), kw.get('url', None), \
-	    kw.get('tracefile', None), kw.get('host', 'localhost')
+	    kw.get('nsdict', {}), kw.get('ssl', 0), kw.get('url'), \
+	    kw.get('tracefile'), kw.get('host', 'localhost')
 	if kw.has_key('auth'):
 	    self.SetAuth(*kw['auth'])
 	else:
@@ -121,7 +121,7 @@ class Binding:
 	elif kw.has_key('requestclass'):
 	    tc = kw['requestclass'].typecode
 	elif type(obj) == types.InstanceType:
-	    tc = obj.__class__.__dict__.get('typecode', None)
+	    tc = obj.__class__.__dict__.get('typecode')
 	    if tc == None: tc = TC.Any(opname)
 	else:
 	    tc = TC.Any(opname)

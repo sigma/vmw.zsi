@@ -163,12 +163,30 @@ phalanx_int_href_test = '''<SOAP-ENV:Envelope xmlns:SOAP-ENV='http://schemas.xml
 </SOAP-ENV:Envelope>
 '''
 
+wm_simple_as_struct_test = '''<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<SOAP-ENV:Body>
+<m:echoSimpleTypesAsStruct xmlns:m="http://soapinterop.org/">
+<inputString>White Mesa Test</inputString>
+<inputInteger>42</inputInteger>
+<inputFloat>0.0999</inputFloat>
+</m:echoSimpleTypesAsStruct>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+'''
+
 testlist = (
     ( 'struct test', pocketsoap_struct_test, None),
     ( 'base64 test', phalanx_b64_test, None),
     ( 'hexBinary', hexbin_test, None),
     ( 'big base64 test', someones_b64_test, None),
     ( 'echovoid', phalanx_void_test, None),
+    ( 'simple2struct', wm_simple_as_struct_test, None),
     ( 'multipart', multipart_test,
 	'Content-type: multipart/related; boundary="sep"\r\n' ),
     ( 'int href test', phalanx_int_href_test, None),

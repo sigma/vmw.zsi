@@ -84,7 +84,7 @@ def _CGISendFault(f):
 def AsCGI(modules=None):
     '''Dispatch within a CGI script.
     '''
-    if os.environ.get('REQUEST_METHOD', None) != 'POST':
+    if os.environ.get('REQUEST_METHOD') != 'POST':
 	_CGISendFault(Fault(Fault.Client, 'Must use POST'))
 	return
     ct = os.environ['CONTENT_TYPE']
@@ -147,7 +147,7 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
 def AsServer(**kw):
     address = ('', kw.get('port', 80))
     httpd = HTTPServer(address, SOAPRequestHandler)
-    httpd.modules = kw.get('modules', None)
+    httpd.modules = kw.get('modules')
     httpd.serve_forever()
 
 if __name__ == '__main__': print _copyright
