@@ -63,7 +63,7 @@ class SOAPBuilder:
 
     def __init__(self, args = (), kw = {}, method = None, namespace = None,
         header = None, methodattrs = None, envelope = 1, encoding = 'UTF-8',
-        use_refs = 0, config = Config,noroot = 0):
+        use_refs = 0, config = Config, noroot = 0):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
@@ -92,6 +92,7 @@ class SOAPBuilder:
         self.noroot     = noroot
 
     def build(self):
+        if Config.debug: print "In build."
         ns_map = {}
 
         # Cache whether typing is on or not
@@ -183,6 +184,7 @@ class SOAPBuilder:
         return ''.join(self.out)
 
     def gentag(self):
+        if Config.debug: print "In gentag."
         self.tcounter += 1
         return "v%d" % self.tcounter
 
@@ -261,13 +263,15 @@ class SOAPBuilder:
     # dumpers
 
     def dump(self, obj, tag = None, typed = 1, ns_map = {}):
+        if Config.debug: print "In dump.", "obj=", obj
         ns_map = ns_map.copy()
         self.depth += 1
 
         if type(tag) not in (NoneType, StringType, UnicodeType):
             raise KeyError, "tag must be a string or None"
 
-        tag = tag or self.gentag()
+        if tag=='': tag = self.gentag()
+        #tag = tag or self.gentag()
 
         try:
             meth = getattr(self, "dump_" + type(obj).__name__)
@@ -285,8 +289,9 @@ class SOAPBuilder:
 
     # generic dumper
     def dumper(self, nsURI, obj_type, obj, tag, typed = 1, ns_map = {},
-        rootattr = '', id = '',
-        xml = '<%(tag)s%(type)s%(id)s%(attrs)s%(root)s>%(data)s</%(tag)s>\n'):
+               rootattr = '', id = '',
+               xml = '<%(tag)s%(type)s%(id)s%(attrs)s%(root)s>%(data)s</%(tag)s>\n'):
+        if Config.debug: print "In dumper."
 
         if nsURI == None:
             nsURI = self.config.typesNamespaceURI
@@ -316,6 +321,7 @@ class SOAPBuilder:
             "id": id, "attrs": a}
 
     def dump_float(self, obj, tag, typed = 1, ns_map = {}):
+        if Config.debug: print "In dump_float."
         if fpconst.is_PosInf(obj):
             obj = "INF"
         elif fpconst.is_NegInf(obj):
@@ -330,6 +336,7 @@ class SOAPBuilder:
                                     self.genroot(ns_map)))
 
     def dump_string(self, obj, tag, typed = 0, ns_map = {}):
+        if Config.debug: print "In dump_string."
         tag = tag or self.gentag()
 
         id = self.checkref(obj, tag, ns_map)
@@ -346,6 +353,7 @@ class SOAPBuilder:
     dump_unicode = dump_string
 
     def dump_None(self, obj, tag, typed = 0, ns_map = {}):
+        if Config.debug: print "In dump_None."
         tag = tag or self.gentag()
         ns = self.genns(ns_map, self.config.schemaNamespaceURI)[0]
 
@@ -355,6 +363,7 @@ class SOAPBuilder:
     dump_NoneType = dump_None # For Python 2.2+
 
     def dump_list(self, obj, tag, typed = 1, ns_map = {}):
+        if Config.debug: print "In dump_list.", "obj=", obj
         if type(obj) == InstanceType:
             data = obj.data
         else:
@@ -450,6 +459,7 @@ class SOAPBuilder:
     dump_tuple = dump_list
 
     def dump_dictionary(self, obj, tag, typed = 1, ns_map = {}):
+        if Config.debug: print "In dump_dictionary."
         tag = tag or self.gentag()
 
         id = self.checkref(obj, tag, ns_map)
@@ -471,6 +481,7 @@ class SOAPBuilder:
     dump_dict = dump_dictionary # For Python 2.2+
 
     def dump_instance(self, obj, tag, typed = 1, ns_map = {}):
+        if Config.debug: print "In dump_instance.", "obj=", obj, "tag=", tag
         if not tag:
             # If it has a name use it.
             if isinstance(obj, anyType) and obj._name:
@@ -521,7 +532,7 @@ class SOAPBuilder:
 
             # first write out items with order information
             for i in range(len(obj._keyord)):
-                self.dump(getattr(obj, i), obj._keyord[i], 1, ns_map)
+                self.dump(obj.aslist(i), obj._keyord[i], 1, ns_map)
                 keylist.remove(obj._keyord[i])
 
             # now write out the rest

@@ -1,6 +1,6 @@
 Copyright (c) 2001-2003
 
-SOAP.py 0.10.3
+SOAP.py 0.11.0-pre1
 
 Current Maintainers: 	
 
@@ -42,20 +42,18 @@ FEATURES:
 - SSL servers (with OpenSSL configured in to Python and M2Crypto installed)
 - Encodes XML tags per SOAP 1.2 name mangling specification (Gregory Warnes)
 - Automatic stateful SOAP server support (Apache v2.x) (blunck2)
+- Early WSDL Support
+- Uses standard distutils ('setup.py') method for installation
 
 TODO: (See RELEASE_INFO and CHANGELOG for recent changes)
-- Timeout on method calls - MCU
-- Arrays (sparse, multidimensional and partial) - BLM
-- Clean up data types - BLM
-- Type coercion system (Builder) - MCU
-- Early WSDL Support - MCU
-- Attachments - BLM
-- setup.py - MCU
-- mod_python example - MCU
-- medusa example - MCU
-- Documentation - JAG
+- Timeout on method calls
+- Advanced arrays (sparse, multidimensional and partial)
+- Type coercion system (Builder)
+- Attachments
+- mod_python example
+- medusa example
+- Improved documentation
 - Look at performance
-- Put into standard 'setup.py' module format to ease installation
 
 
 MANIFEST:
@@ -68,14 +66,14 @@ setup.py            Python installation control file
 tests/*             examples
 validate/*          interop client and servers
 bid/*	            N+I interop client and server
+doc/*		    Documentation
 
 INSTALLATION 
 
 SOAPpy depends on the following packages:
 
-- fpconst <http://www.analytics.washington.edu/Zope/projects/fpconst>
-- (optional) pyXML   <http://pyxml.sourceforge.net> 
-
+- fpconst          <http://www.analytics.washington.edu/Zope/projects/fpconst>
+- (optional) pyXML <http://pyxml.sourceforge.net> 
 
 As of version 0.9.8 SOAPpy can be installed using the standard python
 package installation tools.  Executing the commands
@@ -85,6 +83,17 @@ package installation tools.  Executing the commands
 
 (the second as root) should install SOAPpy into the appropriate Python
 library directory.
+
+To install:
+
+   unpack the source package, then:
+
+   $ python setup.py build
+
+   then as a priveleged users:
+
+   $ python setup.py install
+
 
 IMPORTANT NOTE:
 
@@ -117,7 +126,7 @@ description language (WSDL) files.
         temp = proxy.getTemp(zip)
         print 'Temperature at', zip, 'is', temp
 
-    - On the server, you can allow the cleint to download the WSDL for
+    - On the server, you can allow the client to download the WSDL for
     a service by sending a request of the form by adding a do_GET
     method to the SOAPRequestHandler.  [Not yet working when
     debug=FALSE. Add example here when working]

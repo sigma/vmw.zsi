@@ -77,12 +77,12 @@ class SOAPConfig:
 
             # New argument name handling mechanism.  See
             # README.MethodParameterNaming for details
-            self.specialArgs = True 
+            self.specialArgs = 1
 
             # Automatically simplfy SOAP complex types into the
             # corresponding python types. (structType --> dict,
             # arrayType --> array)
-            self.unwrap_results = 1
+            self.unwrap_results = 0
             
             try: SSL; d['SSLserver'] = 1
             except: d['SSLserver'] = 0

@@ -29,6 +29,9 @@ class RefHolder:
     def __repr__(self):
         return "<%s %s at %d>" % (self.__class__, self.name, id(self))
 
+    def __str__(self):
+        return "<%s %s at %d>" % (self.__class__, self.name, id(self))
+
 class SOAPParser(xml.sax.handler.ContentHandler):
     class Frame:
         def __init__(self, name, kind = None, attrs = {}, rules = {}):
@@ -197,7 +200,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             href = attrs.get((None, 'href'))
             if href:
                 if href[0] != '#':
-                    raise Error, "only do local hrefs right now"
+                    raise Error, "Non-local hrefs are not yet suppported."
                 if self._data != None and string.join(self._data, "").strip() != '':
                     raise Error, "hrefs can't have data"
 
@@ -848,25 +851,37 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 return d.split()
         if t[0] in NS.XSD_L:
             if t[1] in ("base64", "base64Binary"):
-                return base64.decodestring(d)
+                if d:
+                    return base64.decodestring(d)
+                else:
+                    return ''
             if t[1] == "hexBinary":
-                return decodeHexString(d)
+                if d:
+                    return decodeHexString(d)
+                else:
+                    return
             if t[1] == "anyURI":
                 return urllib.unquote(collapseWhiteSpace(d))
             if t[1] in ("normalizedString", "token"):
                 return collapseWhiteSpace(d)
         if t[0] == NS.ENC:
             if t[1] == "base64":
-                return base64.decodestring(d)
+                if d:
+                    return base64.decodestring(d)
+                else:
+                    return ''
         if t[0] == NS.XSD:
             if t[1] == "binary":
                 try:
                     e = attrs[(None, 'encoding')]
 
-                    if e == 'hex':
-                        return decodeHexString(d)
-                    elif e == 'base64':
-                        return base64.decodestring(d)
+                    if d:
+                        if e == 'hex':
+                            return decodeHexString(d)
+                        elif e == 'base64':
+                            return base64.decodestring(d)
+                    else:
+                        return ''
                 except:
                     pass
 
@@ -968,17 +983,18 @@ def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None,
         p = structType(name)
 
     if config.unwrap_results:
-
         # Unwrap named and unnamed parameters, but not private 
         # attributes
-        for i in p._keys():
-            if i[0] != "_":
-                if type(p)==dict:
-                    tmp = simplify(p[i])
-                    p[i] = tmp
-                else:
-                    tmp = simplify(getattr(p, i))
-                    setattr(p,i,tmp)
+        
+        if isinstance(p, compoundType):
+            for i in p._keys():
+                if i[0] != "_": setattr(p,i, simplify(getattr(p, i)))
+        elif type(p)==dict:
+            for i in p.keys():
+                if i[0] != "_": p[i] = simplify(p[i])
+#        elif type(p)==list:
+#            for i in range(len(p)): p[i] = simplify(p[i])
+                
 
     if header or body or attrs:
         ret = (p,)

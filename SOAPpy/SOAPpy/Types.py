@@ -63,7 +63,9 @@ class anyType:
         if type(name) in (ListType, TupleType):
             self._ns, self._name = name
         else:
-            self._ns, self._name = self._validURIs[0], name
+            self._ns = self._validURIs[0]
+            self._name = name
+            
         self._typed = typed
         self._attrs = {}
 
@@ -1300,7 +1302,7 @@ class compoundType(anyType):
 
 class structType(compoundType):
     def __str__(self):
-        return str(self._asdict())
+        return anyType.__str__(self) + ": " + str(self._asdict())
     pass
 
 class headerType(structType):
@@ -1527,7 +1529,7 @@ class faultType(structType, Error):
 # Convert complex SOAPpy objects to native python equivalents
 #######
 
-def simplify(object ):
+def simplify(object, level=0 ):
     """
     Unwrap SOAPpy objects to get 'raw' python objects
     
@@ -1536,13 +1538,16 @@ def simplify(object ):
     - arrayType  --> array
     """
 
+    if level>3: return object
+
     if isinstance( object, structType ):
         data = object._asdict()
-        for k in data.keys():
-            data[k] = simplify(data[k])
+        for k in data.keys(): data[k] = simplify(data[k], level=level+1)
         return data
     elif isinstance( object, arrayType ):
-        return map(simplify, object._aslist())
+        data = object._aslist()
+        for k in object._aslist(): data[k] <- simplify(data[k], level=level+1)
+        return data
     else:
         return object
         
