@@ -531,7 +531,7 @@ class ServiceDescription:
                         kwstring = "\n%skw = {'requestclass': %sWrapper}" \
                                    % (ID2, inputName )
                         myBinding['defs'][op.getName()] +=\
-                                                        '\n%sif not type(request) == %s:' %( ID2, simpleType)
+                                                        '\n%sif not isinstance(request, %s):' %( ID2, simpleType)
                     else:
                         kwstring = '\n%skw = {}' % ID2
 
@@ -553,9 +553,17 @@ class ServiceDescription:
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Receive(%sWrapper())' % \
                             (ID2, outputName)
-			myBinding['defs'][op.getName()] +=\
-                            '\n%sif not isinstance(response, %s) and\\\n%snot issubclass(%s, response.__class__):'\
-                            %(ID2, outputName, ID3, outputName)
+
+			# JRB
+                        simpleType = self.isSimpleElementDeclaration(op, input=False)
+                        if simpleType:
+                            myBinding['defs'][op.getName()] +=\
+                                '\n%sif not isinstance(response, %s):' %( ID2, simpleType)
+                        else:
+			    myBinding['defs'][op.getName()] +=\
+                                '\n%sif not isinstance(response, %s) and\\\n%snot issubclass(%s, response.__class__):'\
+                                %(ID2, outputName, ID3, outputName)
+			# JRB
 			myBinding['defs'][op.getName()] +=\
 			    '\n%sraise TypeError, %s' %(ID3, r'"%s incorrect response type" %(response.__class__)')
 		        myBinding['defs'][op.getName()] += '\n%sreturn response' %(ID2)
@@ -587,14 +595,16 @@ class ServiceDescription:
         if not hasSoapBinding:
            raise WsdlGeneratorError, 'no soap bindings available for service %s' % service.getName()
 
-    def isSimpleElementDeclaration(self, op):
-        
-        if len( op.getInput().getMessage().getPartList() ) == 1:
+    def isSimpleElementDeclaration(self, op, input=True):
+
+        prt = None        
+        if input is True and len( op.getInput().getMessage().getPartList() ) == 1:
             prt = op.getInput().getMessage().getPartList()[0]
+        elif input is False and len( op.getOutput().getMessage().getPartList() ) == 1:
+            prt = op.getOutput().getMessage().getPartList()[0]
 
-            if prt.getElement():
-                return prt.getElement().isBasicElement()
-
+        if prt is not None and prt.getElement():
+            return prt.getElement().isBasicElement()
         return False
 
     class MessageWriter:

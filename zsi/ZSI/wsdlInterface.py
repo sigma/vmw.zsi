@@ -1167,11 +1167,11 @@ class ZSITypeAdapter(AdapterBase, TypeInterface):
         """
         
         pythontypes = {
-            'int'   : 'types.IntType',
-            'float' : 'types.FloatType',
-            'str'   : 'types.StringType',
-            'tuple' : 'types.TupleType',
-            'list'  : 'types.ListType',
+            'int'   : 'int',
+            'float' : 'float',
+            'str'   : 'basestring',
+            'tuple' : 'tuple',
+            'list'  : 'list',
             }
 
 

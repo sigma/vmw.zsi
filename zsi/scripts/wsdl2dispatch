@@ -120,9 +120,21 @@ class ServerCallbackDescription:
 
         if op.getOutput().getMessage() is not None:
             o += '\n\n%s# assign return values to response object' % ID2
-            o += '\n%sresponse = %s()' \
-                 % ( ID2, op.getOutput().getMessage().getName() \
-                     + 'Wrapper' )
+            # JRB CHECK MESSAGE TO SEE IF ITS SIMPLE
+            response_type = IsSimpleElementDeclaration(op, input=False)
+            if response_type is False:
+                o += '\n%sresponse = %s()' \
+                     % ( ID2, op.getOutput().getMessage().getName() \
+                         + 'Wrapper' )
+            else:
+                # can't instantiate a basestring, so by default do a str
+                if response_type == 'basestring': response_type = 'str'
+                o += '\n%sclass SimpleTypeWrapper(%s): typecode = %s()' \
+                     % ( ID2, response_type, op.getOutput().getMessage().getName() \
+                         + 'Wrapper' )
+                o += '\n\n%s# WARNING specify value eg. SimpleTypeWrapper(1)' % ID2
+                o += '\n%sresponse = SimpleTypeWrapper()'  % ID2
+
             o += '\n\n%sreturn response' % ID2
         else:
             o += '\n\n%s# NO output' % ID2
@@ -141,6 +153,19 @@ class ServerCallbackDescription:
 
     def write(self, fd=sys.stdout):
         fd.write( self.getContents() )
+
+
+def IsSimpleElementDeclaration(op, input=True):
+
+    prt = None
+    if input is True and len( op.getInput().getMessage().getPartList() ) == 1:
+        prt = op.getInput().getMessage().getPartList()[0]
+    elif input is False and len( op.getOutput().getMessage().getPartList() ) == 1:
+        prt = op.getOutput().getMessage().getPartList()[0]
+
+    if prt is not None and prt.getElement():
+        return prt.getElement().isBasicElement()
+    return False
 
 
 def doCommandLine():
