@@ -241,10 +241,10 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     if k[0]=="v":
                         try:
                             i = int(k[1:])
+                            ordered_args[i] = v
                         except ValueError:
                             named_args[str(k)] = v
 
-                        ordered_args[i] = v
                     else:
                         named_args[str(k)] = v
 
