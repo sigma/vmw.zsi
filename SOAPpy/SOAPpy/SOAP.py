@@ -4091,28 +4091,32 @@ class SOAPServer(SocketServer.TCPServer, SOAPServerBase):
 
         SocketServer.TCPServer.__init__(self, addr, RequestHandler)
 
-class SOAPUnixSocketServer(SocketServer.UnixStreamServer, SOAPServerBase):
+# only define class if Unix domain sockets are available
+if hasattr(socket, "AF_UNIX"):
 
-    def __init__(self, addr = 8000,
-        RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
-        config = Config, namespace = None, ssl_context = None):
-
-        # Test the encoding, raising an exception if it's not known
-        if encoding != None:
-            ''.encode(encoding)
-
-        if ssl_context != None and not config.SSLserver:
-            raise AttributeError, \
-                "SSL server not supported by this Python installation"
-
-        self.namespace          = namespace
-        self.objmap             = {}
-        self.funcmap            = {}
-        self.ssl_context        = ssl_context
-        self.encoding           = encoding
-        self.config             = config
-        self.log                = log
-
-        self.allow_reuse_address= 1
-
-        SocketServer.UnixStreamServer.__init__(self, str(addr), RequestHandler)
+    class SOAPUnixSocketServer(SocketServer.UnixStreamServer, SOAPServerBase):
+    
+        def __init__(self, addr = 8000,
+            RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
+            config = Config, namespace = None, ssl_context = None):
+    
+            # Test the encoding, raising an exception if it's not known
+            if encoding != None:
+                ''.encode(encoding)
+    
+            if ssl_context != None and not config.SSLserver:
+                raise AttributeError, \
+                    "SSL server not supported by this Python installation"
+    
+            self.namespace          = namespace
+            self.objmap             = {}
+            self.funcmap            = {}
+            self.ssl_context        = ssl_context
+            self.encoding           = encoding
+            self.config             = config
+            self.log                = log
+    
+            self.allow_reuse_address= 1
+    
+            SocketServer.UnixStreamServer.__init__(self, str(addr), RequestHandler)
+    
