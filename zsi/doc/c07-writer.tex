@@ -21,7 +21,11 @@ method for generating the output.
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{envelope}}{\code{1}}}{Write the SOAP envelope elements.
+\lineiii{\code{encoding}}{\code{SOAP-ENC} value}{If not \code{None}, then
+use the specified value as the value for the SOAP \code{encodingStyle}
+attribute.
+\versionadded{1.2}}
+\lineiii{\code{envelope}}{\code{1}}{Write the SOAP envelope elements.
 \versionadded{1.2}}
 \lineiii{\code{nsdict}}{\code{\{\}}}{Dictionary of namespaces to write
 in the SOAP \code{Header}.}

@@ -31,6 +31,7 @@ class SoapWriter:
 	    out, [], [], 0
 	nsdict = kw.get('nsdict', {})
 	self.envelope = kw.get('envelope', 1)
+	self.encoding = kw.get('encoding', SOAP.ENC)
 
 	if not self.envelope: return
 	print >>self, '<SOAP-ENV:Envelope\n' \
@@ -39,6 +40,8 @@ class SoapWriter:
 	    ' xmlns:xsi="%(xsi)s"\n' \
 	    ' xmlns:xsd="%(xsd)s"\n' \
 	    ' xmlns:ZSI="%(ZSI)s"' % _reserved_ns,
+	if self.encoding:
+	    print >>self, ' %s:encodingStyle="%s"' % (SOAP.ENC, self.encoding),
 	if nsdict: self.writeNSdict(nsdict)
 	print >>self, '>'
 	header = kw.get('header', None)
@@ -138,7 +141,7 @@ class SoapWriter:
 	    for n in trailer:
 		Canonicalize(n, self, nsdict=nsdict or _reserved_ns)
 		print >>self
-	if not self.envelope: print >>self, '</SOAP-ENV:Envelope>'
+	if self.envelope: print >>self, '</SOAP-ENV:Envelope>'
 	self.closed = 1
 
     def __del__(self):

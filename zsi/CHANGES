@@ -37,7 +37,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Allow keyword args in Fault.AsSOAP, passed to SoapWriter ctor
     -	SoapWriter's self.memo always uses id() (even for strings)
     -	Add SoapWriter.Forget()
-    -	Add 'envelope' keyword to SoapWriter
+    -	Add 'envelope' and 'encoding' keywords to SoapWriter
     -	Added 'mutable' paramter to TC.Struct
     -	TC.oname now properly defaults to TC.pname
 
