@@ -4,7 +4,7 @@
 # David W. Robertson, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import sys, re, weakref, string
+import sys, re, weakref, string, warnings
 from xml.dom.ext import SplitQName
 from xml.ns import SOAP, SCHEMA
 import ZSI
@@ -283,8 +283,9 @@ class WriteServiceModule:
         # check imports
         for ns in schema.getImports():
             if self.tns_imported.has_key(ns):
-                raise WsdlGeneratorError,\
-                      'suspect circular import of %s - not suported' % ns
+                #raise WsdlGeneratorError,\
+                #      'suspect circular import of %s - not suported' % ns
+                pass
             if ns not in SCHEMA.XSD_LIST and \
                ns not in [SOAP.ENC]:
                 self.tns_imported[ns] = 1
@@ -378,8 +379,9 @@ class ServiceDescription:
                     soapAddress = e
 
             if not hasSoapAddress:
-                continue
+                raise WsdlGeneratorError, 'no soap address specified for port %s - not supported' % p.getName()
 
+                
             # -----------------------------
 	    #  class variable address
 
@@ -1207,7 +1209,7 @@ class SchemaDescription:
                               % ID3)
             self.initcode.write('\n%sns = ns or self.__class__.schema' % ID3)
 
-            self.basector.set('\n\n%s%s.__init__(self,pname=name, **kw)' % (ID3,tpc))
+            self.basector.set('\n\n%s%s.__init__(self,pname=name, aname="_%%s" %% name,  **kw)' % (ID3,tpc))
             typeName = self.bti.get_pythontype(None, None, tpc)
             self.typeDoc('', '__param', typeName)
                   
