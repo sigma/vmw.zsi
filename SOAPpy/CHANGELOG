@@ -1,4 +1,31 @@
 $Id$
+VERSION 0.10.4
+--------------
+
+- Integrated a simple patch submitted by Erik Westra that dramatically
+  improves parser performance.
+
+- WSDL tools now uses m2crypto for SSL if it's installed.
+
+- Various other WSDL changes.
+
+VERSION 0.10.3
+--------------
+
+- Removed import of obsoleted ieee753.py.  Now use the fpconst module
+  proposed by PEP 754, available from 
+  <http://www.analytics.washington.edu/Zope/projects/fpconst/>
+
+- SOAPpy should no longer depend on pyXML.
+
+VERSION 0.10.2
+--------------
+
+- Fixed client support for basic authentication
+
+- Fixed import error in Client.py
+
+- Improved Client parsing of namespaces to support stateful SOAP servers.
 
 VERSION 0.10.1
 --------------
