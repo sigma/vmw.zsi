@@ -101,6 +101,7 @@ class NamespaceHash:
         if NamespaceHash.NSDICT.has_key(ns):
             return NamespaceHash.NSDICT[ns][1]
         else:
+            self.dump()
             raise WsdlGeneratorError, 'could not retrieve alias for %s' % ns
 
     def getNSList(self):
@@ -136,6 +137,7 @@ class WriteServiceModule:
         self._wa = ZSIWsdlAdapter( self.wsdl )
         self.nsh = NamespaceHash()
         self.tns_wrote = {}
+        self.tns_imported = {}
         self._nscount = 1
         self._nsdict  = {}
         self._importlib  = importlib
@@ -212,10 +214,14 @@ class WriteServiceModule:
 
         # check imports
         for ns in schema.getImports():
+            if self.tns_imported.has_key(ns):
+                raise WsdlGeneratorError,\
+                      'suspect circular import of %s - not suported' % ns
+            self.tns_imported[ns] = 1
             if self._wa.getSchemaDict().has_key(ns) and \
                    (not self.tns_wrote.has_key(ns)):
-                self.write_dependent_schema(self._wa.getSchemaDict().get(ns),
-                                            fd)
+                self.write_dependent_schema(self._wa.\
+                                            getSchemaDict().get(ns), fd)
 
         # next...xmlns
         for ns in schema.getXmlnsDict().values():
@@ -532,9 +538,10 @@ class ServiceDescription:
                             %(message.getName())
             self.typecode += '\n%sdef __init__(self, name=None, ns=None):'\
                              %(ID1)
-            
+
 	    for p in message.getPartList():
                 if p.getType():
+                    tns = p.getType().getTargetNamespace()
                     tp = self.__class__.PartWriter()
                     tp.fromPart(p)
                     if tp.typecode[0][0:3] == 'ZSI':
@@ -544,7 +551,7 @@ class ServiceDescription:
                     else:
                         qualifiedtc = tp.typecode[0:]
                         idx = qualifiedtc[0].find('(')
-                        qualifiedtc[0] = self.nsh.getAlias(namespace) + \
+                        qualifiedtc[0] = self.nsh.getAlias(tns) + \
                                          '.' + qualifiedtc[0][0:idx] + \
                                          '_Def' + qualifiedtc[0][idx:]
                         l += qualifiedtc
@@ -552,7 +559,7 @@ class ServiceDescription:
                         defclass = defclass[0:defclass.find('(')] + '_Def()'
                         self.typecode += '\n%sself._%s = %s.%s'\
                                          % ( ID2, p.getName(),
-                                             self.nsh.getAlias(namespace),
+                                             self.nsh.getAlias(tns),
                                              defclass )
                 elif p.getElement():
                     raise WsdlGeneratorError, 'Bad encoding'
@@ -759,6 +766,8 @@ class SchemaDescription:
             alternateWriter = '%s.%s()' % (alternateWriter[0],
                                            alternateWriter[1] )
 
+        #print schema.getTypesDict()
+        
 	for name, tp in schema.getTypesDict().items():
             
             defaultWriter = 'self.__class__.TypeWriter()'
@@ -799,7 +808,7 @@ class SchemaDescription:
         if check_list:
             self.getClassDefs(check_list, class_dict)
         else:
-            for l in class_dict.values(): 
+            for l in class_dict.values():
                 for tw in l:
                     self.body += tw.classdef
                     self.body += tw.initdef
@@ -903,11 +912,9 @@ class SchemaDescription:
             if etp and etp.isDefinition():    
 
                 if etp.isSimpleType():
-
                     self._elementSimpleType(tp, etp)
 
                 elif etp.isComplexType():
-
                     self._elementComplexType(tp, etp)
 
 
