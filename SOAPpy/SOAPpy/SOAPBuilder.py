@@ -110,7 +110,7 @@ class SOAPBuilder:
         if self.header:
             # Create a header.
             self.dump(self.header, "Header", typed = typed)
-            self.header = None # Wipe it out so no one is using it.
+            #self.header = None # Wipe it out so no one is using it.
 
         if self.body:
             # Call genns to record that we've used SOAP-ENV.
