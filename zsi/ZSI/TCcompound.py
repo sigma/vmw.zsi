@@ -109,6 +109,8 @@ class Struct(TypeCode):
                             v[what.aname].append(value)
                         else:
                             v[what.aname] = [value]
+                        c[j] = None
+                        continue
                     else:
                         v[what.aname] = value
                     c[j] = None
@@ -118,7 +120,7 @@ class Struct(TypeCode):
                     raise EvaluateException('Out of order struct',
                             ps.Backtrace(c_elt))
             else:
-                if not what.optional:
+                if not what.optional and not v.has_key(what.aname):
                     raise EvaluateException('Element "' + what.aname + \
                         '" missing from struct', ps.Backtrace(elt))
                 if hasattr(what, 'default'):
