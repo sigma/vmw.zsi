@@ -1074,7 +1074,6 @@ class SchemaDescription:
             subTypes = ''
  
             for t in self.localDefs:
-                print 'subtype'
                 subTypes += t.extractCode()
 
             formatted = []
