@@ -311,6 +311,7 @@ class Array(TypeCode):
                 raise EvaluateException('Array has content and HREF',
                         ps.Backtrace(elt))
             elt = ps.FindLocalHREF(href, elt)
+        if self.nilled(elt, ps): return None
         if not _find_arraytype(elt) and not self.undeclared:
             raise EvaluateException('Array expected', ps.Backtrace(elt))
         t = _find_type(elt)
