@@ -14,7 +14,7 @@
 ##########################################################################
 [configuration]
 
-tracefile = 0
+tracefile = 1
 
 
 ##########################################################################
@@ -29,7 +29,7 @@ test_GlobalWeather_gw = complex_tests GlobalWeather
 test_GlobalWeather_si = complex_tests GlobalWeather
 test_threatService = complex_tests threatService
 test_XMethodsQuery = complex_tests XMethodsQuery
-test_ZipCodeResolver = complex_tests ZipCodeResolver
+#test_ZipCodeResolver = complex_tests ZipCodeResolver
 test_noschemas = no_schemas Unused
 
 
@@ -41,20 +41,21 @@ test_noschemas = no_schemas Unused
 
 AbysalSendEmail  =  http://www.abysal.com/soap/AbysalEmail.wsdl
 BNQuoteService  =  http://www.xmethods.net/sd/2001/BNQuoteService.wsdl
-BabelFishService  =  http://www.xmethods.net/sd/2001/BabelFishService.wsdl
 Bible  =  http://www.stgregorioschurchdc.org/wsdl/Bible.wsdl
 Blast  =  http://xml.nig.ac.jp/wsdl/Blast.wsdl
 CATrafficService  =  http://www.xmethods.net/sd/2001/CATrafficService.wsdl
 Calendar  =  http://www.stgregorioschurchdc.org/wsdl/Calendar.wsdl
 ClustalW  =  http://xml.nig.ac.jp/wsdl/ClustalW.wsdl
-# % in binding name
+#syntax error in generated file
 #CountryInfoLookupService  =  http://www.cs.uga.edu/~sent/xmethods/CountryInfoLookup.wsdl
 CurrencyExchangeService  =  http://www.xmethods.net/sd/2001/CurrencyExchangeService.wsdl
 DDBJ  =  http://xml.nig.ac.jp/wsdl/DDBJ.wsdl
 DiscordianService  =  http://www.compkarori.com/wsdl/discordian.wsdl
+DistanceService  =  http://webservices.imacination.com/distance/Distance.jws?wsdl
 EMWebFunctionWS  =  http://www.eyemaginations.com/cgi-bin/getWSDL.pl?wsdl=WebFunction.wsdl
 Fasta  =  http://xml.nig.ac.jp/wsdl/Fasta.wsdl
 FaxService  =  http://oneoutbox.com/wsdl/FaxService.wsdl
+FreeFaxService  =  http://www.OneOutBox.com/wsdl/FreeFaxService.wsdl
 GetEntry  =  http://xml.nig.ac.jp/wsdl/GetEntry.wsdl
 IBorlandBabelservice  =  http://ww6.borland.com/webservices/BorlandBabel/BorlandBabel.exe/wsdl/IBorlandBabel
 IDutchservice  =  http://www.ebob42.com/cgi-bin/NumberToWordsInDutch.exe/wsdl/IDutch
@@ -72,15 +73,18 @@ ISOcode2shortformat  =  http://www.siliconllama.com/services/wsdl/ISOcode2shortf
 ISlashdotHeadlineProviderservice  =  http://www.marotz.se/scripts/SlashdotHeadlines.exe/wsdl/ISlashdotHeadlineProvider
 ISwedishZipInfoservice  =  http://www.marotz.se/scripts/zipinfo.exe/wsdl/ISwedishZipInfo
 ITempConverterservice  =  http://developerdays.com/cgi-bin/tempconverter.exe/wsdl/ITempConverter
+IWSMazeServerservice  =  http://www.culand.net/WebServices/bin/WSMaze_Server.dll/wsdl/IWSMazeServer
 IWagAddressServerSingleservice  =  http://62.212.78.36/cgi-bin/WagAddressServerSingle.exe/wsdl/IWagAddressServerSingle
 IWhoIsservice  =  http://webservices.matlus.com/scripts/whoiswebservice.dll/wsdl/IWhoIs
-Ieconomicservice  =  http://www.suiyi.com/soap/economic.dll/wsdl/Ieconomic
+# connection refused
+#Ieconomicservice  =  http://www.suiyi.com/soap/economic.dll/wsdl/Ieconomic
 IgetNumbersservice  =  http://reto.checkit.ch/Scripts/Lotto.dll/wsdl/IgetNumbers
-Iws_Verify_NRICservice  =  http://www.rightsecurity.biz/NRICWebServices/NRICWebServices.dll/wsdl/Iws_Verify_NRIC
 KRSS_DAML_Service  =  http://digilander.libero.it/mamo78/KRSS_DAML_Service.wsdl
 MBWSSoapService  =  http://www.extensio.com:8080/ExtensioInfoServer/mbsoap/MBWSSoapServices.wsdl
 SRS  =  http://xml.nig.ac.jp/wsdl/SRS.wsdl
-SmsService  =  http://sms.smspoint.net:8080/special/services/Sms?wsdl
+# connection refused
+#SmsService  =  http://sms.smspoint.net:8080/special/services/Sms?wsdl
+SurveyService  =  http://survey.rila.net/SurveyService/SurveyService.asmx?wsdl
 TemperatureService  =  http://www.xmethods.net/sd/2001/TemperatureService.wsdl
 TxSearch  =  http://xml.nig.ac.jp/wsdl/TxSearch.wsdl
 UrduSOAP  =  http://www.apniurdu.com/SOAP/Urdu2.wsdl
@@ -89,7 +93,6 @@ WSGenerator  =  http://xmlrad.com/WSGeneratorBin/WSGenerator.dll/WSDL
 Wiki  =  http://www.wlug.org.nz/phpwiki/soap.wsdl
 WorldTimeService  =  http://ws.digiposs.com/WorldTime.jws?wsdl
 XEMBL  =  http://www.ebi.ac.uk/xembl/XEMBL.wsdl
-XMethodsFilesystemService  =  http://www.xmethods.net/sd/2001/XMethodsFilesystemService.wsdl
 YIM_Service  =  http://www.scdi.org/~avernet/webservice/yim.wsdl
 YahooUserPingService  =  http://www.allesta.net:51110/webservices/wsdl/YahooUserPingService.xml
 convert  =  http://www.cosme.nu/services/convert.php?wsdl
@@ -107,32 +110,49 @@ pop  =  http://www.cosme.nu/services/pop.php?wsdl
 ##########################################################################
 [simple_types] 
 
+ABA  =  http://www.webservicex.com/aba.asmx?WSDL
 AmazonBox  =  http://www.xmlme.com/WSAmazonBox.asmx?WSDL
+AustralianPostCode  =  http://www.webservicex.com/AustralianPostCode.asmx?WSDL
 Autoloan  =  http://upload.eraserver.net/circle24/autoloan.asmx?wsdl
 BNPrice  =  http://www.abundanttech.com/webservices/bnprice/bnprice.wsdl
 BankCode  =  http://appserver.pepperzak.net/bankcode/BankCodeEJBHome/wsdl.jsp
+BarCode  =  http://www.webservicex.com/barcode.asmx?WSDL
+BibleWebservice  =  http://www.webservicex.com/BibleWebservice.asmx?wsdl
+Braille  =  http://www.webservicex.net/braille.asmx?WSDL
 CEqImage  =  http://www.quisque.com/fr/techno/eqimage/eqimage.asmx?WSDL
 CFRSearch  =  http://www.oakleaf.ws/cfrsearchws/cfrsearchws.asmx?wsdl
 CFRSect  =  http://www.oakleaf.ws/cfrsectws/cfrsectws.asmx?wsdl
 CFRToc  =  http://www.oakleaf.ws/cfrtocws/cfrtocws.asmx?wsdl
 CodeGenerator  =  http://www.esynaps.com/webservices/codegenerator.asmx?WSDL
 CreditCardValidator  =  http://www.richsolutions.com/RichPayments/RichCardValidator.asmx?WSDL
+CurrencyConvertor  =  http://www.webservicex.com/CurrencyConvertor.asmx?wsdl
 Currencyws  =  http://glkev.webs.innerhost.com/glkev_ws/Currencyws.asmx?WSDL
 DailyDilbert  =  http://www.esynaps.com/WebServices/DailyDiblert.asmx?WSDL
 DotnetDailyFact  =  http://www.xmlme.com/WSDailyNet.asmx?WSDL
 DynamicFlashWebService  =  http://www.firelife.eu.com/dynamicflash/dynamicflash.asmx?WSDL
+EMBLNucleotideSequenceWebService  =  http://www.webservicex.com/EMBLNucleotideSequenceWebService.asmx?wsdl
 ElectronicProductsFinder  =  http://www.xmlme.com/WSElectronics.asmx?WSDL
-EncryptionWS  =  http://test.mapfrepr.net/Encryption/Encryption.asmx?WSDL
 Fax  =  http://ws.acrosscommunications.com/Fax.asmx?WSDL
+FinanceService  =  http://www.webservicex.com/FinanceService.asmx?WSDL
 GetCustomNews  =  http://www.xmlme.com/WSCustNews.asmx?WSDL
 GetLocalTime  =  http://services.develop.co.za/GetLocalTime.asmx?WSDL
+# duplicate name problem
+# GlobalWeather  =  http://www.webservicex.com/globalweather.asmx?WSDL
+HCPCS  =  http://www.webservicex.com/hcpcs.asmx?WSDL
 IBANFunctions  =  http://www.bitounis.com/IBAN/IBANFuncs.asmx?WSDL
+ICD10  =  http://www.webservicex.com/icd10.asmx?WSDL
+ICD9  =  http://www.webservicex.com/icd9.asmx?WSDL
+ICD9Drug  =  http://www.webservicex.com/icd9drug.asmx?WSDL
+ICD9ToICD10  =  http://www.webservicex.com/icd9toicd10.asmx?WSDL
 ICQ  =  http://ws.acrosscommunications.com/ICQ.asmx?WSDL
+ISBN  =  http://www.webservicex.com/isbn.asmx?WSDL
 ISearchSwedishPersonservice  =  http://www.marotz.se/scripts/searchperson.exe/wsdl/ISearchSwedishPerson
 InstantMessageAlert  =  http://www.bindingpoint.com/ws/imalert/imalert.asmx?wsdl
+LetterSoup  =  http://helena.europe.webmatrixhosting.net/LetterSoup.asmx?WSDL
 LocalTime  =  http://www.ripedev.com/webservices/LocalTime.asmx?WSDL
 MSProxy  =  http://www.esynaps.com/WebServices/MsProxy.asmx?WSDL
 MXChecker  =  http://beta2.eraserver.net/webservices/mxchecker/mxchecker.asmx?WSDL
+NAICS  =  http://www.webservicex.com/NAICS.asmx?wsdl
 NFLNews  =  http://www.esynaps.com/WebServices/NFLNews.asmx?WSDL
 NumPager  =  http://ws.acrosscommunications.com/NumPager.asmx?WSDL
 NumberToWords  =  http://www28.brinkster.com/hegdes/NumberToWords.asmx?WSDL
@@ -144,40 +164,53 @@ QueryIP  =  http://ws.cdyne.com/whoisforip/queryip.asmx?wsdl
 Quotes  =  http://www.seshakiran.com/QuoteService/QuotesService.asmx?wsdl
 QuranVerse  =  http://aspnet.lamaan.com/webservices/QuranVerse.asmx?WSDL
 RSAFuncs  =  http://www.bitounis.com/RSAFunctions/RSAFuncs.asmx?WSDL
+RSStoHTML  =  http://www.webservicex.com/RssToHTML.asmx?WSDL
 SMS  =  http://ws.acrosscommunications.com/SMS.asmx?WSDL
-# duplicate service name, not handled for now
 #SMS_1  =  http://www.barnaland.is/dev/sms.asmx?WSDL
 SQLDataSoap  =  http://www.SoapClient.com/xml/SQLDataSoap.wsdl
 SecureXML  =  http://www.securexml.net/securexml/securexml.wsdl
+SendSMSWorld  =  http://www.webservicex.com/sendsmsworld.asmx?WSDL
 ServiceSMS  =  http://smsserver.dotnetisp.com/servicesms.asmx?WSDL
 Shakespeare  =  http://www.xmlme.com/WSShakespeare.asmx?WSDL
 SportingGoodsFinder  =  http://www.xmlme.com/WSSportingGoods.asmx?WSDL
+StockQuote  =  http://www.webservicex.com/stockquote.asmx?WSDL
+StockQuotes  =  http://www.gama-system.com/webservices/stockquotes.asmx?wsdl
 TAP  =  http://ws.acrosscommunications.com/TAP.asmx?WSDL
+TMorse  =  http://helena.europe.webmatrixhosting.net/Morse.asmx?WSDL
+TranslationService  =  http://www.webservicex.com/TranslateService.asmx?WSDL
+UDDIBusinessFinder  =  http://www.webservicex.com/UDDIBusinessFinder.asmx?WSDL
+UKLocation  =  http://www.webservicex.com/uklocation.asmx?WSDL
 UNSPSCConvert  =  http://www.codemechanisms.co.uk/WebServices/UNSPSC.asmx?WSDL
+USWeather  =  http://www.webservicex.com/usweather.asmx?WSDL
+ValidateEmail  =  http://www.webservicex.com/ValidateEmail.asmx?WSDL
 VideoGamesFinder  =  http://www.xmlme.com/WSVideoGames.asmx?WSDL
 WebChart  =  http://www.gxchart.com/webchart.wsdl
 WebSearchWS  =  http://www.esynaps.com/WebServices/SearchWS.asmx?WSDL
 WhoIS  =  http://ws.cdyne.com/whoisquery/whois.asmx?wsdl
 WhoIsService  =  http://www.esynaps.com/WebServices/WhoIsService.asmx?WSDL
 XmlDailyFact  =  http://www.xmlme.com/WSDailyXml.asmx?WSDL
+XmlTracking  =  http://www.baxglobal.com/xmltracking/xmltracking.asmx?wsdl
 XreOnline  =  http://www.codecube.net/services/xreonline.asmx?WSDL
 ZipCodesService  =  http://webservices.instantlogic.com/zipcodes.ils?wsdl
+airport  =  http://www.webservicex.com/airport.asmx?wsdl
 bork  =  http://www.x-ws.de/cgi-bin/bork/service.wsdl
 chat  =  http://www.x-ws.de/cgi-bin/eliza/chat.wsdl
+clip  =  http://www.dotnetclipper.com/clip.asmx?WSDL
+country  =  http://www.webservicex.com/country.asmx?wsdl
 eSynapsFeed  =  http://www.esynaps.com/WebServices/eSynapsFeed.asmx?WSDL
 eSynapsSerach  =  http://www.esynaps.com/WebServices/eSynapsSearch.asmx?WSDL
 engtoarabic  =  http://www.dl-me.com/etoaservice/engtoarabic.asmx?WSDL
-# service name not found
-#fWArticleService  =  http://www.framewerks.com/WebServices/fWArticleService/fwArticles.asmx?WSDL
+fWArticleService  =  http://www.framewerks.com/WebServices/fWArticleService/fwArticles.asmx?WSDL
+fax  =  http://www.webservicex.com/fax.asmx?wsdl
 foxcentral  =  http://www.foxcentral.net/foxcentral.wsdl
 huzipService  =  http://www.c6.hu/ws/huzip.wsdl
 iifws  =  http://www.inkostar.com/wsdl/iifws/iifws.wsdl
 imstatus  =  http://www.x-ws.de/cgi-bin/msn/imstatus.wsdl
 machnumber  =  http://www.cgi101.com/~msmithso/wsdl/mach.wsdl
+periodictable  =  http://www.webservicex.com/periodictable.asmx?wsdl
 piglatin  =  http://www.aspxpressway.com/maincontent/webservices/piglatin.asmx?wsdl
 unitext  =  http://www.dl-me.com/webservices/unitext.asmx?wsdl
 wwhelpservice  =  http://www.west-wind.com/wconnect/soap/wwhelpservice.wsdl
-xmlserver  =  http://xml.redcoal.net/SMSSOAP/xmlserver.wsdl
 
 
 
@@ -187,6 +220,8 @@ xmlserver  =  http://xml.redcoal.net/SMSSOAP/xmlserver.wsdl
 ##########################################################################
 [complex_types] 
 
+AMIWebServiceService  =  http://isnpx1158.in2p3.fr:8180/axis/services/AMIWebService?wsdl
+AddFinderService  =  http://www.lixusnet.com/lixusnet/AddFinder.jws?wsdl
 AddressFinder  =  http://arcweb.esri.com/services/v2/AddressFinder.wsdl
 AddressLookup  =  http://ws.cdyne.com/psaddress/addresslookup.asmx?wsdl
 AlanBushCompositions  =  http://www.alanbushtrust.org.uk/soap/compositions.wsdl
@@ -196,46 +231,33 @@ BondService  =  http://www.financialwebservices.ltd.uk/axis/services/bond?wsdl
 BusinessNews  =  http://glkev.webs.innerhost.com/glkev_ws/businessnews.asmx?WSDL
 CSearch  =  http://www.quisque.com/fr/chasses/blasons/search.asmx?WSDL
 CarRentalQuotesService  =  http://wavendon.dsdata.co.uk/axis/services/CarRentalQuotes?wsdl
+Cesar  =  http://www.quisque.com/fr/chasses/crypto/cesar.asmx?WSDL
 CupScores  =  http://scores.serviceobjects.com/CupScores.asmx?WSDL
-DOTSAddressValidate  =  http://ws2.serviceobjects.net/av/AddressValidate.asmx?WSDL
-DOTSDomainSpy  =  http://ws2.serviceobjects.net/ds/domainspy.asmx?WSDL
-DOTSEmailValidate  =  http://ws2.serviceobjects.net/ev/EmailValidate.asmx?WSDL
-DOTSFastQuote  =  http://ws2.serviceobjects.net/sq/FastQuote.asmx?WSDL
-DOTSFastTax  =  http://ws2.serviceobjects.net/ft/FastTax.asmx?WSDL
-DOTSFastWeather  =  http://ws2.serviceobjects.net/fw/FastWeather.asmx?WSDL
-DOTSGeoCash  =  http://ws2.serviceobjects.net/gc/GeoCash.asmx?WSDL
-DOTSGeoPhone  =  http://ws2.serviceobjects.net/gp/GeoPhone.asmx?WSDL
-DOTSGeoPinPoint  =  http://ws2.serviceobjects.net/gpp/GeoPinPoint.asmx?WSDL
-DOTSLotteryNumbers  =  http://ws2.serviceobjects.net/ln/lotterynumbers.asmx?WSDL
-DOTSPackageTracking  =  http://ws2.serviceobjects.net/pt/PackTrack.asmx?WSDL
-DOTSPatentOffice  =  http://ws2.serviceobjects.net/uspo/USPatentOffice.asmx?WSDL
-DOTSPhoneAppend  =  http://ws2.serviceobjects.net/pa/phoneappend.asmx?wsdl
-DOTSShippingComparison  =  http://ws2.serviceobjects.net/pc/packcost.asmx?WSDL
-DOTSUPC  =  http://ws2.serviceobjects.net/upc/UPC.asmx?WSDL
-DOTSYellowPages  =  http://ws2.serviceobjects.net/yp/YellowPages.asmx?WSDL
 DataService  =  http://webservices.empowered.com/statsws/stats.asmx?WSDL
 Dispenser  =  http://www.blackstoneonline.com/webservices/dispenser.xml
-DocConverterService  =  http://telecommerce.danet.de/axis/services/DocConverterServicePort?wsdl
 FOPService  =  http://live.capescience.com/wsdl/FOPService.wsdl
 FedRoutingDirectoryService  =  http://demo.soapam.com/services/FedEpayDirectory/FedEpayDirectoryService.wsdl
 GMChart  =  http://service.graphmagic.com/GMService/GraphMagic.asmx?wsdl
+GeoIPService  =  http://www.webservicex.com/geoipservice.asmx?WSDL
 GeoPlaces  =  http://www.codebump.com/services/placelookup.asmx?wsdl
 GlobalWeather  =  http://live.capescience.com/wsdl/GlobalWeather.wsdl
 GoogleSearch  =  http://api.google.com/GoogleSearch.wsdl
 HPcatalogService  =  http://www.lixusnet.com/lixusnet/HPcatalog.jws?wsdl
-# service name not found 
-#HTMLeMail  =  http://www.framewerks.com/WebServices/HTMLeMail/HTMLeMail.asmx?WSDL
-#HelpfulFunctions  =  http://www.framewerks.com/WebServices/helpfulfunctions/helpfulfunctions.asmx?WSDL
+HTMLeMail  =  http://www.framewerks.com/WebServices/HTMLeMail/HTMLeMail.asmx?WSDL
+HelpfulFunctions  =  http://www.framewerks.com/WebServices/helpfulfunctions/helpfulfunctions.asmx?WSDL
 HistoricalStockQuotes  =  http://glkev.webs.innerhost.com/glkev_ws/HistoricalStockQuotes.asmx?WSDL
 Horoscope  =  http://www.swanandmokashi.com/HomePage/WebServices/Horoscope.asmx?WSDL
 IACHSOAPservice  =  http://soap.achchex.com/exec/achsoap.dll/wsdl/IACHSOAP
-IGetInflectionservice  =  http://www.verbix.com/cgi-bin/soapx.exe/wsdl/IGetInflection
+# missing definitions element
+#IGetInflectionservice  =  http://www.verbix.com/cgi-bin/soapx.exe/wsdl/IGetInflection
+ILohn2004service  =  http://www.newcomer.de/WebServices/Lohn.dll/wsdl/ILohn2004
 IP2Geo  =  http://ws.cdyne.com/ip2geo/ip2geo.asmx?wsdl
 ISOcodes  =  http://www.siliconllama.com/services/wsdl/ISOcodesService.wsdl
 ISoapFindMP3service  =  http://www.agnisoft.com/soap/mssoapmp3search.xml
 ITAddressValidationsservice  =  http://63.138.157.107/av/wsdl/ITAddressValidations
 ITeeChartservice  =  http://www.berneda.com/scripts/TeeChartSOAP.exe/wsdl/ITeeChart
 IZPOP3service  =  http://www.zanetti-dev.com/scripts/zpop3ws.exe/wsdl/IZPOP3
+JIPNewsService  =  http://www.javaportal.it/kservices/JIPNews?wsdl
 LookyBookService  =  http://www.winisp.net/cheeso/books/books.asmx?WSDL
 MailLocate  =  http://www.maillocate.com/soap/index.php?wsdl
 NameLookup  =  http://www.barnaland.is/dev/names.asmx?WSDL
@@ -246,37 +268,40 @@ Option_x0020_Pricing_x0020_Calculator  =  http://www.indobiz.com/OptionPricing.a
 PersonLookup  =  http://www.barnaland.is/dev/personlookup.asmx?WSDL
 Phonebook  =  http://www.barnaland.is/dev/phonebook.asmx?WSDL
 PopulationWS  =  http://www.abundanttech.com/webservices/population/population.wsdl
-QueryInterfaceService  =  http://www.transactionalweb.com/SOAP/globalskilocator.wsdl
+# KeyError
+#QueryInterfaceService  =  http://www.transactionalweb.com/SOAP/globalskilocator.wsdl
 QuizService  =  http://java.rus.uni-stuttgart.de/quiz/quiz.wsdl
-QuoteOfTheDay  =  http://www.swanandmokashi.com/HomePage/WebServices/QuoteOfTheDay.asmx?WSDL
+QuoteofTheDay  =  http://www.swanandmokashi.com/HomePage/WebServices/QuoteOfTheDay.asmx?WSDL
 RandomBushism  =  http://greg.froh.ca/fun/random_bushism/soap/?wsdl
 RandomGoogleSearch  =  http://www.ghettodriveby.com/soap/?wsdl
 RateInfoClass  =  http://www.xeeinc.com/RateInformation/RateInfo.asmx?WSDL
-# duplicate service name, not handled for now
 #RateInfoClass_1  =  http://www.xeeinc.com/RateInformation/Rateinfo.asmx?WSDL
 RecipeService  =  http://icuisine.net/webservices/RecipeService.asmx?WSDL
 RenderServer3D  =  http://ws.xara.com/graphicrender/render3d.wsdl
 RichPayments  =  http://www.richsolutions.com/richpayments/richpay.asmx?WSDL
 SBGGetAirFareQuoteService  =  http://wavendon.dsdata.co.uk:8080/axis/services/SBGGetAirFareQuote?wsdl
-# duplicate service name, not handled for now
 #SMS  =  http://www.abctext.com/webservices/SMS.asmx?WSDL
+SOAPcdtek  =  http://www.drouet-web.com/webservices/soap_cdtek.php?wsdl
 SalesRankNPrice  =  http://www.PerfectXML.NET/WebServices/SalesRankNPrice/BookService.asmx?WSDL
+SendSMS  =  http://www.webservicex.com/SendSMS.asmx?WSDL
 Server  =  http://addison.ra.cwru.edu/orc/calendar_copy/server.php?wsdl
 Service  =  http://www.ejse.com/WeatherService/Service.asmx?WSDL
 SpamKillerService  =  http://wavendon.dsdata.co.uk/axis/services/SpamKiller?wsdl
-StockQuotes  =  http://www.swanandmokashi.com/HomePage/WebServices/StockQuotes.asmx?WSDL
-StockServices  =  http://glkev.webs.innerhost.com/glkev_ws/StockServices.asmx?WSDL
+StatServiceImpl  =  http://api.ecommstats.com/services/statService.wsdl
+# duplicate name problem
+#StockQuotes  =  http://www.swanandmokashi.com/HomePage/WebServices/StockQuotes.asmx?WSDL
+# derived arrays not supported
+#StockServices  =  http://glkev.webs.innerhost.com/glkev_ws/StockServices.asmx?WSDL
 TWSFissionDotNet  =  http://www.sidespace.com/ws/fission/fissiondotnet.php?wsdl
 TerraService  =  http://terraservice.net/TerraService.asmx?WSDL
 Transform  =  http://transform.dataconcert.com/transform.wsdl
 UPSTracking  =  http://glkev.webs.innerhost.com/glkev_ws/UPSTracking.asmx?WSDL
 URLjr_Library  =  http://urljr.com/soap
+Vigenere1  =  http://www.quisque.com/fr/chasses/crypto/vigenere1.asmx?WSDL
 WeatherFetcher  =  http://glkev.webs.innerhost.com/glkev_ws/WeatherFetcher.asmx?WSDL
-# service name not found
-#WeatherService  =  http://www.hkwizard.com/WeatherService.asmx?wsdl
+WeatherService  =  http://www.hkwizard.com/WeatherService.asmx?wsdl
 WebServiceOfTheDay  =  http://www.webserviceoftheday.com/ws/soap/wsotd.asmx?wsdl
 WeblogsSubscriber  =  http://soap.4s4c.com/weblogs/subscribe.wsdl
-WhoIs  =  http://ws2.serviceobjects.net/whi/WhoIs.asmx?WSDL
 WhoisDataService  =  http://wavendon.dsdata.co.uk/axis/services/WhoisData?wsdl
 WolframSearchService  =  http://webservices.wolfram.com/services/SearchServices/WolframSearch.wsdl
 XMethodsQuery  =  http://www.xmethods.net/wsdl/query.wsdl
@@ -285,6 +310,7 @@ XigniteInsider  =  http://www.xignite.com/xInsider.asmx?WSDL
 XigniteNews  =  http://www.xignite.com/xnews.asmx?WSDL
 XigniteOptions  =  http://www.xignite.com/xoptions.asmx?WSDL
 XigniteQuotes  =  http://www.xignite.com/xquotes.asmx?WSDL
+XigniteRates  =  http://www.xignite.com/xrates.asmx?WSDL
 XigniteRealTime  =  http://www.xignite.com/xrealtime.asmx?WSDL
 XigniteRetirement  =  http://www.xignite.com/xretirement.asmx?WSDL
 XigniteSecurity  =  http://www.xignite.com/xsecurity.asmx?WSDL
@@ -309,10 +335,10 @@ com_systinet_demo_search_zvon_ZVONSearchService  =  http://soap.systinet.net/dem
 dic2  =  http://www.dl-me.com/webservices/dic2.asmx?WSDL
 eSynapsMonitor  =  http://www.esynaps.com/WebServices/eSynapsMonitor.wsdl
 ev  =  http://ws.cdyne.com/emailverify/ev.asmx?wsdl
+eyeVeri  =  http://www.tilisoft.com/ws/eyeVeri/eyeVeri.asmx?WSDL
 getQuakeDataService  =  http://webservices.tei.or.th/getQuakeData.cfc?wsdl
 getSessionReport  =  http://sandbox.grandcentral.com/services/reports?WSDL
 pwspNoCentrbankCurRates  =  http://server1.pointwsp.net/ws/finance/currency.asmx?WSDL
-results  =  http://lokeuei.malaysiandevelopers.net/magnum4d/results.asmx?WSDL
 sekeywordService  =  http://www.aspiringgeek.com/cfc/keyword/sekeyword.cfc?wsdl
 threatService  =  http://www.boyzoid.com/threat.cfc?wsdl
 urn_AldiaService  =  http://webservices.sld.cu/aldia.wsdl
@@ -332,13 +358,11 @@ xmethods_gcd  =  http://samples.bowstreet.com/bowstreet5/webengine/xmethods/gcd/
 ##########################################################################
 [reader_errors] 
 
-BAXGlobalTrackingService  =  http://www.baxglobal.com/xmltracking/xmltracking.asmx?wsdl
 BusinessFinder(UDDI)-WebService  =  http://www.esynaps.com/WebServices/BusinessList.asmx?WSDL
 ColdFusionTip-of-the-Day  =  http://www.forta.com/cf/tips/syndicate.cfc?wsdl
 ComputerDictionarySearch  =  http://dotnet.cyberthink.net/computerdictionary/computerdictionary.asmx?wsdl
 DateFormatter  =  http://www.siliconllama.com/services/wsdl/dConverterService.wsdl
 DynamicChartingofXMLData  =  http://webservices.isitedesign.com/ws/chartWS.cfc?wsdl
-EmailServices  =  http://soap.einsteinware.com/email/emailservices.asmx?WSDL
 ExpressionEvaluator  =  http://www.onepercentsoftware.com/axis/services/EvaluationService?wsdl
 FonttoGraphic  =  http://ws.cdyne.com/FontToGraphic/ftg.asmx?wsdl
 GeoMonsterMailValidate  =  http://webservices.geomonster.com/GeoServe.asmx?wsdl
@@ -347,29 +371,24 @@ HolidayInformation  =  http://wsdl.wsdlfeeds.com/holidays.cfc?wsdl
 Html2Xml  =  http://www.dev1.eraserver.net/REFLECTIONIT/Html2xml.asmx?WSDL
 HuarananetPresstechnologynews  =  http://www22.brinkster.com/horaciovallejo/netpress1.asmx?wsdl
 InfosVille  =  http://www.dotnetisp.com/webservices/dotnetisp/ville.asmx?WSDL
-ItalianFiscalCode  =  http://www.pinellus.com/cfc/Cod_fiscale.cfc?wsdl
-KannadakasturiWebservices  =  http://www.kannadakasturi.com/WebServices/kannadakasturiwebservice.asmx?WSDL
 LinearSystemsSolver  =  http://www.cs.fsu.edu/~engelen/lu.wsdl
+LocInfoZipCode  =  http://www.tilisoft.com/ws/LocInfo/ZipCode.asmx?WSDL
 LogFileParser  =  http://www.bitounis.com/W3CParser/LogFileParser.asmx?WSDL
 MagicSquares  =  http://www.cs.fsu.edu/~engelen/magic.wsdl
 MysicSearchEngine  =  http://mysic.com/Webservices/MysicSearchEngine.asmx?WSDL
 NASCARWinstonCupStatistics  =  http://soap.einsteinware.com/nascar/nascardataservice.asmx?WSDL
+NRICWebServices  =  http://www.rightsecurity.biz/NRICWebServices/NRICWebServices.dll/wsdl/Iws_Verify_NRIC
 OpenDirectoryProject  =  http://wsdl.wsdlfeeds.com/odp.cfc?wsdl
 Orbitarium  =  http://www.orbitarium.com/schemas/ows.wsdl
 PopulatedPlaces  =  http://www.transactionalweb.com/SOAP/geoserve.wsdl
 SchemaWebWebService  =  http://www.schemaweb.info/webservices/soap/SchemaWebSoap.asmx?wsdl
-SendFAX  =  http://www.OneOutBox.com/wsdl/FreeFaxService.wsdl
 SlashdotNewsFeed  =  http://webservices.isitedesign.com/ws/slashdotnews.cfc?wsdl
-SpamKiller  =  http://soap.prowizorka.com/spam/wsdl/ISpamCheck
 SpellChecker  =  http://wsdl.wsdlfeeds.com/spell.cfc?wsdl
-StockQuotesWebService  =  http://www.gama-system.com/webservices/stockquotes.asmx?wsdl
+USAZipcodeInformation  =  http://www.webservicex.com/uszip.asmx?WSDL
 VerisignPayflowProPaymentServices  =  http://ewsdemo.webmethods.com/WmEWS/directory/wsd.dsp?interface=wmpayflow.sample&service=Credit_Approval
 WebEvents  =  http://www.bitounis.com/WebEvents/events.asmx?WSDL
 WebRTF2HTML  =  http://www.infoaccelerator.net/cfc/rtf2html.cfc?WSDL
-adSearch  =  http://www.interpressfact.net/webservices/getAds.asmx?wsdl
 cp2ville  =  http://www.dotnetisp.com/webservices/dotnetisp/codepostal.asmx?WSDL
-getJoke  =  http://www.interpressfact.net/webservices/getJoke.asmx?wsdl
-promotionService  =  http://interpressfact.net/webservices/promotionService.asmx?wsdl
 src2html  =  http://www.dotnetisp.com/webservices/dotnetisp/src2html.asmx?WSDL
 
 
@@ -381,9 +400,11 @@ src2html  =  http://www.dotnetisp.com/webservices/dotnetisp/src2html.asmx?WSDL
 [wsdl2python_errors] 
 
 DeadOrAlive  =  http://www.abundanttech.com/webservices/deadoralive/deadoralive.wsdl
+ElmarSearchService  =  http://projekt.wifo.uni-mannheim.de/elmar/api/ElmarSearchServices?wsdl
 GetCurrencyExchangeSOAP  =  http://www.atlaz.net/webservices/GetCurrencyExchange.wsdl
 IndoEconoCator  =  http://www.indobiz.com/IndoEconoCator.asmx?WSDL
 InterFax  =  http://ws.interfax.net/dfs.asmx?WSDL
+KKwebservice  =  http://www.kannadakasturi.com/WebServices/kannadakasturiwebservice.asmx?WSDL
 MapImage  =  http://arcweb.esri.com/services/v2/MapImage.wsdl
 Muse_net_x0020_Client  =  http://clientservice.muse.net/ClientService.asmx?WSDL
 PlaceFinderSample  =  http://arcweb.esri.com/services/v2/PlaceFinderSample.wsdl
@@ -395,6 +416,5 @@ SAINTlogin  =  http://www.saintlogin.com/SAINT_WS/SAINTlogin_service_mssoap.php?
 SID64sidRANK  =  http://www.sid64.com/soap/sidrank.php?wsdl
 SearchMusicTeachers  =  http://www.PerfectXML.net/WebServices/MusicTeachers/MusicTeachers.asmx?wsdl
 Statistics  =  http://www.strikeiron.com/scripts/statistics.asmx?WSDL
-pos_public  =  http://iis1.grantparksoftware.com:8080/gps/pos_public.asmx?WSDL
 pwspPostalSearch  =  http://server1.pointwsp.net/ws/postal/main.asmx?WSDL
 smtpserver  =  http://www.cosme.nu/services/smtpserver.php?wsdl

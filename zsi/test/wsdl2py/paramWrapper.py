@@ -24,9 +24,9 @@ class TypecodeStrRep:
         self.topObj = obj
 
             # namespace alias dictionary
-        self.nspAliases = {}
+        #self.nspAliases = {}
             # namespace handling class
-        self.nsh = ZSI.wsdl2python.NamespaceHash()
+        #self.nsh = ZSI.wsdl2python.NamespaceHash()
 
         self.recurseTypecodes(obj, self.typeDict)
         
