@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import unittest, sys, tests_good, tests_bad
+import unittest, sys, tests_good, tests_bad, time
 from ZSI import *
 from xml.dom.ext import PrettyPrint
 try:
