@@ -495,11 +495,12 @@ class ServiceDescription:
                     # these have been moved here to build up the typecodes
                     # needed to generate types in the docstrings
                     self.messages[inputName] = \
-                               self.__class__.MessageWriter(self.aname_func)
+                               self.__class__.MessageWriter(aname_func=self.aname_func)
                 
                     self.messages[inputName].\
                                   fromMessage(op.getInput().getMessage(), 
-                                          op.getName(), namespace, style, use)
+                                              op.getName(), namespace,
+                                              style, use)
                 
                     outputName = None
                     if op.getOutput() and op.getOutput().getMessage():
@@ -556,7 +557,7 @@ class ServiceDescription:
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Send(None, None, request, soapaction="%s", **kw)' %(ID2, soapAction)
 			myBinding['defs'][op.getName()] +=\
-                            '\n%sresponse = self.binding.Receive(%sWrapper())' % \
+                            '\n%sresponse = self.binding.Receive(%sWrapper)' % \
                             (ID2, outputName)
 
 			# JRB
@@ -638,7 +639,6 @@ class ServiceDescription:
             else:
                 raise WsdlGeneratorError, 'unsupported use=%s' %(use)
 
-
         def fromMessageEncoded(self, message, name, namespace, style, op):
 	    l = []
 
@@ -664,7 +664,7 @@ class ServiceDescription:
                     if tp.typecode[0][0:3] == 'ZSI':
                         l += tp.typecode
                         self.typecode += '\n%sself.%s = None'\
-                                         % ( ID2, p.getName() )
+                                         % ( ID2, self.aname_func(p.getName()))
                             # for later use in docstring generation
                         self.typeList.append(['_' + tp.docCode[0], tp.docCode[1], False])
                     else:
@@ -677,7 +677,7 @@ class ServiceDescription:
                         defclass = tp.typecode[0][0:]
                         defclass = defclass[0:defclass.find('(')] + '_Def()'
                         self.typecode += '\n%sself.%s = %s.%s'\
-                                         % ( ID2, self.aname(p.getName()),
+                                         % ( ID2, p.getName(),
                                              self.nsh.getAlias(tns),
                                              defclass )
                         self.typeList.append(['_' + tp.docCode[0],
@@ -695,10 +695,6 @@ class ServiceDescription:
 		tcs = ''
 		for i in l:
                     tcs += (i + ',')
-
-                if self.aname_func:
-                    f = self.aname_func
-                    name = f(name)
 
                 self.typecode += '\n%sZSI.TC.Struct.__init__(self, %s, [%s], pname=name, aname="%%s" %% name, oname=oname )' %( ID3, message.getName(), tcs )
 
