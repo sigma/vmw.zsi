@@ -60,6 +60,7 @@ class WriteHLSModule:
         portList = []
         for service in wsm._wa.getServicesList():
 
+            locatorList = []
             for port in service.getPortList():
                 hasSoapAddress = False
                 soapAddress    = None
@@ -75,15 +76,13 @@ class WriteHLSModule:
                 portList.append(port)
                 portTypeName = port.getBinding().getPortType().getName()
 
-                fd.write('class %sHLocator(%sLocator):\n' % (portTypeName, service.getName()))
-                fd.write('    def get%s(self, portAddress=None, **kw):\n' % \
-                        portTypeName )
+                locatorClassName = '%sHLocator' % (portTypeName)
+                locatorList.append([portTypeName, locatorClassName])
+                fd.write('class %s(%sLocator):\n' %
+                         (locatorClassName, service.getName()))
+                fd.write('    def getPortType(self, portAddress=None, **kw):\n')
                 fd.write('        return %sSOAPHLS(portAddress or %sLocator.%s_address, **kw)\n\n' %  \
                     (port.getBinding().getName(), service.getName(), portTypeName))
-                fd.write('    def getPortType(self, portTypeName, **kw):\n')
-                fd.write('        for name, fun in self.__class__.__dict__.items():\n')
-                fd.write('            if name.endswith(portTypeName):\n')
-                fd.write('                return fun(None, **kw)\n\n')
 
             #WRITE OUT PORTS
             for port in portList:
@@ -113,3 +112,13 @@ class WriteHLSModule:
                 fd.write('        return self._opDict[opName][0]()\n\n')
                 fd.write('    def outputWrapper(self, opName):\n')
                 fd.write('        return self._opDict[opName][1]()\n\n')
+            fd.write('\n\nclass ServiceInterface:\n')
+            fd.write('    def __init__(self):\n')
+            fd.write('        self._locatorDict = {}\n')
+            for pair in locatorList:
+                fd.write("        self._locatorDict['%s'] = %s\n" %
+                         (pair[0], pair[1]))
+            fd.write('\n')
+            fd.write('    def getLocator(self, portTypeName):\n')
+            fd.write('        return self._locatorDict[portTypeName]\n')
+

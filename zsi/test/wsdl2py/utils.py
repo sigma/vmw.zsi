@@ -59,14 +59,16 @@ class ServiceTestCase(unittest.TestCase):
         if not serviceModule:
             return None, None
 
-        try:
-            locator = serviceModule.__dict__[portTypeName + 'HLocator']
-        except KeyError:
+        interface = getattr(serviceModule, 'ServiceInterface', None)
+        if not interface:
             print 'Test requires helper interface generation'
             return None, None
 
-        portType = locator().getPortType(portTypeName, **kw)
+        locator = interface().getLocator(portTypeName)
+
+        portType = locator().getPortType(**kw)
         return serviceModule, portType
+
 
     def setUpWsdl(path):
         """Load a WSDL given a file path or a URL.
