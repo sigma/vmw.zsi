@@ -3101,6 +3101,7 @@ class SOAPBuilder:
         self.out += self.dumper(None, "string", cgi.escape(data), tag,
             typed, ns_map, self.genroot(ns_map), id)
 
+    dump_str = dump_string # For Python 2.2+
     dump_unicode = dump_string
 
     def dump_None(self, obj, tag, typed = 0, ns_map = {}):
@@ -3108,6 +3109,8 @@ class SOAPBuilder:
         ns = self.genns(ns_map, self.config.schemaNamespaceURI)[0]
 
         self.out += '<%s %snull="1"%s/>\n' % (tag, ns, self.genroot(ns_map))
+
+    dump_NoneType = dump_None # For Python 2.2+
 
     def dump_list(self, obj, tag, typed = 1, ns_map = {}):
         if type(obj) == InstanceType:
@@ -3214,6 +3217,8 @@ class SOAPBuilder:
                 self.dump(v, k, 1, ns_map)
 
         self.out += '</%s>\n' % tag
+
+    dump_dict = dump_dictionary # For Python 2.2+
 
     def dump_instance(self, obj, tag, typed = 1, ns_map = {}):
         if not tag:
