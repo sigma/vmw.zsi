@@ -1,4 +1,4 @@
-"""
+"
 ################################################################################
 #
 # SOAPpy - Cayce Ullman       (cayce@actzero.com)
@@ -199,9 +199,13 @@ class HTTPTransport:
 
         # read response line
         code, msg, headers = r.getreply()
-        
-        content_type = headers.get("content-type","text/xml")
-        content_length = headers.get("Content-length")
+
+        if headers:
+            content_type = headers.get("content-type","text/xml")
+            content_length = headers.get("Content-length")
+        else:
+            content_type=None
+            content_length=None
 
         # work around OC4J bug which does '<len>, <len>' for some reaason
         if content_length:
