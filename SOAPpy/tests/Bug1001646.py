@@ -48,6 +48,8 @@ keyword2 = { 'status': 'Moderate',
 		'id': 2 }
 keylist = [keyword1, keyword2]
 
+# Check that the data goes through properly
+
 retval = server.echo_simple(adgroupid, keylist)
 
 kw1 = retval[1][0]
@@ -60,5 +62,11 @@ for key in kw1.keys():
 
 for key in kw2.keys():
   assert(kw2[key]==keyword2[key])
+
+# Check that the header is preserved
+retval = server.echo_header((adgroupid, keylist))
+
+assert(retval[1].has_key('useragent'))
+assert(retval[1]['useragent'] == ['foo'])
 
 print "Success!"
