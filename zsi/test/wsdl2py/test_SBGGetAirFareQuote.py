@@ -10,7 +10,6 @@ from ZSI import EvaluateException
 
 import utils
 from paramWrapper import ResultsToStr
-from clientGenerator import ClientGenerator
 
 """
 Unittest for contacting the SBGGetAirFareQuoteService Web service.
@@ -19,28 +18,23 @@ WSDL: http://wavendon.dsdata.co.uk:8080/axis/services/SBGGetAirFareQuote?wsdl
 """
 
 
-class SBGGetAirFareQuoteServiceTest(unittest.TestCase):
+class SBGAirFareQuoteTest(unittest.TestCase):
     """Test case for SBGGetAirFareQuoteService Web service
     """
 
     def setUp(self):
-        """unittest calls setUp and tearDown after each
-           test method call.
+        """Done this way because unittest instantiates a TestCase
+           for each test method, but want all diffs to go in one
+           file.  Not doing testdiff as a global this way causes
+           problems.
         """
         global testdiff
-        global SBGAirFareQuote
 
         if not testdiff:
             testdiff = utils.TestDiff(self, 'diffs')
-            testdiff.setDiffFile('SBGGetAirFareQuoteService.diffs')
-          
-        kw = {}
-        #kw = { 'tracefile' : sys.stdout }
-        SBGAirFareQuote = service.SBGGetAirFareQuoteServiceLocator().getSBGGetAirFareQuote(**kw)
 
-    
     def test_getAirFareQuote(self):
-        request = service.getAirFareQuoteRequestWrapper()
+        request = portType.inputWrapper('getAirFareQuote')
         request._in0 = service.ns1.AirFareQuoteRequest_Def()
         dateTime = time.gmtime(time.time()+864000)
         request._in0._outwardDate = dateTime
@@ -48,38 +42,31 @@ class SBGGetAirFareQuoteServiceTest(unittest.TestCase):
         request._in0._returnDate = dateTime
         request._in0._originAirport = 'SFO'
         request._in0._destinationAirport = 'CMH'
-        response = SBGAirFareQuote.getAirFareQuote(request)
+        response = portType.getAirFareQuote(request)
         print ResultsToStr(response)
 
     def test_getAirlines(self):
-        request = service.getAirlinesRequestWrapper()
-        response = SBGAirFareQuote.getAirlines(request)
+        request = portType.inputWrapper('getAirlines')
+        response = portType.getAirlines(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
     
 
-def setUp():
-    global testdiff
-    global deleteFile
-    global service
-
-    deleteFile = utils.handleExtraArgs(sys.argv[1:])
-    testdiff = None
-    service = ClientGenerator().getModule('config.txt', 'complex_types',
-                                   'SBGGetAirFareQuoteService',
-                                   'generatedCode')
-    return service
-
-
 def makeTestSuite():
+    global service, portType, testdiff
+
+    service, portType = utils.testSetUp(SBGAirFareQuoteTest,
+                           'SBGGetAirFareQuoteService', 'SBGGetAirFareQuote')
+    testdiff = None
     suite = unittest.TestSuite()
     if service:
-        suite.addTest(unittest.makeSuite(SBGGetAirFareQuoteServiceTest, 'test_'))
+        suite.addTest(unittest.makeSuite(SBGAirFareQuoteTest, 'test_'))
     return suite
 
 
-def main():
-    if setUp():
-        utils.TestProgram(defaultTest="makeTestSuite")
-                  
+def tearDown():
+    """Global tear down."""
+    testdiff.close()
 
-if __name__ == "__main__" : main()
+
+if __name__ == "__main__" :
+    utils.TestProgram(defaultTest="makeTestSuite")

@@ -9,7 +9,6 @@ from ZSI import FaultException
 
 import utils
 from paramWrapper import ResultsToStr
-from clientGenerator import ClientGenerator
 
 """
 Unittest for contacting the FreeDB Web service.
@@ -21,70 +20,43 @@ class FreeDBServiceTest(unittest.TestCase):
     """Test case for FreeDBService Web service
     """
 
-    def setUp(self):
-        """unittest calls setUp and tearDown after each
-           test method call.
-        """
-        global testdiff
-        global FreeDBService
-
-        if not testdiff:
-            testdiff = utils.TestDiff(self, 'diffs')
-            testdiff.setDiffFile('FreeDBService.diffs')
-
-        #kw = {'tracefile':sys.stdout}
-        kw = {}
-        FreeDBService = service.JavaServiceLocator().getFreeDBService(**kw)
-    
     def test_getDetails(self):
-        request = service.FreeDBService_getDetails_1_RequestWrapper()
+        request = portType.inputWrapper('getDetails')
         request._title = 'Hollywood Town Hall'
         request._discId = '8509ff0a'
         request._artist = 'Jayhawks'
         request._category = 'rock'
-        response = FreeDBService.getDetails(request)
+        response = portType.getDetails(request)
         print ResultsToStr(response)
 
     def test_search(self):
-        response = FreeDBService.search('Ted Nugent and the Amboy Dukes')
+        response = portType.search('Ted Nugent and the Amboy Dukes')
         print ResultsToStr(response)
 
     def test_searchByTitle(self):
-        response = FreeDBService.searchByTitle('Ummagumma')
+        response = portType.searchByTitle('Ummagumma')
         print ResultsToStr(response)
 
     def test_searchByTrack(self):
-        response = FreeDBService.searchByTrack('Species of Animals')
+        response = portType.searchByTrack('Species of Animals')
         print ResultsToStr(response)
 
     def test_searchByArtist(self):
-        response = FreeDBService.searchByArtist('Steppenwolf')
+        response = portType.searchByArtist('Steppenwolf')
         print ResultsToStr(response)
     
 
-def setUp():
-    global testdiff
-    global deleteFile
-    global service
-
-    deleteFile = utils.handleExtraArgs(sys.argv[1:])
-    testdiff = None
-    service = ClientGenerator().getModule('config.txt', 'complex_types',
-                                   'com.systinet.demo.freedb.FreeDBService',
-                                   'generatedCode')
-    return service
-
-
 def makeTestSuite():
+    global service, portType
+
+    service, portType =  utils.testSetUp(FreeDBServiceTest,
+                    'com.systinet.demo.freedb.FreeDBService', 'FreeDBService')
     suite = unittest.TestSuite()
     if service:
         suite.addTest(unittest.makeSuite(FreeDBServiceTest, 'test_'))
     return suite
 
 
-def main():
-    if setUp():
-        utils.TestProgram(defaultTest="makeTestSuite")
-                  
+if __name__ == "__main__" :
+    utils.TestProgram(defaultTest="makeTestSuite")
 
-if __name__ == "__main__" : main()

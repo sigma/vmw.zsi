@@ -10,7 +10,6 @@ from ZSI import EvaluateException, FaultException
 
 import utils
 from paramWrapper import ResultsToStr
-from clientGenerator import ClientGenerator
 
 """
 Unittest for contacting the TerraService Web service.
@@ -19,77 +18,73 @@ WSDL:  http://terraservice.net/TerraService.asmx?WSDL
 """
 
 
-class TerraServiceTest(unittest.TestCase):
+class TerraServiceSoapTest(unittest.TestCase):
     """Test case for TerraService Web service
     """
 
     def setUp(self):
+        """Done this way because unittest instantiates a TestCase
+           for each test method, but want all diffs to go in one
+           file.  Not doing testdiff as a global this way causes
+           problems.
+        """
         global testdiff
-        global TerraServiceSoap
-        
-        #kw = {'tracefile': sys.stdout}
-        kw = {}
-        TerraServiceSoap = service.TerraServiceLocator().getTerraServiceSoap(**kw)
 
         if not testdiff:
             testdiff = utils.TestDiff(self, 'diffs')
-            if deleteFile:
-                testdiff.deleteFile('TerraService.diffs')
-            testdiff.setDiffFile('TerraService.diffs')
-
 
     def test_ConvertPlaceToLonLatPt(self):
-        request = service.ConvertPlaceToLonLatPtSoapInWrapper()
+        request = portType.inputWrapper('ConvertPlaceToLonLatPt')
         request._place = service.ns1.Place_Def()
         request._place._City = 'Oak Harbor'
         request._place._State = 'Washington'
         request._place._Country = 'United States'
-        response = TerraServiceSoap.ConvertPlaceToLonLatPt(request)   
+        response = portType.ConvertPlaceToLonLatPt(request)   
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_ConvertPlaceToLonLatPt_x1(self):
-        request = service.ConvertPlaceToLonLatPtSoapInWrapper()
+        request = portType.inputWrapper('ConvertPlaceToLonLatPt')
         request._place = service.ns1.Place_Def()
         request._place._City = 1
         request._place._State = 'Washington'
         request._place._Country = 'United States'
-        self.failUnlessRaises(Exception, TerraServiceSoap.ConvertPlaceToLonLatPt, request)
+        self.failUnlessRaises(Exception, portType.ConvertPlaceToLonLatPt, request)
 
     def test_ConvertLonLatPtToNearestPlace(self):
-        request = service.ConvertLonLatPtToNearestPlaceSoapInWrapper()
+        request = portType.inputWrapper('ConvertLonLatPtToNearestPlace')
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = -122.64
         request._point._Lat = 48.29
-        response = TerraServiceSoap.ConvertLonLatPtToNearestPlace(request)   
+        response = portType.ConvertLonLatPtToNearestPlace(request)   
         testdiff.failUnlessEqual(ResultsToStr(response))
     
     def later_ConvertLonLatPtToNearestPlace_x1(self):
-        request = service.ConvertLonLatPtToNearestPlaceSoapInWrapper()
+        request = portType.inputWrapper('ConvertLonLatPtToNearestPlace')
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = '-122.64'
         request._point._Lat = 48.29
-        response = TerraServiceSoap.ConvertLonLatPtToNearestPlace(request)   
-        self.failUnlessRaises(Exception, TerraServiceSoap.ConvertLonLatPtToNearestPlace, request)
+        response = portType.ConvertLonLatPtToNearestPlace(request)   
+        self.failUnlessRaises(Exception, portType.ConvertLonLatPtToNearestPlace, request)
     
     def test_ConvertLonLatPtToUtmPt(self):
-        request = service.ConvertLonLatPtToUtmPtSoapInWrapper()
+        request = portType.inputWrapper('ConvertLonLatPtToUtmPt')
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = -122.64
         request._point._Lat = 48.29
-        response = TerraServiceSoap.ConvertLonLatPtToUtmPt(request)  
+        response = portType.ConvertLonLatPtToUtmPt(request)  
         testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_ConvertUtmPtToLonLatPt(self):
-        request = service.ConvertUtmPtToLonLatPtSoapInWrapper()
+        request = portType.inputWrapper('ConvertUtmPtToLonLatPt')
         request._utm = service.ns1.UtmPt_Def()
         request._utm._X =  526703.512403
         request._utm._Y =  5348595.96493
         request._utm._Zone =  10
-        response = TerraServiceSoap.ConvertUtmPtToLonLatPt(request)  
+        response = portType.ConvertUtmPtToLonLatPt(request)  
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_CountPlacesInRect(self):
-        request = service.CountPlacesInRectSoapInWrapper()
+        request = portType.inputWrapper('CountPlacesInRect')
         request._upperleft = service.ns1.LonLatPt_Def()
         request._upperleft._Lon = -122.64
         request._upperleft._Lat = 48.29
@@ -97,20 +92,20 @@ class TerraServiceTest(unittest.TestCase):
         request._lowerright._Lon = request._upperleft._Lon + 1.0
         request._lowerright._Lat = request._upperleft._Lon - 1.0
         request._ptype = "HillMountain"
-        response = TerraServiceSoap.CountPlacesInRect(request)
+        response = portType.CountPlacesInRect(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
     
     def later_CountPlacesInRect_x1(self):
-        request = service.CountPlacesInRectSoapInWrapper()
+        request = portType.inputWrapper('CountPlacesInRect')
         request._upperleft = service.ns1.LonLatPt_Def()
         request._upperleft._Lon = -122.64
         request._upperleft._Lat = 48.29
         request._ptype = "HillMountain"
-        response = TerraServiceSoap.CountPlacesInRect(request)
-        self.failUnlessRaises(Exception, TerraServiceSoap.CountPlacesInRect, request)
+        response = portType.CountPlacesInRect(request)
+        self.failUnlessRaises(Exception, portType.CountPlacesInRect, request)
     
     def test_GetAreaFromPt(self):
-        request = service.GetAreaFromPtSoapInWrapper()
+        request = portType.inputWrapper('GetAreaFromPt')
         request._center = service.ns1.LonLatPt_Def()
         request._center._Lon = -122.64
         request._center._Lat = 48.29
@@ -118,12 +113,12 @@ class TerraServiceTest(unittest.TestCase):
         request._scale = "Scale2m"
         request._displayPixWidth = 2
         request._displayPixHeight = 2
-        response = TerraServiceSoap.GetAreaFromPt(request)
+        response = portType.GetAreaFromPt(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
-        '''TerraService no longer likes these parameters'''
+        '''service no longer likes these parameters'''
     def badparams_GetAreaFromRect(self):
-        request = service.GetAreaFromRectSoapInWrapper()
+        request = portType.inputWrapper('GetAreaFromRect')
         request._upperLeft = service.ns1.LonLatPt_Def()
         request._upperLeft._Lon = -122.64
         request._upperLeft._Lat = 48.29
@@ -132,11 +127,11 @@ class TerraServiceTest(unittest.TestCase):
         request._lowerRight._Lat = request._upperLeft._Lat - 1.0
         request._theme = 'Topo'
         request._scale = "Scale2m"
-        response = TerraServiceSoap.GetAreaFromRect(request)
+        response = portType.GetAreaFromRect(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetAreaFromTileId(self):
-        request = service.GetAreaFromTileIdSoapInWrapper()
+        request = portType.inputWrapper('GetAreaFromTileId')
         id = service.ns1.TileId_Def()
         id._Theme = 'Topo'
         id._Scale = "Scale2m"
@@ -146,40 +141,40 @@ class TerraServiceTest(unittest.TestCase):
         request._id = id
         request._displayPixWidth = 2
         request._displayPixHeight = 2
-        response = TerraServiceSoap.GetAreaFromTileId(request)
+        response = portType.GetAreaFromTileId(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetLatLonMetrics(self):
-        request = service.GetLatLonMetricsSoapInWrapper()
+        request = portType.inputWrapper('GetLatLonMetrics')
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = -122.64
         request._point._Lat = 48.29
-        response = TerraServiceSoap.GetLatLonMetrics(request)
+        response = portType.GetLatLonMetrics(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
         # derived type (enum) problem
     def later_GetPlaceFacts(self):
-        request = service.GetPlaceFactsSoapInWrapper()
+        request = portType.inputWrapper('GetPlaceFacts')
         request._place = service.ns1.Place_Def()
         request._place._City = 'Seattle'
         request._place._State = 'Washington'
         request._place._Country = 'United States'
-        response = TerraServiceSoap.GetPlaceFacts(request)
+        response = portType.GetPlaceFacts(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
         # derived type (enum) problem
         # also consistent timeout problem for this call
     def later_GetPlaceList(self):
-        request = service.GetPlaceListSoapInWrapper()
+        request = portType.inputWrapper('GetPlaceList')
         request._placeName = 'New York'
         request._MaxItems = 5
         request._imagePresence = 0
-        #response = TerraServiceSoap.GetPlaceList(request)
+        #response = portType.GetPlaceList(request)
         #testdiff.failUnlessEqual(ResultsToStr(response))
-        self.failUnlessRaises(EvaluateException, TerraServiceSoap.GetPlaceList, request)
+        self.failUnlessRaises(EvaluateException, portType.GetPlaceList, request)
 
-    def test_GetPlaceListInRect(self):
-        request = service.GetPlaceListInRectSoapInWrapper()
+    def timingout_GetPlaceListInRect(self):
+        request = portType.inputWrapper('GetPlaceListInRect')
         request._upperleft = service.ns1.LonLatPt_Def()
         request._upperleft._Lon = -123.0
         request._upperleft._Lat = 44.0
@@ -190,69 +185,62 @@ class TerraServiceTest(unittest.TestCase):
         request._lowerright._Lat = 43.5
         request._ptype = "HillMountain"
         request._MaxItems = 3
-        response = TerraServiceSoap.GetPlaceListInRect(request)
+        response = portType.GetPlaceListInRect(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTheme(self):
-        request = service.GetThemeSoapInWrapper()
+        request = portType.inputWrapper('GetTheme')
         request._theme = 'Topo'
-        response = TerraServiceSoap.GetTheme(request)
+        response = portType.GetTheme(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTile(self):
-        request = service.GetTileSoapInWrapper()
+        request = portType.inputWrapper('GetTile')
         request._id = service.ns1.TileId_Def()
         request._id._Theme = 'Topo'
         request._id._Scale = 'Scale2m'
         request._id._Scene = 8
         request._id._X = 20
         request._id._Y = 20
-        response = TerraServiceSoap.GetTile(request)
+        response = portType.GetTile(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTileMetaFromLonLatPt(self):
-        request = service.GetTileMetaFromLonLatPtSoapInWrapper()
+        request = portType.inputWrapper('GetTileMetaFromLonLatPt')
         request._theme = 'Topo'
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = -122.64
         request._point._Lat = 48.29
         request._scale = "Scale4m"
-        response = TerraServiceSoap.GetTileMetaFromLonLatPt(request)
+        response = portType.GetTileMetaFromLonLatPt(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTileMetaFromTileId(self):
-        request = service.GetTileMetaFromTileIdSoapInWrapper()
+        request = portType.inputWrapper('GetTileMetaFromTileId')
         request._id = service.ns1.TileId_Def()
         request._id._Theme = 'Topo'
         request._id._Scale = 'Scale2m'
         request._id._Scene = 8
         request._id._X = 20
         request._id._Y = 20
-        response = TerraServiceSoap.GetTileMetaFromTileId(request)
+        response = portType.GetTileMetaFromTileId(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
 
-def setUp():
-    global testdiff
-    global deleteFile
-    global service
-
-    deleteFile = utils.handleExtraArgs(sys.argv[1:])
-    testdiff = None
-    service = ClientGenerator().getModule('config.txt', 'complex_types',
-                                          'TerraService', 'generatedCode')
-    return service
-
-
 def makeTestSuite():
+    global service, portType, testdiff
+
+    testdiff = None
+    service, portType = utils.testSetUp(TerraServiceSoapTest, 'TerraService', 'TerraServiceSoap')
     suite = unittest.TestSuite()
     if service:
-       suite.addTest(unittest.makeSuite(TerraServiceTest, 'test_'))
+        suite.addTest(unittest.makeSuite(TerraServiceSoapTest, 'test_'))
     return suite
 
+def tearDown():
+    """Global tear down."""
+    testdiff.close()
 
-def main():
-    if setUp():
-        utils.TestProgram(defaultTest="makeTestSuite")
-                  
 
-if __name__ == "__main__" : main()
+if __name__ == "__main__" :
+    utils.TestProgram(defaultTest="makeTestSuite")
+    tearDown()

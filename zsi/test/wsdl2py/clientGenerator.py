@@ -6,6 +6,8 @@ from ZSI import wsdl2python
 from ZSI.wstools.WSDLTools import WSDLReader
 from ZSI.wstools.TimeoutSocket import TimeoutError
 
+from helperInterface import WriteHLSModule
+
 
 class ClientGenerator:
 
@@ -31,20 +33,20 @@ class ClientGenerator:
 
         if codePath not in sys.path:
             sys.path.append(codePath)
-        moduleName = \
+        helperModuleName = \
             wsdl2python.nonColonizedName_to_moduleName(serviceName) + \
-                '_services'
+                '_services_interface'
         try:
-            service = __import__(moduleName)
+            helper = __import__(helperModuleName)
         except ImportError:
             path, initPath = \
                 self.setUp(configFileName, section, serviceName, codePath,
                            explicitPath)
 
             self.generateCode(path, codePath)
-            service = __import__(moduleName)
-            self.updateInit(initPath, moduleName)
-        return service
+            helper = __import__(helperModuleName)
+            self.updateInit(initPath, helperModuleName)
+        return helper
 
 
     def generateCode(self, path, codePath='.'):
@@ -59,8 +61,8 @@ class ClientGenerator:
             return None
         currentPath = os.getcwd()
         os.chdir(codePath)
-        codegen = wsdl2python.WriteServiceModule(wsdl)
-        codegen.write()
+        wsm = WriteHLSModule(wsdl)
+        wsm.write()
         os.chdir(currentPath)
 
 

@@ -12,6 +12,8 @@ import unittest, ConfigParser
 from ZSI import wsdl2python
 from ZSI.wstools.WSDLTools import WSDLReader
 
+from clientGenerator import ClientGenerator
+
 """
 utils:
     This module contains utility functions for use by test case modules, a
@@ -20,8 +22,6 @@ utils:
     class with a different loading strategy than the default
     unittest.TestLoader.
 """
-
-thisFileName = sys.modules[__name__].__file__
 
 class ConfigHandler(ConfigParser.ConfigParser):
 
@@ -88,11 +88,34 @@ def setUpWsdl(path):
     return wsdl
 
 
+def testSetUp(testcase, serviceName, portTypeName, kw={},
+              configFileName='config.txt', section='complex_types'):
+
+    if not hasattr(testcase, 'service'):
+        serviceModule = ClientGenerator().getModule(configFileName, section,
+                                                    serviceName, 'stubs')
+    else:
+        serviceModule = testcase.service
+
+    if not serviceModule:
+        return None, None
+
+    try:
+        locator = serviceModule.__dict__[portTypeName + 'HLocator']
+    except KeyError:
+        print 'Test requires helper interface generation'
+        return None, None
+
+    portType = locator().getPortType(portTypeName, **kw)
+    return serviceModule, portType
+
+
+
 class TestDiff:
     """TestDiff encapsulates comparing a string or StringIO object
        against text in a test file.  Test files are expected to
        be located in a subdirectory of the current directory,
-       named data if a name isn't provided.  If the sub-directory
+       named diffs if a name isn't provided.  If the sub-directory
        doesn't exist, it will be created
 
        If used in a test case, this should be instantiated in setUp and
@@ -108,9 +131,9 @@ class TestDiff:
        a new test file, remove the old one from the sub-directory.
     """
 
-    def __init__(self, testInst, subDir='data', *ignoreList):
+    def __init__(self, testInst, subDir='diffs', *ignoreList):
         self.SUBDIR = subDir
-        self.dataFile = None
+        self.diffsFile = None
         self.testInst = testInst
         self.origStrFile = None
             # used to divide separate test blocks within the same
@@ -120,6 +143,13 @@ class TestDiff:
         self.testFilePath = self.SUBDIR + os.sep
         if not os.path.exists(self.testFilePath):
             os.mkdir(self.testFilePath)
+        
+        deleteFile = handleExtraArgs(sys.argv[1:])
+        if deleteFile:
+             self.deleteFile('%s.diffs' % testInst.__class__.__name__)
+        self.setDiffFile('%s.diffs' % testInst.__class__.__name__)
+
+
 
         
 
@@ -130,14 +160,14 @@ class TestDiff:
            writing.
         """
         filename = fname
-        if self.dataFile and not self.dataFile.closed:
-            self.dataFile.close()
+        if self.diffsFile and not self.diffsFile.closed:
+            self.diffsFile.close()
         try:
-            self.dataFile = open(self.testFilePath + filename, "r")
-            self.origStrFile = StringIO.StringIO(self.dataFile.read())
+            self.diffsFile = open(self.testFilePath + filename, "r")
+            self.origStrFile = StringIO.StringIO(self.diffsFile.read())
         except IOError:
             try:
-                self.dataFile = open(self.testFilePath + filename, "w")
+                self.diffsFile = open(self.testFilePath + filename, "w")
             except IOError:
                 print "exception"
 
@@ -159,7 +189,7 @@ class TestDiff:
         else:
             testStrFile = buffer
             testStrFile.seek(0)
-        if self.dataFile.mode == "r":
+        if self.diffsFile.mode == "r":
             for testLine in testStrFile:
                 origLine = self.origStrFile.readline() 
                     # skip divider
@@ -176,19 +206,20 @@ class TestDiff:
                     line = origLine
                     while line and line != self.divider:
                         line = self.origStrFile.readline() 
+                    print self.testInst.__class__
                     self.testInst.failUnlessEqual(origLine, testLine)
 
         else:       # write new test file
             for line in testStrFile:
-                self.dataFile.write(line)
-            self.dataFile.write(self.divider)
+                self.diffsFile.write(line)
+            self.diffsFile.write(self.divider)
 
 
     def close(self):
         """Closes handle to original test file.
         """
-        if self.dataFile and not self.dataFile.closed:
-            self.dataFile.close()
+        if self.diffsFile and not self.diffsFile.closed:
+            self.diffsFile.close()
 
 
     def getSubdirName(self):
@@ -241,6 +272,14 @@ Examples:
             self.createTests()
         except getopt.error, msg:
             self.usageExit(msg)
+
+    def runTests(self):
+        if self.testRunner is None:
+            self.testRunner = unittest.TextTestRunner(verbosity=self.verbosity)
+        result = self.testRunner.run(self.test)
+            # may want global cleanup; sys.exit removed here
+
+
 
 
 class MatchTestLoader(unittest.TestLoader):

@@ -9,7 +9,6 @@ from ZSI import FaultException
 
 import utils
 from paramWrapper import ResultsToStr
-from clientGenerator import ClientGenerator
 
 """
 Unittest for contacting the ZipCodeResolver Web service.
@@ -26,80 +25,69 @@ class ZipCodeResolverTest(unittest.TestCase):
     """
 
     def setUp(self):
-        """unittest calls setUp and tearDown after each
-           test method call.
+        """Done this way because unittest instantiates a TestCase
+           for each test method, but want all diffs to go in one
+           file.  Not doing testdiff as a global this way causes
+           problems.
         """
         global testdiff
-        global ZipCodeResolverSoap
-
-        kw = {}
-        ZipCodeResolverSoap = service.ZipCodeResolverLocator().getZipCodeResolverSoap(**kw)
 
         if not testdiff:
             testdiff = utils.TestDiff(self, 'diffs')
-            testdiff.setDiffFile('ZipCodeResolver.diffs')
-    
+
     def test_CorrectedAddressHtml(self):
-        request = service.CorrectedAddressHtmlSoapInWrapper()
+        request = portType.inputWrapper('CorrectedAddressHtml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = ZipCodeResolverSoap.CorrectedAddressHtml(request)
+        response = portType.CorrectedAddressHtml(request)
         print ResultsToStr(response)
     
     def test_CorrectedAddressXml(self):
-        request = service.CorrectedAddressXmlSoapInWrapper()
+        request = portType.inputWrapper('CorrectedAddressXml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = ZipCodeResolverSoap.CorrectedAddressXml(request)
+        response = portType.CorrectedAddressXml(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_FullZipCode(self):
-        request = service.FullZipCodeSoapInWrapper()
+        request = portType.inputWrapper('FullZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = ZipCodeResolverSoap.FullZipCode(request)
+        response = portType.FullZipCode(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_ShortZipCode(self):
-        request = service.ShortZipCodeSoapInWrapper()
+        request = portType.inputWrapper('ShortZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = ZipCodeResolverSoap.ShortZipCode(request)
+        response = portType.ShortZipCode(request)
         testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_VersionInfo(self):
-        request = service.VersionInfoSoapInWrapper()
-        response = ZipCodeResolverSoap.VersionInfo(request)   
+        request = portType.inputWrapper('VersionInfo')
+        response = portType.VersionInfo(request)   
         testdiff.failUnlessEqual(ResultsToStr(response))
 
 
-def setUp():
-    global testdiff
-    global deleteFile
-    global service
-
-    deleteFile = utils.handleExtraArgs(sys.argv[1:])
-    testdiff = None
-    service = ClientGenerator().getModule('config.txt', 'complex_types',
-                                          'ZipCodeResolver', 'generatedCode')
-    return service
-
-
-
 def makeTestSuite():
+    global service, portType, testdiff
+
+    service, portType = utils.testSetUp(ZipCodeResolverTest,
+                                  'ZipCodeResolver', 'ZipCodeResolverSoap')
+    testdiff = None
     suite = unittest.TestSuite()
     if service:
         suite.addTest(unittest.makeSuite(ZipCodeResolverTest, 'test_'))
     return suite
 
 
-def main():
-    if setUp():
-        utils.TestProgram(defaultTest="makeTestSuite")
-                  
+def tearDown():
+    """Global tear down."""
+    testdiff.close()
 
-if __name__ == "__main__" : main()
+if __name__ == "__main__" :
+    utils.TestProgram(defaultTest="makeTestSuite")

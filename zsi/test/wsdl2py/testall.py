@@ -32,7 +32,7 @@ def main():
     sys.path.append('.')
     for filename in glob.glob('test_*.py'):
         module = __import__(os.path.splitext(filename)[0])
-        if (not hasattr(module, 'SeparateTest')) and module.setUp():
+        if not hasattr(module, 'SeparateTest'):
             moduleList.append(module)
     utils.TestProgram(defaultTest="makeTestSuite")
 
