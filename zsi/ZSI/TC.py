@@ -814,17 +814,18 @@ class XML(TypeCode):
         if type(pyobj) in _stringtypes:
             print >>sw, '<%s%s href="%s"/>' % (n, attrtext, pyobj)
         elif kw.get('inline', self.inline):
-            self.cb(sw, pyobj)
+            self.cb(sw, pyobj, unsuppressedPrefixes)
         else:
             print >>sw, '<%s%s href="#%s"/>' % (n, attrtext, objid)
-            sw.AddCallback(self.cb, pyobj)
+            sw.AddCallback(self.cb, pyobj, unsuppressedPrefixes)
 
-    def cb(self, sw, pyobj):
+    def cb(self, sw, pyobj, unsuppressedPrefixes=[]):
         if sw.Known(pyobj): return
         objid = '%x' % id(pyobj)
         n = self.pname or ('E' + objid)
         print >>sw, '<%s SOAP-ENC:encodingStyle="" id="%s">' % (n, objid)
-        Canonicalize(pyobj, sw, comments=self.comments)
+        Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
+            comments=self.comments)
         print >>sw, '</%s>' % n
 
 from TCnumbers import *
