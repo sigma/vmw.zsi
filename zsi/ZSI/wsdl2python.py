@@ -704,7 +704,8 @@ class ServiceDescription:
 	    l = []
 
 	    self.typecode = '\n\nclass %s: ' %(message.getName())
-	    self.typecode += '\n%sdef __init__(self):' %(ID1)
+	    self.typecode += '\n%sdef __init__(self, name=None, ns=None):' \
+                             % (ID1)
 
 	    for p in message.getPartList():
 		if p.getElement():
@@ -735,7 +736,15 @@ class ServiceDescription:
 		    if p.getType():
 			tp = self.__class__.PartWriter()
 			tp.fromPart(p)
-			l += tp.typecode
+                        if tp.typecode[0][0:3] != 'ZSI':
+                            qualifiedtc = tp.typecode[0:]
+                            idx = qualifiedtc[0].find('(')
+                            qualifiedtc[0] = self.nsh.getAlias(tp.tns) + \
+                                             '.' + qualifiedtc[0][0:idx] + \
+                                             '_Def' + qualifiedtc[0][idx:]
+                            l += qualifiedtc
+                        else:
+                            l += tp.typecode
 		    else:
 			raise WsdlGeneratorError, \
                               'Missing attribute for <message name=\"%s\"><part name=\"%s\">' % (message.getName(),p.getName())
@@ -744,10 +753,13 @@ class ServiceDescription:
                 # XXX: not very good wsdl - put warning message here
 		tcs = ''
 		for i in l: tcs += (i + ',')
-		self.typecode += '\n%s%s.typecode = Struct(%s,[%s],pname="%s",aname="_%s",oname="%s  xmlns=\\"%s\\"")'\
+                if namespace == None:
+                    namespace = ''
+                if style == 'rpc':
+                    namespace = ''
+		self.typecode += '\n%s%s.typecode = Struct(%s,[%s], pname=name, aname="_%%s" %% name, oname="%%s  xmlns=\\"%s\\"" %% name )'\
 			     %(ID2,message.getName(),message.getName(),
-                               tcs,message.getName(),message.getName(),
-                               message.getName(),namespace)
+                               tcs,namespace)
 
             # do the wrapper to go w/the message
 
@@ -839,6 +851,7 @@ class ServiceDescription:
             """
 	    def __init__(self):
 		self.typecode = None
+                self.tns = None
 		self.name = None
                 self.docCode = []
 
@@ -868,6 +881,8 @@ class ServiceDescription:
                     raise WsdlGeneratorError, 'whoa!  part typing problem!'
 
 		self.typecode = []
+
+                self.tns = tp.getTargetNamespace()
 
                 if not isinstance(tp, ZSI.wsdlInterface.ZSITypeAdapter):
                     raise TypeError, 'not a type adapter'
@@ -1151,14 +1166,14 @@ class SchemaDescription:
             self.classvar.write('\n%sschema = "%s"' % \
                                 (ID2,tp.getTargetNamespace()))
             
-            self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None):' \
+            self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' \
                              % ID2)
 
             self.initcode.set('\n%sname = name or self.__class__.literal' \
                               % ID3)
             self.initcode.write('\n%sns = ns or self.__class__.schema' % ID3)
 
-            self.basector.set('\n\n%s%s.__init__(self,pname=name)' % (ID3,tpc))
+            self.basector.set('\n\n%s%s.__init__(self,pname=name, **kw)' % (ID3,tpc))
             typeName = self.bti.get_pythontype(None, None, tpc)
             self.typeDoc('', '__param', typeName)
                   
@@ -1185,7 +1200,7 @@ class SchemaDescription:
                 self.classvar.write('\n%sschema = "%s"' \
                                     % ( ID2,tp.getTargetNamespace()))
                 
-                self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None):' %(ID2))
+                self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' %(ID2))
 
                 self.initcode.set('\n%sname = name or self.__class__.literal'\
                                   % ID3 )
@@ -1195,8 +1210,8 @@ class SchemaDescription:
                 nsp = etp.getTargetNamespace()
                 
                 typeName = '%s.%s_Def' % (self.nsh.getAlias(nsp), etp.getName())
-                self.basector.set('\n\n%s%s.__init__(self)'  % (ID3, typeName))
-                self.postpend.set('\n%sself.typecode = %s(name=name, ns=ns)' % (ID3, typeName))
+                self.basector.set('\n\n%s%s.__init__(self, name=name, ns=ns, **kw)'  % (ID3, typeName))
+                self.postpend.set('\n%sself.typecode = %s(name=name, ns=ns, **kw)' % (ID3, typeName))
                 self.typeDoc('', '_' + tp.getName(), typeName)
             else:
                 # at this point what we have is an global element declaration
