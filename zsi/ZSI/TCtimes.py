@@ -34,7 +34,7 @@ def _dict_to_tuple(d):
             retval[4] -= m
     if d.get('neg', 0):
         retval[0:5] = map(operator.__neg__, retval[0:5])
-    return retval
+    return tuple(retval)
 
 
 
