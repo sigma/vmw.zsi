@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert (1, '..')
 
-import SOAP
+from SOAPpy import SOAP
 
 SoapEndpointURL		= 'http://www.lemurlabs.com/rpcrouter'
 MethodNamespaceURI 	= 'urn:lemurlabs-ITimeService'

@@ -1,1 +1,2 @@
-from SOAP import *
+import SOAP
+import XMLname

@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert (1, '..')
 
-import SOAP
+from SOAPpy import SOAP
 
 if SOAP.Config.SSLserver:
     from M2Crypto import SSL

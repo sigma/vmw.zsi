@@ -1,6 +1,6 @@
 
 import http_server
-from SOAP import *
+from SOAPpy.SOAP import *
 Fault = faultType
 import string, sys
 

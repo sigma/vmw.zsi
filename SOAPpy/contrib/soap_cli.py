@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import time
-import SOAP
+from SOAPpy import SOAP
 
 srv = SOAP.SOAPProxy('http://localhost:10080/')
 

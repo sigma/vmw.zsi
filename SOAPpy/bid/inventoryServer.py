@@ -2,7 +2,7 @@
 # Copyright (c) 2001, actzero, inc.
 import sys
 sys.path.insert(1,"..")
-import SOAP
+from SOAPpy import SOAP
 #SOAP.Config.debug = 1
 serverstring = "SOAP.py (actzero.com) running "+sys.platform
 NUMBUYS = 0

@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert (1, '..')
 
-import SOAP
+from SOAPpy import SOAP
 
 ident = '$Id$'
 

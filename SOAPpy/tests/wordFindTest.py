@@ -2,7 +2,7 @@ import sys
 
 sys.path.insert (1, '..')
 
-import SOAP
+from SOAPpy import SOAP
 
 def usage():
     print sys.argv[0], "searchString"

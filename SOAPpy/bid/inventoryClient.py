@@ -7,7 +7,7 @@ import string
 import re
 import time
 sys.path.insert(1,"..")
-import SOAP
+from SOAPpy import SOAP
 import traceback
 
 DEFAULT_SERVERS_FILE        = './inventory.servers'

@@ -1,4 +1,4 @@
-import SOAP
+from SOAPpy import SOAP
 import sys
 import getopt
 

@@ -22,16 +22,22 @@ MANIFEST:
 
 README	      
 CHANGELOG     
-__init__.py   initialization code for use as python module
-SOAP.py       the library
-SOAPtest.py   tests the builder and parser
-echoClient.py an example client
-echoServer.py an example server
-speedTest.py  benchmarks the various parsers, compares speed to DOM
-TCtest.py     experimental type coercion system tests
+SOAPpy/*      Source code for the package
+setup.py      Python installation control file
 tests/*       examples
 validate/*    interop client and servers
 bid/*	      N+I interop client and server
+
+INSTALLATION 
+
+As of version 0.9.8 SOAPpy can be installed using the standard python
+package installation tools.  Executing the commands
+
+    $ python setup.py build
+    $ python setup.py install
+
+(the second as root) should install SOAPpy into the appropriate Python
+library directory.
 
 IMPORTANT NOTE:
 
@@ -68,7 +74,7 @@ Here are some examples of how to use SOAP.py:
 CLIENT EXAMPLES:
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 server = SOAP.SOAPProxy("http://localhost:8080/")
 print server.echo("Hello world")
 ## /CODE
@@ -78,7 +84,7 @@ method echo with the ordered parameter of "Hello World", and prints the
 results.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 server = SOAP.SOAPProxy("https://localhost:8443/")
 print server.echo("Hello world")
 ## /CODE
@@ -88,7 +94,7 @@ localhost:8443, calls the method echo with the ordered parameter of
 "Hello World" and prints the results. Python must be built with OpenSSL.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 server = SOAP.SOAPProxy("http://services.xmethods.com/soap",
         	        namespace = "urn:xmethods-delayed-quotes")
 print server.getQuote(symbol = "IBM")
@@ -99,7 +105,7 @@ urn:xmethods-delayed-quotes on server services.xmethods.com. getQuote is
 passed a named parameter, symbol.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 server = SOAP.SOAPProxy("http://services.xmethods.com/soap")
 
 print server._ns("urn:xmethods-delayed-quotes").getQuote(symbol = "IBM")
@@ -109,7 +115,7 @@ This does the same thing as the previous example, however namespace is
 specified inline on a per call basis rather than at the server level.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 server = SOAP.SOAPProxy("http://services.xmethods.com/soap",
 			soapaction = "http://somesite.com/myaction")
 
@@ -119,7 +125,7 @@ print server._ns("urn:xmethods-delayed-quotes").getQuote(symbol = "IBM")
 This is the same quote call with a soapaction specified.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 server = SOAP.SOAPProxy("http://services.xmethods.com:80/soap")
 
 ns = "urn:xmethods-delayed-quotes")
@@ -143,7 +149,7 @@ attributes.
 SERVER EXAMPLES:
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 def echo(s):
     return s + s # repeats a string twice
 
@@ -156,7 +162,7 @@ This exposes the function echo (that takes an unnamed arguement) on a server
 running on localhost:8080.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 def echo(s):
     return s + s # repeats a string twice
 
@@ -169,7 +175,7 @@ The same as above, but this time the method is available in the namespace
 "echo-space".
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 
 class echoBuilder:
     def echo(self, val):
@@ -185,7 +191,7 @@ This registers the whole instance of the object echoBuilder, e.  Every
 method of the instance is exposed on the server.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 
 def echo(**kw):
     return kw['first'] + kw['second'] + kw['third']
@@ -200,7 +206,7 @@ main thing to notice here is the use of the method registerKWFunction over
 registerFunction.
 
 ## CODE
-import SOAP
+from SOAPpy import SOAP
 
 from M2Crypto import SSL
 
@@ -220,7 +226,7 @@ accepting SSL connections at localhost:8443. Ng Pheng Siong's M2Crypto
 package (available at <http://www.pobox.org.sg/home/ngps/m2/>) must be
 installed. Also see tests/silabserver.py.
 
-
+Copyright (c) 2002-2003, Pfizer, Inc.
 Copyright (c) 2001, Cayce Ullman.
 Copyright (c) 2001, Brian Matthews.
 

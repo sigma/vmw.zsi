@@ -1,9 +1,22 @@
 
 SOAP.py
 
-CHANGES: 
+CHANGES SINCE VERSION 0.9.7
 
-SINCE VERSION 0.9.7
+- I (Gregory R. Warnes) have implemented an experimental and
+  non-standard method of handling named and unnamed arguments.  This
+  mechanism is enabled in SOAPpy by setting
+  SOAPpy.SOAP.Config.specialArgs=1.
+
+  When enabled, parameters with names of the form _#### (i.e.,
+  matching the regexp "^_[0-9]+") are assumed to be unnamed parameters
+  and are passed to the method in numeric order.  All other parameters
+  are assumed to be named and are passed using the xml tag id as the
+  parameter name.  Outgoing SOAP method calls now always generate
+  names in this way--whether or not specialArgs is enabled--instead of
+  using the pattern v#####.  
+
+  See the file README.MethodParameterNaming for more details.
 
 - Added noroot parameter to the SOAPBuilder and SOAPProxy objects
   in order to provide compatibility with an older version of

@@ -16,7 +16,7 @@ import traceback
 
 sys.path.insert (1, '..')
 
-import SOAP
+from SOAPpy import SOAP
 
 SOAP.Config.typesNamespace = SOAP.NS.XSD3
 SOAP.Config.typesNamespace = SOAP.NS.XSD3
