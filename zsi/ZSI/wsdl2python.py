@@ -557,7 +557,7 @@ class ServiceDescription:
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Send(None, None, request, soapaction="%s", **kw)' %(ID2, soapAction)
 			myBinding['defs'][op.getName()] +=\
-                            '\n%sresponse = self.binding.Receive(%sWrapper)' % \
+                            '\n%sresponse = self.binding.Receive(%sWrapper())' % \
                             (ID2, outputName)
 
 			# JRB
@@ -1167,8 +1167,8 @@ class SchemaDescription:
                     self.initcode.write('\n%sif name:' % ID3)
                     self.initcode.write('\n%skw["pname"] = name' \
                                         % ID4)
-                    self.initcode.write('\n%skw["aname"] = "%%s" %% name' \
-                                        % ID4)
+                    self.initcode.write('\n%skw["aname"] = "%s" %% name' \
+                                        % (ID4, self.aname_func("%s")))
                     self.initcode.write('\n%(INDENT)skw["oname"] = \'%%s xmlns:tns="%%s"\' %%(name,%(ALIAS)s.targetNamespace)' %{"INDENT":ID4, "ALIAS":alias})
                     self.basector.set('\n%s%s.__init__(self, **kw)'\
                                       % (ID3,tpc))
@@ -1692,7 +1692,8 @@ class SchemaDescription:
 
 
             self.initcode.write('\n\n%sif name:' % ID3)
-            self.initcode.write("\n%saname = '%%s' %% name" % ID4)
+            self.initcode.write("\n%saname = '%s' %% name" % (ID4,
+                                                        self.aname_func("%s")))
             self.initcode.write('\n%sif ns:' % ID4)
             self.initcode.write("\n%soname += ' xmlns=\"%%s\"' %% ns" % ID5)
             self.initcode.write('\n%selse:' % ID4)
