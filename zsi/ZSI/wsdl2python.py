@@ -757,18 +757,28 @@ class SchemaDescription:
                        self.nsh.getModuleName(schema.getTargetNamespace())
 
 	self.body = ''
-        class_dict = {}
-        class_list = []
-
         
+        self.class_dict = {}
+        self.class_list = []
+        
+        self.generate(schema.getTypesDict(), alternateWriter)
+        self.generate(schema.getElementsDict(), alternateWriter)
+        self.getClassDefs(self.class_list, self.class_dict)
+        
+        
+        self.body += '\n\n# define class alias for subsequent ns classes'
+        self.body += '\n%s = %s' \
+                     % ( self.nsh.getAlias(schema.getTargetNamespace()),
+                         self.nsh.getModuleName(schema.getTargetNamespace()))
+
+    def generate(self, sdict, alternateWriter):
+
         if alternateWriter:
             exec( 'import %s' % alternateWriter[0] )
             alternateWriter = '%s.%s()' % (alternateWriter[0],
                                            alternateWriter[1] )
-
-        #print schema.getTypesDict()
         
-	for name, tp in schema.getTypesDict().items():
+	for name, tp in sdict.items():
             
             defaultWriter = 'self.__class__.TypeWriter()'
             
@@ -779,21 +789,15 @@ class SchemaDescription:
 
             tw.fromType(tp)
             if tw.precede:
-                if class_dict.has_key(tw.precede):
-                    class_dict[tw.precede].append(tw)
+                if self.class_dict.has_key(tw.precede):
+                    self.class_dict[tw.precede].append(tw)
                 else:
-                    class_dict[tw.precede] = [tw]
+                    self.class_dict[tw.precede] = [tw]
             else:
-                class_list.append(tw.name)
+                self.class_list.append(tw.name)
                 self.body += tw.classdef
                 self.body += tw.initdef
-        else:
-            self.getClassDefs(class_list, class_dict)
 
-        self.body += '\n\n# define class alias for subsequent ns classes'
-        self.body += '\n%s = %s' \
-                     % ( self.nsh.getAlias(schema.getTargetNamespace()),
-                         self.nsh.getModuleName(schema.getTargetNamespace()))
 
     def getClassDefs(self, class_list, class_dict):
         check_list = []

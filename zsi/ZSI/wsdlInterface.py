@@ -5,6 +5,7 @@
 
 import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
+from ZSI.wstools.Utility import Collection
 import xml
 from xml.dom.ext import SplitQName
 
@@ -1214,7 +1215,7 @@ class ZSISchemaAdapter(SchemaInterface):
             return {}
 
     def getTypesDict(self):
-        """return dictionary of all types
+        """return dictionary of all schema types
            {'name':type}
         """
 
@@ -1224,11 +1225,20 @@ class ZSISchemaAdapter(SchemaInterface):
             for k, v in self._schema.types.items():
                 typesdict[k] = ZSISchemaTypeAdapter(v)
 
+        return typesdict
+
+    def getElementsDict(self):
+        """return dictionary of all schema elements
+           {'name':type}
+        """
+        
+        elementdict = {}
+
         if hasattr( self._schema, 'elements' ):
             for k, v in self._schema.elements.items():
-                typesdict[k] = ZSISchemaTypeAdapter(v)
+                elementdict[k] = ZSISchemaTypeAdapter(v)
 
-        return typesdict
+        return elementdict
 
 
 class ZSISchemaTypeAdapter(SchemaTypeInterface):
@@ -1675,7 +1685,7 @@ class ZSIDerivedTypesAdapter(DerivedTypesInterface):
 
         arrayinfo = None
         isDefined = None
-        
+
         if hasattr(self._content, 'derivation'):
             if self._content.derivation.attr_content[0].attributes.\
                    has_key('arrayType'):
