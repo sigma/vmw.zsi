@@ -94,6 +94,7 @@ import time
 import SocketServer
 from XMLname import toXMLname, fromXMLname
 from types import *
+import ieee754
 
 try: from M2Crypto import SSL
 except: pass
@@ -102,16 +103,6 @@ ident = '$Id$'
 
 __version__ = "0.9.9-pre1"
 
-# Platform hackery
-
-# Check float support
-try:
-    float("NaN")
-    float("INF")
-    float("-INF")
-    good_float = 1
-except:
-    good_float = 0
 
 ################################################################################
 # Exceptions
@@ -1975,7 +1966,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
         if self._next == "E":
             if name[1] != 'Envelope':
-                raise Error, "expected `SOAP-ENV:Envelope', got `%s:%s'" % \
+                raise Error, "expected `SOAP-ENV:Envelope', gto `%s:%s'" % \
                     (self._prem_r[name[0]], name[1])
             if name[0] != NS.ENV:
                 raise faultType, ("%s:VersionMismatch" % NS.ENV_T,
@@ -2681,27 +2672,23 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             if self.floatlimits.has_key (t[1]):
                 l = self.floatlimits[t[1]]
                 s = d.strip().lower()
-                try:
-                    d = float(s)
-                except:
-                    # Some platforms don't implement the float stuff. This
-                    # is close, but NaN won't be > "INF" as required by the
-                    # standard.
 
-                    if s in ("nan", "inf"):
-                        return 1e300**2
-                    if s == "-inf":
-                        return -1e300**2
+                if s == "nan":
+                    return ieee754.NaN
+                elif s == "inf":
+                    return ieee754.PosInf
+                elif s == "-inf":
+                    return ieee754.NegInf
 
-                    raise
+                d = float(s)
 
-                if str (d) == 'nan':
+                if str(d).lower() == 'nan':
                     if s != 'nan':
                         raise ValueError, "invalid %s" % t[1]
-                elif str (d) == '-inf':
+                elif str(d).lower() == '-inf':
                     if s != '-inf':
                         raise UnderflowError, "%s too small" % t[1]
-                elif str (d) == 'inf':
+                elif str(d).lower() == 'inf':
                     if s != 'inf':
                         raise OverflowError, "%s too large" % t[1]
                 elif d < 0:
@@ -3124,18 +3111,14 @@ class SOAPBuilder:
             "id": id, "attrs": a}
 
     def dump_float(self, obj, tag, typed = 1, ns_map = {}):
-        # Terrible windows hack
-        if not good_float:
-            if obj == float(1e300**2):
-                obj = "INF"
-            elif obj == float(-1e300**2):
-                obj = "-INF"
-
-        obj = str(obj)
-        if obj in ('inf', '-inf'):
-            obj = str(obj).upper()
-        elif obj == 'nan':
-            obj = 'NaN'
+        if ieee754.is_PosInf(obj):
+            obj = "INF"
+        elif ieee754.is_NegInf(obj):
+            obj = "-INF"
+        elif ieee754.is_NaN(obj):
+            obj = "NaN"
+        else:
+            obj = str(obj)
 
 	# Note: python 'float' is actually a SOAP 'double'.
         self.out.append(self.dumper(None, "double", obj, tag, typed, ns_map,
