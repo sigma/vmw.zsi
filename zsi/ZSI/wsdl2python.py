@@ -629,7 +629,7 @@ class ServiceDescription:
 			self.typecode += '\n%sdef __init__(self, name=None, ns=None): pass' %(ID1)
 		    break
 		else:
-		    if hasattr(p, 'type'):
+		    if p.getType():
 			tp = self.__class__.PartWriter()
 			tp.fromPart(p)
 			l += tp.typecode
