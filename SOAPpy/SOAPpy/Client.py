@@ -171,7 +171,7 @@ class HTTPTransport:
         if soapaction == None or len(soapaction) == 0:
             r.putheader("SOAPAction", "")
         else:
-            r.putheader("SOAPAction", '%s' % soapaction)
+            r.putheader("SOAPAction", '"%s"' % soapaction)
 
         if config.dumpHeadersOut:
             s = 'Outgoing HTTP headers'
