@@ -4,6 +4,7 @@ Changes for 1.7 released xxx:
     -   Avoid FutureWarning with Python 2.3.x.
     -   Make sure generated ID values are legal IDs under Python 2.3
         and newer.
+    -   Don't need _textunprotect (via Grahame Bowland)
 
 Changes for 1.5, released 10-Mar-2004:
     -   TypeCode honoring for response parameters

@@ -196,7 +196,6 @@ _find_xsi_attr = lambda E, attr: \
 _find_type = lambda E: _find_xsi_attr(E, "type")
 
 _textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
-_textunprotect = lambda s: s.replace('&lt;', '<').replace('&amp;', '&')
 
 
 def _valid_encoding(elt):

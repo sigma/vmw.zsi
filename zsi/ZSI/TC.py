@@ -5,7 +5,7 @@
 
 from ZSI import _copyright, _children, _child_elements, \
         _floattypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
-        _find_encstyle, _textprotect, _textunprotect, \
+        _find_encstyle, _textprotect, \
         _find_xsi_attr, _find_type, _Node, \
         EvaluateException, _valid_encoding
 
@@ -433,7 +433,6 @@ class String(TypeCode):
         if len(_children(elt)) == 0: return ''
         v = self.simple_value(elt, ps)
         if self.strip: v = v.strip()
-        if self.textprotect: v = _textunprotect(v)
         return v
 
     def serialize(self, sw, pyobj, name=None, attrtext='', orig=None, **kw):
