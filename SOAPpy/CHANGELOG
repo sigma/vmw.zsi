@@ -1,16 +1,31 @@
 
 SOAP.py
 
+CHANGES SINCE VERSION 0.9.8-pre1
+
+- Fixed bug caused by omission of the ieee754 module from __init__.py.
+
+- SOAPpy now provides a SOAPUnixSocketServer class, which uses a unix
+  domain socket instead of a network TCP/IP socket for communication. A
+  corresponding client will be provided in the future.  [This class
+  has not yet been tested.]
+
 CHANGES SINCE VERSION 0.9.8
 
-- SOAPpy should now work properly on Microsoft Windows systems.
+- IEEE 754 floating point specials (Inf, -Inf, NaN) should now be
+  properly and consistently handled on all platforms. 
 
-  Previously, supporting platforms for which float('Inf') and similar
-  produced an error message ( notably Microsoft Windows) required an
-  ugly hack in the code which fails entirely under recent versions of
-  Python.  A new module, ieee754 has been implemented which provides
-  functions to handle NaN, Inf, and -Inf, so SOAPPy should now work on
-  all platforms that use IEEE 754 double-precision floating point.
+  Added code to explicitly check for and handle IEEE 754 floating
+  point specials (Inf, -Inf, NaN). This replaces an ugly hack for 
+  systems whose python float() doesn't understand the strings "Inf",
+  "NaN", etc.  Floating point specials should now be properly handled
+  on all operating systems.  
+
+  ***SOAPpy should now work properly on all versions of Microsoft Windows.***
+
+  A new module, ieee754 contains the functions required to detect and
+  create NaN, Inf, and -Inf values.  This module should be usable in
+  other contexts.
 
 - *** The new argument handling method (via SOAPpy.SOAP.Config.specialArgs=1)
   is now enabled by default.***

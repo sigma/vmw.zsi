@@ -1,0 +1,25 @@
+
+This release fixes the version string problem Mark Bucciarelli pointed
+out, as well as a couple of other bugs.
+
+There are 2 important changes:
+
+1) The new name handling mechanism has been enabled by default.  
+
+   The primary purpose of this release is to allow users to test this
+   to see if it causes problems.  Please take the time to do so.  If
+   there are no problems reported by April 15, 2003, 0.9.9 will be
+   released with this feature enabled by default.
+
+   Note that running a client under an old release of SOAPpy and a
+   server under this release will be likely to generate errors due to
+   the different name handling mechanisms.
+
+2) MS-Windows systems should now be fully supported.  
+
+   This required implmenting a new module, ieee754, which provides
+   functions for detecting and generating IEEE 754 special floating
+   point values (+Inf, -Inf, NaN) which are not properly handled by
+   the Windows implementation of the float() function.
+
+See the changelog for a detailed list of changes from previous releases.

@@ -1,12 +1,11 @@
-Copyright (c) 2001
+Copyright (c) 2001-2003
 
-SOAP.py 0.9.8 
+SOAP.py 0.9.9-pre2
 
 Current Maintainers: 	
 
 	Gregory R. Warnes <greg@warnes.net>
 	Christopher Blunck <blunck2@gst.com>
-
 
 Original Authors: 
 
@@ -16,7 +15,6 @@ Original Authors:
 Contributions by:
 
 	Brad Knotwell <b.knotwell@f5.com>
-
 
 MANIFEST:
 
