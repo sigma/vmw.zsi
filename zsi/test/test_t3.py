@@ -22,6 +22,7 @@ class t3TestCase(unittest.TestCase):
         if ps.IsAFault():
             f = FaultFromFaultMessage(ps)
             print f.AsSOAP()
+            self.failUnless(f.AsSOAP().find(str(a)) > 0)
 
 
 def makeTestSuite():
