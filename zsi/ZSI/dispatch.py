@@ -32,8 +32,6 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
         if modules is None:
             modules = ( sys.modules['__main__'], )
 
-
-            
         handlers = [ getattr(m, what) for m in modules if hasattr(m, what) ]
         if len(handlers) == 0:
             raise TypeError("Unknown method " + what)
@@ -49,6 +47,7 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
         _client_binding = ClientBinding(ps)
         if docstyle:
             result = handler(ps.body_root)
+            tc = TC.XML(aslist=1, pname=what + 'Response')
         else:
             data = _child_elements(ps.body_root)
             if len(data) == 0:
@@ -65,10 +64,8 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                     SendFault(FaultFromZSIException(e), **kw)
                     return
             result = [ handler(*arg) ]
+            tc = TC.Any(aslist=1, pname=what + 'Response')
         reply = StringIO.StringIO()
-
-        
-        tc = TC.Any(aslist=1, pname=what + 'Response')
         SoapWriter(reply, nsdict=nsdict).serialize(result, tc, rpc=rpc)
         return SendResponse(reply.getvalue(), **kw)
     except Exception, e:
@@ -180,6 +177,6 @@ def AsHandler(request=None, modules=None, nsdict={}, rpc=None, **kw):
     kw['request'] = request
     _Dispatch(ps, modules, _ModPythonSendXML, _ModPythonSendFault,
               nsdict=nsdict, rpc=rpc, **kw)
-    
+
 
 if __name__ == '__main__': print _copyright

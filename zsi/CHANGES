@@ -1,4 +1,6 @@
 Changes for xxx released xxx:
+    -   Make "docstyle" work for returning data, too (Alexis Marrero-Narvaez)
+    -   TC.Struct.typed will output xsi:type parameter now.
 
 Changes for 1.4, released 09-Sep-2003:
     -   Ouput XML prolog in SoapWriter

@@ -60,6 +60,7 @@ class Struct(TypeCode):
                 'Struct ofwhat must be list or sequence, not ' + str(t))
         self.ofwhat, self.lenofwhat = tuple(ofwhat), len(ofwhat)
         if kw.has_key('typed'):
+            Any.parsemap[self.type] = self
             t = kw['typed']
             for w in self.ofwhat: w.typed = t
         if TypeCode.typechecks:
@@ -159,7 +160,11 @@ class Struct(TypeCode):
         if self.inline:
             print >>sw, '<%s>' % n
         else:
-            print >>sw, '<%s id="%s">' % (n, objid)
+            if typed:
+                attrtext = ' xmlns="%s" xsi:type="%s"' % (self.type[0], self.type[1])
+            else:
+                attrtext = ''
+            print >>sw, '<%s %sid="%s">' % (n, attrtext, objid)
         if self.pyclass:
             d = pyobj.__dict__
         else:
