@@ -35,8 +35,8 @@
 
 ident = '$Id$'
 
-import copy
-import socket
+import copy, socket
+from types import *
 try: from M2Crypto import SSL
 except: pass
 
@@ -77,8 +77,13 @@ class SOAPConfig:
 
             # New argument name handling mechanism.  See
             # README.MethodParameterNaming for details
-            self.specialArgs = 1
+            self.specialArgs = True 
 
+            # Automatically simplfy SOAP complex types into the
+            # corresponding python types. (structType --> dict,
+            # arrayType --> array)
+            self.unwrap_results = 1
+            
             try: SSL; d['SSLserver'] = 1
             except: d['SSLserver'] = 0
 
@@ -96,7 +101,7 @@ class SOAPConfig:
         d = self.__dict__
 
         if name in ('typesNamespace', 'typesNamespaceURI',
-            'schemaNamespace', 'schemaNamespaceURI'):
+                    'schemaNamespace', 'schemaNamespaceURI'):
 
             if name[-3:] == 'URI':
                 base, uri = name[:-3], 1
@@ -146,7 +151,7 @@ class SOAPConfig:
                 d['dumpHeadersOut']     = \
                 d['dumpSOAPIn']         = \
                 d['dumpSOAPOut']        = value
-
+            
         else:
             d[name] = value
 
