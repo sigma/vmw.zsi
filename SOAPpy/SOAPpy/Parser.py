@@ -285,7 +285,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             elif len(self._stack) == 3 and self._next == None:
                 if (ns, name) == (NS.ENV, "Fault"):
                     data = faultType()
-                    self._next = ""
+                    self._next = None # allow followons
                     break
 
             if cur.rules != None:
