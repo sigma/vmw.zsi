@@ -1,11 +1,14 @@
+====================
 Making a ZSI Release
---------------------
+====================
 
 The following instructions tell how to go about making a ZSI release.
 The Makefile automates many of the more mechanical aspects of the
 process.
 
-XXX explain need for Python documentation tools
+The documentation is built using the same documentation tools used for
+the standard Python documentation.  See below for information on
+getting and setting up those tools.
 
 1.  Announce your intent to make a release on the mailing list.  This
     gives folks a day or so to respond with info or last-minute
@@ -35,9 +38,9 @@ XXX explain need for Python documentation tools
 
 6.  Export the tagged sources from CVS.  You'll need to 
 
-        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG zsi
+        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG zsi
         cd zsi/ZSI/
-        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG wstools
+        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs exp -r TAG wstools
 
 7.  Build the release from the export.  Switch to the export directory
     (the one containing setup.py) and run "make kit".
@@ -70,3 +73,42 @@ XXX explain need for Python documentation tools
       can be done using "python setup.py register".
 
     - comp.lang.python.announce
+
+
+Documentation Tools
+-------------------
+
+The Python documentation tools include a script (**mkhowto**) that can
+be used on any Unix or Cygwin installation that provides all the
+required formatting tools.  The recommended way to use them is to
+create a symbolic link to **mkhowto** from some directory on your
+PATH.
+
+The Python documentation tools can be acquired by any of these three
+methods:
+
+- Get a Python source release and unpack it.  Create the symlink to
+  .../Python-VERSION/Doc/tools/mkhowto.
+
+- Get the LaTeX version of the documentation package and unpack it.
+  Create the symlink to .../Python-Doc-VERSION/tools/mkhowto.
+
+- Get them from CVS.  If you have an existing Python checkout, you can
+  symlink to the .../Doc/tools/mkhowto script in that.  If not, then
+  you only need to check out the Doc/ tree::
+
+    cvs -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/python \
+        checkout -d someplace python/dist/src/Doc
+
+  The symlink can then be made to .../someplace/tools/mkhowto.
+
+If you want to skip the symlink, you can specify the MKHOWTO variable
+when you run "make kit"::
+
+  make MKHOWTO=.../Doc/tools/mkhowto kit
+
+If you're working from unpacked Python sources or a complete Python
+checkout, you can just point to that instead of typing the full path
+to the **mkhowto** script::
+
+  make PYSRCDIR=...
