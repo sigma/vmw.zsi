@@ -2,6 +2,10 @@
 import unittest, sys, tests_good, tests_bad
 from ZSI import *
 from xml.dom.ext import PrettyPrint
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
 class t1TestCase(unittest.TestCase):
     "Test case wrapper for old ZSI t1 test case"
@@ -94,14 +98,16 @@ class t1TestCase(unittest.TestCase):
         pyobj2 = S2.parse(elts[8], ps)
         self.failUnlessEqual(TC.URI().parse(elts[12], ps), 
                                             u'"http://foo.com/~salz"')
-        print pyobj == pyobj2, pyobj, pyobj2
+        self.failUnlessEqual(pyobj["i"], pyobj2.i)
+        self.failUnlessEqual(pyobj["t"], pyobj2.t)
 
         tcary = TC.Array('SOAP-ENC:int', TC.Integer())
         nsa = tcary.parse(elts[14],ps)
-        print 'non-sparse', nsa
+        self.failUnlessEqual(nsa, [None, None, None, 12, 13, 14, 15, 16, 17])
         tcary.sparse = 1
         sa = tcary.parse(elts[14],ps)
-        print 'sparse', sa
+        self.failUnlessEqual(sa, 
+                    [(3, 12), (4, 13), (5, 14), (6, 15), (7, 16), (8, 17)])
 
         mychoice = TC.Choice([
             TC.String('n3'),
@@ -109,26 +115,32 @@ class t1TestCase(unittest.TestCase):
             TC.Integer('Price'),
         ])
 
-        print '=' * 60
-        for i in [ 0, 12, 4 ] :
-            b = mychoice.parse(elts[i], ps)
-            print 'b=', type(b), b
-        print '=' * 60
+        b = mychoice.parse(elts[0], ps)
+        self.failUnlessEqual(b[0], 'Price')
+        self.failUnlessEqual(b[1], 34)
+        b = mychoice.parse(elts[12], ps)
+        self.failUnlessEqual(b[0], 'uri')
+        self.failUnlessEqual(b[1], u'"http://foo.com/~salz"')
+        b = mychoice.parse(elts[4], ps)
+        self.failUnlessEqual(b[0], 'n3')
+        self.failUnlessEqual(b[1], u'The value of n3')
 
-        print TC.Array('x', TC.Any()).parse(elts[15], ps)
-        print TC.Struct(None,
-                (TC.FPfloat('a'), TC.Decimal('b'), TC.FPdouble('c'))).parse(elts[13],ps)
+        self.failUnlessEqual(TC.Array('x', TC.Any()).parse(elts[15], ps),
+                                            [u'The value of n3', u'rich salz', 13])
+        self.failUnlessEqual(TC.Struct(None,(TC.FPfloat('a'), TC.Decimal('b'),
+                                            TC.FPdouble('c'))).parse(elts[13],ps),
+                                            {'a': 6.9000000000000004, 'c':
+                                                1e30000, 'b': 0.0})
         nsdict = ps.GetElementNSdict(ps.header)
         nsdict[''] = "http://www.zolera.com/ns/"
         nsdict['q'] = 'q-namespace-uri' 
-        z = SoapWriter(sys.stdout, header=ps.header_elements, nsdict=nsdict) 
-        #pyobj2.z = 'z value!!' 
+        sio = StringIO.StringIO()
+        z = SoapWriter(sio, header=ps.header_elements, nsdict=nsdict) 
         z.serialize(pyobj2, S2) 
         S2.inline = 1 
         S2.typed = 0 
         #z.writeNSdict({'SOAP-ENV': 'foo'}) 
         tc = TC.gDateTime('dt') 
-        print '<!-- s2 -->' 
         z.serialize(pyobj2, S2) 
         z.serialize(pyobj, S) 
         z.serialize(('n3', '******this is the value of a union'), mychoice) 
@@ -142,8 +154,8 @@ class t1TestCase(unittest.TestCase):
         z.serialize(time.time(), TC.gTime('monthday')) 
         z.serialize('$$$$$foo<', TC.String(textprotect=0)) 
         z.close() 
-        print '|'+elts[11].getAttributeNS('foo','bar')+'|' 
-        print 'Any=', TC.Any().parse(elts[11], ps) 
+        self.failUnlessEqual(TC.Any().parse(elts[11], ps),
+                                        {'urt-i': 12, 'urt-t': u'rich salz'})
         #print 'Anydict2=', TC.Any().parse(elts[8], ps)
         try: 
             a = bar() 
