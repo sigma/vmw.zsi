@@ -161,7 +161,7 @@ class ServiceContainer(HTTPServer):
             return node
 
         def setNode(self, service, url):
-            if not isinstace(service, ServiceSOAPBinding):
+            if not isinstance(service, ServiceSOAPBinding):
                raise TypeError, 'A Service must implement class ServiceSOAPBinding'
             scheme,netloc,path,query,fragment = urlparse.urlsplit(url)
             self.__post_dict[path] = service
