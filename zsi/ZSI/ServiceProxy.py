@@ -51,10 +51,11 @@ class ServiceProxy:
         
         binding = self._port.getBinding()
         portType = binding.getPortType()
-        for item in portType.operations:
-            callinfo = wstools.WSDLTools.callInfoFromWSDL(self._port, item.name)
-            method = MethodProxy(self, callinfo)
-            setattr(self, item.name, method)
+        for port in self._service.ports:
+            for item in port.getPortType().operations:
+                callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
+                method = MethodProxy(self, callinfo)
+                setattr(self, item.name, method)
 
     def _call(self, name, *args, **kwargs):
         """Call the named remote web service method."""
