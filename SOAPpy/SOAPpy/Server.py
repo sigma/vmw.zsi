@@ -326,11 +326,16 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     for i in l:
                         f = getattr(f, i)
             except:
-                resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
-                        "No method %s found" % nsmethod,
-                        "%s %s" % tuple(sys.exc_info()[0:2])),
-                    encoding = self.server.encoding,
-                    config = self.server.config)
+                info = sys.exc_info()
+                try:
+                    resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
+                                               "No method %s found" % nsmethod,
+                                               "%s %s" % tuple(info[0:2])),
+                                     encoding = self.server.encoding,
+                                     config = self.server.config)
+                finally:    
+                    del info
+                    
                 status = 500
             else:
                 try:
@@ -415,24 +420,27 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     import traceback
                     info = sys.exc_info()
 
-                    if self.server.config.dumpFaultInfo:
-                        s = 'Method %s exception' % nsmethod
-                        debugHeader(s)
-                        traceback.print_exception(info[0], info[1],
-                            info[2])
-                        debugFooter(s)
+                    try:
+                        if self.server.config.dumpFaultInfo:
+                            s = 'Method %s exception' % nsmethod
+                            debugHeader(s)
+                            traceback.print_exception(info[0], info[1],
+                                                      info[2])
+                            debugFooter(s)
 
-                    if isinstance(e, faultType):
-                        f = e
-                    else:
-                        f = faultType("%s:Server" % NS.ENV_T,
-                           "Method %s failed." % nsmethod)
+                        if isinstance(e, faultType):
+                            f = e
+                        else:
+                            f = faultType("%s:Server" % NS.ENV_T,
+                                          "Method %s failed." % nsmethod)
 
-                    if self.server.config.returnFaultInfo:
-                        f._setDetail("".join(traceback.format_exception(
+                        if self.server.config.returnFaultInfo:
+                            f._setDetail("".join(traceback.format_exception(
                                 info[0], info[1], info[2])))
-                    elif not hasattr(f, 'detail'):
-                        f._setDetail("%s %s" % (info[0], info[1]))
+                        elif not hasattr(f, 'detail'):
+                            f._setDetail("%s %s" % (info[0], info[1]))
+                    finally:
+                        del info
 
                     resp = buildSOAP(f, encoding = self.server.encoding,
                        config = self.server.config)
@@ -442,19 +450,21 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except faultType, e:
             import traceback
             info = sys.exc_info()
+            try:
+                if self.server.config.dumpFaultInfo:
+                    s = 'Received fault exception'
+                    debugHeader(s)
+                    traceback.print_exception(info[0], info[1],
+                        info[2])
+                    debugFooter(s)
 
-            if self.server.config.dumpFaultInfo:
-                s = 'Received fault exception'
-                debugHeader(s)
-                traceback.print_exception(info[0], info[1],
-                    info[2])
-                debugFooter(s)
-
-            if self.server.config.returnFaultInfo:
-                e._setDetail("".join(traceback.format_exception(
-                        info[0], info[1], info[2])))
-            elif not hasattr(e, 'detail'):
-                e._setDetail("%s %s" % (info[0], info[1]))
+                if self.server.config.returnFaultInfo:
+                    e._setDetail("".join(traceback.format_exception(
+                            info[0], info[1], info[2])))
+                elif not hasattr(e, 'detail'):
+                    e._setDetail("%s %s" % (info[0], info[1]))
+            finally:
+                del info
 
             resp = buildSOAP(e, encoding = self.server.encoding,
                 config = self.server.config)
@@ -467,8 +477,11 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 import traceback
                 debugHeader(s)
                 info = sys.exc_info()
-                traceback.print_exception(info[0], info[1],
-                                          info[2])
+                try:
+                    traceback.print_exception(info[0], info[1], info[2])
+                finally:
+                    del info
+
                 debugFooter(s)
 
             self.send_response(500)
