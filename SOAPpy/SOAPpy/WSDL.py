@@ -58,7 +58,7 @@ class Proxy:
         if self.wsdl is None:
             try:
                 stream = urllib.urlopen(wsdlsource)
-                self.wsdl = reader.loadFromStream(stream)
+                self.wsdl = reader.loadFromStream(stream, wsdlsource)
 
                 #print 'url'
             except (IOError, OSError): pass
