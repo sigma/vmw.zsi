@@ -1,0 +1,556 @@
+/*
+** The basic elements:
+*/
+
+body {
+  font: 69% "Lucida Grande", Verdana, Lucida, Helvetica, Arial, sans-serif;
+  background-color: White;
+  color: Black;
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  font-size: 100%;
+}
+
+
+a {
+  text-decoration: none;
+  color: #436976;
+  background-color: transparent;
+}
+
+img {
+  border: none;
+  vertical-align: middle;
+}
+
+p {
+  margin: 0.5em 0em 1em 0em;
+  line-height: 1.5em;
+}
+
+p a {
+  text-decoration: underline;
+}
+
+p a:visited {
+  color: Purple;
+  background-color: transparent;
+}
+
+p a:active {
+  color: Red;
+  background-color: transparent;
+}
+
+p img {
+  border: 0;
+  margin: 0;
+}
+
+hr {
+  height: 1px;
+  color: #dee7ec;
+  background-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: Black;
+  background-color: transparent;
+  font-family: "Lucida Grande", Verdana, Lucida, Helvetica, Arial, san-serif;
+  font-size: 100%;
+  font-weight: normal;
+  margin: 0;
+  padding-top: 0.5em;
+  border-bottom: 1px solid #dee7ec;
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
+  color: Black ! important;
+}
+
+h1 {
+  font-size: 160%;
+}
+
+h2 {
+  font-size: 150%;
+}
+
+h3 {
+  font-size: 140%;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+h4 {
+  font-size: 120%;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+h5 {
+  font-size: 100%;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+h6 {
+  font-size: 85%;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+
+ul {
+  line-height: 1.5em;
+  list-style-type: square;
+  margin: 0.5em 0 0 1.5em;
+  padding:0;
+  list-style-image: url("/Images/bullet.gif");
+}
+
+ol {
+  line-height: 1.5em;
+  margin: 0.5em 0 0 2em;
+  padding:0;
+}
+
+ul a, ol a {
+  text-decoration: underline;
+}
+
+li {
+  margin-bottom: 1em;
+}
+
+dt {
+  font-weight: bold;
+}
+
+dt a {
+  text-decoration: underline;
+}
+
+dd {
+  line-height: 1.5em;
+  margin-bottom: 1em;
+}
+dd a {
+  text-decoration: underline;
+}
+
+dd.link a {
+  text-decoration: none;
+  color: Black;
+}
+
+fieldset {
+  border: 1px solid #dee7ec;
+  margin: 1em 0em 1em 0em;
+  padding: 0em 1em 1em 1em;
+  line-height: 1.5em;
+}
+
+legend {
+  background: White;
+  padding: 0.5em;
+  font-size: 90%;
+}
+
+form {
+  border: none;
+  margin: 0;
+}
+
+textarea {
+  border: 1px solid #dee7ec;
+  color: Black;
+  background-color: white;
+  width: 98%;
+  padding: 0.1em;
+}
+
+/*
+input {
+  font-family: "Lucida Grande", Verdana, Lucida, Helvetica, Arial, sans-serif;
+  visibility: visible;
+  border: 1px solid #dee7ec;
+  color: Black;
+  background-color: white;
+  vertical-align: middle;
+  padding: 0.1em;
+}
+*/
+
+select {
+  border: 1px solid #dee7ec;
+  color: Black;
+  vertical-align: top;
+}
+
+abbr, acronym, .explain {
+  border-bottom: 1px dotted Black;
+  color: Black;
+  background-color: transparent;
+  cursor: help;
+}
+
+q {
+  font-family: Times, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 120%;
+}
+
+blockquote {
+  font-family: Times, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 120%;
+}
+
+code {
+  font-size: 120%;
+  color: Black;
+  background-color: #8cacbb;
+}
+
+pre {
+  font-size: 120%;
+  padding: 1em;
+  border: 1px dashed #dee7ec;
+  color: Black;
+  background-color: #8cacbb;
+  overflow: auto;
+}
+
+.pre a {
+  text-decoration: underline;
+}
+
+
+/*
+** Structural Elements
+*/
+
+.main_page {
+  font-size: 200%;
+}
+
+#header {
+  margin: 10px 0px 10px 0px;
+  padding: 20px 0px 0px 20px;
+  height: 110px;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px 0px; /* top and bottom borders: 1px; left and right borders: 0px */
+  background-color: #ddeeff;
+  white-space: nowrap;
+}
+#main {
+  margin: 10px;
+  padding: 10px;
+  float: left;
+}
+
+#footer {
+  position: relative;
+  margin: 50px 0px 10px 0px;
+  padding: 17px 0px 0px 20px;
+  height: 30px;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px 0px; /* top and bottom borders: 1px; left and right borders: 0px */
+  line-height: 11px;
+  background-color: #ddeeff;
+  text-align: center;
+}
+
+#footnote {
+  text-align: center;
+}
+
+#tabset {
+  float: left;
+  width: 100%;
+  font-size: 93%;
+  line-height: normal;
+}
+
+#tabset div {
+  margin-bottom: 0px;
+  padding: 0px;
+}
+
+#tabset ul {
+  margin:0;
+  padding: 10px 10px 0;
+  list-style: none;
+}
+#tabset li {
+  float: left;
+  background: url("/Images/left.gif") no-repeat left top;
+  margin: 0;
+  padding: 0 0 0 9px;
+}
+#tabset a {
+  float: left;
+  display: block;
+  background: url("/Images/right.gif") no-repeat right top;
+  padding: 5px 15px 4px 6px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #765;
+}
+/* Commented Backslash Hack
+   hides rule from IE5-Mac \*/
+#tabset a {float:none;}
+/* End IE5-Mac hack */
+#tabset a:hover {
+  color:#333;
+}
+#tabset #current {
+  background-image:url("/Images/left_on.gif");
+}
+#tabset #current a {
+  background-image:url("/Images/right_on.gif");
+  color:#333;
+  padding-bottom:5px;
+}
+
+#content {
+  top: 50px;
+  width: 95%;
+  display: table;
+  clear: both;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+#helpcontent {
+  display: table;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+#helpcontentblock {
+  background-color: #eee;
+  padding: 1em;
+  /*border-style: solid;*/
+  border-color: black;
+  border-width: 2px 4px 4px  2px; /*1px 10px 10px 1px;*/
+  border-style: outset;
+  display: table;
+}
+
+#content a {
+  text-decoration: none;
+  border-top: 1px solid #bbd;
+  border-right: 1px solid #88b;
+  border-bottom: 1px solid #88b;
+  border-left: 1px solid #bbd;
+  -moz-border-radius: 0.5em;
+}
+
+#content input[type=submit] input[type=file] {
+  /* border-style: solid;
+  border-color: black;
+  border-width: 1px 3px 3px 1px; */
+  /* background-color: #fee; */
+  padding: 0.5em;
+  /* margin: 1em; */
+}
+
+#contentbox {
+  margin: 1em 0em;
+  padding: 1em;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  display: table;
+}
+
+#contenthelp {
+  width: 45em;
+  background-color: #fee;
+  margin: 1em;
+  padding: 1em;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  float: right;
+}
+
+#contentfieldhelp {
+  width: 45em;
+  padding: 20px;
+  float: right;
+}
+
+#contentblock {
+  width: 95%;
+  background-color: #eee;
+  padding: 1em;
+  /*border-style: solid;*/
+  border-color: black;
+  border-width: 2px 4px 4px  2px; /*1px 10px 10px 1px;*/
+  border-style: outset;
+  display: table;
+  clear: both;
+}
+
+#contentfooter {
+  width: 100%;
+  text-align: center;
+  clear: both;
+  padding-top: 2em;
+}
+
+#sidebar {
+  right: 20px;
+  width: 200px;
+  margin: 1em;
+  padding: 1em;
+  background-color: #fee;
+  border: 1px solid #999;
+  float: right;
+}
+
+#leftcontent {
+  position: absolute;
+  left: 10px;
+  top: 50px;
+  width: 200px;
+}
+
+#centercontent {
+  margin-left: 201px;
+  margin-right: 201px;
+  top: 50px;
+}
+
+#rightcontent {
+  position: absolute;
+  right: 10px;
+  top: 50px;
+  width: 200px;
+}
+
+#portal-logo {
+  background: url(http://rstatserver.pfizer.com:8080/Images/RLogo) no-repeat;
+  height: 77px;
+  width: 101px;
+}
+
+#portal-logo a {
+  text-decoration: none;
+  overflow: hidden;
+  height: 57px;
+  width: 101px;
+  cursor: pointer;
+}
+
+#portal-title {
+  font-size: 200%;
+  font-weight: bold;
+  text-align: center;
+}
+
+#portal-title a {
+  font-size: 100%;
+}
+
+#zope-logo {
+  background: url(http://rstatserver.pfizer.com:8080/p_/ZopeButton) no-repeat;
+  height: 50px;
+  width: 115px;
+  float: right;
+  display: inline;
+}
+
+#zope-logo a {
+  display: block;
+  text-decoration: none;
+  overflow: hidden;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  padding-top: 57px;
+  height 157px;
+  width: 219px;
+  cursor: pointer;
+  display: inline;
+}
+
+#breadcrumbs {
+  display: box;
+  border-bottom-color: #dee7ec;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  padding-left: 2em;
+  padding-right: 2em;
+  text-transform: lowercase;
+}
+
+.form-label {
+  font-size: 120%;
+  font-weight: bold;
+  background: url(http://rstatserver.pfizer.com:8080/Images/required.gif) center left no-repeat;
+  padding: 0 0 0 8px;
+}
+
+.help {
+  margin-left: 1em;
+  text-transform: lowercase;
+  font-style: italic;
+}
+
+.affytitle {
+  font-size: 180%;
+  font-weight: bold;
+  align: center;
+  text-align: center;
+  padding: 8px 8px 8px 8px;
+  width: 98%;
+
+  color: Black;
+  background-color: white;
+  font-family: "Lucida Grande", Verdana, Lucida, Helvetica, Arial, san-serif;
+  #font-size: 100%;
+  #font-weight: normal;
+  margin-bottom: 0.5em;
+  padding-top: 0.5em;
+  border: 1px solid black;
+}
+
+.fieldsettitle {
+  font-size: 140%;
+  font-weight: bold;
+  align: center;
+  text-align: center;
+  padding: 8px 8px 8px 8px;
+}
+
+.message{
+  width: 50%;
+  background-color: #fee;
+  padding: 20px 20px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border-style: solid;
+  border-color: black;
+  border-width: 2px 2px 2px 2px;
+  display: table;
+  text-align: center;
+  font-weight: bold;
+  font-size: 140%;
+  margin-right: auto;
+  margin-left: auto;
+  clear: both
+}
