@@ -3,6 +3,12 @@ SOAP.py
 
 CHANGES: 
 
+VERSION 0.9.7 (6/27/01)
+- Fixed the unamed ordered parameters bug
+- Added the ability to specify a http_proxy
+- Added a patch provided by Tim MiddelKoop to allow printing of proxy objects
+
+
 VERSION 0.9.6 (6/08/01)
 
 - The date and time types now check their initial values when the type
