@@ -1135,6 +1135,7 @@ class SchemaDescription:
         def _fromSimpleType(self, tp):
             
             tp = tp.getDefinition()
+            alias = self.nsh.getAlias(tp.getTargetNamespace())
             
             if tp.getName():
                 tpc = tp.getTypeclass()
@@ -1147,12 +1148,14 @@ class SchemaDescription:
                     self.precede  = '%s' % (tpc)
                     self.classdef.set('\n\n%sclass %s(%s):' \
                                       % (ID1, tp.getName() + '_Def', tpc))
+                    self.classdef.write('\n%stag = "tns:%s"' %(ID2,tp.getName()))
                     self.initcode.set('\n%saname = None' % ID3 )
                     self.initcode.write('\n%sif name:' % ID3)
                     self.initcode.write('\n%skw["pname"] = name' \
                                         % ID4)
                     self.initcode.write('\n%skw["aname"] = "_%%s" %% name' \
                                         % ID4)
+                    self.initcode.write('\n%(INDENT)skw["oname"] = \'%%s xmlns:tns="%%s"\' %%(name,%(ALIAS)s.targetNamespace)' %{"INDENT":ID4, "ALIAS":alias})
                     self.basector.set('\n%s%s.__init__(self, **kw)'\
                                       % (ID3,tpc))
                 else:
