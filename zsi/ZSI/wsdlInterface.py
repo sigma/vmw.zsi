@@ -1635,7 +1635,8 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
         definition as a global one"""
         g = ZSISchemaDefinitionAdapter(self._def)
         g._def.attributes = tp._type.attributes.copy()
-        g._def.attributes['name'] = g._def.attributes['name'] + 'LOCAL'
+        #g._def.attributes['name'] = g._def.attributes['name'] + 'LOCAL'
+        g._def.attributes['name'] = g._def.attributes['name']
         return g
 
 
@@ -1688,6 +1689,15 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
             return False
 
     def isElementReference(self):
+        return False
+
+    def containsLocalDefinition(self):
+        if self._dec.getTypeDefinition('type') == None:
+            if hasattr( self._dec, 'content' ):
+                if isinstance( self._dec.content,
+                               ZSI.wstools.XMLSchema.LocalComplexType):
+                    return True
+
         return False
 
     def isLocalElement(self):

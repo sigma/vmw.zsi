@@ -1036,23 +1036,30 @@ class SchemaDescription:
 	    tp = myType
 
             if tp.isSimpleType():
+                # extracted into a definition object
                 self.name = tp.getName() + '_Def'
                 self._fromSimpleType(tp)
 
 	    elif tp.isWildCard():
-
+                # extracted into a declaration object
                 self._fromWildCard(tp)
 
             elif tp.isElement():
+                # problematic - tp.getType is called but the original
+                # object is still employed.  see if this can be reworked
+                # using the underlying object or a declaration extraction.
+                # the type object is also used in the underlying 'second
+                # tier' methods as well.  this is a bitch.
                 self.name = tp.getName() + '_Dec'
                 self._fromElement(tp)
 
 	    elif tp.isComplexType():
+                # extracted into a definition object
                 self.name = tp.getName() + '_Def'
                 self._fromComplexType(tp)
 
             elif tp.isAttribute():
-
+                # currently a 'pass class' extraction not important
                 self._fromAttribute(tp)
 
 	    else:
@@ -1192,41 +1199,22 @@ class SchemaDescription:
                 self.postpend.set('\n%sself.typecode = %s(name=name, ns=ns)' % (ID3, typeName))
                 self.typeDoc('', '_' + tp.getName(), typeName)
             else:
-                # at this point what we have is an element with
-                # local complex type definition.
+                # at this point what we have is an global element declaration
+                # containing a local complex type definition.
 
                 # so, this is a little odd voodoo so that we can
                 # use the code for processing complex types.
 
                 self._fromComplexType(etp.expressLocalAsGlobal(tp))
 
-                # XXX: the sting splitting breaks down a bit here.
-                # the LOCAL_Def will be correctly assigned to the
-                # appropriate string objects, the element dec is
-                # all crammed into the self.postpend object.
-                # this will be revisited when 'proper' handling of
-                # nested types is worked out.  it needs smoothing.
-                
-                self.postpend.set('\n\n%sclass %s(%s):' % \
-                                  (ID1,tp.getName() + '_Dec',
-                                   tp.getName() + 'LOCAL_Def' ))
-                self.postpend.write('\n%sliteral = "%s"' % \
-                                    ( ID2, tp.getName()))
-                self.postpend.write('\n%sschema = "%s"' % \
-                                    ( ID2, tp.getTargetNamespace()))
-                self.postpend.write('\n\n%sdef __init__(self, name=None, ns=None):' %(ID2))
+                # now we are discaring the _Dec(LOCAL_Def) subclassing
+                # and expressing the declaration w/the local def as
+                # a def.  retweek the classdef and off we go...
 
-                self.postpend.write('\n%sname = name or self.__class__.literal' % ( ID3 ))
-                self.postpend.write('\n%sns = ns or self.__class__.schema'\
-                                    % ( ID3 ))
-                
-                nsp = self.nsh.getAlias(tp.getTargetNamespace())
+                self.classdef.set('\n\n%sclass %s(ZSI.TCcompound.Struct):' \
+                                  %(ID1, tp.getName() + '_Dec'))
+                return
 
-                self.postpend.write('\n\n%s%s.%s.__init__(self, name=name, ns=ns)' %(ID3, nsp, tp.getName() + 'LOCAL_Def'))
-                
-                self.postpend.write('\n%sself.typecode = %s.%s(name=name, ns=ns)' % (ID3, nsp, tp.getName() + 'LOCAL_Def' ))
-                        
-                
 
         def _fromComplexType(self, tp):
 
@@ -1456,8 +1444,8 @@ class SchemaDescription:
                         occurs = self._calculateOccurance(e)
                         nsp = self.nsh.getAlias(etp.getTargetNamespace())
                         typeName = '%s.%s' % (nsp, e.getName()) + '_Dec'
-                        typecodelist +='%s(name="%s",ns=ns%s), '\
-                                        %(typeName, e.getName(), occurs)
+                        typecodelist +='%s(ns=ns%s), '\
+                                        %(typeName, occurs)
 
                     elif etp.isDefinition() and etp.isSimpleType():
                         occurs = self._calculateOccurance(e)
