@@ -222,8 +222,7 @@ class ServiceProxy:
         typeObj.optional = not minOccurs
 
         maxOccurs = element.getAttribute('maxOccurs')
-        if maxOccurs == 'unbounded':
-            typeObj.repeatable = True
+        typeObj.repeatable = (maxOccurs == 'unbounded') or (int(maxOccurs) > 1)
 
         return typeObj
 
