@@ -1524,7 +1524,16 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
             if hasattr(self._def.content, 'content') and \
                    self._def.content.content:
                 for c in self._def.content.content:
-                    group.append( self.__adapterWrap( c ) )
+                    if isinstance(c, ZSI.wstools.XMLSchema.Choice):
+                        # XXX:
+                        # this is a somewhat less than perfect fix.
+                        # in the near term, before we provide for
+                        # nested model groups , i am just 'flattening'
+                        # the contents of the nested model group.
+                        for x in c.content:
+                            group.append( self.__adapterWrap( x ) )
+                    else:
+                        group.append( self.__adapterWrap( c ) )
                 
             if isinstance( self._def.content,
                            ZSI.wstools.XMLSchema.All ):
