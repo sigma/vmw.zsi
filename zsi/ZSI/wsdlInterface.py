@@ -1500,13 +1500,6 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
     def isDeclaration(self):
         return False
 
-    def isRestriction(self):
-        if hasattr(self._def, 'content'):
-            if isinstance(self._def.content, Restriction):
-                print "YES"
-        
-        return False
-    
     def getTargetNamespace(self):
         """get NS
         """
