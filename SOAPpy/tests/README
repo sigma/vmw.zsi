@@ -10,12 +10,6 @@ All of the tests here work without generating errors EXCEPT:
     included in the return object.  This is a known shortcoming of
     SOAPpy and is on the future features list. All other tests pass.
 
-- TCtest.py
-
-    All tests fail because something is currently wrong with the
-    parse rules support. We need to look at old versions of SOAPpy to
-    see when this started to fail and why.
-
 - storageTest.py
 
     Fails because the hard-coded user/password combination is no
