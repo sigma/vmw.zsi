@@ -14,7 +14,7 @@ try:
 except:
     from ZSI.compat import Canonicalize, SCHEMA, SOAP
 
-import re, types
+import re, types, time
 
 from base64 import decodestring as b64decode, encodestring as b64encode
 from urllib import unquote as urldecode, quote as urlencode
@@ -309,6 +309,9 @@ class Any(TypeCode):
                 serializer = Any.serialmap.get(tc)
         else:
             serializer = Any.serialmap.get(tc)
+            if not serializer and isinstance(pyobj, time.struct_time):
+                from ZSI.TCtimes import gDateTime
+                serializer = gDateTime();
         if not serializer:
             # Last-chance; serialize instances as dictionary
             if type(pyobj) != types.InstanceType:

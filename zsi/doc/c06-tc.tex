@@ -305,6 +305,19 @@ the \code{value_list} sequence of text strings
 In addition to \class{TC.String},
 the basic string, several subtypes are provided that transparently
 handle common encodings.
+These classes create a temporary string object and pass that to
+the \method{serialize()} method.
+When doing RPC encoding, and checking for non-unique strings, the
+\class{TC.String} class must have the original Python string, as well
+as the new output.
+This is done by adding a parameter to the \method{serialize()} method:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{orig}}{\code{None}}{If deriving a new typecode from the
+string class, and the derivation creates a temporary Python string
+(such as by \class{Base64String}), than this parameter is the
+original string being serialized.}
+\end{tableiii}
 
 \begin{classdesc}{Base64String}{name\optional{, **keywords}}
 The value is encoded in Base-64.
