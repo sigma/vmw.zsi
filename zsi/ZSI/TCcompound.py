@@ -359,6 +359,12 @@ class Array(TypeCode):
                     d['attrtext'] = ''
                 self.ofwhat.serialize(sw, v, **d)
                 position += 1
-        print >>sw, '</%s>' % n
+
+        i = n.find('xmlns')
+        if i > 0:
+            print >>sw, '</%s>' % n[:i - 1]
+        else:
+            print >>sw, '</%s>' % n
+
 
 if __name__ == '__main__': print _copyright
