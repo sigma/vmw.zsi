@@ -44,7 +44,6 @@ from types import *
 
 # SOAPpy modules
 from Errors import *
-from Types import *
 
 ################################################################################
 # Utility infielders
