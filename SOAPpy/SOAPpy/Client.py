@@ -202,7 +202,7 @@ class HTTPTransport:
         
         content_type = headers.get("content-type","text/xml")
         content_length = headers.get("Content-length")
-        if content_length == None:
+        if not content_length: 
             # No Content-Length provided; just read the whole socket
             # This won't work with HTTP/1.1 chunked encoding
             data = r.getfile().read()
