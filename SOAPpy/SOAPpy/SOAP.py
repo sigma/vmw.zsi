@@ -2806,7 +2806,10 @@ def _parseSOAP(xml_str, rules = None):
     # turn on namespace mangeling
     parser.setFeature(xml.sax.handler.feature_namespaces,1)
 
-    parser.parse(inpsrc)
+    try:
+        parser.parse(inpsrc)
+    except xml.sax.SAXParseException:
+        parser._parser = None
 
     return t
 
