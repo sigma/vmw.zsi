@@ -86,27 +86,38 @@ class ServiceProxy:
         return binding.Receive()
 
     def _getTypeCodes(self, callinfo):
-        """Returns typecodes representing input and output messages
+        """Returns typecodes representing input and output messages, if request and/or
+           response fails to be generated return None for either or both.
+           
            callinfo --  WSDLTools.SOAPCallInfo instance describing an operation.
         """
         prefix = None
         self._resetPrefixDict()
         if callinfo.use == 'encoded':
             prefix = self._getPrefix(callinfo.namespace)
-        requestTC = self._getTypeCode(parameters=callinfo.getInParameters(), literal=(callinfo.use=='literal'))
+        try:
+            requestTC = self._getTypeCode(parameters=callinfo.getInParameters(), literal=(callinfo.use=='literal'))
+        except EvaluateException, ex:
+            print "DEBUG: Request Failed to generate --", ex
+            requestTC = None
 
         self._resetPrefixDict()
-        replyTC = self._getTypeCode(parameters=callinfo.getOutParameters(), literal=(callinfo.use=='literal'))
+        try:
+            replyTC = self._getTypeCode(parameters=callinfo.getOutParameters(), literal=(callinfo.use=='literal'))
+        except EvaluateException, ex:
+            print "DEBUG: Response Failed to generate --", ex
+            replyTC = None
         
+        request = response = None
         if callinfo.style == 'rpc':
-            request = TC.Struct(pyclass=None, ofwhat=requestTC, pname=callinfo.methodName)
-            response = TC.Struct(pyclass=None, ofwhat=replyTC, pname='%sResponse' %callinfo.methodName)
+            if requestTC: request = TC.Struct(pyclass=None, ofwhat=requestTC, pname=callinfo.methodName)
+            if replyTC: response = TC.Struct(pyclass=None, ofwhat=replyTC, pname='%sResponse' %callinfo.methodName)
         else:
-            request = requestTC[0]
-            response = replyTC[0]
+            if requestTC: request = requestTC[0]
+            if replyTC: response = replyTC[0]
 
         #THIS IS FOR RPC/ENCODED, DOC/ENCODED Wrapper
-        if prefix and callinfo.use == 'encoded':
+        if request and prefix and callinfo.use == 'encoded':
             request.oname = '%(prefix)s:%(name)s xmlns:%(prefix)s="%(namespaceURI)s"' \
                 %{'prefix':prefix, 'name':request.oname, 'namespaceURI':callinfo.namespace}
 
@@ -130,9 +141,10 @@ class ServiceProxy:
                 name = part.name
                 typeClass = self._getTypeClass(namespaceURI, localName)
                 if not typeClass:
-                    self._wsdl.types[namespaceURI].getTypeDefinition(localName)
-                    typeClass = self._getElement()
-                tc = typeClass(name)
+                    tp = self._wsdl.types[namespaceURI].types[localName]
+                    tc = self._getType(tp, name, literal, local=True, namespaceURI=namespaceURI)
+                else:
+                    tc = typeClass(name)
             ofwhat.append(tc)
         return ofwhat
 
@@ -186,8 +198,6 @@ class ServiceProxy:
             raise TypeError, 'Expecting an ElementDeclaration'
 
         tc = None
-        ofwhat = []
-
         elementName = element.getAttribute('name')
         tp = element.getTypeDefinition('type')
 
@@ -199,17 +209,27 @@ class ServiceProxy:
             return typeClass(elementName, repeatable=maxOccurs>1, optional=not minOccurs)
         elif not tp:
             tp = element.content
+        return self._getType(tp, elementName, literal, local, namespaceURI)
 
+    def _getType(self, tp, name, literal, local, namespaceURI):
+        """Returns a typecode instance representing the passed in type and name.
+           tp -- XMLSchema.TypeDefinition instance
+           name -- element name
+           literal -- literal encoding?
+           local -- is locally defined?
+           namespaceURI -- namespace
+        """
+        ofwhat = []
         if not (tp.isDefinition() and tp.isComplex()):
-            raise EvaluationError, 'only supporting complexType definition'
+            raise EvaluateException, 'only supporting complexType definition'
         elif not tp.content.isModelGroup():
-            raise EvaluationError, 'only supporting a model group, no derivations'
+            raise EvaluateException, 'only supporting a model group, no derivations'
 
         modelGroup = tp.content
         for item in modelGroup.content:
             ofwhat.append(self._getElement(item, literal=literal, local=True))
 
-        tc = TC.Struct(pyclass=None, ofwhat=ofwhat, pname=elementName)
+        tc = TC.Struct(pyclass=None, ofwhat=ofwhat, pname=name)
         if not local:
             self._globalElement(tc, namespaceURI=namespaceURI, literal=literal)
         return tc
