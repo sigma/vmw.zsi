@@ -370,6 +370,7 @@ class SOAPBuilder:
     def dump_None(self, obj, tag, typed = 0, ns_map = {}):
         if Config.debug: print "In dump_None."
         tag = tag or self.gentag()
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
         ns = self.genns(ns_map, self.config.schemaNamespaceURI)[0]
 
         self.out.append('<%s %snull="1"%s/>\n' %
