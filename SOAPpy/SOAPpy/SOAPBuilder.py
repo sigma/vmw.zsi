@@ -119,6 +119,9 @@ class SOAPBuilder:
             self.out.append("<%sBody>\n" % body_ns)
 
         if self.method:
+            # Save the NS map so that it can be restored when we
+            # fall out of the scope of the method definition
+            save_ns_map = ns_map.copy()
             self.depth += 1
             a = ''
             if self.methodattrs:
@@ -162,6 +165,8 @@ class SOAPBuilder:
 
         if self.method:
             self.out.append("</%s%s>\n" % (methodns, self.method))
+            # End of the method definition; drop any local namespaces
+            ns_map = save_ns_map
             self.depth -= 1
 
         if self.body:
@@ -405,7 +410,7 @@ class SOAPBuilder:
                     sample = typedArrayType(typed=obj._type,
                                             complexType = obj._complexType)
                     sample._typename = obj._type
-                    obj._ns = NS.URN
+                    if not getattr(obj,"_ns",None): obj._ns = NS.URN
 		else:
                     sample = typedArrayType(typed=obj._type)
             else:
