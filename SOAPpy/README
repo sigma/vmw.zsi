@@ -72,8 +72,9 @@ bid/*	            N+I interop client and server
 INSTALLATION 
 
 SOAPpy depends on the following packages:
-	pyXML   <http://pyxml.sourceforge.net>
-	fpconst <http://www.analytics.washington.edu/Zope/projects/fpconst>
+
+- fpconst <http://www.analytics.washington.edu/Zope/projects/fpconst>
+- (optional) pyXML   <http://pyxml.sourceforge.net> 
 
 
 As of version 0.9.8 SOAPpy can be installed using the standard python
