@@ -184,8 +184,7 @@ class SOAPBuilder:
 
     def gentag(self):
         self.tcounter += 1
-        #return "v%d" % self.tcounter
-        return "_%d" % self.tcounter
+        return "v%d" % self.tcounter
 
     def genns(self, ns_map, nsURI):
         if nsURI == None:
@@ -518,21 +517,17 @@ class SOAPBuilder:
                 tag = ns + tag
             self.out.append("<%s%s%s%s%s>\n" % (tag, ndecl, id, a, r))
 
-            # If we have order use it.
-            order = 1
+            keylist = obj.__dict__.keys()
 
-            for i in obj._keys():
-                if i not in obj._keyord:
-                    order = 0
-                    break
-            if order:
-                for i in range(len(obj._keyord)):
-                    self.dump(obj._aslist[i], obj._keyord[i], 1, ns_map)
-            else:
-                # don't have pristine order information, just build it.
-                for (k, v) in obj.__dict__.items():
-                    if k[0] != "_":
-                        self.dump(v, k, 1, ns_map)
+            # first write out items with order information
+            for i in range(len(obj._keyord)):
+                self.dump(getattr(obj, i), obj._keyord[i], 1, ns_map)
+                keylist.remove(obj._keyord[i])
+
+            # now write out the rest
+            for k in keylist:
+                if (k[0] != "_"):
+                    self.dump(getattr(obj,k), k, 1, ns_map)
 
             if isinstance(obj, bodyType):
                 self.multis = 1
