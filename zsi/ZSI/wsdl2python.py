@@ -74,7 +74,7 @@ def nonColonizedName_to_moduleName(name):
 
 def textProtect(s):
     """process any strings we cant have illegal chracters in"""
-    return re.sub('[-./:?]', '_', s)
+    return re.sub('[-./:?#]', '_', s)
 
 class WsdlGeneratorError(Exception):
     pass
@@ -908,14 +908,14 @@ class ServiceDescription:
                             t = tpc
 
 			self.typecode.append('%s(pname="%s",aname="_%s",optional=1)' \
-                                             %(t, part.getName(),
+                                             %(t, part.getName(mangle=False),
                                                part.getName()))
 		    elif tp.getName():
 
                         self.docCode.append(part.getName())
                         self.docCode.append(tp.getName())
 			self.typecode.append('%s(pname="%s",aname="_%s",optional=1)' \
-                                             %(tp.getName(), part.getName(),
+                                             %(tp.getName(mangle=False), part.getName(),
                                                part.getName()))
 		    else:
 			raise WsdlGeneratorError, 'shouldnt happen'
@@ -1196,7 +1196,7 @@ class SchemaDescription:
                 self.classdef.set('\n\n%sclass %s_Dec(Struct):' \
                                   % (ID1, tp.getName()))
                 self.initdef.set('\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2))
-                self.basector.set('\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="_%s", inline=1)' % (ID3,tp.getName(),tp.getName()))
+                self.basector.set('\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="_%s", inline=1)' % (ID3,tp.getName(mangle=False),tp.getName()))
             else:
                 raise WsdlGeneratorError, 'Expecting a type definition: ' \
                       % (etp.getItemTrace())
@@ -1314,7 +1314,7 @@ class SchemaDescription:
             
             self.classvar.set("\n%sschema = '%s'" % (ID2,
                                                      tp.getTargetNamespace()))
-            self.classvar.write("\n%stype = '%s'\n" % (ID2, tp.getName()))
+            self.classvar.write("\n%stype = '%s'\n" % (ID2, tp.getName(mangle=False)))
 
             self.initdef.set('\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2))
 
@@ -1379,7 +1379,7 @@ class SchemaDescription:
                     self.classvar.set('\n%s# rudimentary - more soon' % ID2)
                     self.classvar.write("\n%sschema = '%s'" % \
                                         (ID2, tp.getTargetNamespace()))
-                    self.classvar.write("\n%stype = '%s'" % (ID2,tp.getName()))
+                    self.classvar.write("\n%stype = '%s'" % (ID2,tp.getName(mangle=False)))
                     self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2)
                     self.initcode.write('\n\n%sif name:' % ID3)
                     self.initcode.write('\n%sTCList = [%s]' % (ID4, tclist))
@@ -1441,7 +1441,7 @@ class SchemaDescription:
                                   % ID2)
                 self.classvar.write("\n%sschema = '%s'" % \
                                     (ID2, tp.getTargetNamespace()))
-                self.classvar.write("\n%stype = '%s'" % (ID2,tp.getName()))
+                self.classvar.write("\n%stype = '%s'" % (ID2,tp.getName(mangle=False)))
                 self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2)
                 typecodelist = '[ZSI.TC.Any(*kw), ]'
                 self._complexTypecodeLogic(typecodelist,
@@ -1543,7 +1543,7 @@ class SchemaDescription:
                     elif e.isDeclaration() and e.isAnyType():
                         typeName = 'XML'
                         typecodelist  += 'ZSI.TC.XML(pname="%s",aname="_%s"), '\
-                                         %(e.getName(),e.getName())
+                                         %(e.getName(mangle=False),e.getName())
 
                     elif e.isDeclaration() and e.isElementReference():
                         occurs = self._calculateOccurance(e)
@@ -1574,7 +1574,7 @@ class SchemaDescription:
                                             
                             typecodelist +=\
                                          '%s(pname="%s",aname="_%s"%s), ' \
-                                         %(tpc,e.getName(),e.getName(),
+                                         %(tpc,e.getName(mangle=False),e.getName(),
                                            occurs)
                         else:
                             nsp = self.nsh.getAlias(etp.getTargetNamespace())
@@ -1719,7 +1719,7 @@ class SchemaDescription:
             # this is totally dubious
             if e.getName():
                 return 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
-                       %(e.getName(),e.getName(),occurs)
+                       %(e.getName(mangle=False),e.getName(),occurs)
             else:
                 return 'ZSI.TC.Any(pname=None,aname=None%s), '\
                        %(occurs)

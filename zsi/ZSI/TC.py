@@ -269,6 +269,8 @@ class Any(TypeCode):
     def serialize(self, sw, pyobj, name=None, attrtext='', rpc=None, **kw):
         # What is attrtext for? It isn't used in the function.
         if hasattr(pyobj, 'typecode'):
+            if isinstance(pyobj.typecode, Any):
+                raise EvaluateException, 'Any can\'t serialize Any'
             pyobj.typecode.serialize(sw, pyobj, **kw)
             return
 
@@ -322,6 +324,7 @@ class Any(TypeCode):
             if not serializer and isinstance(pyobj, time.struct_time):
                 from ZSI.TCtimes import gDateTime
                 serializer = gDateTime()
+
         if not serializer:
             # Last-chance; serialize instances as dictionary
             if type(pyobj) != types.InstanceType:
@@ -336,6 +339,9 @@ class Any(TypeCode):
                     if tag.find(':') == -1: tag = 'SOAP-ENC:' + tag
                     kw['name'] = kw['oname'] = tag
                     kw['typed'] = 0
+            else:
+                # If element name is specified, must provide xsi:type
+                kw['typed'] = 1
             serializer.serialize(sw, pyobj, **kw)
 
 

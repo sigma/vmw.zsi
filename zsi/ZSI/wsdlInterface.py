@@ -332,8 +332,9 @@ class PartInterface:
     def __init__(self, part):
         self._part = part
 
-    def getName(self):
-        """return name of part, or None
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
         raise NotImplementedError, 'abstract method not implemented'
 
@@ -427,8 +428,9 @@ class SchemaTypeInterface:
     def __init__(self, type):
         self._type = type
 
-    def getName(self):
-        """get the type name
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
         raise NotImplementedError, 'abstract method not implemented'
 
@@ -502,8 +504,9 @@ class SchemaDefinitionInterface:
         """
         raise NotImplementedError, 'abstract method not implemented'
 
-    def getName(self):
-        """get name
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
         raise NotImplementedError, 'abstract method not implemented'
 
@@ -1087,10 +1090,13 @@ class ZSIPartAdapter(AdapterBase, PartInterface):
         PartInterface.__init__(self, p)
         self._ws = ws
         
-    def getName(self):
-        """return name of part, or None
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
-        return (self.mangle(self._part.name) or None)
+        if mangle is True:
+            return (self.mangle(self._part.name) or None)
+        return self._part.name or None
 
     def getElement(self):
         """return part's element or None
@@ -1386,14 +1392,15 @@ class ZSISchemaTypeAdapter(AdapterBase, SchemaTypeInterface):
         else:
             raise TypeError, 'unknown adapter type: %s' % tp
 
-    def getName(self):
-        """get the type name
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
 
-        if self._type.attributes.has_key('name'):
+        name = self._type.attributes.get('name', None)
+        if name is not None and mangle is True:
             return self.mangle(self._type.attributes['name'])
-        else:
-            return None
+        return name
 
     def getTargetNamespace(self):
         """get the ns
@@ -1504,13 +1511,14 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
         """
         return self._def.getTargetNamespace()
 
-    def getName(self):
-        """get name
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
-        if self._def.attributes.has_key('name'):
+        name = self._def.attributes.get('name', None)
+        if name is not None and mangle is True:
             return self.mangle(self._def.attributes['name'])
-        else:
-            return None
+        return name
 
     def isComplexType(self):
         """boolean - complex type?
@@ -1767,14 +1775,16 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
         else:
             return False
 
-    def getName(self):
-        """returns name
+    def getName(self, mangle=True):
+        """returns mangled name for use w/python attributes (aname),
+        or the actual name for use in XML instances (pname,etc).
         """
-        if hasattr( self._dec, 'attributes'):
-            if self._dec.attributes.has_key('name'):
-                return self.mangle(self._dec.attributes['name'])
-            
-        return None
+        name = None
+        if hasattr(self._dec, 'attributes'):
+            name = self._dec.attributes.get('name', None)
+            if name and mangle is True:
+                return self.mangle(name)
+        return name
 
     def getTargetNamespace(self):
         """return namespace
