@@ -1,5 +1,8 @@
-Changes for xxx, released xxx:
-
+Changes for 1.5, released 10-Mar-2004:
+    -   TypeCode honoring for response parameters
+    -   String adherence to wsdl for request/response params via ServiceProxy
+    -   wsdl2py bug fixes
+    -   Numerous bug fixes
 
 Changes for 1.4.1 released 11-Nov-2003:
     -   Make "docstyle" work for returning data, too (Alexis Marrero-Narvaez)
