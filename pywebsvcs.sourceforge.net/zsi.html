@@ -6,7 +6,6 @@
 <link rel='contents' href='contents.html' title='Contents'>
 <link rel='last' href='about.html' title='About this document...'>
 <link rel='help' href='about.html' title='About this document...'>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta name='aesop' content='information'>
 <META NAME="description" CONTENT="ZSI: The Zolera Soap Infrastructure">
 <META NAME="keywords" CONTENT="zsi">
@@ -18,14 +17,14 @@
 <DIV CLASS="navigation">
 <table align="center" width="100%" cellpadding="0" cellspacing="2">
 <tr>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
 <td align="center" width="100%">ZSI: The Zolera Soap Infrastructure</td>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
 </tr></table>
 <br><hr>
@@ -37,22 +36,21 @@
 <div class="titlepage">
 <center>
 <h1>ZSI: The Zolera Soap Infrastructure</h1>
-<p><b><font size="+2">Rich Salz,
-<BR>
-Christopher Blunck</font></b></p>
+<p><b><font size="+2">Rich Salz,</font></b></p>
 <p>
 <span class="email">rsalz@datapower.com
 <BR>
 blunck@python.org</span>
 </p>
-<p><strong>Release 1.4.1</strong><br>
-<strong>September 09, 2003</strong></p>
+<p><i>        Christopher Blunck</i></p>
+<p><strong>Release 1.5.0</strong><br>
+<strong>March 10, 2004</strong></p>
 <p>
 </center>
 </div>
 
 <P>
-<DIV CLASS="centerline" ID="par3990" ALIGN="CENTER">
+<DIV CLASS="centerline" ID="par4197" ALIGN="CENTER">
 <b>ABSTRACT</b></DIV>
 
 <P>
@@ -86,7 +84,7 @@ The <tt class="module">ZSI</tt> homepage is at <a class="url" href="http://pyweb
 <P>
 
 <P>
-<DIV CLASS="centerline" ID="par3991" ALIGN="CENTER">
+<DIV CLASS="centerline" ID="par4198" ALIGN="CENTER">
 <b>COPYRIGHT</b></DIV>
 
 <P>
@@ -130,7 +128,7 @@ of the copyright holder.
 <P>
 
 <P>
-<DIV CLASS="centerline" ID="par3992" ALIGN="CENTER">
+<DIV CLASS="centerline" ID="par4199" ALIGN="CENTER">
 <b>Acknowledgments</b></DIV>
 
 <P>
@@ -154,7 +152,7 @@ Contents</A>
 <!--Table of Contents-->
 
 <UL CLASS="TofC">
-<LI><A href="zsi.html">1. Introduction</a>
+<LI><A href="zsi.html#SECTION002000000000000000000">1. Introduction</a>
 <UL>
 <LI><A href="zsi.html#SECTION002100000000000000000">1.1 How to Read this Document</a>
 </ul>
@@ -203,11 +201,22 @@ Contents</A>
 </ul>
 <LI><A href="zsi.html#SECTION0012000000000000000000">11. WSDL Support</a>
 <UL>
-<LI><A href="zsi.html#SECTION0012100000000000000000">11.1 Upper-Level WSDL objects</a>
-<LI><A href="zsi.html#SECTION0012200000000000000000">11.2 Binding Classes</a>
+<LI><A href="zsi.html#SECTION0012100000000000000000">11.1 WSDLReader</a>
+<LI><A href="zsi.html#SECTION0012200000000000000000">11.2 ServiceProxy</a>
+<UL>
+<LI><A href="zsi.html#SECTION0012210000000000000000">11.2.1 Example</a>
+</ul>
+<LI><A href="zsi.html#SECTION0012300000000000000000">11.3 Code Generation from WSDL and XML Schema</a>
+<UL>
+<LI><A href="zsi.html#SECTION0012310000000000000000">11.3.1 WriteServiceModule Class Description</a>
+<LI><A href="zsi.html#SECTION0012320000000000000000">11.3.2 Example Use of Generated Code</a>
+</ul>
+<LI><A href="zsi.html#SECTION0012400000000000000000">11.4 WSDL objects</a>
+<UL>
+<LI><A href="zsi.html#SECTION0012410000000000000000">11.4.1 Binding Classes</a>
+</ul>
 </ul>
 <LI><A href="zsi.html#SECTION0013000000000000000000">12. ZSI Schema</a>
-<LI><A href="zsi.html#SECTION0014000000000000000000">About this document ...</a>
 </ul>
 <!--End of Table of Contents-->
 <P>
@@ -234,6 +243,12 @@ The <tt class="module">ZSI</tt> homepage is at
 <a class="url" href="http://www.zolera.com/resources/opensrc/zsi">http://www.zolera.com/resources/opensrc/zsi</a>.
 <tt class="module">ZSI</tt> is discussed on the Python web services mailing list, visit
 <a class="url" href="http://lists.sourceforge.net/lists/listinfo/pywebsvcs-talk">http://lists.sourceforge.net/lists/listinfo/pywebsvcs-talk</a>to subscribe.
+
+<P>
+For those interested in a high-level tutorial covering <tt class="module">ZSI</tt> and why
+Python was chosen, see the article
+<a class="url" href="http://www.xml.com/pub/a/ws/2002/06/12/soap.html">http://www.xml.com/pub/a/ws/2002/06/12/soap.html</a>, 
+written by Rich Salz for xml.com.
 
 <P>
 SOAP-based processing typically involves several steps.
@@ -306,15 +321,14 @@ processing model described above.
 They can skip probably skip chapters 2 and 10.
 
 <P>
-Currently, the most cumbersome part of using <tt class="module">ZSI</tt> is
-defining the typecode objects.
-A future release of <tt class="module">ZSI</tt> may be able to
+This release of <tt class="module">ZSI</tt> adds the capability to 
 process WSDL definitions (described in
 <em class="citetitle"><a
  href="http://www.w3.org/TR/wsdl"
  title="The Web Services Description Language"
  >The Web Services Description Language</a></em>)
-and generate typecodes automatically.
+and generate typecodes automatically.  See chapter 11
+for details.
 
 <H1><A NAME="SECTION003000000000000000000">
 2. Examples</A>
@@ -446,7 +460,7 @@ activity, and serializes the response.
 <div class="verbatim"><pre>
 try:
     player = ps.Parse(Player.typecode)
-except EvaluateError, e:
+except EvaluateException, e:
     FaultFromZSIException(e).AsSOAP(OUT)
     sys.exit(1)
 
@@ -1642,6 +1656,30 @@ the <code>value_list</code> sequence of text strings
 In addition to <tt class="class">TC.String</tt>,
 the basic string, several subtypes are provided that transparently
 handle common encodings.
+These classes create a temporary string object and pass that to
+the <tt class="method">serialize()</tt> method.
+When doing RPC encoding, and checking for non-unique strings, the
+<tt class="class">TC.String</tt> class must have the original Python string, as well
+as the new output.
+This is done by adding a parameter to the <tt class="method">serialize()</tt> method:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign="baseline">
+    <tr><td align="left" valign="baseline"><code>orig</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">If deriving a new typecode from the
+string class, and the derivation creates a temporary Python string
+(such as by <tt class="class">Base64String</tt>), than this parameter is the
+original string being serialized.</td></tbody>
+</table>
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
@@ -2163,6 +2201,30 @@ and not within a SOAP wrapper element.
 </dl>
 
 <P>
+When serializing, it may be necessary to specify which namespace prefixes
+are ``active'' in the XML.
+This is done by using the <code>unsuppressedPrefixes</code> parameter when
+calling the <tt class="method">serialize()</tt> method.
+(This will only work when XML is the top-level item being serialized,
+such as when using typecodes and document-style interfaces.)
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign="baseline">
+    <tr><td align="left" valign="baseline"><code>unsuppressedPrefixes</code></td>
+        <td align="center">[]</td>
+        <td align="left">An array of strings
+identifying the namespace prefixes that should be output.</td></tbody>
+</table>
+
+<P>
 
 <H1><A NAME="SECTION007900000000000000000">
 6.9 Struct</A>
@@ -2487,8 +2549,11 @@ attribute.
 </td>
     <tr><td align="left" valign="baseline"><code>nsdict</code></td>
         <td align="center"><code>{}</code></td>
-        <td align="left">Dictionary of namespaces to write
-in the SOAP <code>Header</code>.</td>
+        <td align="left">Dictionary of namespaces to declare
+in the SOAP <code>Body</code>.
+Note that earlier versions of ZSI put the declarations on the SOAP
+<code>Envelope</code>; they have been moved to the <code>Body</code> for greater
+interoperability.</td>
     <tr><td align="left" valign="baseline"><code>header</code></td>
         <td align="center"><code>None</code></td>
         <td align="left">A sequence of elements to output in
@@ -3483,64 +3548,134 @@ This method is then equivalent to:
 </H1>
 
 <P>
-The <tt class="module">ZSI</tt>and its <tt class="module">ZSI.wstools</tt> module provides client tools for
+The <tt class="module">ZSI</tt>&nbsp;and <tt class="module">ZSI.wstools</tt> modules provide client tools for
 using WSDL 1.1
 (see <em class="citetitle"><a
  href="http://www.w3.org/TR/wsdl"
  title="WSDL 1.1 specification"
- >WSDL 1.1 specification</a></em>)
-files to access services.
+ >WSDL 1.1 specification</a></em>).
 
 <P>
-The <tt class="class">WSDLReader</tt> class in <tt class="module">ZSI.wstools</tt> provides
-methods for loading WSDL service descriptions from URLs or XML data
-and creating a <tt class="class">WSDL</tt> object.
-<tt class="class">WSDL</tt> instances represent WSDL service descriptions and provide 
-an object model for building and working with those descriptions.
+ZSI provides two ways of accessing a WSDL service.  The first
+provides an easy-to-use interface,
+but requires setting all type codes manually.  It is easier
+to use with simple services than with those specifying many
+complex types.
+The second method requires the use of a more complex
+interface, but automatically generates type codes and classes
+that correspond to XML Schema types, as well as client stub code.
+Both use a <tt class="class">WSDL</tt> instance internally to send and receive
+messages (see section 11.4 for more information on the <tt class="class">WSDL</tt>
+class).
 
 <P>
-The <tt class="class">ServiceProxy</tt> in <tt class="module">ZSI</tt> uses a <tt class="class">WSDL</tt> instance to send
-and receive messages.
+The first way of accessing a service is through the <tt class="class">ServiceProxy</tt> class.
 Once the proxy has been created, each remote operation is exposed
 as a method on the object.
-The methods can be called with either positional or keyword arguments;
-the argument types must be compatible with the types specified in the
-WSDL description.
+The user must handle the generation of type codes.
 Note that while <tt class="class">ServiceProxy</tt> is part of <tt class="module">ZSI</tt>, it must be
 explicitly imported.
 
 <P>
-The following example shows a simple language translation service that makes
-use of the complex type structures defined in the module BabelTypes:
+The second method uses wsdl2py.  Handling XML Schema
+(see <em class="citetitle"><a
+ href="http://www.w3.org/XML/Schema"
+ title="XML Schema specification"
+ >XML Schema specification</a></em>) 
+is one of the more difficult aspects
+of using WSDL.  The class <tt class="class">WriteServiceModule</tt>, which wsdl2py
+uses, helps to hides these
+details.  It generates a module with stub code for the client interface,
+and a module that encapsulates the handling of XML Schema, automatically
+generating type codes.
 
 <P>
-<div class="verbatim"><pre>
-from ZSI import ServiceProxy
-import BabelTypes
 
-service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
-		       typesmodule=BabelTypes)
-value = service.BabelFish('en_de', 'This is a test!')
-</pre></div>
+<H1><A NAME="SECTION0012100000000000000000">
+11.1 WSDLReader</A>
+</H1>
 
 <P>
-The return value from a proxy method depends on the SOAP signature. If the 
-remote service returns a single value, that value will be returned. If the 
-remote service returns multiple ``out'' parameters, the return value of the 
-proxy method will be a dictionary containing the out parameters indexed by 
-name.  Because <tt class="class">ServiceProxy</tt> makes use of the ZSI serialization / 
-deserialization engine, complex return types are supported.  This means 
-that an aggregation of primitives can be returned from or passed to a service
-invocation according to any predefined hierarchical structure.
+The <tt class="class">WSDLReader</tt> class in <tt class="module">ZSI.wstools.WSDLTools</tt> provides
+methods for loading WSDL service descriptions from URLs, XML files
+or XML string data, and creating a <tt class="class">WSDL</tt> object.
+It is used by <tt class="class">ServiceProxy</tt> and <tt class="class">WriteServiceModule</tt>.
+
+<P>
+<tt class="class">WSDL</tt> instances represent WSDL service descriptions and provide 
+a low-level object model for building and working with those descriptions.
+
+<P>
+The WSDL reader is implemented as a 
+separate class to make it easy to create custom readers that implement 
+caching policies or other optimizations.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-154"><tt class="class">ServiceProxy</tt></a></b>(</nobr></td>
-  <td><var>wsdl,</var><big>[</big><var>, service</var><big>[</big><var>, port</var><big>]</big><big>]</big>)</td></tr></table>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-154"><tt class="class">WSDLReader</tt></a></b>(</nobr></td>
+  <td>)</td></tr></table>
 <dd>
+
+<P>
+The following methods are available:
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><a name="l2h-155"><tt class="method">loadFromStream</tt></a></b>(</nobr></td>
+  <td><var>file</var>)</td></tr></table>
+<dd>
+Return a <tt class="class">WSDL</tt> instance representing the service description 
+contained in <var>file</var>. The <var>file</var> argument must be a file-like 
+object.
+</dl>
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><a name="l2h-156"><tt class="method">loadFromString</tt></a></b>(</nobr></td>
+  <td><var>data</var>)</td></tr></table>
+<dd>
+Returns a <tt class="class">WSDL</tt> instance loaded from the XML string <var>data</var>.
+</dl>
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><a name="l2h-157"><tt class="method">loadFromFile</tt></a></b>(</nobr></td>
+  <td><var>filename</var>)</td></tr></table>
+<dd>
+Returns a <tt class="class">WSDL</tt> instance loaded from the file named by <var>filename</var>.
+</dl>
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><a name="l2h-158"><tt class="method">loadFromURL</tt></a></b>(</nobr></td>
+  <td><var>url</var>)</td></tr></table>
+<dd>
+Returns a <tt class="class">WSDL</tt> instance loaded from the given <var>url</var>.
+</dl>
+
+<P>
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION0012200000000000000000">
+11.2 ServiceProxy</A>
+</H1>
+
+<P>
 The <tt class="class">ServiceProxy</tt> class provides calls to
 web services. A WSDL description must be available for the 
-service.
+service.  <tt class="class">ServiceProxy</tt> uses <tt class="class">WSDLReader</tt> internally to load 
+a <tt class="class">WSDL</tt> instance.
+
+<P>
+The user may build up a type codes module for use by <tt class="class">ServiceProxy</tt>.
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-159"><tt class="class">ServiceProxy</tt></a></b>(</nobr></td>
+  <td><var>wsdl,</var><big>[</big><var>, service</var><big>[</big><var>, port</var><big>]</big><big>]</big>)</td></tr></table>
+<dd>
 
 <P>
 The <var>wsdl</var> argument may be either the URL of the service description 
@@ -3579,6 +3714,11 @@ represents. These methods may be called like normal methods, using
 *either* positional or keyword arguments (but not both).
 
 <P>
+The methods can be called with either positional or keyword arguments;
+the argument types must be compatible with the types specified in the
+WSDL description.
+
+<P>
 When a method of a <tt class="class">ServiceProxy</tt> is called with positional 
 arguments, the arguments are mapped to the SOAP request based on 
 the parameter order defined in the WSDL description. If keyword 
@@ -3589,69 +3729,251 @@ names.
 </dl>
 
 <P>
-<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-155"><tt class="class">WSDLReader</tt></a></b>(</nobr></td>
-  <td>)</td></tr></table>
-<dd>
+
+<H2><A NAME="SECTION0012210000000000000000">
+11.2.1 Example</A>
+</H2>
 
 <P>
-<tt class="class">WSDLReader</tt> instances are used to load WSDL service descriptions
-from URLs, XML files or XML string data. The reader is implemented as a 
-separate class to make it easy to create custom readers that implement 
-caching policies or other optimizations.
+The following example, using ServiceProxy,  shows a simple language
+translation service that makes
+use of the complex type structures defined in the module BabelTypes:
 
 <P>
-The following methods are available:
+<div class="verbatim"><pre>
+from ZSI import ServiceProxy
+import BabelTypes
+
+service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
+		       typesmodule=BabelTypes)
+value = service.BabelFish('en_de', 'This is a test!')
+</pre></div>
 
 <P>
-<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-156"><tt class="method">loadFromStream</tt></a></b>(</nobr></td>
-  <td><var>file</var>)</td></tr></table>
-<dd>
-Return a <tt class="class">WSDL</tt> instance representing the service description 
-contained in <var>file</var>. The <var>file</var> argument must be a file-like 
-object.
-</dl>
-
-<P>
-<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-157"><tt class="method">loadFromString</tt></a></b>(</nobr></td>
-  <td><var>data</var>)</td></tr></table>
-<dd>
-Returns a <tt class="class">WSDL</tt> instance loaded from the XML string <var>data</var>.
-</dl>
-
-<P>
-<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-158"><tt class="method">loadFromFile</tt></a></b>(</nobr></td>
-  <td><var>filename</var>)</td></tr></table>
-<dd>
-Returns a <tt class="class">WSDL</tt> instance loaded from the file named by <var>filename</var>.
-</dl>
-
-<P>
-<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-159"><tt class="method">loadFromURL</tt></a></b>(</nobr></td>
-  <td><var>url</var>)</td></tr></table>
-<dd>
-Returns a <tt class="class">WSDL</tt> instance loaded from the given <var>url</var>.
-</dl>
-
-<P>
-</dl>
+The return value from a proxy method depends on the SOAP signature. If the 
+remote service returns a single value, that value will be returned. If the 
+remote service returns multiple ``out'' parameters, the return value of the 
+proxy method will be a dictionary containing the out parameters indexed by 
+name.  Because <tt class="class">ServiceProxy</tt> makes use of the ZSI serialization / 
+deserialization engine, complex return types are supported.  This means 
+that an aggregation of primitives can be returned from or passed to a service
+invocation according to any predefined hierarchical structure.
 
 <P>
 
-<H1><A NAME="SECTION0012100000000000000000">
-11.1 Upper-Level WSDL objects</A>
+<H1><A NAME="SECTION0012300000000000000000">
+11.3 Code Generation from WSDL and XML Schema</A>
 </H1>
 
 <P>
-The following classes describe encapsulate the upper-level objects
-in a WSDL file.
+This section covers wsdl2py, the second way ZSI provides to access WSDL
+services.  Given the path to a WSDL service, two files are generated, a 
+'service' file and a 'types' file, that one can then use to access the
+service.  For example, to generate code to access the TerraServer database,
+the script can be called as follows:
 
 <P>
-Note that there are quite many classes defined here to
+<div class="verbatim"><pre>
+wsdl2py http://terraservice.net/TerraService.asmx?WSDL
+</pre></div>
+
+<P>
+To generate the 'service' file, wsdl2py uses the <tt class="class">WriteServiceModule</tt>
+class in <tt class="module">ZSI.wsdl2python</tt>.
+<tt class="class">WriteServiceModule</tt> transforms the definitions in a WSDL instance
+to remote proxy interfaces in the 'service' file.
+To generate the 'types' file, wsdl2py transforms the XML Schema instances in
+the WSDL types section to type codes that describe
+the data.
+
+<P>
+The <tt class="class">WSDL</tt> (see section 11.4) class and <tt class="module">ZSI.wstools.XMLSchema</tt>
+module provide API's into the
+definitions, which <tt class="class">ModuleWriter</tt> and its underlying generator classes
+use to interpret WSDL and XML Schema into class definitions.
+
+<P>
+The 'service' file contains locator, portType, and message classes.  
+A locator instance is used to
+get an instance of a portType class, which is a remote proxy object.
+Message instances are sent and received through the methods of the
+portType instance.
+
+<P>
+The 'types' file contains class representations of the definitions and
+declarations defined by all schema instances imported by the WSDL definition.
+XML Schema attributes, wildcards, and derived types are not fully
+handled.
+
+<P>
+
+<H2><A NAME="SECTION0012310000000000000000">
+11.3.1 WriteServiceModule Class Description</A>
+</H2>
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-160"><tt class="class">WriteServiceModule</tt></a></b>(</nobr></td>
+  <td><var>wsdl, </var><big>[</big><var>importlib,
+</var><big>[</big><var>typewriter</var><big>]</big><big>]</big>)</td></tr></table>
+<dd>
+
+<P>
+This class generates a module containing client stub code, and a module
+encapsulating the use of XML Schema instances, given a <tt class="class">WSDL</tt>
+instance generated by <tt class="class">WSDLReader</tt>.
+It handles import, namespace, and schema complexities, and class definition
+order.
+
+<P>
+<tt class="class">WriteServiceModule</tt> delegates to <tt class="class">ServiceDescription</tt> the
+interpretation
+of the service definition, and to <tt class="class">SchemaDescription</tt> the interpretation
+of the schema definition.  (These two classes are only intended to be called
+by <tt class="class">WriteServiceModule</tt>, but are described here to indicate what
+is going on behind the scenes.)
+
+<P>
+The following method is available:
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><a name="l2h-161"><tt class="method">write</tt></a></b>(</nobr></td>
+  <td>)</td></tr></table>
+<dd>
+Generates the client code.
+</dl>
+
+<P>
+</dl>
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-162"><tt class="class">ServiceDescription</tt></a></b>(</nobr></td>
+  <td>)</td></tr></table>
+<dd>
+Interprets the service definition, and creates the client interface and
+port descriptions code.  It delegates to <tt class="class">MessageWriter</tt>, which
+generates a message's class definition, and to <tt class="class">PartWriter</tt>, which
+generates a message part's description.
+</dl>
+
+<P>
+<dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-163"><tt class="class">SchemaDescription</tt></a></b>(</nobr></td>
+  <td>)</td></tr></table>
+<dd>
+Interprets the schema definition, generating typecode module code
+for all global definitions and declarations in a schema instance.
+It delegates to <tt class="class">TypeWriter</tt>, which generates a type's
+description/typecode.
+</dl>
+
+<P>
+The following excerpt is from wsdl2py, and illustrates how
+<tt class="class">WriteServiceModule</tt> is used.  The input is a 
+path name of a WSDL file or URL.
+
+<P>
+<div class="verbatim"><pre>
+    ...
+    reader = WSDLTools.WSDLReader()
+    if args_d['fromfile']:
+        wsdl = reader.loadFromFile(args_d['wsdl'])
+    elif args_d['fromurl']:
+        wsdl = reader.loadFromURL(args_d['wsdl'])
+    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl)
+    wsm.write()
+    ...
+</pre></div>
+
+<P>
+
+<H2><A NAME="SECTION0012320000000000000000">
+11.3.2 Example Use of Generated Code</A>
+</H2>
+
+<P>
+The following shows how to call a proxy method for
+ConvertPlaceToLonLatPt, a method provided by a service
+named TerraService. It assumes that wsdl2py has already been called.
+In this case, the 'services' and 'types' files generated would
+be named TerraService_services.py and TerraService_services_types.py,
+respectively.
+
+<P>
+<div class="verbatim"><pre>
+from TerraService_services import *
+
+import sys
+
+def main():
+    loc = TerraServiceLocator()
+
+       # prints messages sent and received if tracefile is set
+    kw = { 'tracefile' : sys.stdout }
+    portType = loc.getTerraServiceSoap(**kw)
+
+       # ns1 is an alias for a namespace
+       # Place_Def is defined in TerraService_services_types,
+       # which TerraService_services imports
+    place = ns1.Place_Def()
+    place._City = 'Oak Harbor'
+    place._State = 'Washington'
+    place._Country = 'United States'
+
+    request = ConvertPlaceToLonLatPtSoapInWrapper()
+    request._place = place
+
+    response = portType.ConvertPlaceToLonLatPt(request)
+    print "Latitude = %s" % response._ConvertPlaceToLonLatPtResult._Lat
+    print "Longitude = %s" % response._ConvertPlaceToLonLatPtResult._Lon
+...
+</pre></div>
+
+<P>
+One needs to look at the associated WSDL file to see how
+to use the classes and methods in the generated code.
+In this example, <tt class="class">TerraServiceLocator</tt>
+is a class with the name of the WSDL service, plus 'Locator'.  It contains the
+information necessary to contact the service, using
+<tt class="method">getTerraServiceSoap(**kw)</tt>.
+
+<P>
+That method's name is generated by 'get' plus the name of the WSDL portType
+for the service.  It returns a class which
+encapsulates the information in the portType, and contains the proxies
+for the methods associated with it.
+
+<P>
+<tt class="method">ConvertPlaceToLonLatPtSoapInWrapper()</tt>'s
+name is generated using
+the name of the WSDL input message for the ConvertPlaceToLonLatPt
+WSDL operation, plus 'Wrapper'.  The actual call to the service is a method of
+the class encapsulating the portType, with the same name as the WSDL operation.
+
+<P>
+The name of the response field is '_' plus the name of the
+WSDL element (or one contained by the element) returned by the call.
+Parameters that are input and output are subfields of
+the request object and the response field, respectively. 
+Their names can be determined by looking at the part sub-element of a
+message.
+
+<P>
+
+<H1><A NAME="SECTION0012400000000000000000">
+11.4 WSDL objects</A>
+</H1>
+
+<P>
+The following classes described encapsulate the upper-level objects
+in a WSDL file.  Note that most users will not need to use these,
+given the availability of <tt class="class">WriteServiceModule</tt> and
+<tt class="class">ServiceProxy</tt>, which are built on top of these objects.
+
+<P>
+There are quite many classes defined here to
 implement the WSDL object model. Instances of those classes are generally 
 accessed and created through container objects rather than instantiated 
 directly. Most of them simply implement a straightforward representation of 
@@ -3662,7 +3984,7 @@ described in the next section.
 An exception is defined for errors that occur while creating WSDL objects.
 
 <P>
-<dl><dt><b><span class="typelabel">exception</span>&nbsp;<a name="l2h-160"><tt class="exception">WSDLError</tt></a></b>
+<dl><dt><b><span class="typelabel">exception</span>&nbsp;<a name="l2h-164"><tt class="exception">WSDLError</tt></a></b>
 <dd>
 This exception is raised when errors occur in the parsing or building of 
 WSDL objects, usually indicating invalid structure or usage.
@@ -3671,7 +3993,7 @@ It is a subtype of Python's <tt class="exception">Exception</tt> class.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-161"><tt class="class">WSDL</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-165"><tt class="class">WSDL</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -3689,35 +4011,35 @@ object model (services, bindings, portTypes, etc.) are implemented as
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-162"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-166"><tt class="member">name</tt></a></b>
 <dd>
 The name of the service description (associated with the <i>definitions</i> 
 element), or <code>None</code> if not specified.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-163"><tt class="member">targetNamespace</tt></a></b>
+<dl><dt><b><a name="l2h-167"><tt class="member">targetNamespace</tt></a></b>
 <dd>
 The target namespace associated with the service description, or 
 <code>None</code> if not specified.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-164"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-168"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the <i>definitions</i> element of the 
 service description, or the empty string if not specified.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-165"><tt class="member">location</tt></a></b>
+<dl><dt><b><a name="l2h-169"><tt class="member">location</tt></a></b>
 <dd>
 The URL from which the service description was loaded, or <code>None</code> 
 if the description was not loaded from a URL.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-166"><tt class="member">services</tt></a></b>
+<dl><dt><b><a name="l2h-170"><tt class="member">services</tt></a></b>
 <dd>
 A collection that contains <tt class="class">Service</tt> objects that represent the 
 services that appear in the service description. The items of this 
@@ -3725,7 +4047,7 @@ collection may be indexed by name or ordinal.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-167"><tt class="member">messages</tt></a></b>
+<dl><dt><b><a name="l2h-171"><tt class="member">messages</tt></a></b>
 <dd>
 A collection that contains <tt class="class">Message</tt> objects that represent the 
 messages that appear in the service description. The items of this 
@@ -3733,7 +4055,7 @@ collection may be indexed by name or ordinal.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-168"><tt class="member">portTypes</tt></a></b>
+<dl><dt><b><a name="l2h-172"><tt class="member">portTypes</tt></a></b>
 <dd>
 A collection that contains <tt class="class">PortType</tt> objects that represent the 
 portTypes that appear in the service description. The items of this 
@@ -3741,7 +4063,7 @@ collection may be indexed by name or ordinal.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-169"><tt class="member">bindings</tt></a></b>
+<dl><dt><b><a name="l2h-173"><tt class="member">bindings</tt></a></b>
 <dd>
 A collection that contains <tt class="class">Binding</tt> objects that represent the 
 bindings that appear in the service description. The items of this 
@@ -3749,7 +4071,7 @@ collection may be indexed by name or ordinal.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-170"><tt class="member">imports</tt></a></b>
+<dl><dt><b><a name="l2h-174"><tt class="member">imports</tt></a></b>
 <dd>
 A collection that contains <tt class="class">ImportElement</tt> objects that represent the 
 import elements that appear in the service description. The items of this 
@@ -3758,7 +4080,7 @@ import element.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-171"><tt class="member">types</tt></a></b>
+<dl><dt><b><a name="l2h-175"><tt class="member">types</tt></a></b>
 <dd>
 A <tt class="class">Types</tt> instance that contains <tt class="class">XMLSchema</tt> objects that 
 represent the schemas defined or imported by the WSDL description. The 
@@ -3767,7 +4089,7 @@ lookup schema objects.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-172"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-176"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of objects that represent WSDL <i>extension elements</i>. These 
 objects may be instances of classes that represent WSDL-defined extensions 
@@ -3780,7 +4102,7 @@ objects for unknown extensions.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-173"><tt class="class">Service</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-177"><tt class="class">Service</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 A <tt class="class">Service</tt> object represents a WSDL <code>&lt;service&gt;</code> element.
@@ -3789,19 +4111,19 @@ A <tt class="class">Service</tt> object represents a WSDL <code>&lt;service&gt;<
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-174"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-178"><tt class="member">name</tt></a></b>
 <dd>
 The name of the service.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-175"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-179"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-176"><tt class="member">ports</tt></a></b>
+<dl><dt><b><a name="l2h-180"><tt class="member">ports</tt></a></b>
 <dd>
 A collection that contains <tt class="class">Port</tt> objects that represent the 
 ports defined by the service. The items of this collection may be indexed 
@@ -3809,7 +4131,7 @@ by name or ordinal.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-177"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-181"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of any contained WSDL extensions.
 </dl>
@@ -3819,7 +4141,7 @@ The following method is available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-178"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-182"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">WSDL</tt> instance of the object.
@@ -3830,7 +4152,7 @@ Return the parent <tt class="class">WSDL</tt> instance of the object.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-179"><tt class="class">Port</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-183"><tt class="class">Port</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -3841,25 +4163,25 @@ A <tt class="class">Port</tt> object represents a WSDL <code>&lt;port&gt;</code>
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-180"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-184"><tt class="member">name</tt></a></b>
 <dd>
 The name of the port.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-181"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-185"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-182"><tt class="member">binding</tt></a></b>
+<dl><dt><b><a name="l2h-186"><tt class="member">binding</tt></a></b>
 <dd>
 The name of the binding associated with the port.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-183"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-187"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of any contained WSDL extensions.
 </dl>
@@ -3869,7 +4191,7 @@ The following methods are available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-184"><tt class="method">getAddressBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-188"><tt class="method">getAddressBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 A convenience method that returns the address binding extension for the 
@@ -3879,7 +4201,7 @@ Raises <tt class="exception">WSDLError</tt> if no address binding is found.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-185"><tt class="method">getService</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-189"><tt class="method">getService</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">Service</tt> instance of the object.
@@ -3887,7 +4209,7 @@ Return the parent <tt class="class">Service</tt> instance of the object.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-186"><tt class="method">getBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-190"><tt class="method">getBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the <tt class="class">Binding</tt> instance associated with the port.
@@ -3895,7 +4217,7 @@ Return the <tt class="class">Binding</tt> instance associated with the port.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-187"><tt class="method">getPortType</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-191"><tt class="method">getPortType</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the <tt class="class">PortType</tt> instance associated with the port.
@@ -3906,7 +4228,7 @@ Return the <tt class="class">PortType</tt> instance associated with the port.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-188"><tt class="class">PortType</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-192"><tt class="class">PortType</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -3917,19 +4239,19 @@ A <tt class="class">PortType</tt> object represents a WSDL <code>&lt;portType&gt
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-189"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-193"><tt class="member">name</tt></a></b>
 <dd>
 The name of the portType.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-190"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-194"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-191"><tt class="member">operations</tt></a></b>
+<dl><dt><b><a name="l2h-195"><tt class="member">operations</tt></a></b>
 <dd>
 A collection that contains <tt class="class">Operation</tt> objects that represent the 
 operations in the portType. The items of this collection may be indexed 
@@ -3941,7 +4263,7 @@ The following method is available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-192"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-196"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">WSDL</tt> instance of the object.
@@ -3952,7 +4274,7 @@ Return the parent <tt class="class">WSDL</tt> instance of the object.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-193"><tt class="class">Operation</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-197"><tt class="class">Operation</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -3964,40 +4286,40 @@ within a <code>portType</code> element.
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-194"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-198"><tt class="member">name</tt></a></b>
 <dd>
 The name of the operation.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-195"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-199"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-196"><tt class="member">parameterOrder</tt></a></b>
+<dl><dt><b><a name="l2h-200"><tt class="member">parameterOrder</tt></a></b>
 <dd>
 A string representing the <code>parameterOrder</code> attribute of the operation, 
 or <code>None</code> if the attribute is not defined.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-197"><tt class="member">input</tt></a></b>
+<dl><dt><b><a name="l2h-201"><tt class="member">input</tt></a></b>
 <dd>
 A <tt class="class">MessageRole</tt> instance representing the <code>&lt;input&gt;</code> element of 
 the operation binding, or <code>None</code> if no input element is present.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-198"><tt class="member">output</tt></a></b>
+<dl><dt><b><a name="l2h-202"><tt class="member">output</tt></a></b>
 <dd>
 A <tt class="class">MessageRole</tt> instance representing the <code>&lt;output&gt;</code> element of 
 the operation, or <code>None</code> if no output element is present.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-199"><tt class="member">faults</tt></a></b>
+<dl><dt><b><a name="l2h-203"><tt class="member">faults</tt></a></b>
 <dd>
 A collection of <tt class="class">MessageRole</tt> instances representing the <code>&lt;fault&gt;</code> 
 elements of the operation.
@@ -4008,7 +4330,7 @@ The following methods are available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-200"><tt class="method">getPortType</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-204"><tt class="method">getPortType</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">PortType</tt> instance of the object.
@@ -4016,7 +4338,7 @@ Return the parent <tt class="class">PortType</tt> instance of the object.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-201"><tt class="method">getInputMessage</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-205"><tt class="method">getInputMessage</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return <tt class="class">Message</tt> object associated with the input to the operation.
@@ -4024,7 +4346,7 @@ Return <tt class="class">Message</tt> object associated with the input to the op
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-202"><tt class="method">getOutputMessage</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-206"><tt class="method">getOutputMessage</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return <tt class="class">Message</tt> object associated with the output of the operation.
@@ -4032,7 +4354,7 @@ Return <tt class="class">Message</tt> object associated with the output of the o
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-203"><tt class="method">getFaultMessage</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-207"><tt class="method">getFaultMessage</tt></a></b>(</nobr></td>
   <td><var>name</var>)</td></tr></table>
 <dd>
 Return <tt class="class">Message</tt> object associated with the named fault.
@@ -4043,7 +4365,7 @@ Return <tt class="class">Message</tt> object associated with the named fault.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-204"><tt class="class">MessageRole</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-208"><tt class="class">MessageRole</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4055,26 +4377,26 @@ and <code>&lt;fault&gt;</code> elements within an operation.
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-205"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-209"><tt class="member">name</tt></a></b>
 <dd>
 The name attribute of the element.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-206"><tt class="member">type</tt></a></b>
+<dl><dt><b><a name="l2h-210"><tt class="member">type</tt></a></b>
 <dd>
 The type of the element, one of <code>'input'</code>, <code>'output'</code> or 
 <code>'fault'</code>.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-207"><tt class="member">message</tt></a></b>
+<dl><dt><b><a name="l2h-211"><tt class="member">message</tt></a></b>
 <dd>
 The name of the message associated with the object.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-208"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-212"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
@@ -4084,7 +4406,7 @@ The documentation associated with the element, or an empty string.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-209"><tt class="class">Binding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-213"><tt class="class">Binding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4095,32 +4417,32 @@ A <tt class="class">Binding</tt> object represents a WSDL <code>&lt;binding&gt;<
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-210"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-214"><tt class="member">name</tt></a></b>
 <dd>
 The name of the binding.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-211"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-215"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-212"><tt class="member">type</tt></a></b>
+<dl><dt><b><a name="l2h-216"><tt class="member">type</tt></a></b>
 <dd>
 The name of the portType the binding is associated with.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-213"><tt class="member">operations</tt></a></b>
+<dl><dt><b><a name="l2h-217"><tt class="member">operations</tt></a></b>
 <dd>
 A collection that contains <tt class="class">OperationBinding</tt> objects that represent 
 the contained operation bindings.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-214"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-218"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of any contained WSDL extensions.
 </dl>
@@ -4130,7 +4452,7 @@ The following methods are available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-215"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-219"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">WSDL</tt> instance of the object.
@@ -4138,7 +4460,7 @@ Return the parent <tt class="class">WSDL</tt> instance of the object.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-216"><tt class="method">getPortType</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-220"><tt class="method">getPortType</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the <tt class="class">PortType</tt> object associated with the binding.
@@ -4146,7 +4468,7 @@ Return the <tt class="class">PortType</tt> object associated with the binding.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-217"><tt class="method">findBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-221"><tt class="method">findBinding</tt></a></b>(</nobr></td>
   <td><var>kind</var>)</td></tr></table>
 <dd>
 Find a binding extension in the binding. The <var>kind</var> can be a class 
@@ -4159,7 +4481,7 @@ matching DOM <tt class="class">Element</tt>.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-218"><tt class="method">findBindings</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-222"><tt class="method">findBindings</tt></a></b>(</nobr></td>
   <td><var>kind</var>)</td></tr></table>
 <dd>
 The same as <tt class="method">findBinding()</tt>, but will return multiple values of 
@@ -4171,7 +4493,7 @@ the given <var>kind</var>.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-219"><tt class="class">OperationBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-223"><tt class="class">OperationBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4183,19 +4505,19 @@ element within a binding element.
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-220"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-224"><tt class="member">name</tt></a></b>
 <dd>
 The name of the operation binding.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-221"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-225"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-222"><tt class="member">input</tt></a></b>
+<dl><dt><b><a name="l2h-226"><tt class="member">input</tt></a></b>
 <dd>
 A <tt class="class">MessageRoleBinding</tt> instance representing the <code>&lt;input&gt;</code> 
 element of the operation binding, or <code>None</code> if no input element is 
@@ -4203,7 +4525,7 @@ present.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-223"><tt class="member">output</tt></a></b>
+<dl><dt><b><a name="l2h-227"><tt class="member">output</tt></a></b>
 <dd>
 A <tt class="class">MessageRoleBinding</tt> instance representing the <code>&lt;output&gt;</code> 
 element of the operation binding, or <code>None</code> if no output element is 
@@ -4211,14 +4533,14 @@ present.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-224"><tt class="member">faults</tt></a></b>
+<dl><dt><b><a name="l2h-228"><tt class="member">faults</tt></a></b>
 <dd>
 A collection of <tt class="class">MessageRoleBinding</tt> instances representing the 
 <code>&lt;fault&gt;</code> elements of the operation binding.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-225"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-229"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of any contained WSDL extensions.
 </dl>
@@ -4228,7 +4550,7 @@ The following methods are available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-226"><tt class="method">getBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-230"><tt class="method">getBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">Binding</tt> instance of the operation binding.
@@ -4236,7 +4558,7 @@ Return the parent <tt class="class">Binding</tt> instance of the operation bindi
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-227"><tt class="method">getOperation</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-231"><tt class="method">getOperation</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the abstract <tt class="class">Operation</tt> associated with the operation binding.
@@ -4244,7 +4566,7 @@ Return the abstract <tt class="class">Operation</tt> associated with the operati
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-228"><tt class="method">findBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-232"><tt class="method">findBinding</tt></a></b>(</nobr></td>
   <td><var>kind</var>)</td></tr></table>
 <dd>
 Find a binding extension in the operation binding. The <var>kind</var> can be a 
@@ -4259,7 +4581,7 @@ try to find a matching DOM <tt class="class">Element</tt>.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-229"><tt class="method">findBindings</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-233"><tt class="method">findBindings</tt></a></b>(</nobr></td>
   <td><var>kind</var>)</td></tr></table>
 <dd>
 The same as <tt class="method">findBinding()</tt>, but will return multiple values of 
@@ -4271,7 +4593,7 @@ the given <var>kind</var>.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-230"><tt class="class">MessageRoleBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-234"><tt class="class">MessageRoleBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4283,27 +4605,27 @@ the given <var>kind</var>.
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-231"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-235"><tt class="member">name</tt></a></b>
 <dd>
 The name attribute of the element, for fault elements. This is always 
 <code>None</code> for input and output elements.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-232"><tt class="member">type</tt></a></b>
+<dl><dt><b><a name="l2h-236"><tt class="member">type</tt></a></b>
 <dd>
 The type of the element, one of <code>'input'</code>, <code>'output'</code> or 
 <code>'fault'</code>.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-233"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-237"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-234"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-238"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of any contained WSDL extensions.
 </dl>
@@ -4313,7 +4635,7 @@ The following methods are available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-235"><tt class="method">findBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-239"><tt class="method">findBinding</tt></a></b>(</nobr></td>
   <td><var>kind</var>)</td></tr></table>
 <dd>
 Find a binding extension in the message role binding. The <var>kind</var> can be a 
@@ -4327,7 +4649,7 @@ try to find a matching DOM <tt class="class">Element</tt>.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-236"><tt class="method">findBindings</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-240"><tt class="method">findBindings</tt></a></b>(</nobr></td>
   <td><var>kind</var>)</td></tr></table>
 <dd>
 The same as <tt class="method">findBinding()</tt>, but will return multiple values of 
@@ -4339,7 +4661,7 @@ the given <var>kind</var>.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-237"><tt class="class">Message</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-241"><tt class="class">Message</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4350,19 +4672,19 @@ A <tt class="class">Message</tt> object represents a WSDL <code>&lt;message&gt;<
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-238"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-242"><tt class="member">name</tt></a></b>
 <dd>
 The name of the message.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-239"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-243"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-240"><tt class="member">parts</tt></a></b>
+<dl><dt><b><a name="l2h-244"><tt class="member">parts</tt></a></b>
 <dd>
 A collection that contains <tt class="class">MessagePart</tt> objects that represent the 
 parts of the message. The items of this collection may be indexed 
@@ -4372,7 +4694,7 @@ by name or ordinal.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-241"><tt class="class">MessagePart</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-245"><tt class="class">MessagePart</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4383,26 +4705,26 @@ A <tt class="class">MessagePart</tt> object represents a WSDL <code>&lt;part&gt;
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-242"><tt class="member">name</tt></a></b>
+<dl><dt><b><a name="l2h-246"><tt class="member">name</tt></a></b>
 <dd>
 The name of the message part.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-243"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-247"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-244"><tt class="member">type</tt></a></b>
+<dl><dt><b><a name="l2h-248"><tt class="member">type</tt></a></b>
 <dd>
 A tuple of the form <code>(namespace-URI, localname)</code>, or <code>None</code> 
 if the <tt class="member">type</tt> attribute is not defined.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-245"><tt class="member">element</tt></a></b>
+<dl><dt><b><a name="l2h-249"><tt class="member">element</tt></a></b>
 <dd>
 A tuple of the form <code>(namespace-URI, localname)</code>, or <code>None</code> 
 if the <tt class="member">element</tt> attribute is not defined.
@@ -4411,7 +4733,7 @@ if the <tt class="member">element</tt> attribute is not defined.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-246"><tt class="class">Types</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-250"><tt class="class">Types</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4426,13 +4748,13 @@ element, or included via import). The <tt class="class">Types</tt> object can be
 by ordinal or by the <code>targetNamespace</code> of the contained schemas.
 
 <P>
-<dl><dt><b><a name="l2h-247"><tt class="member">documentation</tt></a></b>
+<dl><dt><b><a name="l2h-251"><tt class="member">documentation</tt></a></b>
 <dd>
 The documentation associated with the element, or an empty string.
 </dl>
 
 <P>
-<dl><dt><b><a name="l2h-248"><tt class="member">extensions</tt></a></b>
+<dl><dt><b><a name="l2h-252"><tt class="member">extensions</tt></a></b>
 <dd>
 A sequence of any contained WSDL extensions.
 </dl>
@@ -4442,7 +4764,7 @@ The following method is available:
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><a name="l2h-249"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
+  <td><nobr><b><a name="l2h-253"><tt class="method">getWSDL</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Return the parent <tt class="class">WSDL</tt> instance of the object.
@@ -4451,7 +4773,7 @@ Return the parent <tt class="class">WSDL</tt> instance of the object.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-250"><tt class="class">ImportElement</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-254"><tt class="class">ImportElement</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 
@@ -4462,7 +4784,7 @@ A <tt class="class">ImportElement</tt> object represents a WSDL <code>&lt;import
 The following attributes are read-only:
 
 <P>
-<dl><dt><b><a name="l2h-251"><tt class="member">namespace</tt></a></b>
+<dl><dt><b><a name="l2h-255"><tt class="member">namespace</tt></a></b>
 <dd>
 The namespace attribute of the import element.
 </dl>
@@ -4471,7 +4793,7 @@ The namespace attribute of the import element.
 The following method is available:
 
 <P>
-<dl><dt><b><a name="l2h-252"><tt class="member">location</tt></a></b>
+<dl><dt><b><a name="l2h-256"><tt class="member">location</tt></a></b>
 <dd>
 The location attribute of the import element.
 </dl>
@@ -4479,9 +4801,9 @@ The location attribute of the import element.
 
 <P>
 
-<H1><A NAME="SECTION0012200000000000000000">
-11.2 Binding Classes</A>
-</H1>
+<H2><A NAME="SECTION0012410000000000000000">
+11.4.1 Binding Classes</A>
+</H2>
 
 <P>
 The <tt class="module">WSDLTools</tt> module contains a number of classes that represent 
@@ -4491,7 +4813,7 @@ XML elements, so they are not documented exhaustively here.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-253"><tt class="class">SoapBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-257"><tt class="class">SoapBinding</tt></a></b>(</nobr></td>
   <td><var>transport</var><big>[</big><var>, style</var><big>]</big>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:binding&gt;</code> element.
@@ -4499,7 +4821,7 @@ Represents a <code>&lt;soap:binding&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-254"><tt class="class">SoapAddressBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-258"><tt class="class">SoapAddressBinding</tt></a></b>(</nobr></td>
   <td><var>location</var>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:address&gt;</code> element.
@@ -4507,7 +4829,7 @@ Represents a <code>&lt;soap:address&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-255"><tt class="class">SoapOperationBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-259"><tt class="class">SoapOperationBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:operation&gt;</code> element.
@@ -4515,7 +4837,7 @@ Represents a <code>&lt;soap:operation&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-256"><tt class="class">SoapBodyBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-260"><tt class="class">SoapBodyBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:body&gt;</code> element.
@@ -4523,7 +4845,7 @@ Represents a <code>&lt;soap:body&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-257"><tt class="class">SoapFaultBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-261"><tt class="class">SoapFaultBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:fault&gt;</code> element.
@@ -4531,7 +4853,7 @@ Represents a <code>&lt;soap:fault&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-258"><tt class="class">SoapHeaderBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-262"><tt class="class">SoapHeaderBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:header&gt;</code> element.
@@ -4539,7 +4861,7 @@ Represents a <code>&lt;soap:header&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-259"><tt class="class">SoapHeaderFaultBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-263"><tt class="class">SoapHeaderFaultBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;soap:headerfault&gt;</code> element.
@@ -4547,7 +4869,7 @@ Represents a <code>&lt;soap:headerfault&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-260"><tt class="class">HttpBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-264"><tt class="class">HttpBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;http:binding&gt;</code> element.
@@ -4555,7 +4877,7 @@ Represents a <code>&lt;http:binding&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-261"><tt class="class">HttpAddressBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-265"><tt class="class">HttpAddressBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;http:address&gt;</code> element.
@@ -4563,7 +4885,7 @@ Represents a <code>&lt;http:address&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-262"><tt class="class">HttpOperationBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-266"><tt class="class">HttpOperationBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;http:operation&gt;</code> element.
@@ -4571,7 +4893,7 @@ Represents a <code>&lt;http:operation&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-263"><tt class="class">HttpUrlReplacementBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-267"><tt class="class">HttpUrlReplacementBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;http:urlReplacement&gt;</code> element.
@@ -4579,7 +4901,7 @@ Represents a <code>&lt;http:urlReplacement&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-264"><tt class="class">HttpUrlEncodedBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-268"><tt class="class">HttpUrlEncodedBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;http:urlEncoded&gt;</code> element.
@@ -4587,7 +4909,7 @@ Represents a <code>&lt;http:urlEncoded&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-265"><tt class="class">MimeMultipartRelatedBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-269"><tt class="class">MimeMultipartRelatedBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;mime:multipartRelated&gt;</code> element.
@@ -4595,7 +4917,7 @@ Represents a <code>&lt;mime:multipartRelated&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-266"><tt class="class">MimePartBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-270"><tt class="class">MimePartBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;mime:part&gt;</code> element.
@@ -4603,7 +4925,7 @@ Represents a <code>&lt;mime:part&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-267"><tt class="class">MimeContentBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-271"><tt class="class">MimeContentBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;mime:content&gt;</code> element.
@@ -4611,7 +4933,7 @@ Represents a <code>&lt;mime:content&gt;</code> element.
 
 <P>
 <dl><dt><table cellpadding="0" cellspacing="0"><tr valign="baseline">
-  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-268"><tt class="class">MimeXmlBinding</tt></a></b>(</nobr></td>
+  <td><nobr><b><span class="typelabel">class</span>&nbsp;<a name="l2h-272"><tt class="class">MimeXmlBinding</tt></a></b>(</nobr></td>
   <td>)</td></tr></table>
 <dd>
 Represents a <code>&lt;mime:mimeXml&gt;</code> element.
@@ -4630,7 +4952,6 @@ The other is used to define a header element containing a name and
 password, for a class of basic authentication.
 
 <P>
-
 <BR>
 <PRE  CLASS="verbatim">
 &lt;schema xmlns="http://www.w3.org/2001/XMLSchema"
@@ -4700,7 +5021,7 @@ password, for a class of basic authentication.
 About this document ...</A>
 </H1>
  <strong>ZSI: The Zolera Soap Infrastructure</strong>,
-September 09, 2003, Release 1.4.1
+March 10, 2004, Release 1.5.1
 <p> This document was generated using the <a
     href="http://saftsack.fs.uni-bayreuth.de/~latex2ht/">
     <strong>LaTeX</strong>2<tt>HTML</tt></a> translator.
@@ -4730,18 +5051,18 @@ September 09, 2003, Release 1.4.1
 <p><hr>
 <table align="center" width="100%" cellpadding="0" cellspacing="2">
 <tr>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
 <td align="center" width="100%">ZSI: The Zolera Soap Infrastructure</td>
-<td><img src='../icons/blank.gif'
+<td><img src='blank.gif'
   border='0' height='32'  alt='' width='32'></td>
 </tr></table>
 <hr>
-<span class="release-info">Release 1.4.1, documentation updated on September 09, 2003.</span>
+<span class="release-info">Release 1.5.1, documentation updated on March 10, 2004.</span>
 </DIV>
 <!--End of Navigation Panel-->
 
