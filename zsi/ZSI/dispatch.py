@@ -54,10 +54,8 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                 try:
                     try:
                         type = data[0].localName
-                        print 'trying to get %s' % type
                         tc = getattr(typesmodule, type).typecode
                     except Exception, e:
-                        print 'bombed: %s' % e
                         tc = TC.Any()
                     arg = [ tc.parse(e, ps) for e in data ]
                 except EvaluateException, e:
