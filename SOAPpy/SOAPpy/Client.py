@@ -127,19 +127,11 @@ class HTTPTransport:
             return original_namespace
     
     # Need a Timeout someday?
-    def call(self, addr, data, namespace, soapaction = '', encoding = None,
+    def call(self, addr, data, namespace, soapaction = None, encoding = None,
         http_proxy = None, config = Config):
 
         import httplib
 
-        # If we are configured to use GSI, set it up
-        if hasattr(config, "channel_mode") and \
-               hasattr(config, "delegation_mode"):
-            from pyGlobus.io import CHANNEL_MODE, DELEGATION_MODE, GSIHTTP
-            CHANNEL_MODE = config.channel_mode
-            DELEGATION_MODE = config.delegation_mode
-        # end GSI stuff
-        
         if not isinstance(addr, SOAPAddress):
             addr = SOAPAddress(addr, config)
 
@@ -152,6 +144,9 @@ class HTTPTransport:
             real_path = addr.path
 
         if addr.proto == 'httpg':
+            from pyGlobus.io import CHANNEL_MODE, DELEGATION_MODE, GSIHTTP
+            CHANNEL_MODE = 1
+            DELEGATION_MODE = 1
             r = GSIHTTP(real_addr)
         elif addr.proto == 'https':
             r = httplib.HTTPS(real_addr)
@@ -173,7 +168,12 @@ class HTTPTransport:
         if addr.user != None:
             val = base64.encodestring(addr.user) 
             r.putheader('Authorization','Basic ' + val.replace('\012',''))
-        r.putheader("SOAPAction", '"%s"' % soapaction)
+
+        # This fixes sending either "" or "None"
+        if soapaction == None or len(soapaction) == 0:
+            r.putheader("SOAPAction", "")
+        else:
+            r.putheader("SOAPAction", '"%s"' % soapaction)
 
         if config.dumpHeadersOut:
             s = 'Outgoing HTTP headers'
@@ -255,7 +255,7 @@ class HTTPTransport:
 # SOAP Proxy
 ################################################################################
 class SOAPProxy:
-    def __init__(self, proxy, namespace = None, soapaction = '',
+    def __init__(self, proxy, namespace = None, soapaction = None,
                  header = None, methodattrs = None, transport = HTTPTransport,
                  encoding = 'UTF-8', throw_faults = 1, unwrap_results = None,
                  http_proxy=None, config = Config, noroot = 0,
@@ -306,10 +306,14 @@ class SOAPProxy:
         ma = ma or self.methodattrs
 
         if sa: # Get soapaction
-            if type(sa) == TupleType: sa = sa[0]
+            if type(sa) == TupleType:
+                sa = sa[0]
         else:
-            sa = self.soapaction
-
+            if self.soapaction:
+                sa = self.soapaction
+            else:
+                sa = name
+                
         if hd: # Get header
             if type(hd) == TupleType:
                 hd = hd[0]
@@ -326,7 +330,7 @@ class SOAPProxy:
 
         m = buildSOAP(args = args, kw = kw, method = name, namespace = ns,
             header = hd, methodattrs = ma, encoding = self.encoding,
-            config = self.config,noroot = self.noroot)
+            config = self.config, noroot = self.noroot)
 
         r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
                                                 encoding = self.encoding,
