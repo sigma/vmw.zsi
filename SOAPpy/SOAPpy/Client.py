@@ -341,10 +341,10 @@ class SOAPProxy:
         call_retry = 0
         try:
 
-        r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
-                                                encoding = self.encoding,
-                                                http_proxy = self.http_proxy,
-                                                config = self.config)
+            r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
+                                                    encoding = self.encoding,
+                                                 http_proxy = self.http_proxy,
+                                                    config = self.config)
 
         except Exception, ex:
             #
@@ -376,7 +376,6 @@ class SOAPProxy:
                                                     config = self.config)
             
 
-        print r
         p, attrs = parseSOAPRPC(r, attrs = 1)
 
         try:
