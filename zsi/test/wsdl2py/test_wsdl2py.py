@@ -10,10 +10,9 @@ import StringIO, os
 import py_compile
 from ZSI import wsdl2python
 from ZSI.wstools.TimeoutSocket import TimeoutError
+from ZSI.wstools.Utility import HTTPResponse
 
 import utils
-
-SeparateTest = True
 
 """
 Tests wsdl2python code generation and compilation against
@@ -53,6 +52,10 @@ class Wsdl2pythonTest(unittest.TestCase):
             wsdl = utils.setUpWsdl(self.path)
         except TimeoutError:
             print "connection timed out"
+            sys.stdout.flush()
+            return
+        except HTTPResponse:
+            print "intial connection with service problem"
             sys.stdout.flush()
             return
         except:
@@ -143,7 +146,8 @@ def makeTestSuite(section=None):
     if not section:
         found = configLoader.setSection(sys.argv)
         if not found:
-            configLoader.setSection("complex_types")
+            configLoader.setSection(["no_schemas", "simple_types",
+                                     "complex_types"])
     else:
         configLoader.setSection(section)
     suite.addTest(configLoader.loadTestsFromConfig(Wsdl2pythonTest))
