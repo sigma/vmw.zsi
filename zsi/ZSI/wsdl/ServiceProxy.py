@@ -240,7 +240,7 @@ class ServiceProxy:
        that reflect the methods of the remote web service."""
 
     def __init__(self, wsdl, service=None, port=None, tracefile=None,
-                 nsdict=None):
+                 typesmodule=None, nsdict=None):
         if not hasattr(wsdl, 'targetNamespace'):
             wsdl = WSDLTools.WSDLReader().loadFromURL(wsdl)
 #        for item in wsdl.types.items():
@@ -251,6 +251,7 @@ class ServiceProxy:
         self._name = self._service.name
         self._wsdl = wsdl
         self._tracefile = tracefile
+        self._typesmodule = typesmodule
         self._nsdict = nsdict
         binding = self._port.getBinding()
         portType = binding.getPortType()
@@ -279,7 +280,8 @@ class ServiceProxy:
 
         binding = Binding(host=host, tracefile=self._tracefile,
                           ssl=(protocol == 'https'),
-                          port=port, url=uri, nsdict=self._nsdict)
+                          port=port, url=uri, typesmodule=self._typesmodule,
+                          nsdict=self._nsdict)
 
         apply(getattr(binding, callinfo.methodName), args)
 
