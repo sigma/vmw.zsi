@@ -1,0 +1,118 @@
+
+SOAP.py
+
+CHANGES: 
+
+VERSION 0.9.6 (6/08/01)
+
+- The date and time types now check their initial values when the type
+  is created, not when the data is marshalled.
+- The date and time types are now parsed and returned as tuples (for
+  multi-element types) or scalars (for single element types) in UTC and thus
+  can represent the entire range of SOAP dates.
+- If an element doesn't have a type but has a name with a namespace, the
+  name is tried as the type.
+- Untyped compound types with more than one element and all the elements
+  the same name are turned into an array when parsing.
+- When parsing a structType, elements with the same name are placed in a
+  list instead of saving just the last one. _getItemsAsList can be used to
+  get an element of a structure as a list, whether there was one or many
+  occurances of the item.
+- Added schemaNamespace, schemaNamespaceURI, and namespaceStyle
+  configuration options. namespaceStyle takes one of 1999, 2000, or 2001,
+  and sets typesNamespace, typesNamespaceURI, schemaNamespace, and
+  schemaNamespaceURI.
+- Normalized the type class names, replacing Compound with compoundType,
+  Struct with structType, Header with headerType, Body with bodyType, Array
+  with arrayType, TypedArray with typedArrayType, Fault with faultType, and
+  urType with anyType.
+- Attributes now appear on an element itself instead of the element's
+  parent. For elements parsed to builtin python types, the attributes are
+  stored in a dictionary keyed by the element's python id. The dictionary
+  is in the Context object, can be returned from parseSOAP*, and can be
+  returned from method calls if the returnAllAttrs configuration option
+  is set.
+- isinstance is used to check for a class, so classes can be subtyped.
+- An encoding of None can be specified to not include encoding information.
+- Problems with the SOAPProxy URL are now reported when the SOAPProxy
+  instance is created instead of when the first method call is made.
+- The Binary, Boolean and DateTime types have been removed in favor of
+  binaryType, booleanType, and dateTimeType.
+
+
+VERSION 0.9.5 (5/16/01)
+
+- Should parse and build all 1999, 2000, 2001, and SOAP-ENC datatypes.
+- Initial handling of multi-dimensional, partial, and sparse arrays.
+- Supports SSL clients (if Python built with OpenSSL).
+- Supports SSL servers (if M2Crypto installed).
+- Applies defaults to SOAPproxy URLs (nice for command-line tools).
+- Added the _SOAPContext object, gives registered server functions more info
+  about the current call.
+- Now assumes that any type that isn't in a schema could be a struct.
+- Added the Config object, now config options can be set globally or on an
+  individual call level.
+- Deprecated the DateTime, Binary and Boolean types, should now 
+  use dateTimeType, binaryType and booleanType.
+- Includes N+I interop suite.
+- Various bug fixes and improvements.
+
+
+VERSION 0.9 (5/01/01)
+
+- The Envelope now just contains definitions for namespaces actually used
+  (Builder)
+- Namespace definitions are inherited by children but not siblings (Builder)
+- Further improved multi-reference parsing -- it handles circular references
+  (Parser)
+- Added support for building recursive and circular types using references
+  (Builder)
+- More types
+- Proper handling of overflow and underflow integral and floating point
+  types (Parser)
+- More interop
+- Various bug fixes and improvements
+
+VERSION 0.8.5 (4/25/01)
+- buildSOAP, SOAPProxy, SOAPServer now taking encoding argument
+- Much improved multi-referencing (Parser)
+- Added base64 and dateTime to interop suite
+- Various bug fixes
+
+VERSION 0.8 (4/23/01)
+- Added more types
+- Early multi-referencing support (Parser)
+- Reorganized the parser, much cleaner now
+- Preserve whitepsace in strings (per the standard)
+- Full XML attribute support (Parser/Builder)
+- Object (de)serialization now maintains element order
+- Fixed the zero-length array problem
+- Made indentation uniform (spaces not tabs)
+- Made Header and Body work more like real structs
+- Changed the parseSOAP api, now returns the body structure, 
+  instead of a list of body elements
+- Changed the soapaction and namespaces for the interop server
+- New silabclient options
+- Initial encoding support
+
+VERSION 0.7 (4/19/01)
+- Fixed a bug that caused nothing to work with Python 2.1
+- Float work arounds for WIN32 (others?)
+- DateTime parsing for WIN32
+- Beginnings of XML attribute support
+- Better interop
+
+VERSION 0.6 (4/18/01)
+- Fixed numerous bugs (dateTime, float precision, Response Element, null
+  strings)
+- Added more types
+- Homogeneous typed arrays
+- Added support for more schemas
+- Early Header support and mustUnderstand and actor
+- Added interop suite
+- Passes validator
+- Interop greatly improved, passes all client tests for Frontier,
+  SOAP::LITE.
+
+VERSION 0.5 (4/17/01)
+- Initial public release

@@ -1,0 +1,213 @@
+Copyright (c) 2001, actzero, inc.
+
+SOAP.py 0.9 - Cayce Ullman   (cayce@actzero.com)
+              Brian Matthews (blm@actzero.com)
+
+MANIFEST:
+README 
+SOAP.py       the library
+SOAPtest.py   tests the builder and parser
+echoClient.py an example client
+echoServer.py an example server
+speedTest.py  benchmarks the various parsers, compares speed to DOM
+TCtest.py     experimental type coercion system tests
+tests/*       examples
+validate/*    interop client and servers
+
+HOWTO:
+
+The easiest way to get up to speed is to run and read the scripts in the
+tests directory. Better documentation is coming.
+
+Here are some examples of how to use SOAP.py:
+
+CLIENT EXAMPLES:
+
+## CODE
+import SOAP
+server = SOAP.SOAPProxy("http://localhost:8080/")
+print server.echo("Hello world")
+## /CODE
+
+This opens a connection to the server listening on localhost:8080, calls the 
+method echo with the ordered parameter of "Hello World", and prints the
+results.
+
+## CODE
+import SOAP
+server = SOAP.SOAPProxy("https://localhost:8443/")
+print server.echo("Hello world")
+## /CODE
+
+This opens a secure connection to the SSL server listening on localhost:8443,
+calls the method echo with the ordered parameter of "Hello World" and prints
+the results. Python must be built with OpenSSL.
+
+## CODE
+import SOAP
+server = SOAP.SOAPProxy("http://services.xmethods.com/soap",
+        	        namespace = "urn:xmethods-delayed-quotes")
+print server.getQuote(symbol = "IBM")
+## /CODE
+
+This calls method getQuote that is in the namespace URI of 
+urn:xmethods-delayed-quotes on server services.xmethods.com. getQuote is
+passed a named parameter, symbol.
+
+## CODE
+import SOAP
+server = SOAP.SOAPProxy("http://services.xmethods.com/soap")
+
+print server._ns("urn:xmethods-delayed-quotes").getQuote(symbol = "IBM")
+## /CODE
+
+This does the same thing as the previous example, however namespace is
+specified inline on a per call basis rather than at the server level.
+
+## CODE
+import SOAP
+server = SOAP.SOAPProxy("http://services.xmethods.com/soap",
+			soapaction = "http://somesite.com/myaction")
+
+print server._ns("urn:xmethods-delayed-quotes").getQuote(symbol = "IBM")
+## /CODE
+
+This is the same quote call with a soapaction specified.
+
+## CODE
+import SOAP
+server = SOAP.SOAPProxy("http://services.xmethods.com:80/soap")
+
+my_call = server._ns("urn:xmethods-delayed-quotes")._sa("http://somesite.com/myaction")
+my_call.getQuote(symbol = "IBM")
+my_call.getQuote(symbol = "IBM")
+my_call.getQuote(symbol = "IBM")
+## /CODE
+
+The same example, this time with both the soapaction and the namespace
+specified inline and saved in a local variable for getQuote to be called
+against.
+
+** What SOAP.py does with the results of a call could seem surprising. If
+there is only one attribute in the Struct that has the return value and
+unwrap_results is turned on (the default) it will bubble up the single
+attribute, otherwise it will return you a Struct object with all of the
+attributes.
+
+SERVER EXAMPLES:
+
+## CODE
+import SOAP
+def echo(s):
+    return s + s # repeats a string twice
+
+server = SOAP.SOAPServer(("localhost", 8080))
+server.registerFunction(echo)
+server.serve_forever()
+## /CODE
+
+This exposes the function echo (that takes an unnamed arguement) on a server 
+running on localhost:8080.
+
+## CODE
+import SOAP
+def echo(s):
+    return s + s # repeats a string twice
+
+server = SOAP.SOAPServer()
+server.registerFunction(echo, "echo-space")
+server.serve_forever()
+## /CODE
+
+The same as above, but this time the method is available in the namespace
+"echo-space".
+
+## CODE
+import SOAP
+
+class echoBuilder:
+    def echo(self, val):
+        return val + val
+
+server = SOAP.SOAPServer()
+e = echoBuilder()
+server.registerObject(e)
+server.serve_forever()
+## /CODE
+
+This registers the whole instance of the object echoBuilder, e.  Every 
+method of the instance is exposed on the server.
+
+## CODE
+import SOAP
+
+def echo(**kw):
+    return kw['first'] + kw['second'] + kw['third']	
+
+server = SOAP.SOAPServer()
+server.registerKWFunction(echo)
+server.serve_forever()
+## /CODE
+
+This time the method echo is exposed and it expects named arguments. The 
+main thing to notice here is the use of the method registerKWFunction over
+registerFunction.
+
+## CODE
+import SOAP
+
+from M2Crypto import SSL
+
+def echo(s):
+    return s+s # repeats a string twice
+
+ssl_context = SSL.Context('sslv23')
+ssl_context.load_cert('server.pem')
+ssl_context.load_verify_location('ca.pem')
+ssl_context.load_client_CA('ca.pem')
+ssl_context.set_verify(SSL.verify_none, 10)
+ssl_context.set_session_id_ctx('id')
+ssl_context.set_tmp_dh('dh1024.pem')
+
+server = SOAP.SOAPServer(("localhost",8443), ssl_context = ssl_context)
+server.registerFunction(echo)
+server.serve_forever()
+## /CODE
+
+This exposes the function echo (taking an unnamed arguement) on a server 
+accepting SSL connections at localhost:8443. Ng Pheng Siong's M2Crypto
+package (available at <http://www.pobox.org.sg/home/ngps/m2/>) must be
+installed. Also see tests/silabserver.py.
+
+
+Copyright (c) 2001, actzero, inc.
+Copyright (c) 2001, Cayce Ullman.
+Copyright (c) 2001, Brian Matthews.
+
+All rights reserved.
+
+LICENSE:
+--------------------------------------------------------------------------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+Neither the name of actzero, inc. nor the names of its contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
