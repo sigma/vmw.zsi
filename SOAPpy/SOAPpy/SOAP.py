@@ -104,7 +104,7 @@ except: pass
 
 ident = '$Id$'
 
-__version__ = "0.9.9-pre5"
+__version__ = "0.9.9-pre6"
 
 
 ################################################################################
@@ -3636,6 +3636,8 @@ class SOAPProxy:
         return self.__call(None, body, {})
 
     def __getattr__(self, name):  # hook to catch method calls
+        if name == '__del__':
+            raise AttributeError, name
         return self.__Method(self.__call, name, config = self.config)
 
     # To handle attribute wierdness
@@ -3674,6 +3676,8 @@ class SOAPProxy:
                 return self.__r_call(*args, **kw)
                         
         def __getattr__(self, name):
+            if name == '__del__':
+                raise AttributeError, name
             if self.__name[0] == "_":
                 # Don't nest method if it is a directive
                 return self.__class__(self.__call, name, self.__ns,
