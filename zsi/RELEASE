@@ -5,6 +5,8 @@ The following instructions tell how to go about making a ZSI release.
 The Makefile automates many of the more mechanical aspects of the
 process.
 
+XXX explain need for Python documentation tools
+
 1. Announce your intent to make a release on the mailing list.  This
    gives folks a day or so to respond with info or last-minute
    checkins.
@@ -25,9 +27,14 @@ process.
    the serial is the number of the candidate for this particular
    software version ("1", "2", etc.).
 
-5. Export the tagged sources from CVS:
+   You'll need to tag the wstools package separately, but using the
+   same tag.
 
-       cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co zsi
+5. Export the tagged sources from CVS.  You'll need to 
+
+       cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG zsi
+       cd zsi/ZSI/
+       cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG wstools
 
 6. Build the release from the export.  Switch to the export directory
    (the one containing setup.py) and run "make kit".
