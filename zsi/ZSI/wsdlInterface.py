@@ -5,7 +5,7 @@
 
 # $Id$
 
-import re
+import re, sys
 import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.wstools.Utility import Collection
@@ -1359,9 +1359,19 @@ class ZSISchemaTypeAdapter(AdapterBase, SchemaTypeInterface):
                     ctype = ZSISchemaDefinitionAdapter(tp.content)
                     #ctype._def.attributes['xsd'] = tp.attributes['xsd']
                     return ctype
+                if isinstance( tp.content,
+                               ZSI.wstools.XMLSchema.AnonymousSimpleType):
+                    # XXX: fully dubious!
+                    # here i make an 'compress' an anonymous simple type
+                    # and the element declaration around it.
+                    stype = ZSISchemaDefinitionAdapter(tp.content)
+                    stype._def.attributes = tp.attributes
+                    return stype
+                
                 # otherwise...
                 if not tp.content:
                     return None
+
                 for c in tp.content:
                     if c.isDefinition():
                         return self.__adapterWrap(c)
@@ -1473,6 +1483,9 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
         if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
             return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'),
                                               tp)
+        if isinstance( tp, ZSI.wstools.XMLSchema.AttributeGroupReference ):
+            # we are currently not handling attributes...more soon...
+            return None
         else:
             raise TypeError, 'unknown adapter type: %s' % tp
 
@@ -1540,9 +1553,11 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                         # nested model groups , i am just 'flattening'
                         # the contents of the nested model group.
                         for x in c.content:
-                            group.append( self.__adapterWrap( x ) )
+                            if self.__adapterWrap( x ):
+                                group.append( self.__adapterWrap( x ) )
                     else:
-                        group.append( self.__adapterWrap( c ) )
+                        if self.__adapterWrap( c ):
+                            group.append( self.__adapterWrap( c ) )
                 
             if isinstance( self._def.content,
                            ZSI.wstools.XMLSchema.All ):
@@ -1568,7 +1583,8 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
 
         if hasattr( self._def, 'attr_content' ) and self._def.attr_content:
             for a in self._def.attr_content:
-                attr.append( self.__adapterWrap(a) )
+                if self.__adapterWrap(a):
+                    attr.append( self.__adapterWrap(a) )
 
         return attr
 
@@ -1589,7 +1605,9 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
         """
         if isinstance(self._def, ZSI.wstools.XMLSchema.SimpleType) or \
                isinstance(self._def,
-                          ZSISchemaDeclarationAdapter.DefinitionContainer):
+                          ZSISchemaDeclarationAdapter.DefinitionContainer) or \
+               isinstance(self._def,
+                          ZSI.wstools.XMLSchema.AnonymousSimpleType):
             return True
         else:
             return False
@@ -1615,6 +1633,16 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                     bti = self.__class__.bti
                     tpc = bti.get_typeclass( self._def.attributes['type'][1],
                                              self._def.attributes['type'][0] )
+                    
+            elif hasattr(self._def, 'content') and \
+                     isinstance(self._def.content,
+                                ZSI.wstools.XMLSchema.SimpleType.List):
+                # XXX: for xsd:list - nacient support
+                bti = self.__class__.bti
+                tpc = bti.get_typeclass( self._def.content.\
+                                         attributes['itemType'][1],
+                                         self._def.content.\
+                                         attributes['itemType'][0] )
             elif self._def.content:
                 pass
 
