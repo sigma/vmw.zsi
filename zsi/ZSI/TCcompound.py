@@ -58,7 +58,7 @@ class Struct(TypeCode):
         if t not in _seqtypes:
             raise TypeError(
                 'Struct ofwhat must be list or sequence, not ' + str(t))
-        self.ofwhat, self.lenofwhat = tuple(ofwhat), len(ofwhat)
+        self.ofwhat = tuple(ofwhat)
         if kw.has_key('typed'):
             Any.parsemap[self.type] = self
             t = kw['typed']
@@ -85,7 +85,7 @@ class Struct(TypeCode):
         c = _child_elements(elt)
         count = len(c)
         if self.nilled(elt, ps): return None
-        if count > self.lenofwhat and not self.hasextras:
+        if count > len(self.ofwhat) and not self.hasextras:
             raise EvaluateException('Too many sub-elements', ps.Backtrace(elt))
 
         # Create the object.
@@ -94,7 +94,7 @@ class Struct(TypeCode):
         # Clone list of kids (we null it out as we process)
         c, crange = c[:], range(len(c))
         # Loop over all items we're expecting
-        for i,what in [ (i, self.ofwhat[i]) for i in range(self.lenofwhat) ]:
+        for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
             # Loop over all available kids
             for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
                 if what.name_match(c_elt):
