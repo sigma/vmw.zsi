@@ -53,7 +53,7 @@ class BaseTypeInterpreter:
                            TC.gMonthDay, TC.InonPositiveInteger, \
                            TC.Ibyte, TC.FPdouble, TC.gTime, TC.gYear, \
                            TC.Ilong, TC.IunsignedLong, TC.Ishort, \
-                           TC.Decimal]
+                           TC.Decimal, TC.Token, TC.QName]
 
         self._tc_to_int = [
             ZSI.TCnumbers.IEnumeration,
@@ -84,7 +84,9 @@ class BaseTypeInterpreter:
             ZSI.TCnumbers.IunsignedShort,
             ZSI.TC.String,
             ZSI.TC.URI,
-            ZSI.TC.XMLString]
+            ZSI.TC.XMLString,
+            ZSI.TC.Token,
+            ZSI.TC.QName]
 
         self._tc_to_date = [
             ZSI.TCtimes.gDate,
