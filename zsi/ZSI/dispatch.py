@@ -52,7 +52,12 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                 arg = []
             else:
                 try:
-                    tc = TC.Any()
+                    try:
+                        import ComplexTypes
+                        type = data[0]._get_localName()
+                        tc = eval('ComplexTypes.%s.typecode' % type)
+                    except:
+                        tc = TC.Any()
                     arg = [ tc.parse(e, ps) for e in data ]
                 except EvaluateException, e:
                     SendFault(FaultFromZSIException(e))
