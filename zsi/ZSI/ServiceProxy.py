@@ -53,7 +53,7 @@ class ServiceProxy:
         if host.find(':') >= 0:
             host, port = host.split(':')
 
-        params = callinfo.getInParameters()
+        #params = callinfo.getInParameters() This doesn't appear to be used at all. krj 5/21/03
         host = str(host)
         port = str(port)
 
