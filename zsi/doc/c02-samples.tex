@@ -105,7 +105,7 @@ class Player:
         pass
 Player.typecode = TC.Struct(Player, [
                                 TC.String('Name'),
-                                TC.Array('Scores', TC.Integer()),
+                                TC.Array('Integer', TC.Integer(), 'Scores'),
                                 ], 'GetAverage')
 class Average:
     def __init__(self, average):

@@ -17,13 +17,28 @@ _AuthHeader = '<BasicAuth xmlns="' + ZSI_SCHEMA_URI + '''">
 
 class _Caller:
     '''Internal class used to give the user a callable object
-    that calls back to the Binding object to make an RPC call.'''
+    that calls back to the Binding object to make an RPC call.
+    '''
 
     def __init__(self, binding, name):
 	self.binding, self.name = binding, name
 
     def __call__(self, *args):
 	return self.binding.RPC(None, self.name, args, TC.Any(),
+		requesttypecode=TC.Any(self.name))
+
+
+class _NamedParamCaller:
+    '''Similar to _Caller, expect that there are named parameters
+    not positional.
+    '''
+
+    def __init__(self, binding, name):
+	self.binding, self.name = binding, name
+
+    def __call__(self, **params):
+	return self.binding.RPC(None, self.name, None, TC.Any(),
+		_args=params, ## requesttypecode correct? XXX
 		requesttypecode=TC.Any(self.name))
 
 
@@ -37,7 +52,7 @@ class Binding:
     def __init__(self, **kw):
 	'''Initialize.
 	Keyword arguments include:
-	    host, port -- where server is; defalt is localhost
+	    host, port -- where server is; default is localhost
 	    ssl -- use SSL? default is no
 	    url -- resource to POST to
 	    soapaction -- value of SOAPAction header
@@ -66,13 +81,11 @@ class Binding:
 	    self.SetNS(kw['ns'])
 	if not self.ssl:
 	    self.port = kw.get('port', httplib.HTTP_PORT)
-	    self.h = httplib.HTTP()
 	else:
 	    self.port = kw.get('port', httplib.HTTPS_PORT)
-	    x509 = {}
+	    self.ssl_files = {}
 	    for k in [ 'cert_file', 'key_file' ]:
-		if kw.has_key(k): x509[k] = kw[k]
-	    self.h = httplib.HTTPS(**x509)
+		if kw.has_key(k): self.ssl_files[k] = kw[k]
 
     def SetAuth(self, style, user=None, password=None):
 	'''Change auth style, return object to user.
@@ -105,12 +118,12 @@ class Binding:
 	self.user_headers.append((header, value))
 	return self
 
-    def RPC(self, url, opname, obj, replyclass, **kw):
+    def RPC(self, url, opname, obj, replytype=None, **kw):
 	'''Send a request, return the reply.  See Send() and Recieve()
 	docstrings for details.
 	'''
 	self.Send(url, opname, obj, **kw)
-	return self.Receive(replyclass, **kw)
+	return self.Receive(replytype, **kw)
 
     def Send(self, url, opname, obj, **kw):
 	'''Send a message.  If url is None, use the value from the
@@ -126,9 +139,9 @@ class Binding:
 	    tc = kw['requestclass'].typecode
 	elif type(obj) == types.InstanceType:
 	    tc = obj.__class__.__dict__.get('typecode')
-	    if tc == None: tc = TC.Any(opname)
+	    if tc == None: tc = TC.Any(opname, aslist=1)
 	else:
-	    tc = TC.Any(opname)
+	    tc = TC.Any(opname, aslist=1)
 
 	# Determine the SOAP auth element.
 	if self.auth_style & AUTH.zsibasic:
@@ -142,7 +155,10 @@ class Binding:
 	if self.ns: d[''] = self.ns
 	d.update(kw.get('nsdict', self.nsdict) or {})
 	sw = SoapWriter(s, nsdict=d, header=auth_header)
-	sw.serialize(obj, tc, typed=0)
+	if kw.has_key('_args'):
+	    sw.serialize(kw['_args'], tc)
+	else:
+	    sw.serialize(obj, tc, typed=0)
 	sw.close()
 	soapdata = s.getvalue()
 
@@ -152,10 +168,15 @@ class Binding:
 	    print >>self.trace, soapdata
 
 	# Send the request.
-	self.h.connect(self.host, self.port)
+	if not self.ssl:
+	    self.h = httplib.HTTPConnection(self.host, self.port)
+	else:
+	    self.h = httplib.HTTPSConnection(self.host, self.port,
+			**self.ssl_files)
+	self.h.connect()
 	self.h.putrequest("POST", url or self.url)
 	self.h.putheader("Content-length", "%d" % len(soapdata))
-	self.h.putheader("Content-type", "text/xml; charset='utf-8'")
+	self.h.putheader("Content-type", 'text/xml; charset=utf-8')
 	self.h.putheader("SOAPAction", kw.get('soapaction', self.soapaction))
 	if self.auth_style & AUTH.httpbasic:
 	    val = _b64_encode(self.auth_user + ':' + self.auth_pass).strip()
@@ -172,8 +193,9 @@ class Binding:
 	'''Read a server reply, unconverted to any format and return it.
 	'''
 	if self.data: return self.data
-	self.reply_code, self.reply_msg, self.reply_headers = self.h.getreply()
-	self.data = self.h.getfile().read()
+	response = self.h.getresponse()
+	self.reply_code, self.reply_msg, self.reply_headers, self.data = \
+	    response.status, response.reason, response.msg, response.read()
 	if self.trace:
 	    print >>self.trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
 	    print >>self.trace, str(self.reply_headers)
@@ -214,7 +236,7 @@ class Binding:
 	    raise TypeError("Expected SOAP Fault not found")
 	return FaultFromFaultMessage(self.ps)
 
-    def Receive(self, replytype, **kw):
+    def Receive(self, replytype=None, **kw):
 	'''Parse message, create Python object. if replytype is None, use
 	TC.Any to dynamically parse; otherwise it can be a Python class
 	or the typecode to use in parsing.
@@ -233,12 +255,9 @@ class Binding:
 	else:
 	    tc = replytype
 	return self.ps.Parse(tc)
-	#data = _child_elements(self.ps.body_root)
-	#if len(data) == 0: return None
-	#return tc.parse(data[0], self.ps)
 
     def __repr__(self):
-	return "<%s.Binding at 0x%x>" % (__name__, id(self))
+	return "<%s instance at 0x%x>" % (self.__class__.__name__, id(self))
 
     def __getattr__(self, name):
 	'''Return a callable object that will invoke the RPC method
@@ -248,5 +267,21 @@ class Binding:
 	    if self.__dict__.has_key(name): return self._dict__[name]
 	    return self.__class__.__dict__[name]
 	return _Caller(self, name)
+
+
+class NamedParamBinding(Binding):
+    '''Like binding, except the argument list for invocation is
+    named parameters.
+    '''
+
+    def __getattr__(self, name):
+	'''Return a callable object that will invoke the RPC method
+	named by the attribute.
+	'''
+	if name[:2] == '__' and len(name) > 5 and name[-2:] == '__':
+	    if self.__dict__.has_key(name): return self._dict__[name]
+	    return self.__class__.__dict__[name]
+	return _NamedParamCaller(self, name)
+
 
 if __name__ == '__main__': print _copyright

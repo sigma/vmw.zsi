@@ -9,7 +9,21 @@ testing.  More information is available from:
 
 The client.py program will send pre-formatted test packets to a server.
 I have not done generic client test, for a couple of reasons:
-    Too hard to keep track of all the endpoints; and
-    I'm not good at writing corner-case tests that stretch the limits
-    The server already exercises all the code -- it parses and serializes
-    There are several other clients out there already
+    1.  Too hard to keep track of all the endpoints; and
+    2.  I'm not good at writing corner-case tests that stretch the limits
+    3.  The server already exercises all the code -- it parses and
+	serializes There are several other clients out there already
+
+There are some other tests not currently implemented (in probable order
+of increasing difficulty):
+
+a.  Polymorph service (get a struct, return the parts, etc.).  See WSDL at
+    http://www.whitemesa.net/wsdl/polymorph.wsdl
+
+b.  Document/literal encoding.  See WSDL at
+    http://www.whitemesa.net/wsdl/interopdoc.wsdl
+
+c.  WS-Routing (not yet implemented in ZSI :).  See WSDL at
+    http://www.whitemesa.net/wsdl/interop_base_end.wsdl
+
+

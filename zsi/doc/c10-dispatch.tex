@@ -191,12 +191,12 @@ Once the necessary parameters have been specified (at a minimum, the URL
 must have been given in the constructor are through \code{SetURL}),
 invocations can be made.
 
-\begin{methoddesc}{RPC}{url, opname, pyobj, replyclass\optional{, **keywords}}
+\begin{methoddesc}{RPC}{url, opname, pyobj, replytype=None\optional{, **keywords}}
 This is the highest-level invocation method.
 It calls \method{Send()} to send \code{pyobj} to the specified \code{url}
 to perform the \code{opname} operation,
 and calls \method{Receive()} expecting to get a reply of the specified
-\code{replyclass}.
+\code{replytype}.
 
 This method will raise a \exception{TypeError} if the response does not
 appear to be a SOAP message, or if is valid SOAP but contains a fault.
@@ -223,22 +223,6 @@ The following keyword arguments may be used:
 \end{tableiii}
 
 \end{methoddesc}
-
-Once a message has been sent, the following read-only attributes are
-available.
-Their values will remain unchanged until another message is sent.
-
-\begin{memberdesc}{reply_code}
-The HTTP reply code, a number.
-\end{memberdesc}
-
-\begin{memberdesc}{reply_headers}
-The HTTP headers, as a \class{mimetools} object.
-\end{memberdesc}
-
-\begin{memberdesc}{reply_msg}
-A text string containing the HTTP reply text.
-\end{memberdesc}
 
 Methods are available to determine the type of response that came back:
 
@@ -271,15 +255,31 @@ Returns a \class{Fault} object containing the SOAP fault message.
 Raises a \exception{TypeError} if the message did not contain a fault.
 \end{methoddesc}
 
-\begin{methoddesc}{Receive}{replytype}
+\begin{methoddesc}{Receive}{replytype=None}
 Parses a SOAP message.
 The \code{replytype} specifies how to parse the data.
 If it s \code{None}, dynamic parsing will be used, usually resulting
 in a Python list.
 If \code{replytype} is a Python class, then the class's \code{typecode}
-attribute will be used, otherwise \code{replytype} is interpreted as
+attribute will be used, otherwise \code{replytype} is taken to be
 the typecode to use for parsing the data.
 \end{methoddesc}
+
+Once a reply has been parsed (or its type examined), the following
+read-only attributes are available.
+Their values will remain unchanged until another reply is parsed.
+
+\begin{memberdesc}{reply_code}
+The HTTP reply code, a number.
+\end{memberdesc}
+
+\begin{memberdesc}{reply_headers}
+The HTTP headers, as a \class{mimetools} object.
+\end{memberdesc}
+
+\begin{memberdesc}{reply_msg}
+A text string containing the HTTP reply text.
+\end{memberdesc}
 
 Finally, if an attribute is fetched other than one of those described
 above, it is taken to be the \code{opname} of a remote procedure,

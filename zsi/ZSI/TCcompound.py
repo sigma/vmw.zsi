@@ -99,15 +99,15 @@ class Struct(TypeCode):
 			value = what.parse(c_elt, ps)
 		    except EvaluateException, e:
 			e.str = '%s.%s: %s' % \
-				(self.pname or '?', what.pname or '?', e.str)
+				(self.pname or '?', what.aname or '?', e.str)
 			raise e
 		    if what.repeatable:
-			if v.has_key(what.pname):
-			    v[what.pname] = v[what.pname].append(value)
+			if v.has_key(what.aname):
+			    v[what.aname] = v[what.aname].append(value)
 			else:
-			    v[what.pname] = [value]
+			    v[what.aname] = [value]
 		    else:
-			v[what.pname] = value
+			v[what.aname] = value
 		    c[j] = None
 		    break
 		# No match; if it was supposed to be here, that's an error.
@@ -116,10 +116,10 @@ class Struct(TypeCode):
 			    ps.Backtrace(c_elt))
 	    else:
 		if not what.optional:
-		    raise EvaluateException('Element "' + what.pname + \
+		    raise EvaluateException('Element "' + what.aname + \
 			'" missing from struct', ps.Backtrace(elt))
 		if hasattr(what, 'default'):
-		    v[what.pname] = what.default
+		    v[what.aname] = what.default
 
 	if not self.hasextras:
 	    extras = [c_elt for c_elt in c if c_elt]
@@ -131,7 +131,7 @@ class Struct(TypeCode):
 	if not self.pyclass: return v
 
 	try:
-	    pyobj = self.pyclass(self.pname)
+	    pyobj = self.pyclass(self.aname)
 	except Exception, e:
 	    raise TypeError("Constructing %s: %s" % (self.pname, str(e)))
 	for key in v.keys():
@@ -163,7 +163,7 @@ class Struct(TypeCode):
 	    if TypeCode.typechecks and type(d) != types.DictType:
 		raise TypeError("Classless struct didn't get dictionary")
 	for what in self.ofwhat:
-	    v = d.get(what.pname)
+	    v = d.get(what.aname)
 	    if what.optional and v == None: continue
 	    try:
 		if what.repeatable and type(v) in _seqtypes:
@@ -172,7 +172,7 @@ class Struct(TypeCode):
 		    what.serialize(sw, v)
 	    except Exception, e:
 		raise Exception('Serializing %s.%s, %s %s' %
-			(n, what.pname or '?', e.__class__.__name__, str(e)))
+			(n, what.aname or '?', e.__class__.__name__, str(e)))
 	print >>sw, '</%s>' % n
 
 
@@ -325,7 +325,7 @@ class Array(TypeCode):
 	kn = kw.get('childnames', self.childnames)
 	if kn:
 	    d['name'] = kn
-	elif not self.ofwhat.pname:
+	elif not self.ofwhat.aname:
 	    d['name'] = 'element'
 	if not self.sparse:
 	    for e in pyobj[offset:]: self.ofwhat.serialize(sw, e, **d)

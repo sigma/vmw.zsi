@@ -58,10 +58,12 @@ class TypeCode:
 	    self.nspname, self.pname = pname
 	else:
 	    self.nspname, self.pname = None, pname
+	# Set oname before splitting pname, and aname after.
 	self.oname = kw.get('oname', self.pname)
 	if self.pname:
 	    i = self.pname.find(':')
 	    if i > -1: self.pname = self.pname[i + 1:]
+	self.aname = kw.get('aname', self.pname)
 
 	self.optional = kw.get('optional', 0)
 	self.typed = kw.get('typed', 1)
@@ -254,6 +256,9 @@ class Any(TypeCode):
 	return parser.parse(elt, ps)
 
     def serialize(self, sw, pyobj, **kw):
+	if hasattr(pyobj, 'typecode'):
+	    pyobj.typecode.serialize(sw, pyobj, **kw)
+	    return
 	kw['name'] = self.oname
 	n = kw.get('name', 'E%x' % id(pyobj))
 	tc = type(pyobj)
@@ -559,15 +564,49 @@ try:
 except:
     _magicnums['INF'] = float(1e300**2)
     _magicnums['-INF'] = float(-1e300**2)
-try:
-    _magicnums['NaN'] = float('NaN')
-    _magicnums['-NaN'] = float('-NaN')
-    _check_for_nan = 0
-except:
-    # The standard says NaN > INF; oh well, close enough.
-    _magicnums['NaN'] = _magicnums['INF'] - _magicnums['INF']
-    _magicnums['-NaN'] = _magicnums['-INF'] - _magicnums['-INF']
-    _check_for_nan = 0
+
+# The following comment and code was written by Tim Peters in
+# article <001401be92d2$09dcb800$5fa02299@tim> in comp.lang.python,
+# also available at the following URL:
+# http://groups.google.com/groups?selm=001401be92d2%2409dcb800%245fa02299%40tim
+# Thanks, Tim!
+
+# NaN-testing.
+#
+# The usual method (x != x) doesn't work.
+# Python forces all comparisons thru a 3-outcome cmp protocol; unordered
+# isn't a possible outcome.  The float cmp outcome is essentially defined
+# by this C expression (combining some cross-module implementation
+# details, and where px and py are pointers to C double):
+#   px == py ? 0 : *px < *py ? -1 : *px > *py ? 1 : 0
+# Comparing x to itself thus always yields 0 by the first clause, and so
+# x != x is never true.
+# If px and py point to distinct NaN objects, a strange thing happens:
+# 1. On scrupulous 754 implementations, *px < *py returns false, and so
+#    does *px > *py.  Python therefore returns 0, i.e. "equal"!
+# 2. On Pentium HW, an unordered outcome sets an otherwise-impossible
+#    combination of condition codes, including both the "less than" and
+#    "equal to" flags.  Microsoft C generates naive code that accepts
+#    the "less than" flag at face value, and so the *px < *py clause
+#    returns true, and Python returns -1, i.e. "not equal".
+# So with a proper C 754 implementation Python returns the wrong result,
+# and under MS's improper 754 implementation Python yields the right
+# result -- both by accident.  It's unclear who should be shot <wink>.
+#
+# Anyway, the point of all that was to convince you it's tricky getting
+# the right answer in a portable way!
+def isnan(x):
+    """x -> true iff x is a NaN."""
+    # multiply by 1.0 to create a distinct object (x < x *always*
+    # false in Python, due to object identity forcing equality)
+    if x * 1.0 < x:
+        # it's a NaN and this is MS C on a Pentium
+        return 1
+    # Else it's non-NaN, or NaN on a non-MS+Pentium combo.
+    # If it's non-NaN, then x == 1.0 and x == 2.0 can't both be true,
+    # so we return false.  If it is NaN, then assuming a good 754 C
+    # implementation Python maps both unordered outcomes to true.
+    return 1.0 == x == 2.0
 
 class Decimal(TypeCode):
     '''Parent class for floating-point numbers.
@@ -637,15 +676,12 @@ class Decimal(TypeCode):
 	elif pyobj == _magicnums['-INF']:
 	    print >>sw, ('<%s%s%s>-INF</%s>') % \
 		    (n, kw.get('attrtext', ''), tstr, n)
-	elif _check_for_nan and pyobj == _magicnums['NaN']:
+        elif isnan(pyobj):
 	    print >>sw, ('<%s%s%s>NaN</%s>') % \
-		    (n, kw.get('attrtext', ''), tstr, n)
-	elif _check_for_nan and pyobj == _magicnums['-NaN']:
-	    print >>sw, ('<%s%s%s>-NaN</%s>') % \
 		    (n, kw.get('attrtext', ''), tstr, n)
 	else:
 	    print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
-		    (n, kw.get('attrtext', ''), tstr, pyobj, n)
+		(n, kw.get('attrtext', ''), tstr, pyobj, n)
 
 class Boolean(TypeCode):
     '''A boolean.

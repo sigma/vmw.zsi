@@ -7,6 +7,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Remove needless __init__ when just calling parent __init__
     -	Added 'undeclared' parameter to TC.Array
     -	Added 'repeatable' parameter to TC.TypeCode
+    -	Add 'aname' parameter to TC.Typecode
     -	Move 'unique' keyword from TC.String up to TC.TypeCode
     -	Add 'wrapped' keyword to TC.XML
     -	Added _find_attr lambda
@@ -26,6 +27,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	SOAPAction header needs quotes <gisle@activestate.com>
     -	Add Apache SOAPArray <gisle@activestate.com>
     -	Properly use 'ns' in client to set default namespace
+    -	Convert client.py to use "new" HTTP objects
     -	Sign isn't optional on numeric timezones in dates <grahamd@dscpl.com.au>
     -	Document limits on date/time conversions.
     -	Add TC.XML.copyit and 'copyit' keyword to constructor
@@ -45,11 +47,17 @@ Changes for 1.2, released xx-xxx-2001:
     -	Remove "None" if it was second arg to dictionary get() method
     -	Add 'format' parameter to TC.Decimal and TC.Integer
     -	Fix TC.Decimal to work where float('INF') doesn't
+    -	Fix TC.Decimal to handle NaN more portably <grahamd@dscpl.com.au>
     -	Add samples directory
     -	Binding() omits typing from the outermost RPC wrapper
     -	Fix HTML docs to include the ZSI schema
     -	Add readerclass parameter to client Binding
     -	Ignore <> around Content-ID in resolver; fix test to have it
+    -	Docfix for Placer.typecode (paul@prescod.net)
+    -	TC.Any will call pyobj's typecode if attr exists (paul@prescod.net)
+    -	Binding replytype is optional; standards replytype not replyclass
+    -	Document other tests to-do in interop/README
+    -	Document ZSI typecode naming better.
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!

@@ -7,6 +7,44 @@ understood by \ZSI{}.
 
 All typecodes classes have the prefix \code{TC.}, to avoid name clashes.
 
+\ZSI{} provides fine-grain control over the names used when parsing and
+serializing XML into local Python objects, through the use of three
+attributes: the \code{pname}, the \code{aname}, and the \code{oname}
+(in approximate order of importance).  They specify the name expected on
+the XML element being parsed, the name to use for the analogous attribute
+in the local Python object, and the name to use for the output element
+when serializing.
+
+The \code{pname} is the parameter name. It specifies the incoming
+XML element name and the default values for the Python attribute
+and serialized names.  All typecodes take name argument, known as
+\code{name}, for the \code{pname}.  This name can be specified as
+either a list or a string.  When specified as a list, it must have two
+elements which are interpreted as a ``(namespace-URI, localname)'' pair.
+If specified this way, both the namespace and the local element name
+must match for the parse to succeed.  For the Python attribute, and
+when generating output, only the ``localname'' is used.  (Because the
+output name is not namespace-qualified, it may be necessary to set the
+default namespace, such as through the \code{nsdict} parameter of the
+\class{SoapWriter} class.  When the name is specified as a string, it
+can be either a simple XML name (such as ``foo''), or a colon-separated
+XML qualified name (such as ``tns:foo'').  If a qualified name is used,
+the namespace prefix is ignore on input and for the Python attribute,
+but the full qualified name is used for output; this \emph{requires}
+the namespace prefix to be specified.
+
+The \code{aname} is the attribute name.  This parameter overrides
+any value implied by the \code{pname}.  Typecodes nested in a the
+\class{TC.Struct} or \class{TC.Choice} can use this parameter to specify
+the tag, dictionary key, or instance attribute to set.
+
+The final name, \code{oname}, specifies the name to use for the XML element
+when serializing.  This is most useful when using the same typecode for
+both parsing and serializing operations.  It can be any string, and is
+output directly; a name like ``tns:foo'' implies that the \code{nsdict}
+parameter to the \class{SoapWriter} construct should have an entry for
+``tns,'' otherwise the resulting output will not be well-formed XML.
+
 \begin{classdesc}{TypeCode}{name, **keywords}
 The \code{name} parameter is the name of the object; this is only
 required when a typecode appears within a \class{TC.Struct} as it defines
@@ -14,22 +52,20 @@ the attribute name used to hold the data, or within a \class{TC.Choice}
 as it determines the data type.
 (Since SOAP RPC models transfer as structures, this essentially means that
 a the \code{name} parameter can never be \code{None}.)
-The name may be either a text string, or a \samp{(uri, localname)} tuple.
-If the name (or \code{localname} tuple element) has a colon, the namespace
-prefix before the colon will be ignore when parsing input, but written
-when serializing for output.
 
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{aname}}{\-}{See name discussion above.}
 \lineiii{\code{default}}{n/a}{Value if the element is not specified.}
 \lineiii{\code{optional}}{\code{0}}{The element is optional; see below.}
+\lineiii{\code{oname}}{\-}{See name discussion above.}
 \lineiii{\code{repeatable}}{\code{0}}{If multiple instances of this
 occur in a \class{TC.Struct}, collect the values into a list.
 \versionadded{1.2}}
 \lineiii{\code{typed}}{\code{1}}{Output type information (in the
 \code{xsi:type} attribute) when serializing. By special dispensation,
-items within a \class{TC.Struct} object will inherit this from the
+typecodes within a \class{TC.Struct} object inherit this from the
 container.}
 \lineiii{\code{unique}}{\code{0}}{If true, the object is unique and will
 never be ``aliased'' with another object, so the \code{id} attribute
@@ -134,6 +170,11 @@ The default is a Python dictionary, which preserves parameter names but
 loses the ordering.
 \versionadded{1.1}}
 \end{tableiii}
+
+In addition, if the Python object being serialized with an \class{Any}
+has a \code{typecode} attribute, then the \method{serialize} method of
+the typecode will be invoked to do the serialization.
+This allows objects to override the default dynamic serialization.
 \end{classdesc}
 
 Referring back to the compound XML data above, it is possible to create a new
@@ -603,15 +644,21 @@ foo.typecodes = TC.Struct(foo,
 
 \section{Choice}
 
-A choice is a Python two-element \samp{(name, value)} tuple.
-The first item is a string, and the second is the actual Python object.
-The string is the discriminant, used to identify the type of the data.
+A choice is a Python two-element \samp{(name, value)} tuple, representing
+a union of different types.
+The first item is a string identifying the type, and the second is the
+actual data.
 
 \begin{classdesc}{Choice}{typecode_seq, name\optional{, **keywords}}
-When parsing, \ZSI{} will look at the element name in the SOAP message,
-and determine which of the choices to create.
-When serializing, \ZSI{} will look at the name in the tuple and determine
-which typecode to serialize the object.
+When parsing, ZSI will look at the element name in the SOAP message, and
+determine which of the choices to create.
+
+When serializing Python objects to SOAP messages, \ZSI{} must be
+explicitly told which of the choices define the data.
+This is done by passing a two-element tuple.
+The first item is a string identifying the name of a typecode
+from the \code{typecode_seq} list of typecodes.
+The second is the object to be serialized.
 \end{classdesc}
 
 \section{Arrays}

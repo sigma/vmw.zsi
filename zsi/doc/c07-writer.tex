@@ -40,7 +40,7 @@ Creating a \class{SoapWriter} object with a \class{StringIO} object for
 the \code{out} parameter and \code{envelope} set to false results in an
 object that can be used for serializing objects into a string.
 
-\begin{methoddesc}{serialize}{pyobj\optional{, typecode\optional{, root=None}}}
+\begin{methoddesc}{serialize}{pyobj\optional{, typecode\optional{, root=None\optional{, **keywords}}}}
 This method serializes the \code{pyobj} Python object as directed
 by the \code{typecode} typecode object.
 If \code{typecode} is omitted, then \code{pyobj} should be a Python
@@ -51,6 +51,8 @@ The \code{root} parameter may be used to explicitly indicate the root
 (main element) of a SOAP encoding, or indicate that the item is not the
 root.
 If specified, it should have the numeric value of zero or one.
+Any other keyword parameters are passed to the typecode's \code{serialize}
+method.
 \end{methoddesc}
 
 \begin{methoddesc}{close}{\optional{trailer=None\optional{, nsdict=None}}}
