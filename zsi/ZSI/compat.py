@@ -7,10 +7,6 @@ wrote.
 
 from ZSI import _copyright
 
-class XMLNS:
-    BASE        = "http://www.w3.org/2000/xmlns/"
-    XML         = "http://www.w3.org/XML/1998/namespace"
-
 class SOAP:
     ENV         = "http://schemas.xmlsoap.org/soap/envelope/"
     ENC         = "http://schemas.xmlsoap.org/soap/encoding/"
