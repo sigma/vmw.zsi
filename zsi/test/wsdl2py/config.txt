@@ -47,7 +47,8 @@ Blast  =  http://xml.nig.ac.jp/wsdl/Blast.wsdl
 CATrafficService  =  http://www.xmethods.net/sd/2001/CATrafficService.wsdl
 Calendar  =  http://www.stgregorioschurchdc.org/wsdl/Calendar.wsdl
 ClustalW  =  http://xml.nig.ac.jp/wsdl/ClustalW.wsdl
-CountryInfoLookupService  =  http://www.cs.uga.edu/~sent/xmethods/CountryInfoLookup.wsdl
+# % in binding name
+#CountryInfoLookupService  =  http://www.cs.uga.edu/~sent/xmethods/CountryInfoLookup.wsdl
 CurrencyExchangeService  =  http://www.xmethods.net/sd/2001/CurrencyExchangeService.wsdl
 DDBJ  =  http://xml.nig.ac.jp/wsdl/DDBJ.wsdl
 DiscordianService  =  http://www.compkarori.com/wsdl/discordian.wsdl
@@ -144,7 +145,8 @@ Quotes  =  http://www.seshakiran.com/QuoteService/QuotesService.asmx?wsdl
 QuranVerse  =  http://aspnet.lamaan.com/webservices/QuranVerse.asmx?WSDL
 RSAFuncs  =  http://www.bitounis.com/RSAFunctions/RSAFuncs.asmx?WSDL
 SMS  =  http://ws.acrosscommunications.com/SMS.asmx?WSDL
-SMS_1  =  http://www.barnaland.is/dev/sms.asmx?WSDL
+# duplicate service name, not handled for now
+#SMS_1  =  http://www.barnaland.is/dev/sms.asmx?WSDL
 SQLDataSoap  =  http://www.SoapClient.com/xml/SQLDataSoap.wsdl
 SecureXML  =  http://www.securexml.net/securexml/securexml.wsdl
 ServiceSMS  =  http://smsserver.dotnetisp.com/servicesms.asmx?WSDL
@@ -165,7 +167,8 @@ chat  =  http://www.x-ws.de/cgi-bin/eliza/chat.wsdl
 eSynapsFeed  =  http://www.esynaps.com/WebServices/eSynapsFeed.asmx?WSDL
 eSynapsSerach  =  http://www.esynaps.com/WebServices/eSynapsSearch.asmx?WSDL
 engtoarabic  =  http://www.dl-me.com/etoaservice/engtoarabic.asmx?WSDL
-fWArticleService  =  http://www.framewerks.com/WebServices/fWArticleService/fwArticles.asmx?WSDL
+# service name not found
+#fWArticleService  =  http://www.framewerks.com/WebServices/fWArticleService/fwArticles.asmx?WSDL
 foxcentral  =  http://www.foxcentral.net/foxcentral.wsdl
 huzipService  =  http://www.c6.hu/ws/huzip.wsdl
 iifws  =  http://www.inkostar.com/wsdl/iifws/iifws.wsdl
@@ -220,8 +223,9 @@ GeoPlaces  =  http://www.codebump.com/services/placelookup.asmx?wsdl
 GlobalWeather  =  http://live.capescience.com/wsdl/GlobalWeather.wsdl
 GoogleSearch  =  http://api.google.com/GoogleSearch.wsdl
 HPcatalogService  =  http://www.lixusnet.com/lixusnet/HPcatalog.jws?wsdl
-HTMLeMail  =  http://www.framewerks.com/WebServices/HTMLeMail/HTMLeMail.asmx?WSDL
-HelpfulFunctions  =  http://www.framewerks.com/WebServices/helpfulfunctions/helpfulfunctions.asmx?WSDL
+# service name not found 
+#HTMLeMail  =  http://www.framewerks.com/WebServices/HTMLeMail/HTMLeMail.asmx?WSDL
+#HelpfulFunctions  =  http://www.framewerks.com/WebServices/helpfulfunctions/helpfulfunctions.asmx?WSDL
 HistoricalStockQuotes  =  http://glkev.webs.innerhost.com/glkev_ws/HistoricalStockQuotes.asmx?WSDL
 Horoscope  =  http://www.swanandmokashi.com/HomePage/WebServices/Horoscope.asmx?WSDL
 IACHSOAPservice  =  http://soap.achchex.com/exec/achsoap.dll/wsdl/IACHSOAP
@@ -248,12 +252,14 @@ QuoteOfTheDay  =  http://www.swanandmokashi.com/HomePage/WebServices/QuoteOfTheD
 RandomBushism  =  http://greg.froh.ca/fun/random_bushism/soap/?wsdl
 RandomGoogleSearch  =  http://www.ghettodriveby.com/soap/?wsdl
 RateInfoClass  =  http://www.xeeinc.com/RateInformation/RateInfo.asmx?WSDL
-RateInfoClass_1  =  http://www.xeeinc.com/RateInformation/Rateinfo.asmx?WSDL
+# duplicate service name, not handled for now
+#RateInfoClass_1  =  http://www.xeeinc.com/RateInformation/Rateinfo.asmx?WSDL
 RecipeService  =  http://icuisine.net/webservices/RecipeService.asmx?WSDL
 RenderServer3D  =  http://ws.xara.com/graphicrender/render3d.wsdl
 RichPayments  =  http://www.richsolutions.com/richpayments/richpay.asmx?WSDL
 SBGGetAirFareQuoteService  =  http://wavendon.dsdata.co.uk:8080/axis/services/SBGGetAirFareQuote?wsdl
-SMS  =  http://www.abctext.com/webservices/SMS.asmx?WSDL
+# duplicate service name, not handled for now
+#SMS  =  http://www.abctext.com/webservices/SMS.asmx?WSDL
 SalesRankNPrice  =  http://www.PerfectXML.NET/WebServices/SalesRankNPrice/BookService.asmx?WSDL
 Server  =  http://addison.ra.cwru.edu/orc/calendar_copy/server.php?wsdl
 Service  =  http://www.ejse.com/WeatherService/Service.asmx?WSDL
@@ -266,7 +272,8 @@ Transform  =  http://transform.dataconcert.com/transform.wsdl
 UPSTracking  =  http://glkev.webs.innerhost.com/glkev_ws/UPSTracking.asmx?WSDL
 URLjr_Library  =  http://urljr.com/soap
 WeatherFetcher  =  http://glkev.webs.innerhost.com/glkev_ws/WeatherFetcher.asmx?WSDL
-WeatherService  =  http://www.hkwizard.com/WeatherService.asmx?wsdl
+# service name not found
+#WeatherService  =  http://www.hkwizard.com/WeatherService.asmx?wsdl
 WebServiceOfTheDay  =  http://www.webserviceoftheday.com/ws/soap/wsotd.asmx?wsdl
 WeblogsSubscriber  =  http://soap.4s4c.com/weblogs/subscribe.wsdl
 WhoIs  =  http://ws2.serviceobjects.net/whi/WhoIs.asmx?WSDL
