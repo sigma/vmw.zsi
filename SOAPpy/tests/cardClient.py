@@ -26,3 +26,5 @@ print "*****hand****\n",hand,"\n*********"
 print "******sortedhand*****\n",sortedhand,"\n*********"
 print "card:",card
 
+serv.quit()
+

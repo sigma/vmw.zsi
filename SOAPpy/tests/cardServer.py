@@ -90,6 +90,12 @@ def dealArrangedHand (NumberOfCards, StringSeparator):
 def dealCard ():
     return deal(1)[0]
 
+run = 1
+
+def quit():
+    global run
+    run=0;
+
 namespace = 'http://soapinterop.org/'
 
 server = SOAPServer (("localhost", 12027))
@@ -97,8 +103,10 @@ server = SOAPServer (("localhost", 12027))
 server.registerKWFunction (dealHand, namespace)
 server.registerKWFunction (dealArrangedHand, namespace)
 server.registerKWFunction (dealCard, namespace)
+server.registerKWFunction (quit, namespace)
 
 try:
-    server.serve_forever()
+    while run:
+        server.handle_request()
 except KeyboardInterrupt:
     pass
