@@ -2907,8 +2907,13 @@ class SOAPBuilder:
             for i in args:
                 self.dump(i, typed = typed, ns_map = ns_map)
 
-            for (k, v) in self.kw.items():
-                self.dump(v, k, typed = typed, ns_map = ns_map)
+            if hasattr(self.config, "argsOrdering") and self.config.argsOrdering.has_key(self.method):
+                for k in self.config.argsOrdering.get(self.method):
+                    self.dump(self.kw.get(k), k, typed = typed, ns_map = ns_map)                
+            else:
+                for (k, v) in self.kw.items():
+                    self.dump(v, k, typed = typed, ns_map = ns_map)
+                
         except RecursionError:
             if self.use_refs == 0:
                 # restart
