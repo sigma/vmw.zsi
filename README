@@ -1,0 +1,11 @@
+Welcome to pywebsvcs, a SourceForge "meta-project" for python web
+services programming.
+
+
+SOAPpy
+	SOAP implementation by Cayce Ullman (c_ullman@yahoo.com) and
+	Brian Matthews (blm@blmatthews.com)
+
+ZSI, Zolera SOAP Infrastructure
+	A different SOAP implementation primarily by Rich Salz
+	(rsalz@zolera.com).
