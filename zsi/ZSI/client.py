@@ -50,8 +50,8 @@ class Binding:
     '''
 
     def __init__(self, nsdict=None, ssl=0, url=None, tracefile=None,
-    host='localhost', readerclass=None, port=None, typesmodule=None,
-    soapaction='""', **kw):
+                 host='localhost', readerclass=None, port=None,
+                 typesmodule=None, soapaction='""', ns=None, op_ns=None, **kw):
         '''Initialize.
         Keyword arguments include:
             host, port -- where server is; default is localhost
@@ -64,13 +64,24 @@ class Binding:
             tracefile -- file to dump packet traces
             cert_file, key_file -- SSL data (q.v.)
             readerclass -- DOM reader class
+            ns -- the namespace to use for the SOAP:Body
+            op_ns -- the namespace to use for the operation
         '''
-        self.data, self.ps, self.ns, self.user_headers, self.port = \
-            None, None, None, [], None
+        self.data = None
+        self.ps = None
+        self.ns = ns
+        self.user_headers = []
+        self.port = None
         self.typesmodule = typesmodule
-        self.nsdict, self.ssl, self.url, self.trace, self.host, \
-        self.readerclass, self.soapaction = \
-            nsdict or {}, ssl, url, tracefile, host, readerclass, soapaction
+        self.nsdict = nsdict or {}
+        self.ssl = ssl
+        self.url = url
+        self.trace = tracefile
+        self.host = host
+        self.readerclass = readerclass
+        self.soapaction = soapaction
+        self.op_ns = op_ns
+
         if kw.has_key('auth'):
             self.SetAuth(*kw['auth'])
         else:
@@ -138,6 +149,7 @@ class Binding:
         requestclass keyword; default is the class's typecode (if
         there is one), else Any.
         '''
+            
         # Get the TC for the obj.
         if kw.has_key('requesttypecode'):
             tc = kw['requesttypecode']
@@ -149,6 +161,11 @@ class Binding:
         else:
             tc = TC.Any(opname, aslist=1)
 
+
+        if self.op_ns:
+            opname = '%s:%s' % (self.op_ns, opname)
+            tc.oname = opname 
+
         # Determine the SOAP auth element.
         if kw.has_key('auth_header'):
             auth_header = kw['auth_header']
@@ -159,7 +176,7 @@ class Binding:
 
         # Serialize the object.
         s = StringIO.StringIO()
-        d = {}
+        d = self.nsdict or {}
         if self.ns: d[''] = self.ns
         d.update(nsdict or self.nsdict or {})
         sw = SoapWriter(s, nsdict=d, header=auth_header)
