@@ -145,8 +145,11 @@ class StringWriter:
             self.data.append(val)
             
     def set(self, val):
-        self.data = None
-        self.data = []
+        if self.data:
+            # in some cases the empty list reassignment fails, so....
+            self.data = None
+            self.data = []
+            
         self.data.append(val)
         
     def write(self, val):
