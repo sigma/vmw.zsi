@@ -43,19 +43,19 @@ class BaseTypeInterpreter:
     """
 
     def __init__(self):
-        self.__type_list = [TC.Boolean, TC.Iinteger, TC.IunsignedShort, \
-                            TC.gYearMonth, TC.Base64String, \
-                            TC.InonNegativeInteger, TC.Iint, TC.String, \
-                            TC.gDateTime, TC.IunsignedInt, \
-                            TC.IpositiveInteger, TC.FPfloat, TC.gDay, \
-                            TC.InegativeInteger, TC.gDate, TC.URI, \
-                            TC.HexBinaryString, TC.IunsignedByte, \
-                            TC.gMonthDay, TC.InonPositiveInteger, \
-                            TC.Ibyte, TC.FPdouble, TC.gTime, TC.gYear, \
-                            TC.Ilong, TC.IunsignedLong, TC.Ishort, \
-                            TC.Decimal]
+        self._type_list = [TC.Boolean, TC.Iinteger, TC.IunsignedShort, \
+                           TC.gYearMonth, TC.Base64String, \
+                           TC.InonNegativeInteger, TC.Iint, TC.String, \
+                           TC.gDateTime, TC.IunsignedInt, \
+                           TC.IpositiveInteger, TC.FPfloat, TC.gDay, \
+                           TC.InegativeInteger, TC.gDate, TC.URI, \
+                           TC.HexBinaryString, TC.IunsignedByte, \
+                           TC.gMonthDay, TC.InonPositiveInteger, \
+                           TC.Ibyte, TC.FPdouble, TC.gTime, TC.gYear, \
+                           TC.Ilong, TC.IunsignedLong, TC.Ishort, \
+                           TC.Decimal]
 
-        self.__tc_to_int = [
+        self._tc_to_int = [
             ZSI.TCnumbers.IEnumeration,
             ZSI.TCnumbers.Iint,
             ZSI.TCnumbers.Iinteger,
@@ -67,13 +67,13 @@ class BaseTypeInterpreter:
             ZSI.TCnumbers.IpositiveInteger,
             ZSI.TCnumbers.Ishort]
   
-        self.__tc_to_float = [
+        self._tc_to_float = [
             ZSI.TC.Decimal,
             ZSI.TCnumbers.FPEnumeration,
             ZSI.TCnumbers.FPdouble,
             ZSI.TCnumbers.FPfloat]
         
-        self.__tc_to_string = [
+        self._tc_to_string = [
             ZSI.TC.Base64String,
             ZSI.TC.Enumeration,
             ZSI.TC.HexBinaryString,
@@ -86,7 +86,7 @@ class BaseTypeInterpreter:
             ZSI.TC.URI,
             ZSI.TC.XMLString]
 
-        self.__tc_to_date = [
+        self._tc_to_date = [
             ZSI.TCtimes.gDate,
             ZSI.TCtimes.gDateTime,
             ZSI.TCtimes.gDay,
@@ -97,15 +97,15 @@ class BaseTypeInterpreter:
         
         return
     
-    def __get_xsd_typecode(self, msg_type):
-        for tc in self.__type_list:
+    def _get_xsd_typecode(self, msg_type):
+        for tc in self._type_list:
             if tc.tag == msg_type:
                 break
         else:
             tc = TC.Any
         return tc
 
-    def __get_soapenc_typecode(self, msg_type):
+    def _get_soapenc_typecode(self, msg_type):
         if msg_type == 'Array':
             return TCcompound.Array
         elif msg_type == 'base64':
@@ -116,9 +116,9 @@ class BaseTypeInterpreter:
     def get_typeclass(self, msg_type, targetNamespace):
         prefix, name = SplitQName(msg_type)
         if targetNamespace in SCHEMA.XSD_LIST:
-            return self.__get_xsd_typecode(name)
+            return self._get_xsd_typecode(name)
         elif targetNamespace in [SOAP.ENC]:
-            return self.__get_soapenc_typecode(name)
+            return self._get_soapenc_typecode(name)
         return None
 
     def get_pythontype(self, msg_type, targetNamespace, typeclass=None):
@@ -126,13 +126,13 @@ class BaseTypeInterpreter:
             tc = self.get_typeclass(msg_type, targetNamespace)
         else:
             tc = typeclass
-        if tc in self.__tc_to_int:
+        if tc in self._tc_to_int:
             return 'int'
-        elif tc in self.__tc_to_float:
+        elif tc in self._tc_to_float:
             return 'float'
-        elif tc in self.__tc_to_string:
+        elif tc in self._tc_to_string:
             return 'str'
-        elif tc in self.__tc_to_date:
+        elif tc in self._tc_to_date:
             return 'tuple'
         elif tc in [TCcompound.Array]:
             return 'list'
