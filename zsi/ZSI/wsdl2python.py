@@ -1188,7 +1188,7 @@ class SchemaDescription:
 
 
             elif not etp:
-                self.classdef.set('\n\n%sclass %s(Struct):' \
+                self.classdef.set('\n\n%sclass %s_Dec(Struct):' \
                                   % (ID1, tp.getName()))
                 self.initdef.set('\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2))
                 self.basector.set('\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="_%s", inline=1)' % (ID3,tp.getName(),tp.getName()))
