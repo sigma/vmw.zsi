@@ -6,7 +6,7 @@ from ZSI import *
 class t2TestCase(unittest.TestCase):
     "Test case wrapper for old ZSI t2 test case"
 
-    def checkt1(self):
+    def checkt2(self):
         try: 
             ps = ParsedSoap(IN)
         except ParseException, e:
@@ -27,43 +27,19 @@ class t2TestCase(unittest.TestCase):
         if len(mu): 
             uri, localname = mu[0] 
             FaultFromNotUnderstood(uri, localname).AsSOAP(OUT) 
-            unitest.fail() 
+            self.fail() 
            
-        class Player: 
-            '''Input class.''' 
-            def __init__(self, name=None): 
-                pass 
-        Player.typecode = TC.Struct(Player, [ TC.String('Name', optional=1), 
-                                            TC.Array('xsd:integer', TC.Integer(), 
-                                            'Scores'), ], 'GetAverage') 
-        class Average: 
-            '''Output class.''' 
-            def __init__(self, average): 
-                self.average = average 
-        Average.typecode = TC.Struct(Average, [ TC.Integer('average'), 
-                                            ], 'GetAverageResponse', inline=1) 
                                             
         try: 
-            #player = ps.Parse(Player.typecode) 
             player = ps.Parse(Player) 
         except EvaluateException, e: 
             FaultFromZSIException(e).AsSOAP(OUT) 
             self.fail() 
             
-        def bar(total, len): 
-            return total / len 
-        
-        def foo(total, len): 
-            return bar(total, len) 
-        
         try: 
             import operator 
             total = reduce(operator.add, player.Scores, 0)
             result = Average(foo(total, len(player.Scores)))
-            #sw = SoapWriter(OUT)
-            #sw.serialize(result).close()
-            #sw.serialize(result, Average.typecode)
-            #sw.close()
             SoapWriter(OUT).serialize(result) 
         except Exception, e: 
             FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT) 
@@ -74,6 +50,27 @@ def makeTestSuite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(t2TestCase, "check"))
     return suite
+
+
+class Player: 
+    '''Input class.''' 
+    def __init__(self, name=None): 
+        pass 
+Player.typecode = TC.Struct(Player, [ TC.String('Name', optional=1), 
+                                    TC.Array('xsd:integer', TC.Integer(), 
+                                    'Scores'), ], 'GetAverage') 
+class Average: 
+    '''Output class.''' 
+    def __init__(self, average): 
+        self.average = average 
+Average.typecode = TC.Struct(Average, [ TC.Integer('average'), 
+                                    ], 'GetAverageResponse', inline=1) 
+
+def bar(total, len): 
+    return total / len 
+
+def foo(total, len): 
+    return bar(total, len) 
 
 OUT = sys.stdout
 IN='''<SOAP-ENV:Envelope
