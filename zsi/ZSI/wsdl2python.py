@@ -1145,6 +1145,10 @@ class SchemaDescription:
                     elif dt.contentIsChoice():
                         tclist = self._complexTypeChoice(tp,
                                                          dt.getContent())
+                    else:
+                        # dubious?
+                        tclist = ''
+                        
                     # end cheating....
                     
                     self.precede  = '%s%s' % ( dt.getDerivation(), '_Def' )
