@@ -13,8 +13,11 @@ class t7TestCase(unittest.TestCase):
         tclist = TC.Apache.Map(aslist=1)
 
         d = tcdict.parse(ps.body_root, ps)
+        self.assertEqual(d, { u'a':123, '\x00\x01':456 })
         print 'as dictionary\n', d
+
         l = tclist.parse(ps.body_root, ps)
+        self.assertEqual(l, [('\x00\x01', 456), (u'a', 123)])
         print '\n', '=' * 30
         print 'as list\n', l
 
