@@ -1,10 +1,11 @@
 #!/usr/bin/python
+"""
 ################################################################################
 #
-# SOAP.py 0.9.8 - Cayce Ullman       (cayce@actzero.com)
-#                 Brian Matthews     (blm@actzero.com)
-#                 Gregory Warnes     (gregory_r_warnes@groton.pfizer.com)
-#                 Christopher Blunck (blunck@gst.com)
+# SOAPpy - Cayce Ullman       (cayce@actzero.com)
+#          Brian Matthews     (blm@actzero.com)
+#          Gregory Warnes     (gregory_r_warnes@groton.pfizer.com)
+#          Christopher Blunck (blunck@gst.com)
 #
 # INCLUDED:
 # - General SOAP Parser based on sax.xml (requires Python 2.0)
@@ -76,6 +77,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ################################################################################
+"""
+
 import xml.sax
 import UserList
 import base64
@@ -97,7 +100,7 @@ except: pass
 
 ident = '$Id$'
 
-__version__ = "0.9.8"
+__version__ = "0.9.9"
 
 # Platform hackery
 
@@ -226,7 +229,10 @@ class SOAPConfig:
             self.buildWithNamespacePrefix = 1
             self.returnAllAttrs = 0
 
-            self.specialArgs = 0
+
+            # New argument name handling mechanism.  See
+            # README.MethodParameterNaming for details
+            self.specialArgs = 1
 
             try: SSL; d['SSLserver'] = 1
             except: d['SSLserver'] = 0

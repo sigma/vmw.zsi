@@ -1,6 +1,17 @@
 
 SOAP.py
 
+CHANGES SINCE VERSION 0.9.8
+
+- *** New argument handling method (via SOAPpy.SOAP.Config.specialArgs=1)
+  is now enabled by default.***
+
+- Changed all references to actzero.com in SOAP.py to pywebscvs.sf.net.
+
+- Fixed a bug where lists included as parameters to SOAP method calls
+  were being incorrectly named 'Results' even when another name was
+  given.
+
 CHANGES SINCE VERSION 0.9.7
 
 - Modified structure to allow installation using Python distutils
@@ -42,7 +53,7 @@ CHANGES SINCE VERSION 0.9.7
 
 - Add basic authentication (Brad Knotwell)
 
-- Fixes to enble proper handling of SOAP faults by the client:
+- Fixes to enable proper handling of SOAP faults by the client:
   - Fixed test of whether message content is text/xml when recieving a fault.
   - Added __call__ method to exception classes to match the current API.
   - The faultType.__repr__() method now print details if present

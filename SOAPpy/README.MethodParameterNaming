@@ -19,10 +19,10 @@ resulted in a several problems, particularly for a SOAPpy client
 communicating with a SOAPpy server.  First, when named arguments were
 used in call to a non-flagged function, the argument would silently be
 reordered by the sender (since they were stored using a Python
-dictionary), *and* the names would be ignored by the reciever, which
+dictionary), *and* the names would be ignored by the receiver, which
 assumed that the parameters were unnamed and only the order was
 significant.  This results in incorrect argument matching.  This
-problem also occured with mixed named and unnamed arguments.
+problem also occurred with mixed named and unnamed arguments.
 
 For my primary SOAP application, it is not reasonable to flag all of
 the SOAPpy methods as requiring named arguments, for a variety of
@@ -34,14 +34,15 @@ optional arguments, making it impractical to specify them all.
 In an attempt to overcome this problem, I have implemented an
 experimental and non-standard method of handling named and unnamed
 arguments.  This mechanism is enabled in SOAPpy by setting
-SOAPpy.SOAP.Config.specialArgs=1.
+SOAPpy.SOAP.Config.specialArgs=1, and disabled by setting SOAPpy.SOAP.Config.specialArgs=0.
 
 When enabled, parameters with names of the form _#### (i.e., matching
 the regexp "^_[0-9]+") are assumed to be unnamed parameters and are
 passed to the method in numeric order.  All other parameters are
 assumed to be named and are passed using the name.  Outgoing SOAP
 method calls now always generate names in this way--whether or not
-specialArgs is enabled--instead of using the pattern v#####.
+specialArgs is enabled. (Previously, unnamed arguments were given
+names of the form v#####.)
 
 I selected the form _#### because it is a valid XML name, but is
 unlikely to be used as a parameter name.
@@ -50,12 +51,11 @@ In my testing, this mechanism for handling method parameter names
 works fine between a SOAPpy client and a SOAPpy server, and resolves
 the parameter reordering problems I was experiencing.  This system
 seems unlikely to have any negative side effects on other SOAP
-applications, except in the (hopefully) rare case when _#### might abe
-used as an actual parameter name.  
+applications, except in the (hopefully) rare case when _#### might be
+used as an actual parameter name.
 
-For the moment, this feature is disabled by default, but I will
-consider changing the default in a future release.
-
+**In version 0.9.9-pre1, this feature is enabled by default.** Please
+let me know if there are situations where this causes problems.
 
 Note that this mechanism is only a partial solution, since it is still
 impossible to return named parameters in a specified order using
@@ -63,5 +63,5 @@ SOAPpy. SOAP applications or implementations which require this
 feature are simply not compatible with SOAPpy.
 
 -Greg Warnes <gregory_r_warnes@groton.pfizer.com>
-2003-03-07
+2003-03-07 (updated 2003-03-25)
 
