@@ -683,7 +683,7 @@ class foo:
     def __str__(self):
         return str((self.name, self.i, self.text))
 
-foo.typecodes = TC.Struct(foo,
+foo.typecode = TC.Struct(foo,
     ( TC.Integer('i'), TC.String('text') ),
     'foo')
 \end{verbatim}
