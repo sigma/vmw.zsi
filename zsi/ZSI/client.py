@@ -51,7 +51,7 @@ class Binding:
 
     def __init__(self, nsdict=None, ssl=0, url=None, tracefile=None,
     host='localhost', readerclass=None, port=None, typesmodule=None,
-    soapaction='"http://www.zolera.com"', **kw):
+    soapaction='""', **kw):
         '''Initialize.
         Keyword arguments include:
             host, port -- where server is; default is localhost
