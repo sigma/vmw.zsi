@@ -1,0 +1,9 @@
+include README*
+recursive-include bid      *.py
+recursive-include contrib  *.py
+recursive-include docs     *.txt
+recursive-include tests    *.py
+recursive-include tools    *.py
+recursive-include validate *.py
+include validate/server.pem
+include validate/silab.servers
