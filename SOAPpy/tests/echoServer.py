@@ -1,15 +1,11 @@
 #!/usr/bin/env python
-
+#
 # Copyright (c) 2001 actzero, inc. All rights reserved.
 
 import sys
 sys.path.insert(1, "..")
 
 from SOAPpy import *
-
-import gc
-
-gc.set_debug(gc.DEBUG_LEAK)
 
 # Uncomment to see outgoing HTTP headers and SOAP and incoming
 #Config.dumpSOAPIn = 1
@@ -42,6 +38,13 @@ def _authorize(*args, **kw):
 
 # Simple echo
 def echo(s):
+    global Config
+    
+    # Test of context retrieval
+    ctx = Server.GetSOAPContext()
+    if Config.debug:
+        print "SOAP Context: ", ctx
+        
     return s + s
 
 # An echo class
@@ -72,38 +75,48 @@ class echoBuilder:
 
 # Echo with context
 def echo_wc(s, _SOAPContext):
+    global Config
+    
     c = _SOAPContext
 
     sep = '-' * 72
 
     # The Context object has extra info about the call
+    if Config.debug:
+        print "-- XML", sep[7:]
+        # The original XML request
+        print c.xmldata     
 
-    print "-- XML", sep[7:]
-    print c.xmldata     # The original XML request
+        print "-- Header", sep[10:]
+        # The SOAP Header or None if not present
+        print c.header      
 
-    print "-- Header", sep[10:]
-    print c.header      # The SOAP Header or None if not present
+        if c.header:
+            print "-- Header.mystring", sep[19:]
+            # An element of the SOAP Header
+            print c.header.mystring         
 
-    if c.header:
-        print "-- Header.mystring", sep[19:]
-        print c.header.mystring         # An element of the SOAP Header
+        print "-- Body", sep[8:]
+        # The whole Body object
+        print c.body        
 
-    print "-- Body", sep[8:]
-    print c.body        # The whole Body object
+        print "-- Peer", sep[8:]
+        if not GSI:
+            # The socket object, useful for
+            print c.connection.getpeername()    
+        else:
+            # The socket object, useful for
+            print c.connection.get_remote_address() 
+            ctx = c.connection.get_security_context()
+            print ctx.inquire()[0].display()
 
-    print "-- Peer", sep[8:]
-    if not GSI:
-        print c.connection.getpeername()    # The socket object, useful for
-    else:
-        print c.connection.get_remote_address() # The socket object, useful for
-        ctx = c.connection.get_security_context()
-        print ctx.inquire()[0].display()
+        print "-- SOAPAction", sep[14:]
+        # The SOAPaction HTTP header
+        print c.soapaction                  
 
-    print "-- SOAPAction", sep[14:]
-    print c.soapaction                  # The SOAPaction HTTP header
-
-    print "-- HTTP headers", sep[16:]
-    print c.httpheaders                 # All the HTTP headers
+        print "-- HTTP headers", sep[16:]
+        # All the HTTP headers
+        print c.httpheaders                 
 
     return s + s
 
@@ -133,11 +146,12 @@ else:
     prefix = 'http'
 
 print "Server listening at: %s://%s:%d/" % (prefix, addr[0], addr[1])
-    
+
+# register the method
+server.registerFunction(echo)
 server.registerFunction(echo, path = "/pathtest")
 server.registerFunction(_authorize)
 server.registerFunction(_authorize, path = "/pathtest")
-server.registerFunction(echo)
 
 # Register a whole object
 o = echoBuilder()
