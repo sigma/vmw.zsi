@@ -38,13 +38,15 @@ class ServerCallbackDescription:
 
     def fromWsdl(self, ws):
 
+        wsdl = ws
+        
         wsm = ZSI.wsdl2python.WriteServiceModule(ws)
 
         self.service = wsm.get_module_names()[1]
 
         wsm = None
 
-        ws = ZSIWsdlAdapter( ws )
+        ws = ZSIWsdlAdapter(ws)
 
         self.imports = self.getImports()
 
@@ -63,6 +65,9 @@ class ServerCallbackDescription:
                     if self.do_extended:
                         self.generateMethods2(op, port)
 
+
+        self.raw_wsdl = wsdl.document.toxml().replace("\"", "\\\"")
+        
         self.classdef = self.getClassdef(ws)
         self.initdef  = self.getInitdef(do_extended=self.do_extended)
         if self.do_extended:
@@ -92,6 +97,8 @@ class ServerCallbackDescription:
         
         c += '\n%s}' % ID2
 
+        c += "\n%s_wsdl = \"\"\"%s\"\"\"" % (ID1, self.raw_wsdl)
+        
         return c
 
     def getInitdef(self, do_extended=0):
@@ -141,8 +148,9 @@ class ServerCallbackDescription:
             iargs = ["%s" % x.getName() for x in input_args]
             iargs = ", ".join(iargs)
             for a in op.getInput().getMessage().getPartList():
-                o += '\n%s# %s is a %s' % (ID2, a.getName(),
-                                           a.getType().getName())
+                if a.getType():
+                    o += '\n%s# %s is a %s' % (ID2, a.getName(),
+                                               a.getType().getName())
                 o += '\n%s%s = args.%s' % (ID2, a.getName(), a.getName())
             o += "\n"
             
@@ -207,7 +215,9 @@ class ServerCallbackDescription:
         iargs = ", ".join(iargs)
         o  = '\n%sdef %s(self, %s):' % (ID1, op.getName(), iargs)
         for a in op.getInput().getMessage().getPartList():
-            o += "\n%s# %s is a %s" % (ID2, a.getName(), a.getType().getName())
+            if a.getType():
+                o += "\n%s# %s is a %s" % (ID2, a.getName(),
+                                           a.getType().getName())
 
         o += "\n"
 
@@ -235,9 +245,9 @@ class ServerCallbackDescription:
         
         if op.getOutput().getMessage() is not None:
             for a in op.getOutput().getMessage().getPartList():
-                o += "\n%s# %s is a %s" % (ID2,
-                                                            a.getName(),
-                                                        a.getType().getName())
+                if a.getType():
+                    o += "\n%s# %s is a %s" % (ID2, a.getName(),
+                                               a.getType().getName())
                 o += "\n%sreturn %s" % (ID2, a.getName())
 
         else:
