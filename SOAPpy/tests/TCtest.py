@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from SOAP import *
+from SOAPpy.SOAP import *
 import sys
 
 x = '''<?xml version="1.0" encoding="utf-8"?>

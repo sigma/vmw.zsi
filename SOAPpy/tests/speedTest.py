@@ -48,7 +48,7 @@ x2='''<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" x
 # Import in function, because for some reason they slow each other
 # down in same namespace ???
 def SOAPParse(inxml):
-    import SOAP
+    from SOAPpy import SOAP
     t=  time.time()
     SOAP.parseSOAPRPC(inxml)
     return time.time()-t

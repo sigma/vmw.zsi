@@ -4,7 +4,10 @@
 
 import sys
 
-import SOAP
+from SOAPpy import SOAP
+
+SOAP.Config.dumpSOAPIn = 1
+SOAP.Config.dumpSOAPOut = 1
 
 if SOAP.Config.SSLserver:
     from M2Crypto import SSL

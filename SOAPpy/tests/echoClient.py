@@ -4,10 +4,10 @@
 
 import sys
 
-import SOAP
+from SOAPpy import SOAP
 
 # Uncomment to see outgoing HTTP headers and SOAP and incoming SOAP.
-#SOAP.Config.debug = 1
+SOAP.Config.debug = 1
 
 SOAP.Config.BuildWithNoType = 1
 SOAP.Config.BuildWithNoNamespacePrefix = 1
