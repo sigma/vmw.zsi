@@ -67,6 +67,15 @@ def nonColonizedName_to_moduleName(name):
     """
     return re.sub('\.', '_', name)
 
+def textProtect(s):
+    """process any strings we cant have illegal chracters in"""
+    tmp = s[0:]
+    tmp = re.sub('-', '_', tmp)
+    tmp = re.sub('\.', '_', tmp)
+    tmp = re.sub('/', '_', tmp)
+    tmp = re.sub(':', '_', tmp)
+    return tmp
+
 class WsdlGeneratorError(Exception):
     pass
 
@@ -115,9 +124,7 @@ class NamespaceHash:
         if name.startswith('http://'):
             name = name[7:]
 
-        name = re.sub('\.', '_', name)
-        name = re.sub('/', '_', name)
-        name = re.sub(':', '_', name)
+        name = textProtect(name)
 
         if name.endswith('_'):
             name = name[:-1]
