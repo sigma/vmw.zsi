@@ -35,15 +35,17 @@ class WSDLReader:
         wsdl.load(document)
         return wsdl
 
-    def loadFromString(self, data, checksum=None):
+    def loadFromString(self, data):
         """Return a WSDL instance loaded from an xml string."""
-        return self.loadFromStream(StringIO(data), checksum)
+        return self.loadFromStream(StringIO(data))
 
-    def loadFromFile(self, filename, checksum=None):
+    def loadFromFile(self, filename):
         """Return a WSDL instance loaded from the given file."""
         file = open(filename, 'rb')
-        try: wsdl = self.loadFromStream(file, checksum)
-        finally: file.close()
+        try:
+            wsdl = self.loadFromStream(file)
+        finally:
+            file.close()
         return wsdl
 
 class WSDL:
@@ -461,11 +463,7 @@ class Binding(Element):
         return None
 
     def findBindings(self, kind):
-        result = []
-        for item in self.extensions:
-            if isinstance(item, kind):
-                result.append(item)
-        return result
+        return [ item for item in self.extensions if isinstance(item, kind) ]
 
     def addOperationBinding(self, name, documentation=''):
         item = OperationBinding(name, documentation)
@@ -540,11 +538,7 @@ class OperationBinding(Element):
         return None
 
     def findBindings(self, kind):
-        result = []
-        for item in self.extensions:
-            if isinstance(item, kind):
-                result.append(item)
-        return result
+        return [ item for item in self.extensions if isinstance(item, kind) ]
 
     def addInputBinding(self, binding):
         if self.input is None:
@@ -595,11 +589,7 @@ class MessageRoleBinding(Element):
         return None
 
     def findBindings(self, kind):
-        result = []
-        for item in self.extensions:
-            if isinstance(item, kind):
-                result.append(item)
-        return result
+        return [ item for item in self.extensions if isinstance(item, kind) ]
 
     def load_ex(self, elements):
         for e in elements:
@@ -932,40 +922,29 @@ def GetDocumentation(element):
     return ''
 
 def GetExtensions(element):
-    result = []
-    for item in DOM.getElements(element, None, None):
-        if item.namespaceURI != DOM.NS_WSDL:
-            result.append(item)
-    return result
+    return [ item for item in DOM.getElements(element, None, None)
+        if item.namespaceURI != DOM.NS_WSDL ]
 
 def FindExtensions(object, kind, t_type=type(())):
-    result = []
     if isinstance(kind, t_type):
+        result = []
         namespaceURI, name = kind
-        for item in object.extensions:
-            if not hasattr(item, 'nodeType'):
-                continue
-            if DOM.nsUriMatch(namespaceURI, item.namespaceURI) and \
-               item.name == name:
-                result.append(item)
-    else:
-        for item in object.extensions:
-            if isinstance(item, kind):
-                result.append(item)
-    return result
+        return [ item for item in object.extensions
+                if hasattr(item, 'nodeType') \
+                and DOM.nsUriMatch(namespaceURI, item.namespaceURI) \
+                and item.name == name ]
+    return [ item for item in object.extensions if isinstance(item, kind) ]
 
 def FindExtension(object, kind, t_type=type(())):
     if isinstance(kind, t_type):
         namespaceURI, name = kind
         for item in object.extensions:
-            if not hasattr(item, 'nodeType'):
-                continue
-            if DOM.nsUriMatch(namespaceURI, item.namespaceURI) and \
-               item.name == name:
+            if hasattr(item, 'nodeType') \
+            and DOM.nsUriMatch(namespaceURI, item.namespaceURI) \
+            and item.name == name:
                 return item
     else:
         for item in object.extensions:
             if isinstance(item, kind):
                 return item
     return None
-
