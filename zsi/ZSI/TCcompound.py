@@ -69,7 +69,7 @@ class Struct(TypeCode):
             _check_typecode_list(self.ofwhat, 'Struct')
 
     def parse(self, elt, ps):
-        if self.rpc:
+        if hasattr(self, 'rpc'):
             elt = elt.getElementsByTagName(self.oname)[0]
         self.checkname(elt, ps)
         if self.type and \
