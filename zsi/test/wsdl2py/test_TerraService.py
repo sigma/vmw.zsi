@@ -231,9 +231,9 @@ def makeTestSuite():
 
     testdiff = None
     kw = {}
-    setUp = utils.TestSetUp()
-    serviceLoc = setUp.getOption('config.txt', 'complex_types', 'TerraService')
-    useTracefile = setUp.getOption('config.txt', 'configuration', 'tracefile') 
+    setUp = utils.TestSetUp('config.txt')
+    serviceLoc = setUp.get('complex_types', 'TerraService')
+    useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
         kw['tracefile'] = sys.stdout
     service, portType = setUp.setService(TerraServiceSoapTest, serviceLoc,

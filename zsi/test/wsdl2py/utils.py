@@ -34,6 +34,9 @@ class ConfigHandler(ConfigParser.ConfigParser):
             print '%s not found\n' % name
             sys.exit(0)
 
+    def optionxform(self, optionstr):
+        return optionstr
+
     
     def getConfigNames(self, sections, numMethods, valueFunc=None):
         """A generator which returns one value from a given config
@@ -88,20 +91,14 @@ def setUpWsdl(path):
     return wsdl
 
 
-class TestSetUp:
+class TestSetUp(ConfigParser.ConfigParser):
 
-    def __init__(self):
-        self.cp = None
+    def __init__(self, fname):
+        ConfigParser.ConfigParser.__init__(self)
+        self.read(fname)
 
-    def getOption(self, configFileName, section, option):
-        if not self.cp:
-            self.cp = ConfigParser.ConfigParser()
-            self.cp.read(configFileName)
-
-        if self.cp.has_option(section, option):
-            return self.cp.get(section, option)
-        else:
-            return None
+    def optionxform(self, optionstr):
+        return optionstr
 
 
     def setService(self, testcase, serviceLoc, serviceName, portTypeName, **kw):

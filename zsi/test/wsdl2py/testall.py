@@ -24,16 +24,15 @@ def makeTestSuite():
 
 
 def main():
-    """Searches the current directory for any modules matching test_*.py.
-       Adapted from wxPython/wxPython/py/tests/testall.py."""
+    """Gets tests to run from configuration file."""
     global moduleList
 
     moduleList = []
     sys.path.append('.')
-    for filename in glob.glob('test_*.py'):
-        module = __import__(os.path.splitext(filename)[0])
-        if not hasattr(module, 'SeparateTest'):
-            moduleList.append(module)
+    cp = utils.TestSetUp('config.txt')
+    for name, value in cp.items('individual_tests'):
+        module = __import__(name)  # value unused for now
+        moduleList.append(module)
     utils.TestProgram(defaultTest="makeTestSuite")
 
 if __name__ == "__main__" : main()

@@ -54,9 +54,9 @@ def makeTestSuite():
     global service, portType
 
     kw = {}
-    setUp = utils.TestSetUp()
-    serviceLoc = setUp.getOption('config.txt', 'complex_types', 'XMethodsQuery')
-    useTracefile = setUp.getOption('config.txt', 'configuration', 'tracefile') 
+    setUp = utils.TestSetUp('config.txt')
+    serviceLoc = setUp.get('complex_types', 'XMethodsQuery')
+    useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
         kw['tracefile'] = sys.stdout
     service, portType = setUp.setService(XMethodsQueryTest, serviceLoc,
