@@ -397,6 +397,10 @@ class SchemaInterface:
         """
         raise NotImplementedError, 'abstract method not implemented'
 
+    def getImportSchema(self, ns):
+        """return a schema associated with an import"""
+        raise NotImplementedError, 'abstract method not implemented'
+
     def getTargetNamespace(self):
         """return targetnamespace of schema
         """
@@ -760,7 +764,7 @@ class ZSIWsdlAdapter(AdapterBase, WsdlInterface):
         """return dictionary of schema adapter objects
         """
         schemas = {}
-        
+
         for k in self._wsdl.types.keys():
             schemas[k] = ZSISchemaAdapter(self._wsdl.types[k])
             
@@ -1263,6 +1267,13 @@ class ZSISchemaAdapter(AdapterBase, SchemaInterface):
             imports.append( i.attributes['namespace'] )
 
         return imports
+
+    def getImportSchema(self, ns):
+        """return a schema associated with an import"""
+        if self._schema.getImportSchemas().has_key(ns):
+            return ZSISchemaAdapter(self._schema.getImportSchemas()[ns])
+        else:
+            return None
     
     def getTargetNamespace(self):
         """return targetnamespace of schema

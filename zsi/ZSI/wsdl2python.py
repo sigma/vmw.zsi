@@ -258,6 +258,9 @@ class WriteServiceModule:
                    (not self.tns_wrote.has_key(ns)):
                 self.write_dependent_schema(self._wa.\
                                             getSchemaDict().get(ns), fd)
+            if schema.getImportSchema(ns) and \
+               (not self.tns_wrote.has_key(ns)):
+                self.write_dependent_schema(schema.getImportSchema(ns), fd)
 
         # next...xmlns
         for ns in schema.getXmlnsDict().values():
