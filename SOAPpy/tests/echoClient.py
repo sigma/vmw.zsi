@@ -12,7 +12,7 @@ from SOAPpy import *
 #Config.dumpHeadersIn = 1
 #Config.dumpSOAPIn = 1
 #Config.dumpSOAPOut = 1
-Config.unwrap_results = 1
+Config.simplify_objects = 1
 
 #Config.BuildWithNoType = 1
 #Config.BuildWithNoNamespacePrefix = 1

@@ -34,7 +34,7 @@ class test_service:
 
 
 server = SOAPpy.SOAPServer(("localhost",9999))
-SOAPpy.Config.unwrap_results=1
+SOAPpy.Config.simplify_objects=1
 
 access_object = test_service()
 server.registerObject(access_object)

@@ -89,10 +89,17 @@ class SOAPConfig:
             # README.MethodParameterNaming for details
             self.specialArgs = 1
 
+            # If set and there is only element in the struct,
+            # SOAPProxy will assume that this element is the result
+            # and return it rather than the struct containing it.
+            # Otherwise SOAPproxy will return the struct with all the
+            # elements as attributes.
+            self.unwrap_results = 1
+
             # Automatically simplfy SOAP complex types into the
             # corresponding python types. (structType --> dict,
             # arrayType --> array)
-            self.unwrap_results = 0
+            self.simplify_objects = 0
 
             # Per-class authorization method
             self.authMethod = None

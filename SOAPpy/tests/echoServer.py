@@ -19,7 +19,7 @@ Config.authMethod = "_authorize"
 allowAll = 1
 
 # ask for returned SOAP responses to be converted to basic python types
-Config.unwrap_results = 1
+Config.simplify_objects = 1
 
 if Config.SSLserver:
     from M2Crypto import SSL

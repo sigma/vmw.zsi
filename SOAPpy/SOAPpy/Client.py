@@ -350,6 +350,12 @@ class SOAPProxy:
             except:
                 pass
 
+        # Automatically simplfy SOAP complex types into the
+        # corresponding python types. (structType --> dict,
+        # arrayType --> array)
+        if config.simplify_objects:
+            p = simplify(p)
+
         if self.config.returnAllAttrs:
             return p, attrs
         return p

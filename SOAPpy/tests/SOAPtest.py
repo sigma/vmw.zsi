@@ -15,8 +15,11 @@ import unittest
 sys.path.insert(1, "..")
 from SOAPpy import *
 config=Config
-config.unwrap_results=1
 config.strict_range=1
+
+
+# run these tests with this variable set both to 1 and 0
+config.simplify_objects=0
 
 # as borrowed from jake.soapware.org for float compares.
 def nearlyeq(a, b, prec = 1e-7):
@@ -116,7 +119,7 @@ class SOAPTestCase(unittest.TestCase):
             }
         }
         y = parseSOAPRPC(x, rules=pr)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(y['Result']['Person']['age'], 49);
             self.assertEquals(y['Result']['Person']['height'], -5.5);
         else:
@@ -163,7 +166,7 @@ class SOAPTestCase(unittest.TestCase):
     </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>'''
         y = parseSOAPRPC(x)
-        if(config.unwrap_results):
+        if(config.simplify_objects):
             self.assertEquals(y['return'][0]['varString'], "West Virginia")
             self.assertEquals(y['return'][1]['varInt'], -641)
             self.assertEquals(y['return'][2]['varFloat'], 1.375)
@@ -208,7 +211,7 @@ class SOAPTestCase(unittest.TestCase):
     </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>'''
         y = parseSOAPRPC(x)
-        if(config.unwrap_results):
+        if(config.simplify_objects):
             self.assertEquals(y["return"][0]['string'], "West Virginia")
             self.assertEquals(y["return"][1]['int'], -641)
             self.assertEquals(y["return"][2]['float'], 1.375)
@@ -234,7 +237,7 @@ class SOAPTestCase(unittest.TestCase):
 </return2>
 </SOAP-ENV:Body></SOAP-ENV:Envelope>'''
         y = parseSOAPRPC(x)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(y['return2'][1], "Hello")
         else:
             self.assertEquals(y.return2[1], "Hello")
@@ -305,7 +308,7 @@ class SOAPTestCase(unittest.TestCase):
 </soap:Envelope>
 '''
         y = parseSOAPRPC(x)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(y['Result']['Book']['author']['name'], "Henry Ford")
             self.assertEquals(y['Result']['Book']['author']['address']['web'], "http://www.henryford.com")
             self.assertEquals(y['Result']['Book']['author']['address']['pers']['name'], "Henry Ford")
@@ -332,7 +335,7 @@ class SOAPTestCase(unittest.TestCase):
 </soap:Envelope>
 '''
         y = parseSOAPRPC(x)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(y['Return'][0], 0)
             self.assertEquals(y['Return'][1], 1)
             self.assertEquals(y['Return'][2], -1)
@@ -488,7 +491,7 @@ class SOAPTestCase(unittest.TestCase):
 </SOAP-ENV:Envelope>
 '''
         x, a = parseSOAPRPC(x, attrs = 1) 
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(a[id(x['Result'])][(None, 'name')], 'fred')
         else:
             self.assertEquals(a[id(x.Result)][(None, 'name')], 'fred')
@@ -528,22 +531,17 @@ class SOAPTestCase(unittest.TestCase):
 </SOAP-ENV:Envelope>
 '''
 
-        if config.unwrap_results: 
-            try:
-                z = parseSOAPRPC(x)
-                raise "Failed to raise fault %s" % z
-            except faultType:
-                pass
-        else:
-            z = parseSOAPRPC(x)
-        
+        z = parseSOAPRPC(x)
+        self.assertEquals(z.__class__,faultType)
+        self.assertEquals(z.faultstring, "Exception thrown on Server")
+
             
     def testFlatEnvelope(self):
         x = '''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <SOAP-ENV:Envelope SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body><m:echoStringResponse xmlns:m="http://soapinterop.org/"><Result></Result></m:echoStringResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
 '''
         z = parseSOAPRPC(x)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(type(z['Result']), type(''))
         else:
             self.assertEquals(type(z.Result), type(''))
@@ -564,7 +562,7 @@ class SOAPTestCase(unittest.TestCase):
         x = arrayType(['a', 'b', 'c'])
         y = buildSOAP(x)
         z = parseSOAP(y)
-        if config.unwrap_results:        
+        if config.simplify_objects:        
             self.assertEquals(z.v1._elemsname, 'item')
             self.assertEquals(z.v1, x)
         else:
@@ -575,7 +573,7 @@ class SOAPTestCase(unittest.TestCase):
         x = arrayType(['d', 'e', 'f'], elemsname = 'elementals')
         y = buildSOAP(x)
         z = parseSOAP(y)
-        if config.unwrap_results:        
+        if config.simplify_objects:        
             self.assertEquals(z.v1._elemsname, 'elementals')
             self.assertEquals(z.v1, x)
         else:
@@ -593,7 +591,7 @@ class SOAPTestCase(unittest.TestCase):
 </SOAP-ENV:Envelope>
 '''
         s = parseSOAPRPC(my_xml)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(s['statenum'], 41)
             self.assertEquals(type(s['statenum']), type(0))
         else:
@@ -611,7 +609,7 @@ class SOAPTestCase(unittest.TestCase):
 </XSOAP-ENV:Envelope>
 '''
         s = parseSOAPRPC(my_xml_ns)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(s['statenum'], 41, "NS one failed")
             self.assertEquals(type(s['statenum']), type(0))
         else:
@@ -641,7 +639,7 @@ class SOAPTestCase(unittest.TestCase):
 </SOAP-ENV:Envelope>
 '''
         s = parseSOAPRPC(my_xml2)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(s['PriceAndVolume']['LastTradePrice'].strip(), "34.5")
             self.assertEquals(s['PriceAndVolume']['DayVolume'].strip(), "10000")
         else:
@@ -663,7 +661,7 @@ class SOAPTestCase(unittest.TestCase):
 '''
         s = parseSOAPRPC(my_xml3)
 
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(s['param']['lowerBound'], 18)
             self.assertEquals(s['param']['upperBound'], 139)
         else:
@@ -686,7 +684,7 @@ class SOAPTestCase(unittest.TestCase):
 </SOAP-ENV:Envelope>
 '''
         s = parseSOAPRPC(my_xml4)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(s['param'][0], 12)
             self.assertEquals(s['param'][1], "Egypt")
             self.assertEquals(s['param'][2], 0)
@@ -710,16 +708,9 @@ class SOAPTestCase(unittest.TestCase):
       </SOAP-ENV:Body>
    </SOAP-ENV:Envelope>
 '''
-        if config.unwrap_results:
-            try:
-                s = parseSOAPRPC(my_xml5)
-                raise "Failed to raise fault %s" % s
-            except faultType:
-                pass
-        else:
-            s = parseSOAPRPC(my_xml5)
-            self.assertEquals(s.__class__, faultType)
-            self.assertEquals(s.faultcode, "SOAP-ENV:Client")
+        s = parseSOAPRPC(my_xml5)
+        self.assertEquals(s.__class__, faultType)
+        self.assertEquals(s.faultcode, "SOAP-ENV:Client")
 
     def testArray2(self):
         my_xml6 = '''
@@ -756,7 +747,7 @@ class SOAPTestCase(unittest.TestCase):
         self.assertEquals(q[3], 'monkey')
         self.assertEquals(q[4], 'cay')
         x = q[5]
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals(x['monkey'], 5)
             self.assertEquals(x['cat'], "hello")
             self.assertEquals(x['ferret'][0], 5)
@@ -781,7 +772,7 @@ class SOAPTestCase(unittest.TestCase):
         x.test = 5
         y = buildSOAP(x)
         z = parseSOAPRPC(y)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals( x['test'], z['test'] )
         else:
             self.assertEquals( x.test, z.test )
@@ -791,17 +782,10 @@ class SOAPTestCase(unittest.TestCase):
         x = faultType("ServerError","Howdy",[5,4,3,2,1])
         y = buildSOAP(x)
 
-        if config.unwrap_results:
-            try:
-                z = parseSOAPRPC(y)
-                raise "Failed to raise fault %s" % z
-            except faultType:
-                pass
-        else:
-            z = parseSOAPRPC(y)
-            self.assertEquals( x.faultcode ,  z.faultcode)
-            self.assertEquals( x.faultstring ,  z.faultstring)
-            self.assertEquals( x.detail ,  z.detail)
+        z = parseSOAPRPC(y)
+        self.assertEquals( x.faultcode ,  z.faultcode)
+        self.assertEquals( x.faultstring ,  z.faultstring)
+        self.assertEquals( x.detail ,  z.detail)
         
     # Test the recursion
     def testRecursion(self):
@@ -814,7 +798,7 @@ class SOAPTestCase(unittest.TestCase):
         tre.t = t
         x = buildSOAP(tre)
         y = parseSOAPRPC(x)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals( y['t']['o']['t']['o']['t']['o']['t']['str'] ,  "two")
         else:
             self.assertEquals( y.t.o.t.o.t.o.t.str ,  "two")
@@ -833,7 +817,7 @@ class SOAPTestCase(unittest.TestCase):
         tre.str = "three"
         x = buildSOAP(tre)
         y = parseSOAPRPC(x)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals( y['t']['o']['t']['o']['t']['o']['t']['str'] ,  "two")
         else:
             self.assertEquals( y.t.o.t.o.t.o.t.str ,  "two")
@@ -844,7 +828,7 @@ class SOAPTestCase(unittest.TestCase):
         x.msg = m
         y = buildSOAP(x)
         z = parseSOAPRPC(y)
-        if config.unwrap_results:
+        if config.simplify_objects:
             self.assertEquals( m ,  z['msg'])
         else:
             self.assertEquals( m ,  z.msg)

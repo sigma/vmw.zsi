@@ -7,7 +7,7 @@ import syslog, sys
 sys.path.insert (1, '..')
 import SOAPpy
 
-SOAPpy.Config.unwrap_results=1
+SOAPpy.Config.simplify_objects=1
  
 ##     def test_integer(self,pass_integer):
 ##     def test_string(self,pass_string):

@@ -199,7 +199,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 debugFooter(s)
 
             data = self.rfile.read(int(self.headers["Content-length"]))
-            #            data = data.encode('ascii','replace')
 
             if self.server.config.dumpSOAPIn:
                 s = 'Incoming SOAP'
@@ -210,14 +209,13 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 debugFooter(s)
 
             (r, header, body, attrs) = \
-                parseSOAPRPC(data, header = 1, body = 1, attrs = 1,
-                             unwrap_outer=0)
+                parseSOAPRPC(data, header = 1, body = 1, attrs = 1)
 
             method = r._name
             args   = r._aslist()
             kw     = r._asdict()
 
-            if Config.unwrap_results:
+            if Config.simplify_objects:
                 args = simplify(args)
                 kw = simplify(kw)
 
