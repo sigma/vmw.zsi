@@ -20,7 +20,7 @@ def GetClientBinding():
     return _client_binding
 
 def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
-              nsdict={}, **kw):
+              nsdict={}, rpc=None, **kw):
     '''Find a handler for the SOAP request in ps; search modules.
     Call SendResponse or SendFault to send the reply back, appropriately.
     '''
@@ -61,20 +61,8 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
         reply = StringIO.StringIO()
 
         
-        # if the result is not an instance (and thus is a primitive),
-        # respond with an rpc-style body
-        if type(result[0]) != types.InstanceType:
-            tc = TC.Any(aslist=1, pname=what + 'Response')
-                                                       
-        else:
-            # if the typecode defined what the rpc response should be, use it
-            if hasattr(result[0].typecode, 'rpc'):
-                tc = TC.Any(aslist=1, pname=result[0].typecode.rpc,
-                            rpc=result[0].typecode.rpc)
-            else:
-                tc = TC.Any(aslist=1, pname=None)
-
-        SoapWriter(reply, nsdict=nsdict).serialize(result, tc)
+        tc = TC.Any(aslist=1, pname=what + 'Response')
+        SoapWriter(reply, nsdict=nsdict).serialize(result, tc, rpc=rpc)
         SendResponse(reply.getvalue())
         return
     except Exception, e:
@@ -92,7 +80,7 @@ def _CGISendXML(text, code=200):
 def _CGISendFault(f):
     _CGISendXML(f.AsSOAP(), 500)
 
-def AsCGI(nsdict={}, modules=None):
+def AsCGI(nsdict={}, rpc=None, modules=None):
     '''Dispatch within a CGI script.
     '''
     if os.environ.get('REQUEST_METHOD') != 'POST':
@@ -110,7 +98,7 @@ def AsCGI(nsdict={}, modules=None):
     except ParseException, e:
         _CGISendFault(FaultFromZSIException(e))
         return
-    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict)
+    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict, rpc=rpc)
 
 
 class SOAPRequestHandler(BaseHTTPRequestHandler):
@@ -154,15 +142,16 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             return
 
         _Dispatch(ps, self.server.modules, self.send_xml, self.send_fault,
-            docstyle=self.server.docstyle, nsdict=self.server.nsdict)
+                  docstyle=self.server.docstyle, nsdict=self.server.nsdict,
+                  rpc=self.server.rpc)
 
-def AsServer(port=80, modules=None, docstyle=0, nsdict={}, **kw):
+def AsServer(port=80, modules=None, docstyle=0, nsdict={}, rpc=None, **kw):
     address = ('', port)
     httpd = HTTPServer(address, SOAPRequestHandler)
-    httpd.nsdict = nsdict
     httpd.modules = modules
     httpd.docstyle = docstyle
     httpd.nsdict = nsdict
+    httpd.rpc = rpc
     httpd.serve_forever()
 
 if __name__ == '__main__': print _copyright
