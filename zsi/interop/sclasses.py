@@ -25,7 +25,7 @@ WSDL_DEFINITION = '''<?xml version="1.0"?>
       namespace="http://soapinterop.org/"/>
 <!--  DOCSTYLE; soon.
   <import
-      location="http://www.whitemesa.com/interop/XXX.wsdl"
+      location="http://www.whitemesa.com/interop/interopdoc.wsdl"
       namespace="http://soapinterop.org/"/>
 -->
 
@@ -45,10 +45,11 @@ WSDL_DEFINITION = '''<?xml version="1.0"?>
     <port name="TestSoapMap" binding="tns:InteropTestSoapBindingMap">
       <soap:address location=">>>URL<<<"/>
     </port>
-    <!--  DOCSTYLE -->
-    <port name="TestDoc" binding="tns:XXX">
+<!--  DOCSTYLE; soon.
+    <port name="TestDoc" binding="tns:doc_test_binding">
       <soap:address location=">>>URL<<<"/>
     </port>
+-->
   </service>
 
 </definitions>
