@@ -20,7 +20,7 @@ def GetClientBinding():
     return _client_binding
 
 def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
-              nsdict={}, rpc=None, **kw):
+              nsdict={}, typesmodule=None, rpc=None, **kw):
     '''Find a handler for the SOAP request in ps; search modules.
     Call SendResponse or SendFault to send the reply back, appropriately.
     '''
@@ -53,10 +53,11 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
             else:
                 try:
                     try:
-                        import ComplexTypes
                         type = data[0].localName
-                        tc = getattr(ComplexTypes, type).typecode
-                    except:
+                        print 'trying to get %s' % type
+                        tc = getattr(typesmodule, type).typecode
+                    except Exception, e:
+                        print 'bombed: %s' % e
                         tc = TC.Any()
                     arg = [ tc.parse(e, ps) for e in data ]
                 except EvaluateException, e:
@@ -85,7 +86,7 @@ def _CGISendXML(text, code=200):
 def _CGISendFault(f):
     _CGISendXML(f.AsSOAP(), 500)
 
-def AsCGI(nsdict={}, rpc=None, modules=None):
+def AsCGI(nsdict={}, typesmodule=None, rpc=None, modules=None):
     '''Dispatch within a CGI script.
     '''
     if os.environ.get('REQUEST_METHOD') != 'POST':
@@ -103,7 +104,8 @@ def AsCGI(nsdict={}, rpc=None, modules=None):
     except ParseException, e:
         _CGISendFault(FaultFromZSIException(e))
         return
-    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict, rpc=rpc)
+    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict,
+              typesmodule=typesmodule, rpc=rpc)
 
 
 class SOAPRequestHandler(BaseHTTPRequestHandler):
@@ -148,14 +150,16 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
 
         _Dispatch(ps, self.server.modules, self.send_xml, self.send_fault,
                   docstyle=self.server.docstyle, nsdict=self.server.nsdict,
-                  rpc=self.server.rpc)
+                  typesmodule=self.server.typesmodule, rpc=self.server.rpc)
 
-def AsServer(port=80, modules=None, docstyle=0, nsdict={}, rpc=None, **kw):
+def AsServer(port=80, modules=None, docstyle=0, nsdict={}, typesmodule=None,
+             rpc=None, **kw):
     address = ('', port)
     httpd = HTTPServer(address, SOAPRequestHandler)
     httpd.modules = modules
     httpd.docstyle = docstyle
     httpd.nsdict = nsdict
+    httpd.typesmodule = typesmodule
     httpd.rpc = rpc
     httpd.serve_forever()
 
