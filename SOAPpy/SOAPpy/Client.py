@@ -204,9 +204,10 @@ class HTTPTransport:
         content_length = headers.get("Content-length")
 
         # work around OC4J bug which does '<len>, <len>' for some reaason
-        comma=content_length.find(',')
-        if comma>0:
-            content_length = content_length[:comma]
+        if content_length:
+            comma=content_length.find(',')
+            if comma>0:
+                content_length = content_length[:comma]
 
         # attempt to extract integer message size
         try:
