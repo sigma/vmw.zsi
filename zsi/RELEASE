@@ -7,63 +7,66 @@ process.
 
 XXX explain need for Python documentation tools
 
-1. Announce your intent to make a release on the mailing list.  This
-   gives folks a day or so to respond with info or last-minute
-   checkins.
+1.  Announce your intent to make a release on the mailing list.  This
+    gives folks a day or so to respond with info or last-minute
+    checkins.
 
-2. Edit setup.cfg to set the version number in the [version] section,
-   if appropriate.  If you change the version number, set the
-   "release" in the [bdist_rpm] section to 1.
+2.  Edit setup.cfg to set the version number in the [version] section,
+    if appropriate.  If you change the version number, set the
+    "release" in the [bdist_rpm] section to 1.
 
-3. Commit all changes to CVS.
+3.  Make sure CHANGES is up to date, including the release number at
+    the top.
 
-4. Tag the CVS repository.  Release tags are of the form
+4.  Commit all changes to CVS.
 
-       "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
+5.  Tag the CVS repository.  Release tags are of the form
 
-   where the optional segment containing PATCHLEVEL is included only
-   if PATCHLEVEL is non-zero.  The modifier segment has only been used
-   for release candidates (so far), for which the modifier is "RC" and
-   the serial is the number of the candidate for this particular
-   software version ("1", "2", etc.).
+        "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
 
-   You'll need to tag the wstools package separately, but using the
-   same tag.
+    where the optional segment containing PATCHLEVEL is included only
+    if PATCHLEVEL is non-zero.  The modifier segment has only been
+    used for release candidates (so far), for which the modifier is
+    "RC" and the serial is the number of the candidate for this
+    particular software version ("1", "2", etc.).
 
-5. Export the tagged sources from CVS.  You'll need to 
+    You'll need to tag the wstools package separately, but using the
+    same tag.
 
-       cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG zsi
-       cd zsi/ZSI/
-       cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG wstools
+6.  Export the tagged sources from CVS.  You'll need to 
 
-6. Build the release from the export.  Switch to the export directory
-   (the one containing setup.py) and run "make kit".
+        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG zsi
+        cd zsi/ZSI/
+        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs co -r TAG wstools
 
-4. Rename the PDF documentation.  If the patchlevel from setug.cfg is
-   0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
-   it to dist/zsi-$MAJOR.$MINOR.$PATCHLEVEL.pdf.  This will leave you
-   with all the files you need to upload in a single directory
-   (dist/).
+7.  Build the release from the export.  Switch to the export directory
+    (the one containing setup.py) and run "make kit".
 
-5. Use the SourceForge tools to create a release and upload the files.
-   If appropriate, "hide" obsolete releases.  Hiding old releases is
-   normally only done if the older release contains security bugs or
-   other critical bugs that render it unusable.
+8.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
+    0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
+    it to dist/zsi-$MAJOR.$MINOR.$PATCHLEVEL.pdf.  This will leave you
+    with all the files you need to upload in a single directory
+    (dist/).
 
-6. The web pages are in pywebsvcs.sourceforge.net, at the same level
-   as the zsi directory.  Copy zsi.html from zsi/doc into there.
-   Update index.html to refer (and link) to the new release.  Commit
-   those changes.  The cron job will update it every couple of hours.
+9.  Use the SourceForge tools to create a release and upload the
+    files.  If appropriate, "hide" obsolete releases.  Hiding old
+    releases is normally only done if the older release contains
+    security bugs or other critical bugs that render it unusable.
 
-7. Announce the release:
+10. The web pages are in pywebsvcs.sourceforge.net, at the same level
+    as the zsi directory.  Copy zsi.html from zsi/doc into there.
+    Update index.html to refer (and link) to the new release.  Commit
+    those changes.  The cron job will update it every couple of hours.
 
-   - Freshmeat.  The details of how to do this have been lost to the
-     travesties of time, but there is a ZSI package there.
+11. Announce the release:
 
-   - SourceForge.net news:  Create a news item in the project
-     announcing the release.
+    - Freshmeat.  The details of how to do this have been lost to the
+      travesties of time, but there is a ZSI package there.
 
-   - Register the release with the Python Package Index (PyPI).  This
-     can be done using "python setup.py register".
+    - SourceForge.net news:  Create a news item in the project
+      announcing the release.
 
-   - comp.lang.python.announce
+    - Register the release with the Python Package Index (PyPI).  This
+      can be done using "python setup.py register".
+
+    - comp.lang.python.announce
