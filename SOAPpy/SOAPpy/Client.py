@@ -45,6 +45,7 @@ from __future__ import nested_scopes
 #import xml.sax
 import urllib
 from types import *
+import re
 
 # SOAPpy modules
 from Errors      import *
@@ -108,13 +109,18 @@ class SOAPAddress:
 
 
 class HTTPTransport:
-    # gets the namespace from the data based on a previous namespace
     def getNS(self, original_namespace, data):
+        """Extract the (possibly extended) namespace from the returned
+        SOAP message."""
+
         # only try this if original_namespace is a string!
         if type(original_namespace) == StringType:
-            start = data.find(original_namespace)
-            stop = data.find('"', start) or data.find('\'', start) 
-            return data[start:stop]
+            pattern="xmlns:\w+=['\"](" + original_namespace + ")['\"]"
+            match = re.search(pattern, data)
+            if match:
+                return match.group(1)
+            else:
+                return original_namespace
         else:
             return original_namespace
     
