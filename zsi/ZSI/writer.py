@@ -35,6 +35,7 @@ class SoapWriter:
         self.encoding = encoding
 
         if not self.envelope: return
+        print >>self, '<?xml version="1.0" encoding="utf-8"?>'
         print >>self, '<SOAP-ENV:Envelope\n' \
             '  xmlns:SOAP-ENV="%(SOAP-ENV)s"\n' \
             '  xmlns:SOAP-ENC="%(SOAP-ENC)s"\n' \

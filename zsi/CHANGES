@@ -1,4 +1,5 @@
 Changes for ??, released ???:
+    -   Ouput XML prolog in SoapWriter
     -   Added nsdict parameter to dispatch.AsCGI and dispatch.AsServer
     -   Fixed bug where xmlns attribute was included in closing elements
     -   Added support for "wrapped" complexTypes in response messages
