@@ -270,9 +270,6 @@ class SOAPBuilder:
         if type(tag) not in (NoneType, StringType, UnicodeType):
             raise KeyError, "tag must be a string or None"
 
-        if tag=='': tag = self.gentag()
-        #tag = tag or self.gentag()
-
         try:
             meth = getattr(self, "dump_" + type(obj).__name__)
             meth(obj, tag, typed, ns_map)
@@ -322,6 +319,7 @@ class SOAPBuilder:
 
     def dump_float(self, obj, tag, typed = 1, ns_map = {}):
         if Config.debug: print "In dump_float."
+        tag = tag or self.gentag()
 
         if Config.strict_range:
             doubleType(obj)
@@ -368,12 +366,12 @@ class SOAPBuilder:
 
     def dump_list(self, obj, tag, typed = 1, ns_map = {}):
         if Config.debug: print "In dump_list.", "obj=", obj
+        tag = tag or self.gentag()
+
         if type(obj) == InstanceType:
             data = obj.data
         else:
             data = obj
-
-        tag = tag or self.gentag()
 
         id = self.checkref(obj, tag, ns_map)
         if id == None:
