@@ -15,6 +15,7 @@ USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s]
     -h          -> prints this message and exits.
     -f | -u     -> file or url to load wsdl from
     -x          -> process just the schema from an xsd file [no services]
+    -z          -> specify a function to use to generate attribute names
 """
 
 """
@@ -34,10 +35,15 @@ eg. <definition name='SampleService'>
 def doCommandLine():
     """ Get command line options, print usage message if incorrect.
     """
-    args_d = { 'fromfile': False, 'fromurl': False, 'schemaOnly': False }
+    args_d = {
+        'fromfile': False,
+        'fromurl': False,
+        'schemaOnly': False,
+        'aname' : None
+        }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:hx')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:hx')
     except getopt.GetoptError, e:
         print >>sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -58,6 +64,8 @@ def doCommandLine():
             args_d['fromurl'] = True
         elif opt in ['-x']:
             args_d['schemaOnly'] = True
+        elif opt in ['-z']:
+            args_d['aname'] = val
         else:
             print USAGE
             sys.exit(-1)
@@ -86,12 +94,36 @@ def formatSchemaObject(fname, schemaObj):
     return f
     
 
+def get_aname_func(aname):
+    func = None
+
+    args = aname.split('.')
+    assert len(args) >= 2, 'expecting module.function'
+
+    amod = ".".join(args[:-1])
+    afunc = args[-1]
+
+#    try:
+    exec('from %s import %s as FUNC' % (amod, afunc))
+#    except ImportError, e:
+#        e_str = "Specify a module.function to -z [%s]: " % aname
+#        print e_str, e
+#        return None
+    
+    assert callable(FUNC), '%s must be a callable method with one string parameter' % aname
+
+    return FUNC
 
 def main():
     """ From a wsdl definition create a wsdl object and run the wsdl2python 
         generator.  
     """
     args_d = doCommandLine()
+
+    if args_d['aname']:
+        aname_func = get_aname_func(args_d['aname'])
+    else:
+        aname_func = lambda x: "_%s" % x
 
     schemaOnly = args_d['schemaOnly']
 
@@ -108,7 +140,7 @@ def main():
     if schemaOnly:
         wsdl = formatSchemaObject(args_d['wsdl'], wsdl)
 
-    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl)
+    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl, aname_func = aname_func)
     
     wsm.write(schemaOnly)
     

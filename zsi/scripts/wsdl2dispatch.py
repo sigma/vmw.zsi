@@ -10,6 +10,7 @@ USAGE = """Usage: ./serverstub -f wsdlfile | -u url [-h]
   where:
     wsdl        -> wsdl file to generate callbacks from.
     -f          -> location of wsdl file in disc
+    -x          -> enable experimental server code generation
     -u          -> location of wsdl via url
     -h          -> prints this message and exits.
 """
@@ -32,7 +33,7 @@ class ServerCallbackDescription:
         self.methods  = []
         self.actions  = []
 
-    def fromWsdl(self, ws):
+    def fromWsdl(self, ws, do_extended = 0):
 
         wsm = ZSI.wsdl2python.WriteServiceModule(ws)
 
@@ -56,29 +57,21 @@ class ServerCallbackDescription:
                 # generate methods
                 for op in port.getBinding().getPortType().getOperationList():
                     self.generateMethods(op, port)
+                    if do_extended:
+                        self.generateMethods2(op, port)
 
         self.classdef = self.getClassdef(ws)
-        self.initdef  = self.getInitdef()
+        self.initdef  = self.getInitdef(do_extended=do_extended)
 
     def getImports(self):
-
         i  = 'from %s import *' % self.service
         i += '\nfrom ZSI.ServiceContainer import ServiceSOAPBinding'
-        #i += '\ntry:'
-        #i += '\n%sfrom pyGridWare.twisted.SoapSupport import ZsiSOAPPublisher'\
-        #     % ID1
-        #i += '\nexcept:'
-        #i += '\n%sclass ZsiSOAPPublisher:' % ID1
-        #i += '\n%spass' % ID2
         return i
 
     def getMethodName(self, method):
         return '%s_%s' %(self.method_prefix, method)
 
     def getClassdef(self, ws):
-
-        #c  = '\nclass %s(ZsiSOAPPublisher, ServiceSOAPBinding):' \
-        #     % ws.getName()
         c  = '\nclass %s(ServiceSOAPBinding):' \
              % ws.getName()
         c += '\n%ssoapAction = {' % ID1
@@ -90,19 +83,20 @@ class ServerCallbackDescription:
 
         return c
 
-    def getInitdef(self):
+    def getInitdef(self, do_extended=0):
 
         uri = urlparse.urlparse( self.location )[2]
         
         d  = "\n%sdef __init__(self, post='%s', **kw):" % (ID1, uri)
         d += '\n%sServiceSOAPBinding.__init__(self, post)' % ID2
+        if do_extended:
+            d += '\n%sif kw.has_key(\'impl\'):\n%sself.impl = kw[\'impl\']'%(
+                ID2, ID3)
 
         return d
 
     def generateMethods(self, op, port):
-
         # generate soapactions while we're here
-
         operation = port.getBinding().getOperationDict().get(op.getName())
 
         if operation.getSoapOperation():
@@ -111,7 +105,6 @@ class ServerCallbackDescription:
                 self.actions.append( ( action, op.getName() ) )
             
         # now take care of the method
-
         o  = '\n%sdef %s(self, ps):' % (ID1, self.getMethodName(op.getName()))
         o += '\n%s# input vals in request object' % ID2
         o += '\n%sargs = ps.Parse( %s )' \
@@ -142,6 +135,51 @@ class ServerCallbackDescription:
 
         self.methods.append(o)
 
+    def generateMethods2(self, op, port):
+        # now take care of the method
+        input_args = op.getInput().getMessage().getPartList()
+        iargs = ["%s" % x.getName() for x in input_args]
+        iargs = ", ".join(iargs)
+        o  = '\n%sdef %s(self, %s):' % (ID1, op.getName(), iargs)
+        for a in op.getInput().getMessage().getPartList():
+            o += "\n%s# %s is a %s" % (ID2, a.getName(), a.getType().getName())
+
+        o += "\n"
+
+        if op.getOutput().getMessage():
+            output_args = op.getOutput().getMessage().getPartList()
+            oargs = ["%s" % x.getName() for x in output_args]
+            oargs = ", ".join(oargs)
+        else:
+            output_args = None
+
+        if output_args:
+            if len(output_args) > 1:
+                print "Message has more than one return value (Bad Design)."
+                oargs = "(%s)" % oargs
+
+            oargs = "%s = " % oargs
+
+        else:
+            oargs = ""
+
+        o += "\n%s# If we have an implementation object use it" % ID2
+        o += "\n%sif hasattr(self, 'impl'):" % ID2
+        o += "\n%s%sself.impl.%s(%s)" % (ID3, oargs, op.getName(), iargs)
+        o += "\n"
+        
+        if op.getOutput().getMessage() is not None:
+            for a in op.getOutput().getMessage().getPartList():
+                o += "\n%s# %s is a %s" % (ID2,
+                                                            a.getName(),
+                                                        a.getType().getName())
+                o += "\n%sreturn %s" % (ID2, a.getName())
+
+        else:
+            o += "\n%s# There is no return from this method." % ID2
+
+        self.methods.append(o)
+        
     def getContents(self):
         return string.join([self.imports,
                             self.classdef,
@@ -170,10 +208,10 @@ def IsSimpleElementDeclaration(op, input=True):
 
 def doCommandLine():
 
-    args_d = { 'fromfile': False, 'fromurl': False }
+    args_d = { 'fromfile': False, 'fromurl': False, 'extended' : False }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:h')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:hx')
     except getopt.GetoptError, e:
         print >> sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -192,6 +230,8 @@ def doCommandLine():
         elif opt in ['-u']:
             args_d['wsdl'] = val
             args_d['fromurl'] = True
+        elif opt in ['-x']:
+            args_d['extended'] = True
         else:
             print USAGE
             sys.exit(-1)
@@ -212,7 +252,7 @@ def main():
 
     ss = ServerCallbackDescription()
 
-    ss.fromWsdl(wsdl)
+    ss.fromWsdl(wsdl, do_extended = args_d['extended'])
 
     fd = open( ss.getStubName() + '.py', 'w+' )
 
