@@ -1512,7 +1512,7 @@ class SchemaDescription:
             typecodelist = ''
 
             self.initcode.set('\n%s# internal vars' % ID3)
-                
+
             for e in mg.getContent():
                 if e.isDeclaration() and e.isElement():
 
@@ -1609,6 +1609,12 @@ class SchemaDescription:
 
                     self.typeDoc(occurs, objName, typeName)
 
+                elif e.isDeclaration() and e.isElementReference():
+                    occurs = self._calculateOccurance(e)
+                    nsp = self.nsh.getAlias(etp.getTargetNamespace())
+                    typeName = '%s.%s' % (nsp, e.getName()) + '_Dec'
+                    typecodelist +='%s(ns=ns%s), '\
+                                    %(typeName, occurs)
                 else:
                     raise WsdlGeneratorError, 'instance %s not handled '\
                           % (e.__class__)
