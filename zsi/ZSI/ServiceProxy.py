@@ -13,8 +13,8 @@ from ZSI import *
 from ZSI.client import *
 from ZSI.TC import Any
 from ZSI.typeinterpreter import BaseTypeInterpreter
-import wstools
-from wstools.Utility import DOM
+import ZSI.wstools
+from ZSI.wstools.Utility import DOM
 from urlparse import urlparse
 import weakref
 
@@ -31,7 +31,7 @@ class ServiceProxy:
                    information in WSDL.
         """
         if not hasattr(wsdl, 'targetNamespace'):
-            wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
+            wsdl = ZSI.wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
 
 #        for item in wsdl.types.items():
 #            self._serializer.loadSchema(item)
