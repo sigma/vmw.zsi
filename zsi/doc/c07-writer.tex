@@ -21,6 +21,8 @@ method for generating the output.
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{envelope}}{\code{1}}}{Write the SOAP envelope elements.
+\versionadded{1.2}}
 \lineiii{\code{nsdict}}{\code{\{\}}}{Dictionary of namespaces to write
 in the SOAP \code{Header}.}
 \lineiii{\code{header}}{\code{None}}{A sequence of elements to output in
@@ -29,6 +31,10 @@ It may also be a text string, in which case it is output as-is, and should
 therefore be XML text.}
 \end{tableiii}
 \end{classdesc}
+
+Creating a \class{SoapWriter} object with a \class{StringIO} object for
+the \code{out} parameter and \code{envelope} set to false results in an
+object that can be used for serializing objects into a string.
 
 \begin{methoddesc}{serialize}{pyobj\optional{, typecode\optional{, root=None}}}
 This method serializes the \code{pyobj} Python object as directed
