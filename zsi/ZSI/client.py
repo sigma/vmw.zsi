@@ -288,10 +288,9 @@ class Binding:
     def __parse(self, node, type):
         try:
             if hasattr(self.typesmodule, type):
-                clazz = eval('self.typesmodule.%s' % type)
+                clazz = getattr(self.typesmodule, 'type')
                 tc = clazz.typecode
-                instance = tc.parse(node, self.ps)
-                return instance
+                return tc.parse(node, self.ps)
             else:
                 tc = TC.Any(aslist=1)
                 return tc.parse(node, self.ps)                
