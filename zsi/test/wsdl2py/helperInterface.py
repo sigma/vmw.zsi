@@ -78,7 +78,7 @@ class WriteHLSModule:
                 fd.write('class %sHLocator(%sLocator):\n' % (portTypeName, service.getName()))
                 fd.write('    def get%s(self, portAddress=None, **kw):\n' % \
                         portTypeName )
-                fd.write('        return %sSOAPHLS(portAddress or %sLocator.%s_address)\n\n' %  \
+                fd.write('        return %sSOAPHLS(portAddress or %sLocator.%s_address, **kw)\n\n' %  \
                     (port.getBinding().getName(), service.getName(), portTypeName))
                 fd.write('    def getPortType(self, portTypeName, **kw):\n')
                 fd.write('        for name, fun in self.__class__.__dict__.items():\n')

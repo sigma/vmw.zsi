@@ -88,8 +88,8 @@ def setUpWsdl(path):
     return wsdl
 
 
-def testSetUp(testcase, serviceName, portTypeName, kw={},
-              configFileName='config.txt', section='complex_types'):
+def testSetUp(testcase, serviceName, portTypeName,
+              configFileName='config.txt', section='complex_types', **kw):
 
     if not hasattr(testcase, 'service'):
         serviceModule = ClientGenerator().getModule(configFileName, section,
