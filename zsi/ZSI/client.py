@@ -256,7 +256,14 @@ class Binding:
 
         if replytype is None:
             tc = TC.Any(aslist=1)
-            data = _child_elements(self.ps.body_root)
+
+            # if the message is RPC style, skip the fooBarResponse
+            elt_name = '%s' % self.ps.body_root.localName
+            if elt_name.find('Response') > 0:
+                data = _child_elements(self.ps.body_root)
+            else:
+                data = [self.ps.body_root]
+                
             if len(data) == 0: return None
 
             # check for array type, loop and process if found
@@ -288,7 +295,7 @@ class Binding:
     def __parse(self, node, type):
         try:
             if hasattr(self.typesmodule, type):
-                clazz = getattr(self.typesmodule, 'type')
+                clazz = getattr(self.typesmodule, type)
                 tc = clazz.typecode
                 return tc.parse(node, self.ps)
             else:
