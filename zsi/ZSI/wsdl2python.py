@@ -749,7 +749,8 @@ class ServiceDescription:
             docList.append('\n')
 
             for item in self.typeList:
-                item[1] = item[1].replace('LOCAL_Def', '_Def')
+                if item[1]:
+                    item[1] = item[1].replace('LOCAL_Def', '_Def')
             alreadyListed = []
             docList.extend(self.recurseTypeList(allTypeDict, self.typeList,
                                                 1, alreadyListed))
@@ -761,6 +762,8 @@ class ServiceDescription:
             """Recurse through a dictionary of type lists until reach
                Python types.
             """
+            if level > 10:
+                return
             strList = []
             for item in typeList:
                 if item[0].startswith('_'):
