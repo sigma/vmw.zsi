@@ -1253,13 +1253,13 @@ class compoundType(anyType):
             self.__dict__.update(data)
 
     def _aslist(self, item=None):
-        if item:
+        if item is not None:
             return self.__dict__[self._keyord[item]]
         else:
             return map( lambda x: self.__dict__[x], self._keyord)
 
     def _asdict(self, item=None, encoding=Config.dict_encoding):
-        if item:
+        if item is not None:
             if type(item) in (UnicodeType,StringType):
                 item = item.encode(encoding)
             return self.__dict__[item]
@@ -1408,13 +1408,13 @@ class arrayType(UserList.UserList, compoundType):
 
 
     def _aslist(self, item=None):
-        if item:
+        if item is not None:
             return self.data[int(item)]
         else:
             return self.data
 
     def _asdict(self, item=None, encoding=Config.dict_encoding):
-        if item:
+        if item is not None:
             if type(item) in (UnicodeType,StringType):
                 item = item.encode(encoding)
             return self.data[int(item)]
