@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import unittest, sys
 from ZSI import *
 
@@ -10,18 +11,18 @@ class t2TestCase(unittest.TestCase):
             ps = ParsedSoap(IN)
         except ParseException, e:
              FaultFromZSIException(e).AsSOAP(OUT)
-             unittest.fail()
+             self.fail()
         except Exception, e:
             # Faulted while processing; assume it's in the
             # header.
             FaultFromException(e, 1).AsSOAP(OUT)
-            unittest.fail()
+            self.fail()
         # We are not prepared to handle any actors or mustUnderstand elements.  
         # Arbitrary fault back with the first one found.  
         a = ps.WhatActorsArePresent() 
         if len(a): 
             FaultFromActor(a[0]).AsSOAP(OUT) 
-            unittest.fail()
+            self.fail()
         mu = ps.WhatMustIUnderstand() 
         if len(mu): 
             uri, localname = mu[0] 
@@ -47,7 +48,7 @@ class t2TestCase(unittest.TestCase):
             player = ps.Parse(Player) 
         except EvaluateException, e: 
             FaultFromZSIException(e).AsSOAP(OUT) 
-            unittest.fail() 
+            self.fail() 
             
         def bar(total, len): 
             return total / len 
@@ -66,7 +67,7 @@ class t2TestCase(unittest.TestCase):
             SoapWriter(OUT).serialize(result) 
         except Exception, e: 
             FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT) 
-            unittest.fail()
+            self.fail()
 
 
 def makeTestSuite():
