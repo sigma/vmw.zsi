@@ -5,26 +5,26 @@ indicate it was unable to process a message.
 The \ZSI{} \class{Fault} class encapsulates this.
 
 \begin{classdesc}{Fault}{code, string\optional{, **keywords}}
-The \code{code} parameter is a text string identifying the SOAP fault
+The \var{code} parameter is a text string identifying the SOAP fault
 code, a namespace-qualified name.
 The class attribute \code{Fault.Client} can be used to indicate a problem with
 an incoming message, \code{Fault.Server} can be used to
 indicate a problem occurred while processing the request, or \code{Fault.MU}
 can be used to indicate a problem with the SOAP \code{mustUnderstand}
 attribute.
-The \code{string} parameter is a human-readable text string describing the
+The \var{string} parameter is a human-readable text string describing the
 fault.
 
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{actor}}{\code{None}}{A string identifying the \code{actor}
+\lineiii{\var{actor}}{\code{None}}{A string identifying the \code{actor}
 attribute that caused the problem (usually because it is unknown).}
-\lineiii{\code{detail}}{\code{None}}{A sequence
+\lineiii{\var{detail}}{\code{None}}{A sequence
 of elements to output in the \code{detail} element; it may also
 be a text string, in which case it is output as-is, and should
 therefore be XML text.}
-\lineiii{\code{headerdetail}}{\code{None}}{Data, treated the same as
+\lineiii{\var{headerdetail}}{\code{None}}{Data, treated the same as
 the \code{detail} keyword, to be output in the SOAP header.  See
 the following paragraph.}
 \end{tableiii}
@@ -62,14 +62,14 @@ A text string or sequence of elements containing holding the value of the
 A text string holding the value of the SOAP \code{faultstring} element.
 \end{memberdesc}
 
-\begin{methoddesc}{AsSOAP}{\optional{output=None\optional{, **kw}}}
+\begin{methoddesc}{AsSOAP}{\optional{output\optional{, **kw}}}
 This method serializes the \class{Fault} object into a SOAP message.
-If the \code{output} parameter is not specified, the message is returned
-as a string.
+If the \var{output} parameter is not specified or \constant{None}, the
+message is returned as a string.
 Any other keyword arguments are passed to the \class{SoapWriter} constructor.
-Otherwise \method{AsSOAP()} will call \method{output.write()} as needed
+Otherwise \method{AsSOAP()} will call \code{\var{output}.write()} as needed
 to output the message.
-\versionadded{1.1; the old \code{AsSoap} method is still available}
+\versionadded{1.1; the old \method{AsSoap()} method is still available}
 \end{methoddesc}
 
 If other data is going to be sent with the fault, the following
@@ -83,55 +83,56 @@ This method returns a text string that can be included as the
 \end{methoddesc}
 
 \begin{methoddesc}{serialize}{sw}
-This method outputs the fault object onto the \code{sw} object,
+This method outputs the fault object onto the \var{sw} object,
 which must support a \method{write()} method.
 \end{methoddesc}
 
 Some convenience functions are available to create a \class{Fault}
 from common conditions.
 
-\begin{funcdesc}{FaultFromActor}{uri\optional{, actor=None}}
+\begin{funcdesc}{FaultFromActor}{uri\optional{, actor}}
 This function could be used when an application receives a message
 that has a SOAP \code{Header} element directed to an actor that
 cannot be processed.
-The \code{uri} parameter identifies the actor.
-The \code{actor} parameter can be used to specify a URI that identifies the
+The \var{uri} parameter identifies the actor.
+The \var{actor} parameter can be used to specify a URI that identifies the
 application, if it is not the ultimate recipient of the SOAP message.
 \end{funcdesc}
 
 \begin{funcdesc}{FaultFromException}{ex, inheader\optional{,
-    tb=None\optional{, actor=None}}}
+    tb\optional{, actor}}}
 This function creates a \class{Fault} from a general Python exception.
 A SOAP ``server'' fault is created.
-The \code{ex} parameter should be the Python exception.
-The \code{inheader} parameter should be true if the error was
+The \var{ex} parameter should be the Python exception.
+The \var{inheader} parameter should be true if the error was
 found on a SOAP \code{Header} element.
-The optional \code{tb} parameter may be a Python \class{traceback}
+The optional \var{tb} parameter may be a Python traceback
 object, as returned by \samp{sys.exc_info()[2]}.
-The \code{actor} parameter can be used to specify a URI that identifies the
+The \var{actor} parameter can be used to specify a URI that identifies the
 application, if it is not the ultimate recipient of the SOAP message.
 \end{funcdesc}
 
 \begin{funcdesc}{FaultFromFaultMessage}{ps}
-This function creates a \class{Fault} from a \class{ParsedSoap} object.
+This function creates a \class{Fault} from a \class{ParsedSoap} object
+passed in as \var{ps}.
 It should only be used if the \method{IsAFault()} method returned true.
 \end{funcdesc}
 
-\begin{funcdesc}{FaultFromNotUnderstood}{uri, localname,\optional{,
-    actor=None}}
+\begin{funcdesc}{FaultFromNotUnderstood}{uri, localname,\optional{, actor}}
 This function could be used when an application receives a message with
 the SOAP \code{mustUnderstand} attribute that it does not understand.
-The \code{uri} and \code{localname} parameters should identify
+The \var{uri} and \var{localname} parameters should identify
 the unknown element.
-The \code{actor} parameter can be used to specify a URI that identifies the
+The \var{actor} parameter can be used to specify a URI that identifies the
 application, if it is not the ultimate recipient of the SOAP message.
 \end{funcdesc}
 
-\begin{funcdesc}{FaultFromZSIException}{ex\optional{, actor=None}}
+\begin{funcdesc}{FaultFromZSIException}{ex\optional{, actor}}
 This function creates a \class{Fault} object from a \ZSI{} exception,
-\exception{ParseException} or \exception{EvaluateException}.
+\exception{ParseException} or \exception{EvaluateException}, passed in
+as \var{ex}.
 A SOAP ``client'' fault is created.
-The \code{actor} parameter can be used to specify a URI that identifies the
+The \var{actor} parameter can be used to specify a URI that identifies the
 application, if it is not the ultimate recipient of the SOAP message.
 \end{funcdesc}
 
