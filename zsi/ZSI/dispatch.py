@@ -31,6 +31,9 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
         # See what modules have the element name.
         if modules is None:
             modules = ( sys.modules['__main__'], )
+
+
+            
         handlers = [ getattr(m, what) for m in modules if hasattr(m, what) ]
         if len(handlers) == 0:
             raise TypeError("Unknown method " + what)
@@ -59,7 +62,7 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                         tc = TC.Any()
                     arg = [ tc.parse(e, ps) for e in data ]
                 except EvaluateException, e:
-                    SendFault(FaultFromZSIException(e))
+                    SendFault(FaultFromZSIException(e), **kw)
                     return
             result = [ handler(*arg) ]
         reply = StringIO.StringIO()
@@ -67,22 +70,32 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
         
         tc = TC.Any(aslist=1, pname=what + 'Response')
         SoapWriter(reply, nsdict=nsdict).serialize(result, tc, rpc=rpc)
-        SendResponse(reply.getvalue())
-        return
+        return SendResponse(reply.getvalue(), **kw)
     except Exception, e:
         # Something went wrong, send a fault.
-        SendFault(FaultFromException(e, 0, sys.exc_info()[2]))
+        return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
 
 
-def _CGISendXML(text, code=200):
+def _ModPythonSendXML(text, code=200, **kw):
+    req = kw['request']
+    req.content_type = 'text/xml'
+    req.content_length = len(text)
+    req.send_http_header()
+    req.write(text)
+
+
+def _ModPythonSendFault(f, **kw):
+    _ModPythonSendXML(f.AsSOAP(), 500, **kw)
+
+def _CGISendXML(text, code=200, **kw):
     print 'Status: %d' % code
     print 'Content-Type: text/xml; charset="utf-8"'
     print 'Content-Length: %d' % len(text)
     print ''
     print text
 
-def _CGISendFault(f):
-    _CGISendXML(f.AsSOAP(), 500)
+def _CGISendFault(f, **kw):
+    _CGISendXML(f.AsSOAP(), 500, **kw)
 
 def AsCGI(nsdict={}, typesmodule=None, rpc=None, modules=None):
     '''Dispatch within a CGI script.
@@ -160,5 +173,13 @@ def AsServer(port=80, modules=None, docstyle=0, nsdict={}, typesmodule=None,
     httpd.typesmodule = typesmodule
     httpd.rpc = rpc
     httpd.serve_forever()
+
+def AsHandler(request=None, modules=None, nsdict={}, rpc=None, **kw):
+    '''Dispatch from within ModPython.'''
+    ps = ParsedSoap(request)
+    kw['request'] = request
+    _Dispatch(ps, modules, _ModPythonSendXML, _ModPythonSendFault,
+              nsdict=nsdict, rpc=rpc, **kw)
+    
 
 if __name__ == '__main__': print _copyright
