@@ -1775,7 +1775,7 @@ class ZSIDerivedTypesAdapter(DerivedTypesInterface):
             else:
                 raise WsdlInterfaceError, 'could not determine array type'
 
-            if t[0:3] == 'xsd':
+            if t[0:4] == 'xsd:':
                 isDefined = False
                 tns = 'http://www.w3.org/2001/XMLSchema'
                 bti = BaseTypeInterpreter()
