@@ -1,4 +1,69 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+import unittest, sys, multifile, mimetools, base64
+from xml.dom import Node
+from xml.dom.ext.reader import PyExpat
+from ZSI import *
+from ZSI import resolvers
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
+
+class t6TestCase(unittest.TestCase):
+    "Test case wrapper for old ZSI t6 test case"
+
+    def checkt6(self):
+        try:
+            istr = StringIO.StringIO(intext)
+            m = mimetools.Message(istr)
+            cid = resolvers.MIMEResolver(m['content-type'], istr)
+            xml = cid.GetSOAPPart()
+            ps = ParsedSoap(xml, resolver=cid.Resolve)
+            #except ParseException, e:
+            #    FaultFromZSIException(e).AsSOAP(OUT)
+            #    self.fail()
+        except Exception, e:
+            # Faulted while processing; assume it's in the header.
+            FaultFromException(e, 1, sys.exc_info()[2]).AsSOAP(OUT) 
+            self.fail()
+
+        try:
+            dict = ps.Parse(typecode)
+        except Exception, e:
+            # Faulted while processing; now it's the body
+            FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
+            self.fail()
+
+        print '**', dict['stringtest'], '**'
+        print base64.encodestring(cid['partii@zolera.com'].read()) 
+        v = dict['b64']
+        print type(v), 'is type(v)' 
+        self.failUnlessEqual(cid['partii@zolera.com'].getvalue(), v,
+                                    "mismatch")
+        print base64.encodestring(v)             
+        try: 
+            from xml.dom.ext import Canonicalize 
+        except: 
+            from ZSI.compat import Canonicalize 
+        z = dict['xmltest'] 
+        print type(z), z 
+        print Canonicalize(z)
+
+def makeTestSuite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(t6TestCase, "check"))
+    return suite
+
+def main():
+    unittest.main(defaultTest="makeTestSuite")
+
+OUT = sys.stdout
+typecode = TC.Struct(None, [
+                TC.String('b64'),
+                TC.String('stringtest'),
+                TC.XML('xmltest'),
+            ])
+                                                            
 intext='''Return-Path: <rsalz@zolera.com>
 Received: from zolera.com (os390.zolera.com [10.0.1.9])
         by zolera.com (8.11.0/8.11.0) with ESMTP id f57I2sf00832
@@ -77,53 +142,8 @@ Content-ID: <12@zolera.com>
 --------------68E4BAC5B266315E42428C64--
 '''
 
-import multifile, mimetools, base64, sys
-import cStringIO as StringIO
-from ZSI import *
-from ZSI import resolvers
-from xml.dom import Node
-from xml.dom.ext.reader import PyExpat
 
-OUT = sys.stdout
 
-typecode = TC.Struct(None, [
-                TC.String('b64'),
-                TC.String('stringtest'),
-                TC.XML('xmltest'),
-            ])
+if __name__ == "__main__" : main()
 
-try:
-    istr = StringIO.StringIO(intext)
-    m = mimetools.Message(istr)
-    cid = resolvers.MIMEResolver(m['content-type'], istr)
-    xml = cid.GetSOAPPart()
-    ps = ParsedSoap(xml, resolver=cid.Resolve)
-#except ParseException, e:
-#    FaultFromZSIException(e).AsSOAP(OUT)
-#    sys.exit(1)
-except Exception, e:
-    # Faulted while processing; assume it's in the header.
-    FaultFromException(e, 1, sys.exc_info()[2]).AsSOAP(OUT)
-    sys.exit(1)
 
-try:
-    dict = ps.Parse(typecode)
-except Exception, e:
-    # Faulted while processing; now it's the body
-    FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
-    sys.exit(1)
-
-print '**', dict['stringtest'], '**'
-print base64.encodestring(cid['partii@zolera.com'].read())
-v = dict['b64']
-print type(v), 'is type(v)'
-if cid['partii@zolera.com'].getvalue() != v: print 'mismatch'
-else: print 'parts matched'
-print base64.encodestring(v)
-try:
-    from xml.dom.ext import Canonicalize
-except:
-    from ZSI.compat import Canonicalize
-z = dict['xmltest']
-print type(z), z
-print Canonicalize(z)
