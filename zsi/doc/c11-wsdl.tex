@@ -1,27 +1,31 @@
-\chapter{WSDL Services}
+\chapter{WSDL Support}
 
-The \module{ZSI.wstools} module provides client tools for using WSDL 1.1
+The \ZSI and its \module{ZSI.wstools} module provides client tools for
+using WSDL 1.1
 (see \citetitle[http://www.w3.org/TR/wsdl]{WSDL 1.1 specification})
 files to access services.
 
-The \class{WSDLReader} class provides methods for loading WSDL service 
-descriptions from URLs or XML data and creating a \class{WSDL} object.
+The \class{WSDLReader} class in \module{ZSI.wstools} provides
+methods for loading WSDL service descriptions from URLs or XML data
+and creating a \class{WSDL} object.
 \class{WSDL} instances represent WSDL service descriptions and provide 
 an object model for building and working with those descriptions.
 
-The \class{ServiceProxy} uses a \class{WSDL} instance to send
+The \class{ServiceProxy} in \ZSI{} uses a \class{WSDL} instance to send
 and receive messages.
 Once the proxy has been created, each remote operation is exposed
 as a method on the object.
 The methods can be called with either positional or keyword arguments;
 the argument types must be compatible with the types specified in the
 WSDL description.
+Note that while \class{ServiceProxy} is part of \ZSI{}, it must be
+explicitly imported.
 
 The following example shows a simple language translation service that makes
 use of the complex type structures defined in the module BabelTypes:
 
 \begin{verbatim}
-from ZSI.wstools import ServiceProxy
+from ZSI import ServiceProxy
 import BabelTypes
 
 service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',

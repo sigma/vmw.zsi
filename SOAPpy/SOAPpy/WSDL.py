@@ -14,7 +14,7 @@ class Proxy:
     file name, or a string.
 
     Loads info into self.methods, a dictionary with methodname keys and values
-    of ServiceProxy.SOAPCallinfo.
+    of WSDLTools.SOAPCallinfo.
 
     For example,
     
@@ -24,7 +24,7 @@ class Proxy:
         print wsdl.methods.keys()        # getTemp
 
 
-    See ServiceProxy.SOAPCallinfo for more info on each method's attributes.
+    See WSDLTools.SOAPCallinfo for more info on each method's attributes.
     '''
 
     def __init__(self, wsdlsource):
@@ -65,7 +65,7 @@ class Proxy:
             #print 'string'
 
         # Package wsdl info as a dictionary of remote methods, with method name
-        # as key (based on ServiceProxy.__init__ in ZSI wsdl library).
+        # as key (based on ServiceProxy.__init__ in ZSI library).
         self.methods = {}
         service = self.wsdl.services[0]
         port = service.ports[0]
@@ -73,7 +73,7 @@ class Proxy:
         binding = port.getBinding()
         portType = binding.getPortType()
         for operation in portType.operations:
-            callinfo = wstools.ServiceProxy.callInfoFromWSDL(port, operation.name)
+            callinfo = wstools.WSDLTools.callInfoFromWSDL(port, operation.name)
             self.methods[callinfo.methodName] = callinfo
 
         self.soapproxy = SOAP.SOAPProxy('http://localhost/dummy.webservice')

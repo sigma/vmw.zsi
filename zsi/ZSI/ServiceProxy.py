@@ -9,7 +9,7 @@
 
 from ZSI import *
 from ZSI.client import *
-import WSDLTools
+import wstools
 from urlparse import urlparse
 import weakref
 
@@ -21,7 +21,7 @@ class ServiceProxy:
     def __init__(self, wsdl, service=None, port=None, tracefile=None,
                  typesmodule=None, nsdict=None):
         if not hasattr(wsdl, 'targetNamespace'):
-            wsdl = WSDLTools.WSDLReader().loadFromURL(wsdl)
+            wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
 #        for item in wsdl.types.items():
 #            self._serializer.loadSchema(item)
         self._service = wsdl.services[service or 0]
