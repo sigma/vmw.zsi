@@ -126,7 +126,15 @@ class Gregorian(TypeCode):
 
         else:
             tstr = ''
-        print >>sw, '<%s%s%s>%s</%s>' % (n, attrtext, tstr, val, n)
+
+        # ignore the xmlns if it was explicitly stated
+        i = n.find('xmlns')
+        if i > 0:
+            ctag = '</%s>' % n[:i - 1]
+        else:
+            ctag = '</%s>' % n
+            
+        print >>sw, '<%s%s%s>%s%s' % (n, attrtext, tstr, val, ctag)
 
 class gDateTime(Gregorian):
     '''A date and time.
