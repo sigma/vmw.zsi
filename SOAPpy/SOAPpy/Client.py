@@ -236,7 +236,7 @@ class SOAPProxy:
     def __init__(self, proxy, namespace = None, soapaction = '',
                  header = None, methodattrs = None, transport = HTTPTransport,
                  encoding = 'UTF-8', throw_faults = 1, unwrap_results = 1,
-                 http_proxy=None, config = Config,noroot = 0):
+                 http_proxy=None, config = Config, noroot = 0):
 
         # Test the encoding, raising an exception if it's not known
         if encoding != None:
