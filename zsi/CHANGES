@@ -1,4 +1,4 @@
-Changes for ??, released ???:
+Changes for 1.4, released 09-Sep-2003:
     -   Ouput XML prolog in SoapWriter
     -   Added nsdict parameter to dispatch.AsCGI and dispatch.AsServer
     -   Fixed bug where xmlns attribute was included in closing elements
@@ -14,6 +14,7 @@ Changes for ??, released ???:
     -   Add ZSIException as parent for ZSI exception classes, FaultException
         class, and raise that if we get unexpected fault in client (Wichert)
     -   Add auth_header keyword param to client Send method (Phillip Pearson)
+    -   Added support for conversion between WSDL and Python classes
 
 Changes for 1.3, released xx-May-2002:
     -	Fixed parsing bug evidenced by dW article
