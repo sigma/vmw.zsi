@@ -7,7 +7,7 @@
 import sys, unittest
 from ZSI import EvaluateException, FaultException
 
-import utils
+from utils import TestSetUp, TestProgram, failureException
 from paramWrapper import ResultsToStr
 
 """
@@ -26,7 +26,7 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getAllServiceNames(request)   
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -37,7 +37,7 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getAllServiceSummaries(request)   
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -49,7 +49,7 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getServiceDetail(request)   
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -61,7 +61,7 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getServiceNamesByPublisher(request)   
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -73,7 +73,7 @@ class XMethodsQueryTest(unittest.TestCase):
         try:
             response = portType.getServiceSummariesByPublisher(request)   
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -83,7 +83,7 @@ def makeTestSuite():
     global service, portType
 
     kw = {}
-    setUp = utils.TestSetUp('config.txt')
+    setUp = TestSetUp('config.txt')
     serviceLoc = setUp.get('complex_types', 'XMethodsQuery')
     useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
@@ -99,4 +99,4 @@ def makeTestSuite():
 
 
 if __name__ == "__main__" :
-    utils.TestProgram(defaultTest="makeTestSuite")
+    TestProgram(defaultTest="makeTestSuite")

@@ -7,7 +7,7 @@
 import sys, unittest
 from ZSI import FaultException
 
-import utils
+from utils import TestSetUp, TestProgram, TestDiff, failureException
 from paramWrapper import ResultsToStr
 
 """
@@ -22,27 +22,16 @@ class StationInfoTest(unittest.TestCase):
     """Test case for GlobalWeather Web service, port type StationInfo
     """
 
-    def setUp(self):
-        """Done this way because unittest instantiates a TestCase
-           for each test method, but want all diffs to go in one
-           file.  Not doing testdiff as a global this way causes
-           problems.
-        """
-        global testdiff
-
-        if not testdiff:
-            testdiff = utils.TestDiff(self, 'diffs')
-
     def test_getStation(self):
         request = portType.inputWrapper('getStation')
         request._code = 'SFO'
         try:
             response = portType.getStation(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
     def test_isValidCode(self):
@@ -51,10 +40,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.isValidCode(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
     def test_listCountries(self):
@@ -62,10 +51,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.listCountries(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
     
 
     def test_searchByCode(self):
@@ -74,10 +63,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByCode(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
     def test_searchByCountry(self):
@@ -86,10 +75,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByCountry(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
     
         # can't find what valid name is, returns empty result
     def test_searchByName(self):
@@ -98,10 +87,10 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByName(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
         # can't find what valid region is, returns empty result
@@ -111,18 +100,17 @@ class StationInfoTest(unittest.TestCase):
         try:
             response = portType.searchByRegion(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
     
 
 def makeTestSuite():
-    global service, portType, testdiff
+    global service, portType
 
-    testdiff = None
     kw = {}
-    setUp = utils.TestSetUp('config.txt')
+    setUp = TestSetUp('config.txt')
     serviceLoc = setUp.get('complex_types', 'GlobalWeather')
     useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
@@ -137,10 +125,5 @@ def makeTestSuite():
     return suite
 
 
-def tearDown():
-    """Global tear down."""
-    testdiff.close()
-
-
 if __name__ == "__main__" :
-    utils.TestProgram(defaultTest="makeTestSuite")
+    TestProgram(defaultTest="makeTestSuite")

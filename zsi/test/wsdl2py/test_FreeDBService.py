@@ -7,7 +7,7 @@
 import sys, unittest
 from ZSI import FaultException
 
-import utils
+from utils import TestSetUp, TestProgram, failureException
 from paramWrapper import ResultsToStr
 
 """
@@ -29,7 +29,7 @@ class FreeDBServiceTest(unittest.TestCase):
         try:
             response = portType.getDetails(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -39,7 +39,7 @@ class FreeDBServiceTest(unittest.TestCase):
         try:
             response = portType.search('Ted Nugent and the Amboy Dukes')
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -49,7 +49,7 @@ class FreeDBServiceTest(unittest.TestCase):
         try:
             response = portType.searchByTitle('Ummagumma')
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -59,7 +59,7 @@ class FreeDBServiceTest(unittest.TestCase):
         try:
             response = portType.searchByTrack('Species of Animals')
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -69,7 +69,7 @@ class FreeDBServiceTest(unittest.TestCase):
         try:
             response = portType.searchByArtist('Steppenwolf')
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -79,7 +79,7 @@ def makeTestSuite():
     global service, portType
 
     kw = {}
-    setUp = utils.TestSetUp('config.txt')
+    setUp = TestSetUp('config.txt')
     serviceLoc = setUp.get('complex_types',
                            'com.systinet.demo.freedb.FreeDBService')
     useTracefile = setUp.get('configuration', 'tracefile') 
@@ -95,5 +95,5 @@ def makeTestSuite():
 
 
 if __name__ == "__main__" :
-    utils.TestProgram(defaultTest="makeTestSuite")
+    TestProgram(defaultTest="makeTestSuite")
 

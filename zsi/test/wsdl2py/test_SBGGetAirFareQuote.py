@@ -8,8 +8,9 @@ import sys, unittest
 import time
 
 from ZSI import FaultException
+
+from utils import TestSetUp, TestProgram, TestDiff, failureException
 from paramWrapper import ResultsToStr
-import utils
 
 """
 Unittest for contacting the SBGGetAirFareQuoteService Web service.
@@ -21,17 +22,6 @@ WSDL: http://wavendon.dsdata.co.uk:8080/axis/services/SBGGetAirFareQuote?wsdl
 class SBGAirFareQuoteTest(unittest.TestCase):
     """Test case for SBGGetAirFareQuoteService Web service
     """
-
-    def setUp(self):
-        """Done this way because unittest instantiates a TestCase
-           for each test method, but want all diffs to go in one
-           file.  Not doing testdiff as a global this way causes
-           problems.
-        """
-        global testdiff
-
-        if not testdiff:
-            testdiff = utils.TestDiff(self, 'diffs')
 
     def test_getAirFareQuote(self):
         request = portType.inputWrapper('getAirFareQuote')
@@ -45,7 +35,7 @@ class SBGAirFareQuoteTest(unittest.TestCase):
         try:
             response = portType.getAirFareQuote(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -56,18 +46,17 @@ class SBGAirFareQuoteTest(unittest.TestCase):
         try:
             response = portType.getAirlines(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
     
 
 def makeTestSuite():
-    global service, portType, testdiff
+    global service, portType
 
-    testdiff = None
     kw = {}
-    setUp = utils.TestSetUp('config.txt')
+    setUp = TestSetUp('config.txt')
     serviceLoc = setUp.get('complex_types', 'SBGGetAirFareQuoteService')
     useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
@@ -81,10 +70,5 @@ def makeTestSuite():
     return suite
 
 
-def tearDown():
-    """Global tear down."""
-    testdiff.close()
-
-
 if __name__ == "__main__" :
-    utils.TestProgram(defaultTest="makeTestSuite")
+    TestProgram(defaultTest="makeTestSuite")

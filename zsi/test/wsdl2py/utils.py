@@ -9,6 +9,8 @@ import sys, os, os.path, pickle
 import shutil, getopt
 import StringIO, copy, re
 import unittest, ConfigParser
+import inspect
+
 from ZSI import wsdl2python
 from ZSI.wstools.WSDLTools import WSDLReader
 
@@ -139,10 +141,12 @@ class TestDiff:
        against text in a test file.  Test files are expected to
        be located in a subdirectory of the current directory,
        named diffs if a name isn't provided.  If the sub-directory
-       doesn't exist, it will be created
+       doesn't exist, it will be created.  If a single test file
+       is to be generated, the file name is passed in.  If not,
+       another sub-directory is created below the diffs directory,
+       in which a file is created for each test.
 
-       If used in a test case, this should be instantiated in setUp and
-       closed in tearDown.  The calling unittest.TestCase instance is passed
+       The calling unittest.TestCase instance is passed
        in on object creation.  Optional compiled regular expressions
        can also be passed in, which are used to ignore strings
        that one knows in advance will be different, for example
@@ -154,51 +158,41 @@ class TestDiff:
        a new test file, remove the old one from the sub-directory.
     """
 
-    def __init__(self, testInst, subDir='diffs', *ignoreList):
-        self.SUBDIR = subDir
+    def __init__(self, testInst, testFilePath='diffs', singleFileName='',
+                *ignoreList):
         self.diffsFile = None
         self.testInst = testInst
         self.origStrFile = None
-            # used to divide separate test blocks within the same
-            # test file.
-        self.divider = "#" + ">" * 75 + "\n"
         self.expectedFailures = copy.copy(ignoreList)
-        self.testFilePath = self.SUBDIR + os.sep
-        if not os.path.exists(self.testFilePath):
-            os.mkdir(self.testFilePath)
-        
+
+        if not os.path.exists(testFilePath):
+            os.mkdir(testFilePath)
+
+        if not singleFileName:
+            testFilePath = testFilePath + os.sep + testInst.__class__.__name__
+            if not os.path.exists(testFilePath):
+                os.mkdir(testFilePath)
+            f = inspect.currentframe()
+            fullName = testFilePath + os.sep + \
+                       inspect.getouterframes(f)[1][3] + '.diffs'
+        else:
+            fullName = testFilePath + os.sep + singleFileName
+
         deleteFile = handleExtraArgs(sys.argv[1:])
         if deleteFile:
-             self.deleteFile('%s.diffs' % testInst.__class__.__name__)
-        self.setDiffFile('%s.diffs' % testInst.__class__.__name__)
+            try:
+                os.remove(fullName)
+            except OSError:
+                print fullName
 
-
-
-        
-
-    def setDiffFile(self, fname):
-        """setDiffFile attempts to open the test file with the
-           given name, and read it into a StringIO instance.
-           If the file does not exist, it opens the file for
-           writing.
-        """
-        filename = fname
-        if self.diffsFile and not self.diffsFile.closed:
-            self.diffsFile.close()
         try:
-            self.diffsFile = open(self.testFilePath + filename, "r")
+            self.diffsFile = open(fullName, "r")
             self.origStrFile = StringIO.StringIO(self.diffsFile.read())
         except IOError:
             try:
-                self.diffsFile = open(self.testFilePath + filename, "w")
+                self.diffsFile = open(fullName, "w")
             except IOError:
                 print "exception"
-
-    def deleteFile(self, fname):
-        try:
-            os.remove(self.testFilePath + fname)
-        except OSError:
-            print self.testFilePath + fname
 
 
     def failUnlessEqual(self, buffer):
@@ -212,41 +206,32 @@ class TestDiff:
         else:
             testStrFile = buffer
             testStrFile.seek(0)
+
+        hasContent = False
         if self.diffsFile.mode == "r":
             for testLine in testStrFile:
                 origLine = self.origStrFile.readline() 
-                    # skip divider
-                if origLine == self.divider:
-                    origLine = self.origStrFile.readline() 
+                if not origLine:
+                    break
+                else:
+                    hasContent = True
 
                     # take out expected failure strings before
                     # comparing original against new output
                 for cexpr in self.expectedFailures:
                     origLine = cexpr.sub('', origLine)
                     testLine = cexpr.sub('', testLine)
-                if origLine != testLine:    # fails
-                    # advance test file to next test
-                    line = origLine
-                    while line and line != self.divider:
-                        line = self.origStrFile.readline() 
-                    print self.testInst.__class__
-                    self.testInst.failUnlessEqual(origLine, testLine)
 
-        else:       # write new test file
+                if origLine != testLine:
+                    self.testInst.failUnlessEqual(origLine, testLine)
+            return
+
+        if (self.diffsFile.mode == "w") or not hasContent:
+                # write new test file
             for line in testStrFile:
                 self.diffsFile.write(line)
-            self.diffsFile.write(self.divider)
 
-
-    def close(self):
-        """Closes handle to original test file.
-        """
-        if self.diffsFile and not self.diffsFile.closed:
-            self.diffsFile.close()
-
-
-    def getSubdirName(self):
-        return self.SUBDIR
+        self.diffsFile.close()
 
 
 class TestProgram(unittest.TestProgram):

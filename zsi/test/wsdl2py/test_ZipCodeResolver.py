@@ -7,7 +7,7 @@
 import sys, unittest
 from ZSI import FaultException
 
-import utils
+from utils import TestSetUp, TestProgram, TestDiff, failureException
 from paramWrapper import ResultsToStr
 
 """
@@ -24,17 +24,6 @@ class ZipCodeResolverTest(unittest.TestCase):
     """Test case for ZipCodeResolver Web service
     """
 
-    def setUp(self):
-        """Done this way because unittest instantiates a TestCase
-           for each test method, but want all diffs to go in one
-           file.  Not doing testdiff as a global this way causes
-           problems.
-        """
-        global testdiff
-
-        if not testdiff:
-            testdiff = utils.TestDiff(self, 'diffs')
-
     def test_CorrectedAddressHtml(self):
         request = portType.inputWrapper('CorrectedAddressHtml')
         request._address = '636 Colusa Avenue'
@@ -43,7 +32,7 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.CorrectedAddressHtml(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
             print ResultsToStr(response)
@@ -57,10 +46,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.CorrectedAddressXml(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
     def test_FullZipCode(self):
@@ -71,10 +60,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.FullZipCode(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
     def test_ShortZipCode(self):
@@ -85,10 +74,10 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.ShortZipCode(request)
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
     def test_VersionInfo(self):
@@ -96,18 +85,17 @@ class ZipCodeResolverTest(unittest.TestCase):
         try:
             response = portType.VersionInfo(request)   
         except FaultException, msg:
-            if utils.failureException(FaultException, msg):
+            if failureException(FaultException, msg):
                 raise
         else:
-            testdiff.failUnlessEqual(ResultsToStr(response))
+            TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
 
 def makeTestSuite():
-    global service, portType, testdiff
+    global service, portType
 
-    testdiff = None
     kw = {}
-    setUp = utils.TestSetUp('config.txt')
+    setUp = TestSetUp('config.txt')
     serviceLoc = setUp.get('complex_types', 'ZipCodeResolver')
     useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
@@ -121,9 +109,5 @@ def makeTestSuite():
     return suite
 
 
-def tearDown():
-    """Global tear down."""
-    testdiff.close()
-
 if __name__ == "__main__" :
-    utils.TestProgram(defaultTest="makeTestSuite")
+    TestProgram(defaultTest="makeTestSuite")

@@ -32,10 +32,6 @@ class Wsdl2pythonTest(unittest.TestCase):
         self.path = configLoader.nameGenerator.next()
         print self.path
         sys.stdout.flush()
-        self.testdiff = utils.TestDiff(self, 'generatedCode')
-
-    def tearDown(self):
-        self.testdiff.close()
 
     def __str__(self):
         teststr = unittest.TestCase.__str__(self)
@@ -68,9 +64,7 @@ class Wsdl2pythonTest(unittest.TestCase):
         if hasSchema:
             strFile = StringIO.StringIO()
             typesFileName = f_types + ".py"
-            if deleteFile:
-                self.testdiff.deleteFile(typesFileName)
-            self.testdiff.setDiffFile(typesFileName)
+            testdiff = utils.TestDiff(self, 'generatedCode', typesFileName)
             try:
                 codegen.write_service_types(f_types, strFile)
             except:
@@ -78,23 +72,21 @@ class Wsdl2pythonTest(unittest.TestCase):
                 raise
             if strFile.closed:
                 print "trouble"
-            self.testdiff.failUnlessEqual(strFile)
+            testdiff.failUnlessEqual(strFile)
             strFile.close()
         else:
             typesFileName = None
 
         strFile = StringIO.StringIO()
         servicesFileName = f_services + ".py"
-        if deleteFile:
-            self.testdiff.deleteFile(servicesFileName)
-        self.testdiff.setDiffFile(servicesFileName)
+        testdiff = utils.TestDiff(self, 'generatedCode', servicesFileName)
         try:
             signatures = codegen.write_services(f_types,
                              f_services, strFile, hasSchema)
         except:
             self.path = self.path + ": write_services"
             raise
-        self.testdiff.failUnlessEqual(strFile)
+        testdiff.failUnlessEqual(strFile)
         strFile.close()
 
 
@@ -103,7 +95,7 @@ class Wsdl2pythonTest(unittest.TestCase):
             return
         try:
             py_compile.compile(
-                self.testdiff.getSubdirName() + os.sep + typesFileName,
+                'generatedCode' + os.sep + typesFileName,
                 doraise=True)
 
             # py_compile.compile raises bogus indentation exceptions
@@ -119,7 +111,7 @@ class Wsdl2pythonTest(unittest.TestCase):
             return
         try:
             py_compile.compile(
-                self.testdiff.getSubdirName() + os.sep + servicesFileName,
+                'generatedCode' + os.sep + servicesFileName,
                 doraise=True)
 
             # py_compile.compile raises bogus indentation exceptions
@@ -133,11 +125,9 @@ class Wsdl2pythonTest(unittest.TestCase):
 
 def makeTestSuite(section=None):
     global configLoader
-    global deleteFile
     global servicesFileName
     global typesFileName
 
-    deleteFile = utils.handleExtraArgs(sys.argv[1:])
     servicesFileName = None
     typesFileName = None
 
