@@ -1,4 +1,39 @@
 
+Release 0.11.1 of SOAPpy
+------------------------
+
+- Bug fixes:
+
+   - Fixed bug [ 792258 ] "SOAPBuilder.SOAPBuilder.dump can catch
+   wrong exceptions" in SOAPBuilder.dump() submitted by Greg Chapman
+   (glchapman).
+
+   - Changes suggested by Richard Au (richardau) to fix ssl support.
+   See bug report [ 752882 ] "SSL SOAP Server no longer working."
+
+   - Remove call to gentag from 'dump' and add to 'dump_float', per
+   bug report [ 792600 ] "SOAPBuilder.SOAPBuilder.dump possibly should
+   not call gentag" by Greg Chapman (glchapman).
+
+   - Add a tests for handling of nil="true" and nil="false".  This
+   fixes bug [ pywebsvcs-Bugs-858168 ] 'xsi:nil="true" causes
+   exception' reported by Robert Zimmermann (robertzett):
+
+- testClient1.py now works properly.  It had been failing to start the
+server thread on the second unit test.  It turned out that the
+variable 'quit' needed to be reset to zero after the SOAP server
+thread for the first unit test exited.  With the solution of this
+problem testClient1 can now be extended to run unit tests of both
+client and server components.
+
+- Added 'strict' option to the WSDL class. If strict is true, a
+RuntimeException will be raised if an unrecogned message is recieved.
+If strict is false, a warning will be printed to the console, the
+message type will be added to the WSDL schema, and processing will
+continue.  This is in response to the second half of bug report [
+817331 ] "Some WSDL.py changes", submitted by Rudolf Ruland.
+
+
 Release 0.11.0 of SOAPpy
 ------------------------
 

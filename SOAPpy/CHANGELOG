@@ -3,6 +3,92 @@ $Id$
 This is a detailed changelog, auto-generated from the CVS logs.  For a
 high-level view, see RELEASE_NOTES.
 
+2003-12-23 05:05  warnes
+
+	* SOAPpy/version.py: 
+	- Update version number for new release.
+
+2003-12-23 05:04  warnes
+
+	* SOAPpy/Server.py: 
+	- Changes suggested by Richard Au (richardau) to fix ssl support. 
+	See   bug report [ 752882 ] "SSL SOAP Server no longer working."
+
+2003-12-23 04:33  warnes
+
+	* SOAPpy/SOAPBuilder.py: 
+	- Fixed bug [ 792258 ] "SOAPBuilder.SOAPBuilder.dump can catch
+	wrong	exceptions" in SOAPBuilder.dump() submitted by Greg Chapman
+	(glchapman).
+	
+	- Fixed a bug in SOAPBuilder.dump_instance() that had been masked
+	by   bug #792258.
+
+2003-12-23 04:24  warnes
+
+	* tests/SOAPtest.py: 
+	- Add call to structType.__init__ for user classes that inherit
+	from   structType.  This fixes a bug in the tests that was masked
+	by   incorrectly catching & ignoring exceptions in
+	SOAPBuilder.dump().
+
+2003-12-23 04:10  warnes
+
+	* tests/testClient1.py: 
+	- testClient1.py now works.  The problem was failing to set 'quit'
+	back to zero   after the SOAP server exited.
+
+2003-12-23 03:22  warnes
+
+	* SOAPpy/SOAPBuilder.py: 
+	- Remove call to gentag from 'dump' and add to 'dump_float', per
+	bug   report [ 792600 ] "SOAPBuilder.SOAPBuilder.dump possibly
+	should not   call gentag" by Greg Chapman (glchapman).
+
+2003-12-23 03:21  warnes
+
+	* tests/SOAPtest.py: - Add a tests for handling of nil="true" and
+	nil="false".
+
+2003-12-23 03:17  warnes
+
+	* SOAPpy/Parser.py: 
+	- Correctly handle testing for nil="true" and for nil=1.
+
+2003-12-23 02:56  warnes
+
+	* SOAPpy/wstools/WSDLTools.py: 
+	- Fix syntax error from last change.
+
+2003-12-23 02:42  warnes
+
+	* SOAPpy/wstools/WSDLTools.py: 
+	- Added 'strict' option to the WSDL class. If strict is true, a  
+	RuntimeException will be raised if an unrecogned message is  
+	recieved.  If strict is false, a warning will be printed to the  
+	console, the message type will be added to the WSDL schema, and  
+	processing will continue.  This is in response to the second half
+	of   bug report [ 817331 ] "Some WSDL.py changes", submitted by
+	Rudolf	 Ruland.
+
+2003-12-23 02:21  warnes
+
+	* SOAPpy/wstools/WSDLTools.py: 
+	- rename loadFromStream's 'file' argument to 'stream' to make it
+	clear	that the stream need not be a file.
+
+2003-12-23 02:11  warnes
+
+	* SOAPpy/Parser.py: 
+	- Fix bug [ 858168 ] 'xsi:nil="true" causes exception', reported by
+	  Robert Zimmermann (robertzett@user.sf.net).
+
+2003-12-19 22:21  warnes
+
+	* RELEASE_INFO: 
+	- Mistyped 'unwrap_results' instead of 'simplify_objects'
+
+
 2003-12-19 15:19  warnes
 
 	* SOAPpy/Client.py, SOAPpy/Parser.py, SOAPpy/SOAPBuilder.py,
