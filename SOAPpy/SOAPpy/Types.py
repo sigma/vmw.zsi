@@ -1575,6 +1575,13 @@ class faultType(structType, Error):
     def __call__(self):
         return (self.faultcode, self.faultstring, self.detail)        
 
+class SOAPException(Exception):
+    def __init__(self, code="", string="", detail=None):
+        self.args = ("SOAPpy SOAP Exception", code, string, detail)
+        self.code = code
+        self.string = string
+        self.detail = detail
+        
 #######
 # Convert complex SOAPpy objects to native python equivalents
 #######
@@ -1596,13 +1603,18 @@ def simplify(object, level=0):
     - compoundType --> dictionary
     """
     
-    if level>10: return object
+    if level > 10:
+        return object
     
     if isinstance( object, faultType ):
-        for k in object._keys():
-            if isPublic(k):
-                setattr(object, k, simplify(object[k], level=level+1))
-        raise object
+        se = SOAPException(object.faultcode, object.faultstring, object.detail)
+        raise se
+        # this is the old implementation in case greg decides the above isn't
+        # what we want.
+#         for k in object._keys():
+#             if isPublic(k):
+#                 setattr(object, k, simplify(object[k], level=level+1))
+#         raise object
     elif isinstance( object, arrayType ):
         data = object._aslist()
         for k in range(len(data)):
