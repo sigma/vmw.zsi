@@ -81,7 +81,7 @@ Config.authMethod = "_authorize"
 
 class GSISOAPServer(GSITCPSocketServer, SOAPServerBase):
     def __init__(self, addr = ('localhost', 8000),
-                 RequestHandler = SOAPRequestHandler, log = 1,
+                 RequestHandler = SOAPRequestHandler, log = 0,
                  encoding = 'UTF-8', config = Config, namespace = None):
 
         # Test the encoding, raising an exception if it's not known
@@ -110,7 +110,7 @@ class GSISOAPServer(GSITCPSocketServer, SOAPServerBase):
 class ThreadingGSISOAPServer(ThreadingGSITCPSocketServer, SOAPServerBase):
 
     def __init__(self, addr = ('localhost', 8000),
-                 RequestHandler = SOAPRequestHandler, log = 1,
+                 RequestHandler = SOAPRequestHandler, log = 0,
                  encoding = 'UTF-8', config = Config, namespace = None):
         
         # Test the encoding, raising an exception if it's not known
