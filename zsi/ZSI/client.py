@@ -4,7 +4,7 @@
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
 from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
-    FaultFromFaultMessage, _child_elements, _attrs
+    FaultFromFaultMessage, _child_elements, _attrs, FaultException
 from ZSI.auth import AUTH
 import base64, httplib, cStringIO as StringIO, types, time, urlparse
 
