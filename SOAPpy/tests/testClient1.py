@@ -12,19 +12,28 @@ import SOAPpy
 quit = 0
 
 def echo(s):
-    return s + s # repeats a string twice
+    """repeats a string twice"""
+    return s + s 
 
 def kill():
+    """tell the server to quit"""
     global quit
     quit = 1
 
 def server1():
+    """start a SOAP server on localhost:8000"""
+    
+    print "Starting SOAP Server...",
     server = SOAPpy.Server.SOAPServer(addr=('127.0.0.1', 8000))
     server.registerFunction(echo)
     server.registerFunction(kill)
+    print "Done."
+    
     global quit
     while not quit: 
         server.handle_request()
+    quit = 0
+    print "Server shut down."
 
 class ClientTestCase(unittest.TestCase):
 
@@ -39,22 +48,31 @@ class ClientTestCase(unittest.TestCase):
 
         start = time.time()
         connected = False
-        while not connected and time.time() - start < self.startup_timeout:
+        server = None
+        while not connected  and time.time() - start < self.startup_timeout:
+            print "Trying to connect to the SOAP server...",
             try:
-                self.server = SOAPpy.Client.SOAPProxy('127.0.0.1:8000')
-                self.server.echo('Hello World')
+                server = SOAPpy.Client.SOAPProxy('127.0.0.1:8000')
+                server.echo('Hello World')
+            except socket.error, e:
+                print "Failure:", e
+                time.sleep(0.5)
+            else:
                 connected = True
-                time.sleep(0.1)
-            except socket.error:
-                pass
-        
+                self.server = server
+                print "Success."
+
         if not connected: raise 'Server failed to start.'
 
     def tearDown(self):
         '''This is run once after each unit test.'''
 
-        self.server.kill()
-        time.sleep(5)
+        print "Trying to shut down SOAP server..."
+        if self.server is not None:
+            self.server.kill()
+            time.sleep(5)
+
+        return 1
 
     def testEcho(self):
         '''Test echo function.'''
