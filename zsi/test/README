@@ -1,3 +1,7 @@
-These are "hand tests."  That is, you have to run the tests by hand
-and inspect the output.  As a general rule, it's bad if any of the tests
-exit with an exception. :)
+These tests are in the process of being incorporated in pyunit. Not all errors
+are currently being caught by pyunit, so it is still necessary to check the
+output of the code by hand.
+
+Two top level modules have been provided to run the tests. "test_zsi.py" is used
+to run all of the local tests. "test_zsi_net.py" is used to run all of the zsi
+tests including those that require network access.
