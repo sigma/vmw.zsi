@@ -63,7 +63,7 @@ except: pass
 
 ident = '$Id$'
 
-__version__ = "0.9.9-pre6-CVS"
+from version import __version__
 
 
 
@@ -162,7 +162,7 @@ class SOAPServerBase:
 class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def version_string(self):
         return '<a href="http://pywebsvcs.sf.net">' + \
-            'SOAP.py ' + __version__ + '</a> (Python ' + \
+            'SOAPpy ' + __version__ + '</a> (Python ' + \
             sys.version.split()[0] + ')'
 
     def date_time_string(self):

@@ -56,7 +56,7 @@ from Utilities   import *
 
 ident = '$Id$'
 
-__version__ = "0.9.9-pre6-CVS"
+from version import __version__
 
 
 ################################################################################
@@ -65,7 +65,7 @@ __version__ = "0.9.9-pre6-CVS"
 
 
 def SOAPUserAgent():
-    return "SOAP.py " + __version__ + " (pywebsvcs.sf.net)"
+    return "SOAPpy " + __version__ + " (pywebsvcs.sf.net)"
 
 
 class SOAPAddress:
@@ -113,7 +113,6 @@ class HTTPTransport:
         """Extract the (possibly extended) namespace from the returned
         SOAP message."""
 
-        # only try this if original_namespace is a string!
         if type(original_namespace) == StringType:
             pattern="xmlns:\w+=['\"](" + original_namespace + ")['\"]"
             match = re.search(pattern, data)
@@ -168,7 +167,7 @@ class HTTPTransport:
             debugHeader(s)
             print "POST %s %s" % (real_path, r._http_vsn_str)
             print "Host:", addr.host
-            print "User-agent: SOAP.py " + __version__ + " (http://pywebsvcs.sf.net)"
+            print "User-agent: SOAPpy " + __version__ + " (http://pywebsvcs.sf.net)"
             print "Content-type:", t
             print "Content-length:", len(data)
             print 'SOAPAction: "%s"' % soapaction
