@@ -44,7 +44,7 @@ information on getting and setting up those tools.
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG wstools
 
 7.  Build the release from the export.  Switch to the export directory
-    (the one containing setup.py) and run "make kit".
+    (the one containing setup.py) and run **make kit**.
 
 8.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
     0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
@@ -53,7 +53,7 @@ information on getting and setting up those tools.
     (dist/).
 
 9.  Use the SourceForge tools to create a release and upload the
-    files.  If appropriate, "hide" obsolete releases.  Hiding old
+    files.  If appropriate, hide obsolete releases.  Hiding old
     releases is normally only done if the older release contains
     security bugs or other critical bugs that render it unusable.
 
@@ -71,7 +71,7 @@ information on getting and setting up those tools.
       announcing the release.
 
     - Register the release with the Python Package Index (PyPI).  This
-      can be done using "python setup.py register".
+      can be done using **python setup.py register**.
 
     - comp.lang.python.announce
 
@@ -104,7 +104,7 @@ methods:
   The symlink can then be made to .../someplace/tools/mkhowto.
 
 If you want to skip the symlink, you can specify the MKHOWTO variable
-when you run "make kit"::
+when you run **make kit**::
 
   make MKHOWTO=.../Doc/tools/mkhowto kit
 
