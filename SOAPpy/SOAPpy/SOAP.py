@@ -97,7 +97,7 @@ except: pass
 
 ident = '$Id$'
 
-__version__ = "0.9.7"
+__version__ = "0.9.8"
 
 # Platform hackery
 
@@ -3069,6 +3069,8 @@ class SOAPBuilder:
         if type(tag) not in (NoneType, StringType, UnicodeType):
             raise KeyError, "tag must be a string or None"
 
+        tag = tag or self.gentag()
+
         try:
             meth = getattr(self, "dump_" + type(obj).__name__)
             meth(obj, tag, typed, ns_map)
@@ -3386,7 +3388,7 @@ def buildSOAP(args=(), kw={}, method=None, namespace=None, header=None,
 ################################################################################
 
 def SOAPUserAgent():
-    return "SOAP.py " + __version__ + " (actzero.com)"
+    return "SOAP.py " + __version__ + " (pywebsvcs.sf.net)"
 
 ################################################################################
 # Client
