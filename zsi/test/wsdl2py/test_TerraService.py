@@ -238,8 +238,8 @@ def setUp():
 
     deleteFile = utils.handleExtraArgs(sys.argv[1:])
     testdiff = None
-    service = ClientGenerator().getModule('complex_types', 'TerraService',
-                                          'generatedCode')
+    service = ClientGenerator().getModule('config.txt', 'complex_types',
+                                          'TerraService', 'generatedCode')
     return service
 
 

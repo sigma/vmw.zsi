@@ -100,8 +100,8 @@ def setUp():
 
     deleteFile = utils.handleExtraArgs(sys.argv[1:])
     testdiff = None
-    service = ClientGenerator().getModule('complex_types', 'GlobalWeather',
-                                          'generatedCode')
+    service = ClientGenerator().getModule('config.txt', 'complex_types',
+                                          'GlobalWeather', 'generatedCode')
     return service
 
 def makeTestSuite():

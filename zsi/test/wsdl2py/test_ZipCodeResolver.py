@@ -84,7 +84,7 @@ def setUp():
 
     deleteFile = utils.handleExtraArgs(sys.argv[1:])
     testdiff = None
-    service = ClientGenerator().getModule('complex_types',
+    service = ClientGenerator().getModule('config.txt', 'complex_types',
                                           'ZipCodeResolver', 'generatedCode')
     return service
 
