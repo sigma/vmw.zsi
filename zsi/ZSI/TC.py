@@ -407,13 +407,13 @@ class String(TypeCode):
         if self.textprotect: v = _textunprotect(v)
         return v
 
-    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', orig=None, **kw):
         objid = '%x' % id(pyobj)
         n = name or self.oname or ('E' + objid)
         if type(pyobj) in _seqtypes:
             print >>sw, '<%s%s href="%s"/>' % (n, attrtext, pyobj[0])
             return
-        if not self.unique and sw.Known(pyobj):
+        if not self.unique and sw.Known(orig or pyobj):
             print >>sw, '<%s%s href="#%s"/>' % (n, attrtext, objid)
             return
         if type(pyobj) == types.UnicodeType: pyobj = pyobj.encode('utf-8')
@@ -443,7 +443,7 @@ class URI(String):
         return urldecode(val)
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        String.serialize(self, sw, urlencode(pyobj), **kw)
+        String.serialize(self, sw, urlencode(pyobj), orig=pyobj, **kw)
 
 
 class Base64String(String):
@@ -457,7 +457,7 @@ class Base64String(String):
         return b64decode(val.replace(' ', '').replace('\n','').replace('\r',''))
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        String.serialize(self, sw, '\n' + b64encode(pyobj), **kw)
+        String.serialize(self, sw, '\n' + b64encode(pyobj), orig=pyobj, **kw)
 
 class HexBinaryString(String):
     '''Hex-encoded binary (yuk).
@@ -470,7 +470,7 @@ class HexBinaryString(String):
         return hexdecode(val)
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        String.serialize(self, sw, hexencode(pyobj).upper(), **kw)
+        String.serialize(self, sw, hexencode(pyobj).upper(), orig=pyobj, **kw)
 
 class XMLString(String):
     '''A string that represents an XML document
@@ -488,7 +488,7 @@ class XMLString(String):
         return self.readerclass().fromString(v)
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        String.serialize(self, sw, Canonicalize(pyobj), name, attrtext, **kw)
+        String.serialize(self, sw, Canonicalize(pyobj), name, attrtext, orig=pyobj, **kw)
 
 class Enumeration(String):
     '''A string type, limited to a set of choices.
