@@ -1701,7 +1701,6 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
             if hasattr( self._dec, 'content' ):
                 if isinstance( self._dec.content,
                                ZSI.wstools.XMLSchema.LocalComplexType):
-                    print self.getName()
                     return True
 
         return False
