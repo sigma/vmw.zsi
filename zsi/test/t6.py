@@ -28,9 +28,9 @@ Content-Transfer-Encoding: 7bit
  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/">
 <SOAP-ENV:Body>
 <hreftest>
-    <stringtest href="cid:part1"/>
-    <b64 href="cid:partii"/>
-    <xmltest href="cid:12"/>
+    <stringtest href="cid:part1@zolera.com"/>
+    <b64 href="cid:partii@zolera.com"/>
+    <xmltest href="cid:12@zolera.com"/>
 </hreftest>
 </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
@@ -38,7 +38,7 @@ Content-Transfer-Encoding: 7bit
 Content-Type: text/plain; charset=us-ascii;
  name="abs.txt"
 Content-Transfer-Encoding: 7bit
-Content-ID: part1
+Content-ID: part1@zolera.com
 Content-Disposition: inline;
  filename="abs.txt"
 
@@ -53,7 +53,7 @@ without a costly PKI deployment or application integration issues.
 Content-Type: application/pdf;
  name="gmpharma.pdf"
 Content-Transfer-Encoding: base64
-Content-ID: partii
+Content-ID: partii@zolera.com
 Content-Disposition: inline;
  filename="gmpharma.pdf"
 
@@ -66,7 +66,7 @@ PaIPAnIudFovQTc7Df2Ws9Atz4Bua+oINphIOojogG5LP3Tb3oNu8bsmuK+wFXEdbfgFIx+G
 gKULYx5A2WnaDXB5JeoRQg90S0HcX2dCPmRCqDXB/aX34KujsPwJ/UpRdxXPeAftDkQS6hag
 bh/yTOiUyqBz9CzxnyMYQGDO0jrUZ47kkWfmYvVg
 --------------68E4BAC5B266315E42428C64
-Content-ID: 12
+Content-ID: 12@zolera.com
 
 <foo xmlns="example.com" xmlns:Z="zolera">
     this is a foo
@@ -114,16 +114,16 @@ except Exception, e:
     sys.exit(1)
 
 print '**', dict['stringtest'], '**'
-print base64.encodestring(cid['partii'].read())
-if cid['partii'].getvalue() != dict['b64'].read(): print 'mismatch'
-else: print 'parts matched'
+print base64.encodestring(cid['partii@zolera.com'].read())
 v = dict['b64']
 print type(v), 'is type(v)'
-print base64.encodestring(v.getvalue())
+if cid['partii@zolera.com'].getvalue() != v: print 'mismatch'
+else: print 'parts matched'
+print base64.encodestring(v)
 try:
     from xml.dom.ext import Canonicalize
 except:
-    from zsi.oldpyxml import Canonicalize
+    from ZSI.compat import Canonicalize
 z = dict['xmltest']
 print type(z), z
 print Canonicalize(z)

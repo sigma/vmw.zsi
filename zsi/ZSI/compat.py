@@ -38,9 +38,15 @@ or
 '''
 
 from xml.dom import Node
+try:
+    from xml.ns import XMLNS
+except:
+    class XMLNS:
+	BASE = "http://www.w3.org/2000/xmlns/"
+	XML = "http://www.w3.org/XML/1998/namespace"
 import cStringIO as StringIO
 
-_attrs = lambda E: E.attributes or []
+_attrs = lambda E: (E.attributes and E.attributes.values()) or []
 _children = lambda E: E.childNodes or []
 _IN_XML_NS = lambda n: n.namespaceURI == XMLNS.XML
 
@@ -77,6 +83,8 @@ def _utilized(n, node, other_attrs, unsuppressedPrefixes):
     for attr in other_attrs:
         if n == attr.prefix: return 1
     return 0
+
+_in_subset = lambda subset, node: not subset or node in subset
 
 class _implementation:
     '''Implementation class for C14N. This accompanies a node during it's
@@ -163,7 +171,7 @@ class _implementation:
         '''_do_text(self, node) -> None
         Process a text or CDATA node.  Render various special characters
         as their C14N entity representations.'''
-        if self.subset and node not in self.subset: return
+        if not _in_subset(self.subset, node): return
         s = node.data \
                 .replace("&", "&amp;") \
                 .replace("<", "&lt;") \
@@ -180,7 +188,7 @@ class _implementation:
         document order of the PI is greater or lesser (respectively)
         than the document element.
         '''
-        if self.subset and node not in self.subset: return
+        if not _in_subset(self.subset, node): return
         W = self.write
         if self.documentOrder == _GreaterElement: W('\n')
         W('<?')
@@ -200,7 +208,7 @@ class _implementation:
         document order of the comment is greater or lesser (respectively)
         than the document element.
         '''
-        if self.subset and node not in self.subset: return
+        if not _in_subset(self.subset, node): return
         if self.comments:
             W = self.write
             if self.documentOrder == _GreaterElement: W('\n')
@@ -245,19 +253,21 @@ class _implementation:
 
         # Divide attributes into NS, XML, and others.
         other_attrs = initial_other_attrs[:]
+	in_subset = _in_subset(self.subset, node)
         for a in _attrs(node):
             if a.namespaceURI == XMLNS.BASE:
                 n = a.nodeName
                 if n == "xmlns:": n = "xmlns"        # DOM bug workaround
                 ns_local[n] = a.nodeValue
             elif a.namespaceURI == XMLNS.XML:
-                xml_attrs.append(a)
+		if self.unsuppressedPrefixes == None or in_subset:
+		    xml_attrs.append(a)
             else:
                 other_attrs.append(a)
 
         # Render the node
         W, name = self.write, None
-        if not self.subset or node in self.subset:
+        if in_subset:
             name = node.nodeName
             W('<')
             W(name)
@@ -267,9 +277,16 @@ class _implementation:
             for n,v in ns_local.items():
                 pval = ns_parent.get(n)
 
-                # IF default namespace is XMLNS.BASE or empty, skip
+                # If default namespace is XMLNS.BASE or empty, skip
                 if n == "xmlns" \
                 and v in [ XMLNS.BASE, '' ] and pval in [ XMLNS.BASE, '' ]:
+                    continue
+
+                # "omit namespace node with local name xml, which defines
+                # the xml prefix, if its string value is
+                # http://www.w3.org/XML/1998/namespace."
+                if n == "xmlns:xml" \
+		and v in [ 'http://www.w3.org/XML/1998/namespace' ]:
                     continue
 
                 # If different from parent, or parent didn't render

@@ -4,14 +4,12 @@
 '''
 
 from ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
-	_backtrace, EvaluateException, ParseException, _valid_encoding
+	_backtrace, EvaluateException, ParseException, _valid_encoding, _Node
 import types
 try:
     from xml.ns import SOAP, XMLNS
 except:
     from ZSI.compat import SOAP, XMLNS
-from xml.dom import Node
-from xml.dom.ext.reader import PyExpat
 
 _find_actor = lambda E: E.getAttributeNS(SOAP.ENV, "actor") or None
 _find_mu = lambda E: E.getAttributeNS(SOAP.ENV, "mustUnderstand")
@@ -41,10 +39,15 @@ class ParsedSoap:
 	Keyword arguments:
 	    trailers -- allow trailer elments (default is zero)
 	    resolver -- function (bound method) to resolve URI's
+	    readerclass -- factory class to create a reader
 	'''
 
+	self.readerclass = kw.get('readerclass')
+	if not self.readerclass:
+	    from xml.dom.ext.reader import PyExpat
+	    self.readerclass = PyExpat.Reader
 	try:
-	    self.reader = PyExpat.Reader()
+	    self.reader = self.readerclass()
 	    if type(input) in _stringtypes:
 		self.dom = self.reader.fromString(input)
 	    else:
@@ -66,7 +69,7 @@ class ParsedSoap:
 
 	# Exactly one child element
 	c = [ E for E in _children(self.dom)
-		if E.nodeType == Node.ELEMENT_NODE]
+		if E.nodeType == _Node.ELEMENT_NODE]
 	if len(c) == 0:
 	    raise ParseException("Document has no Envelope", 0)
 	if len(c) != 1:
@@ -90,7 +93,7 @@ class ParsedSoap:
 
 	# Get Envelope's child elements.
 	c = [ E for E in _children(self.envelope)
-		if E.nodeType == Node.ELEMENT_NODE ]
+		if E.nodeType == _Node.ELEMENT_NODE ]
 	if len(c) == 0:
 	    raise ParseException("Envelope is empty (no Body)", 0)
 
@@ -188,9 +191,9 @@ class ParsedSoap:
 	inheader = name == "Header"
 	for n in _children(elt):
 	    t = n.nodeType
-	    if t == Node.COMMENT_NODE: continue
-	    if t != Node.ELEMENT_NODE:
-		if t == Node.TEXT_NODE and n.nodeValue.strip() == "":
+	    if t == _Node.COMMENT_NODE: continue
+	    if t != _Node.ELEMENT_NODE:
+		if t == _Node.TEXT_NODE and n.nodeValue.strip() == "":
 		    continue
 		raise ParseException("Non-element child in " + name, 
 			inheader, elt, self.dom)
@@ -205,11 +208,11 @@ class ParsedSoap:
 	while list:
 	    elt = list.pop()
 	    t = elt.nodeType
-	    if t == Node.PROCESSING_INSTRUCTION_NODE:
+	    if t == _Node.PROCESSING_INSTRUCTION_NODE:
 		raise ParseException('Found processing instruction "<?' + \
 			elt.nodeName + '...>"',
 			inheader, elt.parentNode, self.dom)
-	    elif t == Node.DOCUMENT_TYPE_NODE:
+	    elif t == _Node.DOCUMENT_TYPE_NODE:
 		raise ParseException('Found DTD', inheader,
 			elt.parentNode, self.dom)
 	    list += _children(elt)
@@ -237,7 +240,7 @@ class ParsedSoap:
 	if headers: list.extend(self.header_elements)
 	while list:
 	    e = list.pop()
-	    if e.nodeType == Node.ELEMENT_NODE:
+	    if e.nodeType == _Node.ELEMENT_NODE:
 		nodeid = _find_id(e)
 		if nodeid:
 		    self.id_cache[nodeid] = e

@@ -12,17 +12,6 @@ def foo():
 def bar():
     return foo() + 2
 
-if 0:
-    try:
-	a = bar()
-    except Exception, e:
-	f = FaultFromException(e, 0, sys.exc_info()[2])
-	print f.AsSOAP()
-
-    print \
-	FaultFromNotUnderstood('myuri', 'dalocalname', actor='cher').AsSOAP()
-    FaultFromActor('actor:i:dont:understand').AsSOAP(sys.stdout)
-
 # Get the tests in numeric order.
 results = []
 for key,val in tests.__dict__.items():
@@ -32,7 +21,7 @@ for key,val in tests.__dict__.items():
 	pass
 results.sort(lambda a,b: cmp(a[0], b[0]))
 
-if 0:
+if 1:
     class zParseException: pass
     for key,val in results:
 	try:
@@ -111,7 +100,7 @@ class myclass:
 	return 'myclass-%s-(%d,"%s")' % (self.name, self.i, self.t) + \
 		str(self.z)
 
-from xml.dom.ext import Canonicalize
+from xml.dom.ext.c14n import Canonicalize
 ps = ParsedSoap(datatest)
 #print ps.GetElementNSdict(ps.dom)
 elts = ps.data_elements
@@ -203,5 +192,15 @@ if 1:
     print '|'+elts[11].getAttributeNS('foo','bar')+'|'
     print 'Any=', TC.Any().parse(elts[11], ps)
     #print 'Anydict2=', TC.Any().parse(elts[8], ps)
+
+if 0:
+    try:
+	a = bar()
+    except Exception, e:
+	f = FaultFromException(e, 0, sys.exc_info()[2])
+	print f.AsSOAP()
+    print \
+	FaultFromNotUnderstood('myuri', 'dalocalname', actor='cher').AsSOAP()
+    FaultFromActor('actor:i:dont:understand').AsSOAP(sys.stdout)
 
 sys.exit(0)

@@ -58,7 +58,7 @@ _stringtypes = [ _types.StringType, _types.UnicodeType ]
 
 ##
 ##  Low-level DOM oriented utilities; useful for typecode implementors.
-_attrs = lambda E: E.attributes or []
+_attrs = lambda E: (E.attributes and E.attributes.values()) or []
 _children = lambda E: E.childNodes or []
 _child_elements = lambda E: [ n for n in (E.childNodes or [])
 			if n.nodeType == _Node.ELEMENT_NODE ]
@@ -80,14 +80,14 @@ _textunprotect = lambda s: s.replace('&lt;', '<').replace('&amp;', '&')
 def _valid_encoding(elt):
     '''Does this node have a valid encoding?
     '''
-    enc = _find_encstyle(elt) or None
-    if enc in [ None, _SOAP.ENC ]: return 1
+    enc = _find_encstyle(elt)
+    if not enc or enc == _SOAP.ENC: return 1
     for e in enc.split():
 	if e.startswith(_SOAP.ENC):
 	    # XXX Is this correct?  Once we find a Sec5 compatible
 	    # XXX encoding, should we check that all the rest are from
-	    # XXX that same base?  Perhaps.  But since the "if enc in"
-	    # XXX test will surely get 99% of the cases, leave it for now.
+	    # XXX that same base?  Perhaps.  But since the if test above
+	    # XXX will surely get 99% of the cases, leave it for now.
 	    return 1
     return 0
 

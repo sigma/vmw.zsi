@@ -4,8 +4,6 @@
 '''
 
 from ZSI import _copyright, _child_elements, EvaluateException, TC
-from xml.dom import Node
-from xml.dom.ext.reader import PyExpat
 import multifile, mimetools, urllib
 from base64 import decodestring as b64decode
 import cStringIO as StringIO
@@ -34,7 +32,7 @@ def XML(uri, tc, ps, **keywords):
 	data = StringIO.StringIO()
 	mimetools.decode(source, data, enc)
 	data.seek(0)
-    dom = PyExpat.Reader().fromStream(data)
+    dom = ps.readerclass().fromStream(data)
     return _child_elements(dom)[0]
 
 
@@ -82,12 +80,11 @@ class MIMEResolver:
 	else:
 	    raise ValueError('boundary parameter not found')
 
-	self.base = kw.get('uribase', 'thismessage:/')
-
 	self.id_dict, self.loc_dict, self.parts = {}, {}, []
 	self.next = kw.get('next')
-	mf = multifile.MultiFile(f, kw.get('seekable', 0))
+	self.base = kw.get('uribase', 'thismessage:/')
 
+	mf = multifile.MultiFile(f, kw.get('seekable', 0))
 	mf.push(boundary)
 	while mf.next():
 	    head = mimetools.Message(mf)
@@ -129,7 +126,7 @@ class MIMEResolver:
     def XML(self, uri, tc, ps, **keywords):
 	content = self.get(uri)
 	if content:
-	    dom = PyExpat.Reader().fromStream(content)
+	    dom = ps.readerclass().fromStream(content)
 	    return _child_elements(dom)[0]
 	if not self.next: raise EvaluateException("Unresolvable URI " + uri)
 	return self.next.XML(uri, tc, ps, **keywords)

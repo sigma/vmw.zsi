@@ -8,8 +8,8 @@ Based on code and text from Dan Gunter <dkgunter@lbl.gov>.
 
 The TC.Choice typecode can be used to create a polymorphic type for
 a specified set of object types.  Here's how:
-    1.  Make all your data classes (D1, D2, ...) derive from a common
-	base, B.
+    1.  Define all your data classes (D1, D2, ...). If they derive from
+	a common base class (Base), some feel you get "cleaner" code.
     2.  Create a typecode class (TC_D1, TC_D2, ...) for each data class.
     3.  Create a "base" typecode that uses TC.Choice to do the actual
 	parsing and serializing.  Two versions are shown, below.
@@ -35,6 +35,8 @@ class TC_Base(TC.TypeCode):
         return self.choice.parse(elt, ps)[1]
 
     def serialize(self, sw, pyobj, **kw):
+	if not isinstance(pyobj, Base):
+	    raise TypeError(str(pyobj.__class__) + " not in type hierarchy")
         if isinstance(pyobj, D1):
             self.choice.serialize(sw, ('D1', pyobj), **kw)
         elif isinstance(pyobj, D2):
@@ -107,7 +109,7 @@ a = myTC.parse(ps.body_root, ps)
 print a
 
 if 0:
-    # XXX
+    # XXX.  Does not work. :(
     b = [ P1(), P1(), P2(), P1() ]
     b[0].s = 'string'
     b[1].s = '34'

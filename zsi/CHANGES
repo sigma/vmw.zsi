@@ -15,7 +15,6 @@ Changes for 1.2, released xx-xxx-2001:
     -	Duration.lex_pattern was wrong (old schema) <grahamd@dscpl.com.au>
     -	Newline after output gDateTime, not a space
     -	Newline before Base64string
-    -	Use string.translate instead of multiple replaces in Base64String
     -	Incorrect test in RegisterType <grahamd@dscpl.com.au>
     -	Add Boolean.serialize <grahamd@dscpl.com.au>
     -	Anchor all TCtime lex_pattern's <grahamd@dscpl.com.au>
@@ -80,3 +79,4 @@ Changes for 1.1, released 14-Sep-2001:
     -	Add simple CGI dispatching
     -	Put version in setup.cfg and make newver use it for version.{py,tex}
     -	Add ZSI.Version() to retrieve version tuple
+    -	Use len(_children(elt)) not elt.hasChildNodes()

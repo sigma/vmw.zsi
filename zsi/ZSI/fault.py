@@ -4,13 +4,12 @@
 '''
 
 from ZSI import _copyright, _children, _child_elements, \
-	_textprotect, _stringtypes, _seqtypes, SoapWriter
+	_textprotect, _stringtypes, _seqtypes, _Node, SoapWriter
 try:
     from xml.ns import SOAP
     from xml.dom.ext import Canonicalize
 except:
     from ZSI.compat import SOAP, Canonicalize
-from xml.dom import Node
 import sys, traceback, cStringIO as StringIO
 
 class Fault:
@@ -140,9 +139,9 @@ def FaultFromFaultMessage(ps):
 	if n == 'detail':
 	    d['detail'] = _child_elements(elt)
 	if n in [ 'faultcode', 'faultstring', 'faultactor' ]:
-	    d[n] = ''.join([E. nodeValue for E in _children(elt)
+	    d[n] = ''.join([E.nodeValue for E in _children(elt)
 			    if E.nodeType 
-			    in [ Node.TEXT_NODE, Node.CDATA_SECTION_NODE ]])
+			    in [ _Node.TEXT_NODE, _Node.CDATA_SECTION_NODE ]])
     return Fault(d['faultcode'], d['faultstring'],
 		d['faultactor'], d['detail'])
 

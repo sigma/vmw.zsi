@@ -12,6 +12,9 @@ semantics.
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{readerclass}}{\code{None}}{Class used to create DOM-creating
+XML readers; described below.
+\versionadded{1.2}}
 \lineiii{\code{resolver}}{\code{None}}{Value for the \code{resolver}
 attribute; see below.}
 \lineiii{\code{trailers}}{\code{0}}{Allow trailing data elements
@@ -20,7 +23,7 @@ to appear after the \code{Body}.}
 
 \end{classdesc}
 
-The following attributes are read-only:
+The following attributes of a \class{ParsedSoap} are read-only:
 
 \begin{memberdesc}{body}
 The root of the SOAP \code{Body} element.
@@ -148,3 +151,30 @@ SOAP \code{Header} that have the SOAP \code{mustUnderstand} attribute set
 to a non-zero value.
 \end{methoddesc}
 
+\ZSI{} supports multiple DOM implementations.
+The \code{readerclass} parameter specifies which one to use.
+The default is to use the DOM provided with the PyXML package developed
+by the Python XML SIG, provided through the \class{PyExpat.Reader} class
+in the \module{xml.dom.ext.reader} module.
+To use the \code{cDomlette} DOM provided by the 4Suite package, use the
+\class{RawExpatReader} class in the \module{Ft.Lib.cDomlette} module.
+
+The specified reader class must support the following methods:
+
+\begin{methoddesc}{fromString}{string}
+Return a DOM object from a string.
+\end{methoddesc}
+
+\begin{methoddesc}{fromStream}{stream}
+Return a DOM object from a file-like stream.
+\end{methoddesc}
+
+\begin{methoddesc}{releaseNode}{dom}
+Free the specified DOM object.
+\end{methoddesc}
+
+The DOM object must support the standard Python mapping of the DOM Level 2
+specification.
+While only a small subset of specification is used, the particular
+methods and attributes used by \ZSI{} are available only
+by inspecting the source.

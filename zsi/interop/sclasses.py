@@ -195,7 +195,7 @@ Operation("echoStructAsSimpleTypes",
     TC_SOAPStruct('inputStruct'),
     ( TC.String('outputString', strip=0), TC.Iint('outputInteger'),
 	TC.FPfloat('outputFloat', format='%.18g') ),
-    convert=lambda s: (s.varString, s.varInt, s.varFloat),
+    convert=lambda s: (s.v.varString, s.v.varInt, s.v.varFloat),
 )
 Operation("echoSimpleTypesAsStruct",
     ( TC.String('inputString', strip=0), TC.Iint('inputInteger'),

@@ -6,9 +6,8 @@
 from ZSI import _copyright, _children, _child_elements, \
 	_floattypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
 	_find_encstyle, _textprotect, _textunprotect, \
-	_find_xsi_attr, _find_type, \
+	_find_xsi_attr, _find_type, _Node, \
 	EvaluateException, _valid_encoding
-from xml.dom import Node
 try:
     from xml.dom.ext import Canonicalize
     from xml.ns import SCHEMA, SOAP
@@ -180,7 +179,7 @@ class TypeCode:
 	if len(c) == 0:
 	    raise EvaluateException('Value missing', ps.Backtrace(elt))
 	for c_elt in c:
-	    if c_elt.nodeType == Node.ELEMENT_NODE:
+	    if c_elt.nodeType == _Node.ELEMENT_NODE:
 		raise EvaluateException('Sub-elements in value',
 		    ps.Backtrace(c_elt))
 
@@ -188,7 +187,7 @@ class TypeCode:
 	# concatenating the text nodes is the right thing to do.
 	return ''.join([E.nodeValue for E in c
 		if E.nodeType 
-		in [ Node.TEXT_NODE, Node.CDATA_SECTION_NODE ]])
+		in [ _Node.TEXT_NODE, _Node.CDATA_SECTION_NODE ]])
 
 
 class Any(TypeCode):
