@@ -15,7 +15,7 @@ try:
 except:
     from ZSI.compat import Canonicalize, SCHEMA, SOAP
 
-import re, types
+import re, string, types
 
 from base64 import decodestring as b64decode, encodestring as b64encode
 from urllib import unquote as urldecode, quote as urlencode
@@ -69,7 +69,6 @@ class TypeCode:
 	self.repeatable = kw.get('repeatable', 0)
 	self.unique = kw.get('unique', 0)
 	if kw.has_key('default'): self.default = kw['default']
-	self.resolver = None
 
     def parse(self, elt, ps):
 	'''elt -- the DOM element being parsed
@@ -348,7 +347,7 @@ class String(TypeCode):
 
     def __init__(self, pname=None, **kw):
 	TypeCode.__init__(self, pname, **kw)
-	self.resolver = kw.get('resolver')
+	if kw.has_key('resolver'): self.resolver = kw['resolver']
 	self.strip = kw.get('strip', 1)
 	self.textprotect = kw.get('textprotect', 1)
 
@@ -415,6 +414,9 @@ class URI(String):
     def serialize(self, sw, pyobj, **kw):
 	String.serialize(self, sw, urlencode(pyobj), **kw)
 
+_transtable = string.maketrans('','')
+_WS = string.whitespace
+
 class Base64String(String):
     '''A Base64 encoded string.
     '''
@@ -422,8 +424,8 @@ class Base64String(String):
     tag = 'SOAP-ENC:base64'
 
     def parse(self, elt, ps):
-	val = String.parse(self, elt, ps)
-	return b64decode(val.replace(' ', '').replace('\n','').replace('\r',''))
+	val = string.parse(self, elt, ps)
+	return b64decode(val.translate(_transtable, _WS))
 
     def serialize(self, sw, pyobj, **kw):
 	String.serialize(self, sw, '\n' + b64encode(pyobj), **kw)
@@ -537,22 +539,29 @@ class Integer(TypeCode):
 	    tstr = ' xsi:type="xsd:%s"' % (self.tag or 'integer')
 	else:
 	    tstr = ''
-	print >>sw, '<%s%s%s>' + self.format + '</%s>' % \
+	print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
 		(n, kw.get('attrtext', ''), tstr, pyobj, n)
 
 class Decimal(TypeCode):
     '''Parent class for floating-point numbers.
     '''
 
+    specials = { }
+    try:
+	specials['INF'] = float('INF')
+	specials['-INF'] = float('-INF')
+	specials['NaN'] = float('NaN')
+	specials['-NaN'] = float('-NaN')
+    except:
+	specials['INF'] = float(1e300**2)
+	specials['-INF'] = float(-1e300**2)
+	# The standard says NaN > INF; oh well, close enough.
+	specials['NaN'] = float(1e300**2)
+	specials['-NaN'] = float(-1e300**2)
+
     parselist = [ (None,'decimal'), (None,'float'), (None,'double') ]
     seriallist = _floattypes
     tag = None
-    specials = {
-	'NaN': float('NaN'),
-	'-NaN': float('-NaN'),
-	'INF': float('INF'),
-	'-INF': float('-INF'),
-    }
     ranges =  {
 	'float': ( 7.0064923216240861E-46,
 			-3.4028234663852886E+38, 3.4028234663852886E+38 ),
@@ -576,9 +585,9 @@ class Decimal(TypeCode):
 	    elif tag != type:
 		raise EvaluateException('Floating point type mismatch; ' \
 			'got %s wanted %s' % (type,tag), ps.Backtrace(elt))
-
+	# Special value?
 	if self.nilled(elt, ps): return None
-	v = self.simple_value(elt, ps).lower()
+	v = self.simple_value(elt, ps)
 	m = Decimal.specials.get(v)
 	if m: return m
 
@@ -587,7 +596,7 @@ class Decimal(TypeCode):
 	except:
 	    raise EvaluateException('Unparseable floating point number',
 		    ps.Backtrace(elt))
-	if str(fp) in Decimal.specials.keys():
+	if str(fp).lower() in [ 'inf', '-inf', 'nan', '-nan' ]:
 	    raise EvaluateException('Floating point number parsed as "' + \
 		    str(fp) + '"', ps.Backtrace(elt))
 	if fp == 0 and Decimal.zeropat.search(v):
@@ -608,7 +617,16 @@ class Decimal(TypeCode):
 	    tstr = ' xsi:type="xsd:%s"' % (self.tag or 'decimal')
 	else:
 	    tstr = ''
-	print >>sw, '<%s%s%s>' + self.format + '</%s>' % \
+	fmt = self.format
+	if pyobj == specials['INF']:
+	    fmt, pyobj = "%s", "INF"
+	elif pyobj == specials['-INF']:
+	    fmt, pyobj = "%s", "-INF"
+	elif pyobj == specials['NaN']:
+	    fmt, pyobj = "%s", "NaN"
+	elif pyobj == specials['-NaN']:
+	    fmt, pyobj = "%s", "-NaN"
+	print >>sw, ('<%s%s%s>' + fmt + '</%s>') % \
 		(n, kw.get('attrtext', ''), tstr, pyobj, n)
 
 class Boolean(TypeCode):
@@ -662,7 +680,7 @@ class XML(TypeCode):
 	TypeCode.__init__(self, pname, **kw)
 	self.comments = kw.get('comments', 0)
 	self.inline = kw.get('inline', 0)
-	self.resolver = kw.get('resolver', 0)
+	if kw.has_key('resolver'): self.resolver = kw['resolver']
 	self.wrapped = kw.get('wrapped', 1)
 	self.copyit = kw.get('copyit', XML.copyit)
 

@@ -35,13 +35,13 @@ class SoapWriter:
 
 	if not self.envelope: return
 	print >>self, '<SOAP-ENV:Envelope\n' \
-	    ' xmlns:SOAP-ENV="%(SOAP-ENV)s"\n' \
-	    ' xmlns:SOAP-ENC="%(SOAP-ENC)s"\n' \
-	    ' xmlns:xsi="%(xsi)s"\n' \
-	    ' xmlns:xsd="%(xsd)s"\n' \
-	    ' xmlns:ZSI="%(ZSI)s"' % _reserved_ns,
+	    '  xmlns:SOAP-ENV="%(SOAP-ENV)s"\n' \
+	    '  xmlns:SOAP-ENC="%(SOAP-ENC)s"\n' \
+	    '  xmlns:xsi="%(xsi)s"\n' \
+	    '  xmlns:xsd="%(xsd)s"\n' \
+	    '  xmlns:ZSI="%(ZSI)s"' % _reserved_ns,
 	if self.encoding:
-	    print >>self, '\n SOAP-ENC:encodingStyle="%s"' % self.encoding,
+	    print >>self, '\n  SOAP-ENC:encodingStyle="%s"' % self.encoding,
 	if nsdict: self.writeNSdict(nsdict)
 	print >>self, '>'
 	header = kw.get('header')

@@ -156,7 +156,7 @@ class Binding:
 	    kw.get('soapaction', '"http://www.zolera.com"'))
 	if self.auth_style & AUTH.httpbasic:
 	    val = _b64_encode(self.auth_user + ':' + self.auth_pass).strip()
-	    self.h.putheader('Authentication', 'Basic ' + val)
+	    self.h.putheader('Authorization', 'Basic ' + val)
 	for header,value in self.user_headers:
 	    self.h.putheader(header, value)
 	self.h.endheaders()

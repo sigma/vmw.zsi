@@ -15,6 +15,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Duration.lex_pattern was wrong (old schema) <grahamd@dscpl.com.au>
     -	Newline after output gDateTime, not a space
     -	Newline before Base64string
+    -	Use string.translate instead of multiple replaces in Base64String
     -	Incorrect test in RegisterType <grahamd@dscpl.com.au>
     -	Add Boolean.serialize <grahamd@dscpl.com.au>
     -	Anchor all TCtime lex_pattern's <grahamd@dscpl.com.au>
@@ -42,6 +43,8 @@ Changes for 1.2, released xx-xxx-2001:
     -	TC.oname now properly defaults to TC.pname
     -	Remove "None" if it was second arg to dictionary get() method
     -	Add 'format' parameter to TC.Decimal and TC.Integer
+    -	Fix TC.Decimal to work where float('INF') doesn't
+    -	Add samples directory
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!
