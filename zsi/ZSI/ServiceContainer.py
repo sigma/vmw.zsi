@@ -5,7 +5,7 @@
 
 import urlparse, types, os, sys, thread, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from ZSI import ParseException, FaultFromException
+from ZSI import ParseException, FaultFromException, Fault
 from ZSI import _copyright, _seqtypes, resolvers
 from ZSI.parse import ParsedSoap
 from ZSI.writer import SoapWriter
@@ -53,6 +53,8 @@ def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw
     '''
     try:
         result = server(ps, post, action)
+    except NotAuthorized, e:
+        return SendFault(Fault(Fault.Server, "Not authorized"), code=401)
     except Exception, e:
         return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
     if result == None:
