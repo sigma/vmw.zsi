@@ -1,3 +1,35 @@
+Release 0.11.4 of SOAPpy
+------------------------
+
+- Bug fixes:
+
+    - SOAPpy/Server.py: Check if header information contains SOAPAction
+	  key before checking its value.
+
+    - Fixes for generating SOAP from complexType arrays, contributed by
+    antonio.beamud@linkend.com
+
+    - Fixed bug that caused typedArrayTypes to lose their type
+    information when rendered to SOAP and added corresponding
+    test case.
+
+- New Features 
+
+   - Enhancements to fault handling: The faultType Faultstring is now
+     a non-variable string (i.e. no nsmethod in it) so that it can be
+     programmatically checked.  In addition fault handlers can now be
+     registered to handle specific types of faults.
+
+
+   - SOAPpy/Server.py: Modified unregsiterObject function to take
+     optional namespace/path args to be consistent with registerObject.
+
+   - SOAPpy/Server.py: Added an unregisterObject function
+
+
+   - Changes to allow SOAPBuilder so it can handle a 'raw' Python object.
+
+
 
 Release 0.11.2 of SOAPpy
 ------------------------
