@@ -112,7 +112,7 @@ class _implementation:
             self._do_document(node)
         elif node.nodeType == Node.ELEMENT_NODE:
             self.documentOrder = _Element        # At document element
-            if self.unsuppressedPrefixes != None:
+            if self.unsuppressedPrefixes is not None:
                 self._do_element(node)
             else:
                 inherited = self._inherit_context(node)
@@ -260,7 +260,7 @@ class _implementation:
                 if n == "xmlns:": n = "xmlns"        # DOM bug workaround
                 ns_local[n] = a.nodeValue
             elif a.namespaceURI == XMLNS.XML:
-                if self.unsuppressedPrefixes == None or in_subset:
+                if self.unsuppressedPrefixes is None or in_subset:
                     xml_attrs.append(a)
             else:
                 other_attrs.append(a)
@@ -293,7 +293,7 @@ class _implementation:
                 # and if not exclusive, or this prefix is needed or
                 # not suppressed
                 if (v != pval or n not in ns_rendered) \
-                  and (self.unsuppressedPrefixes == None or \
+                  and (self.unsuppressedPrefixes is None or \
                   _utilized(n, node, other_attrs, self.unsuppressedPrefixes)):
                     ns_to_render.append((n, v))
 

@@ -110,7 +110,7 @@ def _backtrace(elt, dom):
     s = ''
     while elt != dom:
         name, parent = elt.nodeName, elt.parentNode
-        if parent == None: break
+        if parent is None: break
         matches = [ c for c in _child_elements(parent) 
                         if c.nodeName == name ]
         if len(matches) == 1:

@@ -136,7 +136,7 @@ class TypeCode:
         Return the element's type.
         '''
         type = _find_type(elt)
-        if type == None or type == "":
+        if type is None or type is "":
             return (None,None)
 
         # Parse the QNAME.
@@ -145,7 +145,7 @@ class TypeCode:
             raise EvaluateException('Malformed type attribute (not two colons)',
                     ps.Backtrace(elt))
         uri = ps.GetElementNSdict(elt).get(list[0])
-        if uri == None:
+        if uri is None:
             raise EvaluateException('Malformed type attribute (bad NS)',
                     ps.Backtrace(elt))
         type = list[1]
@@ -523,7 +523,7 @@ class Integer(TypeCode):
         if not elt: return None
         tag = getattr(self.__class__, 'tag')
         if tag:
-            if type == None:
+            if type is None:
                 type = tag
             elif tag != type:
                 raise EvaluateException('Integer type mismatch; ' \
@@ -646,7 +646,7 @@ class Decimal(TypeCode):
         if not elt: return None
         tag = getattr(self.__class__, 'tag')
         if tag:
-            if type == None:
+            if type is None:
                 type = tag
             elif tag != type:
                 raise EvaluateException('Floating point type mismatch; ' \

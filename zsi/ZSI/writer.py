@@ -60,7 +60,7 @@ class SoapWriter:
     def serialize(self, pyobj, typecode=None, root=None, **kw):
         '''Serialize a Python object to the output stream.
         '''
-        if typecode == None: typecode = pyobj.__class__.typecode
+        if typecode is None: typecode = pyobj.__class__.typecode
         if TypeCode.typechecks and type(pyobj) == types.InstanceType and \
         not hasattr(typecode, 'pyclass'):
             pass
@@ -79,7 +79,7 @@ class SoapWriter:
         if type(arg) in _seqtypes:
             W = self.out.write
             for a in arg:
-                if a != None: W(a)
+                if a is not None: W(a)
         else:
             self.out.write(arg)
 
@@ -137,7 +137,7 @@ class SoapWriter:
         if self.envelope: print >>self, '</SOAP-ENV:Body>'
         if type(trailer) in _stringtypes:
             print >>self, trailer
-        elif trailer != None:
+        elif trailer is not None:
             for n in trailer:
                 Canonicalize(n, self, nsdict=nsdict or _reserved_ns)
                 print >>self

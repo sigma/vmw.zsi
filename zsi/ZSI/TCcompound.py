@@ -29,7 +29,7 @@ def _check_typecode_list(ofwhat, tcname):
             raise TypeError(
                 tcname + ' ofwhat outside the TypeCode hierarchy, ' +
                 str(o.__class__))
-        if o.pname == None:
+        if o.pname is None:
             raise TypeError(tcname + ' element ' + str(o) + ' has no name')
 
 class Struct(TypeCode):
@@ -63,7 +63,7 @@ class Struct(TypeCode):
             t = kw['typed']
             for w in self.ofwhat: w.typed = t
         if TypeCode.typechecks:
-            if self.pyclass != None and type(self.pyclass) != types.ClassType:
+            if self.pyclass is not None and type(self.pyclass) != types.ClassType:
                 raise TypeError('pyclass must be None or a class, not ' +
                         str(type(self.pyclass)))
             _check_typecode_list(self.ofwhat, 'Struct')
@@ -164,7 +164,7 @@ class Struct(TypeCode):
                 raise TypeError("Classless struct didn't get dictionary")
         for what in self.ofwhat:
             v = d.get(what.aname)
-            if what.optional and v == None: continue
+            if what.optional and v is None: continue
             try:
                 if what.repeatable and type(v) in _seqtypes:
                     for v2 in v: what.serialize(sw, v2)

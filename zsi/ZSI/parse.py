@@ -164,7 +164,7 @@ class ParsedSoap:
 
         # If we didn't find a root, get the first one that didn't
         # say "not me", unless they all said "not me."
-        if self.body_root == None:
+        if self.body_root is None:
             if len(maybe):
                 self.body_root = maybe[0]
             else:
@@ -268,7 +268,7 @@ class ParsedSoap:
     def GetMyHeaderElements(self, actorlist=None):
         '''Return a list of all elements intended for these actor(s).
         '''
-        if actorlist == None:
+        if actorlist is None:
             actorlist = [None, SOAP.ACTOR_NEXT]
         else:
             actorlist = list(actorlist) + [None, SOAP.ACTOR_NEXT]

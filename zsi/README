@@ -11,22 +11,21 @@ invocation methods are supported.  There are no known bugs.  It's only
 known limitation is that it cannot handle multi-dimensional arrays.
 
 ZSI is built on top of DOM.  It requires Python 2.0 or later, and PyXML
-0.6 or later.  It is open source.  We hope you find it useful, and would
-be pleased to receive any feedback (email zsi@zolera.com).
+0.6 or later.  It is open source.  We hope you find it useful.
 
-For examples of ZSI in real-world use, please see our products listed
-at http://www.zolera.com.
+The documentation (in PDF and HTML) is accurate. We should probably
+restructure the document as a HOWTO.  You probably can't usefully
+edit the docs without having the Python2.0 sources and some other
+utilities (TeX, pdfLaTeX, latex2html) on a Unix box.  If you do,
+then edit doc/Makefile to point to your distribution.
 
-The documentation (in PDF and HTML) is accurate, although there are
-some formatting nits (such as page numbers being omitted, section
-numbers being a little silly, etc).  We should probably restructure the
-document as a HOWTO.  You probably can't usefully edit the docs without
-having the Python2.0 sources and some other utilities (TeX, pdfLaTeX,
-latex2html) on a Unix box.  If you do, then edit doc/Makefile to point
-to your distribution.
-
-...and if you ever need XML Digital Signatures (or other XML security
-features), drop us a line (email info@zolera.com).
 	/rich $alz
-	rsalz@zolera.com
-	Zolera Systems
+	rsalz@datapower.com
+
+Things to be done -- any volunteers?
+
+Use isinstance() for types.
+
+Use is/is not for singletons (None, [] (,) '' etc)
+
+Update to SOAPv1.2

@@ -138,7 +138,7 @@ class Binding:
             tc = kw['requestclass'].typecode
         elif type(obj) == types.InstanceType:
             tc = getattr(obj.__class__, 'typecode')
-            if tc == None: tc = TC.Any(opname, aslist=1)
+            if tc is None: tc = TC.Any(opname, aslist=1)
         else:
             tc = TC.Any(opname, aslist=1)
 
@@ -250,7 +250,7 @@ class Binding:
         if self.ps.IsAFault():
             msg = FaultFromFaultMessage(self.ps)
             raise TypeError("Unexpected SOAP fault: " + msg.string)
-        if replytype == None:
+        if replytype is None:
             tc = TC.Any(aslist=1)
             data = _child_elements(self.ps.body_root)
             if len(data) == 0: return None

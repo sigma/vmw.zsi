@@ -56,7 +56,7 @@ class Fault:
         print >>sw, '</SOAP-ENV:Fault>'
 
     def AsSOAP(self, output=None, **kw):
-        if output == None:
+        if output is None:
             s = StringIO.StringIO()
             output = s
         else:

@@ -28,7 +28,7 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0, **kw):
         what = ps.body_root.localName
 
         # See what modules have the element name.
-        if modules == None:
+        if modules is None:
             modules = ( sys.modules['__main__'], )
         handlers = [ getattr(m, what) for m in modules if hasattr(m, what) ]
         if len(handlers) == 0:
