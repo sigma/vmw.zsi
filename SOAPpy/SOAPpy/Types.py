@@ -1674,7 +1674,7 @@ def simplify(object, level=0):
             if isPublic(k):
                 data[k] = simplify(data[k], level=level+1)
         return data
-    elif type(object)==dict:
+    elif type(object)==DictType:
         for k in object.keys():
             if isPublic(k):
                 object[k] = simplify(object[k])
@@ -1721,7 +1721,7 @@ def simplify_contents(object, level=0):
         for k in data.keys():
             if isPublic(k):
                 object[k] = simplify(data[k], level=level+1)
-    elif type(object)==dict:
+    elif type(object)==DictType:
         for k in object.keys():
             if isPublic(k):
                 object[k] = simplify(object[k])
