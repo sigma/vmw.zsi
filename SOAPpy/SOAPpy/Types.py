@@ -35,6 +35,8 @@
 
 ident = '$Id$'
 
+from __future__ import nested_scopes
+
 import UserList
 import base64
 import cgi
@@ -128,7 +130,11 @@ class anyType:
     def _setAttr(self, attr, value):
         attr = self._fixAttr(attr)
 
-        self._attrs[attr] = unicode(value)
+        if type(value) is StringType:
+            value = unicode(value)
+
+        self._attrs[attr] = value
+            
 
     def _setAttrs(self, attrs):
         if type(attrs) in (ListType, TupleType):
