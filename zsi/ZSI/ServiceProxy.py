@@ -19,11 +19,14 @@ class ServiceProxy:
        that reflect the methods of the remote web service."""
 
     def __init__(self, wsdl, service=None, port=None, tracefile=None,
-                 typesmodule=None, nsdict=None):
+                 typesmodule=None, nsdict=None, soapAction=None, ns=None,
+                 op_ns=None):
         if not hasattr(wsdl, 'targetNamespace'):
             wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
+
 #        for item in wsdl.types.items():
 #            self._serializer.loadSchema(item)
+
         self._service = wsdl.services[service or 0]
         self.__doc__ = self._service.documentation
         self._port = self._service.ports[port or 0]
@@ -32,6 +35,10 @@ class ServiceProxy:
         self._tracefile = tracefile
         self._typesmodule = typesmodule
         self._nsdict = nsdict
+        self._soapAction = soapAction
+        self._ns = ns
+        self._op_ns = op_ns
+        
         binding = self._port.getBinding()
         portType = binding.getPortType()
         for item in portType.operations:
@@ -56,12 +63,13 @@ class ServiceProxy:
         #params = callinfo.getInParameters() This doesn't appear to be used at all. krj 5/21/03
         host = str(host)
         port = str(port)
-
+        
         binding = Binding(host=host, tracefile=self._tracefile,
                           ssl=(protocol == 'https'),
                           port=port, url=uri, typesmodule=self._typesmodule,
-                          nsdict=self._nsdict)
-
+                          nsdict=self._nsdict, soapaction=self._soapAction,
+                          ns=self._ns, op_ns=self._op_ns)
+               
         apply(getattr(binding, callinfo.methodName), args)
 
 
