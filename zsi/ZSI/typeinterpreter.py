@@ -136,6 +136,8 @@ class BaseTypeInterpreter:
             return 'tuple'
         elif tc in [TCcompound.Array]:
             return 'list'
+        elif tc in [TC.Boolean]:
+            return 'boolean'
         elif isinstance(tc, TypeCode):
             raise EvaluateException,\
                'failed to map zsi typecode to a python type'
