@@ -118,7 +118,12 @@ class Gregorian(TypeCode):
             'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
         val = self.format % d
         if kw.get('typed', self.typed):
-            tstr = ' xsi:type="xsd:%s"' % self.tag
+            if self.tag and self.tag.find(':') != -1:
+                tstr = ' xsi:type="%s"' % self.tag
+            else:
+                tstr = ' xsi:type="xsd:%s"' % self.tag
+
+
         else:
             tstr = ''
         print >>sw, '<%s%s%s>%s</%s>' % (n, attrtext, tstr, val, n)
