@@ -562,7 +562,7 @@ class ServiceDescription:
 		        myBinding['defs'][op.getName()] += '\n%sreturn response' %(ID2)
                         
 		    else:
-			myBinding['defs'][op.getName()] += '\n%sself.binding.Send(None, None, request )' %(ID2)
+			myBinding['defs'][op.getName()] += '\n%sself.binding.Send(None, None, request, soapaction="%s", **kw )' %(ID2, soapAction)
 		        myBinding['defs'][op.getName()] += '\n%sreturn' %(ID2)
 
 		elif op.output:
