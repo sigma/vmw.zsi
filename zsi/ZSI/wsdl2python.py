@@ -51,6 +51,8 @@ ID4 = 4*ID1
 ID5 = 5*ID1
 ID6 = 6*ID1
 
+IDSP2 = '  '
+
 DEBUG  = 0
 NSDICT = {}
 
@@ -152,6 +154,7 @@ class WriteServiceModule:
         self._nsdict  = {}
         self._importlib  = importlib
         self._typewriter = typewriter
+        self.typeDict = {}
 
     def write(self, schemaOnly=False):
         """Write schema instance contents w/respect to dependency requirements, 
@@ -227,7 +230,7 @@ class WriteServiceModule:
                 if hasattr(obj, 'clientimports' ):
                     sd.imports += obj.clientimports
                     
-            sd.fromWsdl(service)
+            sd.fromWsdl(service, self.typeDict)
             sd.write(fd)
 
         fd.write('\n')
@@ -278,6 +281,9 @@ class WriteServiceModule:
                 sd = SchemaDescription()
                 sd.fromWsdl(schema, alternateWriter)
                 sd.write(fd)
+                    # typeDict used when generating 'services' file
+                    # to generate docstrings for each operation
+                self.typeDict.update(sd.typeDict)
 
     def __del__(self):
         self.nsh.reset()
@@ -302,7 +308,7 @@ class ServiceDescription:
         keys.sort()
         [fd.write(str(self.messages[k])) for k in keys]
             
-    def fromWsdl(self, service):
+    def fromWsdl(self, service, typeDict=None):
         """service -- wsdl.Service instance
         """
 	self.imports += '\nimport urlparse, types'
@@ -443,6 +449,26 @@ class ServiceDescription:
                 # -----------------------------
 
                 if op.getInput():
+                    inputName = op.getInput().getMessage().getName()
+                    # these have been moved here to build up the typecodes
+                    # needed to generate types in the docstrings
+                    self.messages[inputName] = self.__class__.MessageWriter()
+                
+                    self.messages[inputName].\
+                                  fromMessage(op.getInput().getMessage(), 
+                                          op.getName(), namespace, style, use)
+                
+                    outputName = None
+                    if op.getOutput() and op.getOutput().getMessage():
+                        outputName = op.getOutput().getMessage().getName()
+                        self.messages[outputName] = \
+                                      self.__class__.MessageWriter()
+                        self.messages[outputName].\
+                                      fromMessage(op.getOutput().getMessage(), 
+                                                  outputName,
+                                                  namespace,
+                                                  style,
+                                                  use, op)
 
 		    myBinding['defs'][op.getName()] = \
                                                     '\n%sdef %s(self, request):' % \
@@ -454,74 +480,44 @@ class ServiceDescription:
                     
                     if self.isSimpleElementDeclaration(op):
                         kwstring = "\n%skw = {'requestclass': %sWrapper}" \
-                                   % (ID2,
-                                      op.getInput().getMessage().getName() )
+                                   % (ID2, inputName )
                         myBinding['defs'][op.getName()] +=\
                                                         '\n%sif not type(request) == %s:' %( ID2, self.isSimpleElementDeclaration(op) )
                     else:
                         kwstring = '\n%skw = {}' % ID2
                         myBinding['defs'][op.getName()] += '\n%s"""\n' % ID2
-                        myBinding['defs'][op.getName()] +=\
-                            '%sinput message: %s\n' % (ID2, op.getInput().\
-                                                       getMessage().getName())
-                        if op.getOutput() and op.getOutput().getMessage():
-                            myBinding['defs'][op.getName()] += '%s' % ID2
-                            myBinding['defs'][op.getName()] +=\
-                            'output message: %s\n' % (op.getOutput().\
-                                                      getMessage().getName())
+                        myBinding['defs'][op.getName()] += self.messages[inputName].\
+                                         docString(typeDict, inputName, True)
+                        myBinding['defs'][op.getName()] += '\n'
+                        if outputName:
+                            myBinding['defs'][op.getName()] += self.messages[outputName].\
+                                         docString(typeDict, outputName, False)
                         myBinding['defs'][op.getName()] += '%s"""\n' % ID2
                         myBinding['defs'][op.getName()] +=\
                                                         '\n%sif not isinstance(request, %s) and\\\n%snot issubclass(%s, request.__class__):'\
-                                                        %(ID2, op.getInput().\
-                                                          getMessage().getName(),
-                                                          ID3, op.getInput().\
-                                                          getMessage().getName())
+                                                        %(ID2, inputName,
+                                                          ID3, inputName)
 		    myBinding['defs'][op.getName()] +=\
                                                     '\n%sraise TypeError, %s' % \
                                                     (ID3, r'"%s incorrect request type" %(request.__class__)')
 
                     myBinding['defs'][op.getName()] += kwstring
 
-                    self.messages[op.getInput().\
-                                  getMessage().getName()] = self.__class__.\
-                                  MessageWriter()
-                    
-                    self.messages[op.getInput().\
-                                  getMessage().getName()].\
-                                  fromMessage(op.getInput().getMessage(), 
-                                              op.getName(), 
-                                              namespace,
-                                              style,
-                                              use)
 
-
-                    if op.getOutput() and op.getOutput().getMessage():
+                    if outputName:
 
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Send(None, None, request, soapaction="%s", **kw)' %(ID2, soapAction)
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Receive(%sWrapper())' % \
-                            (ID2, op.getOutput().getMessage().getName())
+                            (ID2, outputName)
 			myBinding['defs'][op.getName()] +=\
                             '\n%sif not isinstance(response, %s) and\\\n%snot issubclass(%s, response.__class__):'\
-                            %(ID2, op.getOutput().getMessage().getName(),
-                              ID3, op.getOutput().getMessage().getName())
+                            %(ID2, outputName, ID3, outputName)
 			myBinding['defs'][op.getName()] +=\
 			    '\n%sraise TypeError, %s' %(ID3, r'"%s incorrect response type" %(response.__class__)')
 		        myBinding['defs'][op.getName()] += '\n%sreturn response' %(ID2)
                         
-                        self.messages[op.getOutput().\
-                                      getMessage().getName()] = \
-                                      self.__class__.MessageWriter()
-                        self.messages[op.getOutput().\
-                                      getMessage().getName()].\
-                                      fromMessage(op.getOutput().getMessage(), 
-                                                  op.getOutput().getMessage().\
-                                                  getName(), 
-                                                  namespace,
-                                                  style,
-                                                  use, op)
-
 		    else:
 			myBinding['defs'][op.getName()] += '\n%sself.binding.Send(None, None, request )' %(ID2)
 		        myBinding['defs'][op.getName()] += '\n%sreturn' %(ID2)
@@ -562,6 +558,7 @@ class ServiceDescription:
 	def __init__(self):
             self.nsh = NamespaceHash()
 	    self.typecode = None
+            self.typeList = []
 
 	def __str__(self):
 	    return self.typecode
@@ -607,6 +604,8 @@ class ServiceDescription:
                         l += tp.typecode
                         self.typecode += '\n%sself._%s = None'\
                                          % ( ID2, p.getName() )
+                            # for later use in docstring generation
+                        self.typeList.append(['_' + tp.docCode[0], tp.docCode[1], False])
                     else:
                         qualifiedtc = tp.typecode[0:]
                         idx = qualifiedtc[0].find('(')
@@ -620,6 +619,8 @@ class ServiceDescription:
                                          % ( ID2, p.getName(),
                                              self.nsh.getAlias(tns),
                                              defclass )
+                        self.typeList.append(['_' + tp.docCode[0],
+                                                   '%s.%s_Def' % (self.nsh.getAlias(tns), tp.docCode[1]), False])
                 elif p.getElement():
                     raise WsdlGeneratorError, 'Bad encoding'
                 else:
@@ -680,10 +681,13 @@ class ServiceDescription:
                         self.typecode += '\n%stypecode = %s.%s()' \
                                          % (ID2, nsp, tp.name + \
                                             '_Dec' )
+
 			self.typecode += '\n\n%sdef __init__(self, name=None, ns=None):'\
                                          %(ID1)
                         self.typecode += '\n%s%s.%s.__init__(self, name=None, ns=None)'\
                                          % (ID2, nsp, tp.name + '_Dec')
+                            # for later use in docstring generation
+                        self.typeList.append(['literal', '%s.%sLOCAL_Def' % (nsp, tp.name), False])
 		    else:
 			self.typecode = '\n\nclass %s: ' % (message.getName())
 			self.typecode += '\n%sdef __init__(self, name=None, ns=None): pass' %(ID1)
@@ -728,6 +732,51 @@ class ServiceDescription:
             self.typecode += '\n%s%s.__init__( self, name=%s, ns=None )' \
                              % (ID2, message.getName(), name )
 
+
+        def docString(self, allTypeDict, messageName, isInput):
+            """Generates a docstring giving the input and output
+               message names, and their associated parameters and
+               parameter sub-fields.
+            """
+            docList = []
+            if isInput:
+                docList.append('%s@param: request to %s' % (ID2, messageName))
+            else:
+                docList.append('%s@return: response from %s' % (ID2, messageName))
+            if self.typeList:
+                self.typeList.sort()
+                docList.append('::')
+            docList.append('\n')
+
+            for item in self.typeList:
+                item[1] = item[1].replace('LOCAL_Def', '_Def')
+            alreadyListed = []
+            docList.extend(self.recurseTypeList(allTypeDict, self.typeList,
+                                                1, alreadyListed))
+
+            return ''.join(docList)
+
+
+        def recurseTypeList(self, allTypeDict, typeList, level, alreadyListed):
+            """Recurse through a dictionary of type lists until reach
+               Python types.
+            """
+            strList = []
+            for item in typeList:
+                if item[0].startswith('_'):
+                    indent = ID2 + IDSP2*level
+                    strList.append('%s%s: %s' % (indent, item[0], item[1]))
+                    if item[2]:
+                        strList.append(', optional')
+                    strList.append('\n')
+                if allTypeDict.has_key(item[1]):
+                    if item[1] not in alreadyListed:
+                        strList.extend(self.recurseTypeList(allTypeDict,
+                               allTypeDict[item[1]], level+1, alreadyListed))
+                        alreadyListed.append(item[1])
+            return strList
+
+
 	class PartWriter:
             """Generates a string representation of a typecode representing
                a <message><part>
@@ -735,6 +784,7 @@ class ServiceDescription:
 	    def __init__(self):
 		self.typecode = None
 		self.name = None
+                self.docCode = []
 
 	    def __recurse_tdc(self, tp):
                 """tp -- schema.TypeDescriptionComponent instance
@@ -766,17 +816,21 @@ class ServiceDescription:
                 if not isinstance(tp, ZSI.wsdlInterface.ZSITypeAdapter):
                     raise TypeError, 'not a type adapter'
 
-
 		elif tp.isSimpleType():
 		    if tp.getQName():
 			tpc = bti.get_typeclass(tp.getQName(),
                                                 tp.getTargetNamespace())
+                        self.docCode.append('%s' % part.getName())
+                        self.docCode.append(bti.get_pythontype(tp.getQName(),
+                                                tp.getTargetNamespace()))
 
 			self.typecode.append('%s(pname="%s",aname="_%s",optional=1)' \
                                              %(tpc, part.getName(),
                                                part.getName()))
 		    elif tp.getName():
 
+                        self.docCode.append(part.getName())
+                        self.docCode.append(tp.getName())
 			self.typecode.append('%s(pname="%s",aname="_%s",optional=1)' \
                                              %(tp.getName(), part.getName(),
                                                part.getName()))
@@ -784,6 +838,8 @@ class ServiceDescription:
 			raise WsdlGeneratorError, 'shouldnt happen'
 
 		elif tp.isComplexType():
+                    self.docCode.append(part.getName())
+                    self.docCode.append(tp.getName())
 		    self.typecode.append('%s( name="%s", ns=ns )'\
                                          %(tp.getName(), part.getName()))
 
@@ -798,6 +854,7 @@ class SchemaDescription:
     """
     def __init__(self):
         self.nsh = NamespaceHash()
+        self.typeDict = {}
         return
 
     def fromWsdl(self, schema, alternateWriter):
@@ -805,7 +862,6 @@ class SchemaDescription:
         """
         if not isinstance(schema, ZSISchemaAdapter):
 	    raise TypeError, 'type %s not a Schema' %(schema.__class__)
-
 
 	self.header = '%s \n# %s \n#\n# %s \n%s\n' \
                       %('#'*30, 'targetNamespace',
@@ -825,7 +881,6 @@ class SchemaDescription:
         self.generate(schema.getTypesDict(), alternateWriter)
         self.generate(schema.getElementsDict(), alternateWriter)
         self.getClassDefs(self.class_list, self.class_dict)
-        
         
         self.body += '\n\n# define class alias for subsequent ns classes'
         self.body += '\n%s = %s' \
@@ -858,6 +913,7 @@ class SchemaDescription:
                 self.class_list.append(tw.name)
                 self.body += tw.classdef
                 self.body += tw.initdef
+            self.typeDict.update(tw.typeDict)
 
 
     def getClassDefs(self, class_list, class_dict):
@@ -897,6 +953,8 @@ class SchemaDescription:
 	    self.classdef = None
             self.allOptional = False
             self.hasRepeatable = False
+            self.typeList = []
+            self.typeDict = {}
 	    return
 
 	def fromType(self, myType):
@@ -904,8 +962,6 @@ class SchemaDescription:
             """
 
 	    tp = myType
-
-            self.name = tp.getName()
 
             if tp.isSimpleType():
                 self.name = tp.getName() + '_Def'
@@ -930,7 +986,14 @@ class SchemaDescription:
 	    else:
 		raise WsdlGeneratorError, 'WARNING: NOT HANDLED %s' \
                       % (tp.__class__)
-            
+
+            alias = self.nsh.getAlias(tp.getTargetNamespace())
+            key = "%s.%s_Def" % (alias, tp.getName())
+            if self.typeList:
+                self.typeList.sort()
+                    # add entry to type dictionary for later use in
+                    # docstring generation
+                self.typeDict[key] = self.typeList
 	    return
 
         def _fromSimpleType(self, tp):
@@ -940,7 +1003,9 @@ class SchemaDescription:
             if tp.getName():
                 tpc = tp.getTypeclass()
                 self.initdef  = '\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2)
+                objName = '_' + tp.getName()
                 if tpc:
+                    typeName = self.bti.get_pythontype(None, None, tpc)
                     self.precede  = '%s' % (tpc)
                     self.classdef = '\n\n%sclass %s(%s):' % (ID1,
                                                              tp.getName() \
@@ -948,12 +1013,15 @@ class SchemaDescription:
                                                              tpc)
                     self.initdef  += '\n%s%s.__init__(self,pname="%s",optional=1,repeatable=1)' % (ID3,tpc,tp.getName())
                 else:
+                    typeName = 'Any'
                     # XXX: currently, unions will get shuffled thru here.
                     self.classdef = '\n\n%sclass %s(ZSI.TC.Any):' % (ID1,
                                                                      tp.getName() + '_Def')
                     self.initdef  += '\n%s# probably a union - dont trust it'\
                                      % ID3
                     self.initdef  += '\n%sZSI.TC.Any.__init__(self,pname=name,aname="_%%s" %% name , optional=1,repeatable=1, **kw)' % ID3
+
+                self.typeDoc('optional=1', objName, typeName)
             else:
                 raise WsdlGeneratorError, 'shouldnt happen'
 
@@ -1229,13 +1297,17 @@ class SchemaDescription:
                         nsp  = self.nsh.getAlias(tp.getTargetNamespace())
                         nsp += '.'
                         atype = arrayinfo[1] + '_Def'
+                        typeName = '%s%s' % (nsp, atype)
                     else:
                         atype = arrayinfo[1]
+                        typeName = self.bti.get_pythontype(None, None, atype)
+
                     self.initdef +=\
                                  "\n%s%s.__init__(self, '%s', %s%s(name='element'), pname=name, aname='_%%s' %% name, oname='%%s xmlns=\"%s\"' %% name, **kw)" \
                                  % (ID3, tc, arrayinfo[0], nsp,
                                     atype,
                                     tp.getTargetNamespace())
+                    self.typeDoc('', '_element', typeName)
                 else:
                     raise WsdlGeneratorError, 'failed to handle array!'
             else:
@@ -1291,13 +1363,18 @@ class SchemaDescription:
                         self.initdef += '\n%sself._%s = None' % (ID3,
                                                                  etp.getName())
 
+                    objName = '_' + e.getName()
+                    occurs = None
+
                     if e.isDeclaration() and e.isWildCard():
                         occurs = self._calculateOccurance(e)
                                     
+                        typeName = 'Any'
                         typecodelist += 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
                                         %(e.getName(),e.getName(),occurs)
 
                     elif e.isDeclaration() and e.isAnyType():
+                        typeName = 'XML'
                         typecodelist  += 'ZSI.TC.XML(pname="%s",aname="_%s"), '\
                                          %(e.getName(),e.getName())
 
@@ -1308,24 +1385,25 @@ class SchemaDescription:
                         tpc = etp.getTypeclass()
 
                         if tpc:
+                            typeName = self.bti.get_pythontype(None, None, tpc)
+                                            
                             typecodelist +=\
                                          '%s(pname="%s",aname="_%s"%s), ' \
                                          %(tpc,e.getName(),e.getName(),
                                            occurs)
                         else:
                             nsp = self.nsh.getAlias(etp.getTargetNamespace())
-                            
-                            typecodelist +='%s.%s(name="%s",ns=ns%s), '\
-                                            %(nsp,etp.getName() + '_Def',
-                                              e.getName(), occurs)
+                            typeName = '%s.%s' % (nsp, etp.getName()) + '_Def'
+                            typecodelist +='%s(name="%s",ns=ns%s), '\
+                                            %(typeName, e.getName(), occurs)
 
                     elif etp.isDefinition() and etp.isComplexType():
                         occurs = self._calculateOccurance(e)
 
                         nsp = self.nsh.getAlias(etp.getTargetNamespace())
-                        typecodelist  += '%s.%s(name="%s", ns=ns%s), ' \
-                                         %(nsp,etp.getName() + '_Def',
-                                           e.getName(), occurs)
+                        typeName = '%s.%s' % (nsp,etp.getName()) + '_Def'
+                        typecodelist  += '%s(name="%s", ns=ns%s), ' \
+                                         %(typeName, e.getName(), occurs)
                         self.precede = '%s%s' % ( etp.getName(), '_Def' )
 
                     elif etp:
@@ -1333,16 +1411,19 @@ class SchemaDescription:
                         # like an element reference.  bogosity.
                         # we dont hit this much
                         occurs = self._calculateOccurance(e)
+                        typeName = etp.getType().getName()
                                 
                         typecodelist  += '%s(name="%s",ns=ns%s), '\
-                                         % (etp.getType().getName(),
-                                            etp.getName(), occurs)
+                                         % (typeName, etp.getName(), occurs)
                     elif e:
                         raise WsdlGeneratorError, 'instance %s not handled '\
                               % (e.getName())
                     else:
                         raise WsdlGeneratorError, 'instance %s not handled '\
                               % (e)
+
+                    self.typeDoc(occurs, objName, typeName)
+
                 else:
                     raise WsdlGeneratorError, 'instance %s not handled '\
                           % (e.__class__)
@@ -1474,3 +1555,15 @@ class SchemaDescription:
 		tp = self.__recurse_tdc(tp.type)
 	    else:
 		return tp.type
+
+        
+        def typeDoc(self, occurs, objName, typeName):
+            """Generates an entry in the type list for later use
+               by docstring generation.
+            """
+            if not occurs:
+                self.typeList.append([objName, typeName, False])
+            elif occurs.find('optional=1') == -1:
+                self.typeList.append([objName, typeName, False])
+            else:
+                self.typeList.append([objName, typeName, True])
