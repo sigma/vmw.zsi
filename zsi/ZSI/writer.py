@@ -42,6 +42,8 @@ class SoapWriter:
             '  xmlns:xsi="%(xsi)s"\n' \
             '  xmlns:xsd="%(xsd)s"\n' \
             '  xmlns:ZSI="%(ZSI)s"' % _reserved_ns,
+        self.writeNSdict(nsdict)
+        
         if self.encoding:
             print >>self, '\n  SOAP-ENV:encodingStyle="%s"' % self.encoding,
         print >>self, '>'
@@ -55,9 +57,7 @@ class SoapWriter:
                     Canonicalize(n, self, nsdict=nsdict)
                     print >>self
             print >>self, '</SOAP-ENV:Header>'
-        print >>self, '<SOAP-ENV:Body'
-        if nsdict: self.writeNSdict(nsdict)
-        print >>self, '>'
+        print >>self, '<SOAP-ENV:Body>'
 
     def serialize(self, pyobj, typecode=None, root=None, **kw):
         '''Serialize a Python object to the output stream.
