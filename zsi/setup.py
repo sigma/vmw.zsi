@@ -20,8 +20,9 @@ except:
 setup(
     name="ZSI",
     version=_version,
-    licence="Python",
+    license="Python",
     packages=[ "ZSI", "ZSI.wstools" ],
+    scripts=["scripts/wsdl2py"],
     description="Zolera SOAP Infrastructure",
     author="Rich Salz",
     author_email="rsalz@zolera.com",
