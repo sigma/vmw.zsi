@@ -3,6 +3,7 @@
 ident = '$Id$'
 
 import sys, os, time, signal, re
+sys.path.insert(1, "..")
 from SOAPpy import SOAPProxy, SOAPConfig, SOAPUserAgent
 
 # Check for a web proxy definition in environment

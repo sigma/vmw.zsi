@@ -3,6 +3,7 @@
 # Copyright (c) 2001 actzero, inc. All rights reserved.
 
 import sys
+sys.path.insert(1, "..")
 
 from SOAPpy import *
 

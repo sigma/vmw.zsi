@@ -4,8 +4,13 @@
 
 ident = '$Id$'
 
-import os, re
+import os, re,sys
+
+# add local SOAPpy code to search path
+sys.path.insert(1, "..")
+
 from SOAPpy import *
+Config.debug=0
 
 # Check for a web proxy definition in environment
 try:

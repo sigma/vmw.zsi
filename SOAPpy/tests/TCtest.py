@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-from SOAPpy import *
 import sys
+sys.path.insert(1, "..")
+from SOAPpy import *
+
 
 x = '''<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">

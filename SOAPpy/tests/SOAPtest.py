@@ -10,6 +10,7 @@ import urllib
 import sys
 import unittest
 
+sys.path.insert(1, "..")
 from SOAPpy import *
 
 ident = '$Id$'

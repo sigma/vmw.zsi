@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import sys
+sys.path.insert(1, "..")
+
 from SOAPpy import *
 server = SOAPProxy("http://206.135.217.234:8000/")
 server.COM_SetProperty("Visible", 1)

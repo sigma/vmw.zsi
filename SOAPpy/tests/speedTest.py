@@ -3,6 +3,8 @@
 ident = '$Id$'
 
 import time
+import sys
+sys.path.insert(1, "..")
 
 x='''<SOAP-ENV:Envelope
       xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"

@@ -4,6 +4,9 @@
 ident = '$Id$'
 
 import os, re
+import sys
+sys.path.insert(1, "..")
+
 from SOAPpy import SOAPProxy
 
 # Check for a web proxy definition in environment
