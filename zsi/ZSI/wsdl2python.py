@@ -253,13 +253,16 @@ class WriteServiceModule:
                                   % ( f_types,
                                       self.nsh.getModuleName(ns),
                                       self.nsh.getAlias(ns)) ]
+
+            sd.fromWsdl(service, self.typeDict)
+            
             if self._importlib:
                 exec( 'import %s' % self._importlib )
                 exec( 'obj = %s' % self._importlib )
                 if hasattr(obj, 'clientimports' ):
                     sd.imports += obj.clientimports
                     
-            sd.fromWsdl(service, self.typeDict)
+
             sd.write(fd)
 
         fd.write('\n')
@@ -1444,6 +1447,7 @@ class SchemaDescription:
                         occurs = self._calculateOccurance(e)
                         nsp = self.nsh.getAlias(etp.getTargetNamespace())
                         typeName = '%s.%s' % (nsp, e.getName()) + '_Dec'
+                        print e.getMinOccurs()
                         typecodelist +='%s(ns=ns%s), '\
                                         %(typeName, occurs)
 
