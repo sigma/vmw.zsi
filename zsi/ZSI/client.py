@@ -254,7 +254,14 @@ class Binding:
             tc = TC.Any(aslist=1)
             data = _child_elements(self.ps.body_root)
             if len(data) == 0: return None
-            return tc.parse(data[0], self.ps)
+
+            type = data[0]._get_localName()
+            try:
+                import ComplexTypes
+                instance = eval('ComplexTypes.%s' % type)
+                return instance.typecode.parse(data[0], self.ps)
+            except Exception:
+                return tc.parse(data[0], self.ps)
         elif hasattr(replytype, 'typecode'):
             tc = replytype.typecode
         else:
