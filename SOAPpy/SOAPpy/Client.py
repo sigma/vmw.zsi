@@ -40,6 +40,9 @@
 ################################################################################
 """
 
+ident = '$Id$'
+from version import __version__
+
 from __future__ import nested_scopes
 
 #import xml.sax
@@ -55,11 +58,6 @@ from Parser      import parseSOAPRPC
 from SOAPBuilder import buildSOAP
 from Utilities   import *
 from Types       import faultType, simplify
-
-ident = '$Id$'
-
-from version import __version__
-
 
 ################################################################################
 # Client

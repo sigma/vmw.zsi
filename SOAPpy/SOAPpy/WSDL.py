@@ -3,6 +3,7 @@
 Rudimentary support."""
 
 ident = '$Id$'
+from version import __version__
 
 import wstools
 from Client import SOAPProxy, SOAPAddress

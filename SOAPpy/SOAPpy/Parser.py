@@ -13,7 +13,7 @@ try: from M2Crypto import SSL
 except: pass
 
 ident = '$Id$'
-
+from version import __version__
 
 
 ################################################################################
@@ -778,7 +778,19 @@ class SOAPParser(xml.sax.handler.ContentHandler):
     }
     zerofloatre = '[1-9]'
 
+
+
+
+
     def convertType(self, d, t, attrs, config=Config):
+        return self.convertToBasicTypes(d, t, attrs, config)
+
+
+    def convertToSOAPpyTypes(self, d, t, attrs, config=Config):
+        pass
+
+
+    def convertToBasicTypes(self, d, t, attrs, config=Config):
         dnn = d or ''
 
         if t[0] in NS.EXSD_L:
@@ -790,7 +802,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 except:
                     d = long(d)
                 return d
-            if self.intlimits.has_key (t[1]):
+            if self.intlimits.has_key (t[1]): # integer types
                 l = self.intlimits[t[1]]
                 try: d = int(d)
                 except: d = long(d)

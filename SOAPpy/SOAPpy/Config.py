@@ -34,6 +34,7 @@
 """
 
 ident = '$Id$'
+from version import __version__
 
 import copy, socket
 from types import *

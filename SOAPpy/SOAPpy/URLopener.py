@@ -2,6 +2,7 @@
 authentication"""
 
 ident = '$Id$'
+from version import __version__
 
 from Config import Config
 from urllib import FancyURLopener

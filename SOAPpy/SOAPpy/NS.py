@@ -43,8 +43,7 @@
 from __future__ import nested_scopes
 
 ident = '$Id$'
-
-__version__ = "0.9.9-pre6-CVS"
+from version import __version__
 
 ##############################################################################
 # Namespace Class

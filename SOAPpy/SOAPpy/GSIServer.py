@@ -43,6 +43,9 @@ GSIServer - Contributed by Ivan R. Judson <judson@mcs.anl.gov>
 ################################################################################
 """
 
+ident = '$Id$'
+from version import __version__
+
 from __future__ import nested_scopes
 
 #import xml.sax
@@ -63,10 +66,6 @@ from Utilities   import debugHeader, debugFooter
 
 try: from M2Crypto import SSL
 except: pass
-
-ident = '$Id$'
-
-from version import __version__
 
 #####
 
