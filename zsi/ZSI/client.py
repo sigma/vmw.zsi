@@ -40,18 +40,19 @@ class Binding:
 	    host, port -- where server is; defalt is localhost
 	    ssl -- use SSL? default is no
 	    url -- resource to POST to
+	    soapaction -- value of SOAPAction header
 	    auth -- (type, name, password) triplet; default is unauth
 	    ns -- default namespace
 	    nsdict -- namespace entries to add
 	    tracefile -- file to dump packet traces
 	    cert_file, key_file -- SSL data (q.v.)
-	    uselists -- use lists, not dictionaries (default is yes)
 	'''
 	self.data, self.ps, self.ns, self.user_headers = \
 	    None, None, None, []
 	self.nsdict, self.ssl, self.url, self.trace, self.host = \
 	    kw.get('nsdict', {}), kw.get('ssl', 0), kw.get('url'), \
 	    kw.get('tracefile'), kw.get('host', 'localhost')
+	self.soapaction = kw.get('soapaction', '"http://www.zolera.com"')
 	if kw.has_key('auth'):
 	    self.SetAuth(*kw['auth'])
 	else:
@@ -138,7 +139,7 @@ class Binding:
 	if self.ns: d[''] = self.ns
 	d.update(kw.get('nsdict', self.nsdict) or {})
 	sw = SoapWriter(s, nsdict=d, header=auth_header)
-	sw.serialize(obj, tc)
+	sw.serialize(obj, tc, typed=0)
 	sw.close()
 	soapdata = s.getvalue()
 
@@ -152,8 +153,7 @@ class Binding:
 	self.h.putrequest("POST", url or self.url)
 	self.h.putheader("Content-length", "%d" % len(soapdata))
 	self.h.putheader("Content-type", "text/xml; charset='utf-8'")
-	self.h.putheader("SOAPAction",
-	    kw.get('soapaction', '"http://www.zolera.com"'))
+	self.h.putheader("SOAPAction", kw.get('soapaction', self.soapaction))
 	if self.auth_style & AUTH.httpbasic:
 	    val = _b64_encode(self.auth_user + ':' + self.auth_pass).strip()
 	    self.h.putheader('Authorization', 'Basic ' + val)

@@ -268,8 +268,11 @@ class Any(TypeCode):
 	    print >>sw, '</%s>' % n
 	    return
 	if tc in _seqtypes:
-	    print >>sw, '<%s SOAP-ENC:arrayType="xsd:anyType[%d]">' % \
-		(n, len(pyobj))
+	    if kw.get('typed', self.typed):
+		tstr = ' SOAP-ENC:arrayType="xsd:anyType[%d]"' % len(pyobj)
+	    else:
+		tstr = ''
+	    print >>sw, '<%s%s>' % (n, tstr)
 	    a = Any()
 	    for e in pyobj:
 		a.serialize(sw, e, name='element')
@@ -290,6 +293,12 @@ class Any(TypeCode):
 			repr(pyobj))
 	    self.serialize(sw, pyobj.__dict__, **kw)
 	else:
+	    # Try to make the element name self-describing
+	    tag = getattr(serializer, 'tag', None)
+	    if tag:
+		if tag.find(':') == -1: tag = 'xsd:' + tag
+		kw['name'] = kw['oname'] = tag
+		kw['typed'] = 0
 	    serializer.serialize(sw, pyobj, **kw)
 
 

@@ -133,6 +133,8 @@ The following keyword arguments may be used:
 \lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
     SOAP \code{Envelope}}
 \lineiii{\code{port}}{\code{80} or \code{443}}{Port to connect on.}
+\lineiii{\code{soapaction}}{\code{http://www.zolera.com}}{Value for the
+    \code{SOAPAction} HTTP header.}
 \lineiii{\code{ssl}}{\code{0}}{Use SSL if non-zero.}
 \lineiii{\code{tracefile}}{\code{None}}{An object with a \code{write}
     method, where packet traces will be recorded.}
@@ -213,7 +215,7 @@ The following keyword arguments may be used:
     \code{typecode} attribute specifying how to serialize the data.}
 \lineiii{\code{requesttypecode}}{n/a}{Typecode specifying how to serialize
     the data.}
-\lineiii{\code{soapaction}}{\code{http://www.zolera.com}}{Value for the
+\lineiii{\code{soapaction}}{Obtained from the \class{Binding}}{Value for the
     \code{SOAPAction} HTTP header.}
 \end{tableiii}
 
