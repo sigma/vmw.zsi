@@ -525,6 +525,7 @@ class ServiceDescription:
                     # you will find these in document/literal ops.
                     kwstring = None
                     simpleType = self.isSimpleElementDeclaration(op)
+
                     if simpleType:
                         kwstring = "\n%skw = {'requestclass': %sWrapper}" \
                                    % (ID2, inputName )
@@ -585,6 +586,7 @@ class ServiceDescription:
         return
 
     def isSimpleElementDeclaration(self, op):
+        
         if len( op.getInput().getMessage().getPartList() ) == 1:
             prt = op.getInput().getMessage().getPartList()[0]
 
@@ -1332,7 +1334,7 @@ class SchemaDescription:
 
             typecodelist += ']'
 
-            self._complexTypecodeLogic( typecodelist )
+            self._complexTypecodeLogic( typecodelist, tp.getTargetNamespace() )
 
             return
 
@@ -1437,7 +1439,8 @@ class SchemaDescription:
                 self.classvar.write("\n%stype = '%s'" % (ID2,tp.getName()))
                 self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2)
                 typecodelist = '[ZSI.TC.Any(*kw), ]'
-                self._complexTypecodeLogic(typecodelist)
+                self._complexTypecodeLogic(typecodelist,
+                                           tp.getTargetNamespace())
                 
             else:
                 raise WsdlGeneratorError, 'failed to handle complex content'
@@ -1670,7 +1673,7 @@ class SchemaDescription:
 
             return typecodelist
 
-        def _complexTypecodeLogic( self, typecodelist ):
+        def _complexTypecodeLogic( self, typecodelist, tns ):
 
             # extra "smarts" for all regular (model group) complex type defs.
 
