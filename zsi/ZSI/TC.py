@@ -452,6 +452,11 @@ class URI(String):
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         String.serialize(self, sw, urlencode(pyobj), orig=pyobj, **kw)
 
+class QName(String):
+    '''A QName type
+    '''
+    parselist = [ (None,'QName') ]
+    tag = 'QName'
 
 class Base64String(String):
     '''A Base64 encoded string.
