@@ -56,7 +56,7 @@ class ServerCallbackDescription:
                         self.location = soapAddress.getLocation()
                 # generate methods
                 for op in port.getBinding().getPortType().getOperationList():
-                    self.generateMethods(op, port)
+                    self.generateMethods(op, port, do_extended)
                     if do_extended:
                         self.generateMethods2(op, port)
 
@@ -90,12 +90,14 @@ class ServerCallbackDescription:
         d  = "\n%sdef __init__(self, post='%s', **kw):" % (ID1, uri)
         d += '\n%sServiceSOAPBinding.__init__(self, post)' % ID2
         if do_extended:
-            d += '\n%sif kw.has_key(\'impl\'):\n%sself.impl = kw[\'impl\']'%(
-                ID2, ID3)
+            d += '\n%sif kw.has_key(\'impl\'):' % ID2
+            d += '\n%sself.impl = kw[\'impl\']' % ID3
+#            d += '\n%sif kw.has_key(\'typesmodule\'):' % ID2
+#            d += '\n%sself.typesmodule = kw[\'typesmodule\']'% ID3
 
         return d
 
-    def generateMethods(self, op, port):
+    def generateMethods(self, op, port, do_extended=0):
         # generate soapactions while we're here
         operation = port.getBinding().getOperationDict().get(op.getName())
 
@@ -107,12 +109,27 @@ class ServerCallbackDescription:
         # now take care of the method
         o  = '\n%sdef %s(self, ps):' % (ID1, self.getMethodName(op.getName()))
         o += '\n%s# input vals in request object' % ID2
-        o += '\n%sargs = ps.Parse( %s )' \
-                  % ( ID2, op.getInput().getMessage().getName() \
-                      + 'Wrapper' )
+        iw = op.getInput().getMessage().getName() + 'Wrapper'
+        o += '\n%sargs = ps.Parse( %s )' % ( ID2,  iw)
+
+        o += '\n'
+        
+        
+        if do_extended:
+            input_args = op.getInput().getMessage().getPartList()
+            iargs = ["%s" % x.getName() for x in input_args]
+            iargs = ", ".join(iargs)
+            for a in op.getInput().getMessage().getPartList():
+                o += '\n%s# %s is a %s' % (ID2, a.getName(),
+                                           a.getType().getName())
+                o += '\n%s%s = %s.%s' % (ID2, a.getName(), iw, a.getName())
+            o += "\n"
+            
+            invocation = '\n\n%s# Invoke the method' % ID2
+            invocation += '\n%s%%sself.%s(%s)' % (ID2, op.getName(), iargs)
 
         if op.getOutput().getMessage() is not None:
-            o += '\n\n%s# assign return values to response object' % ID2
+            o += '\n%s# assign return values to response object' % ID2
             # JRB CHECK MESSAGE TO SEE IF ITS SIMPLE
             response_type = IsSimpleElementDeclaration(op, input=False)
             if response_type is False:
@@ -123,15 +140,42 @@ class ServerCallbackDescription:
                 # can't instantiate a basestring, so by default do a str
                 if response_type == 'basestring': response_type = 'str'
                 o += '\n%sclass SimpleTypeWrapper(%s): typecode = %s()' \
-                     % ( ID2, response_type, op.getOutput().getMessage().getName() \
+                     % ( ID2,
+                         response_type, op.getOutput().getMessage().getName()
                          + 'Wrapper' )
                 o += '\n\n%s# WARNING specify value eg. SimpleTypeWrapper(1)' % ID2
                 o += '\n%sresponse = SimpleTypeWrapper()'  % ID2
 
-            o += '\n\n%sreturn response' % ID2
+            if do_extended:
+                output_args = op.getOutput().getMessage().getPartList()
+                oargs = ["%s" % x.getName() for x in output_args]
+
+                invoke_return = ""
+                for ir in ["\n%sresponse.%s = %s" % (ID2, x.getName(), x.getName())
+                           for x in output_args]:
+                    invoke_return += ir
+
+                    oargs = ", ".join(oargs)
+                    if len(output_args) > 1:
+                        print "Message has more than one return value (Bad Design)."
+                        oargs = "(%s)" % oargs
+
+                oargs = "%s = " % oargs
+
+                o += invocation % oargs
+                o += '\n'
+
+                o += '\n%s# Assign return values to response' % ID2
+                o += invoke_return
+            
+            o += '\n\n%s# Return the response' % ID2
+            o += '\n%sreturn response' % ID2
         else:
-            o += '\n\n%s# NO output' % ID2
-            o += '\n\n%sreturn None' % ID2
+            if do_extended:
+                o += invocation % ""
+                o += '\n'
+            o += '\n%s# NO output' % ID2
+            o += '\n%sreturn None' % ID2
 
         self.methods.append(o)
 
