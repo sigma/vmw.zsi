@@ -98,7 +98,8 @@ class ServiceTestCase(unittest.TestCase):
             url = CONFIG_PARSER.get(self.url_section, self.name)
             wsdl = reader.loadFromURL(url)
             self._wsm = WriteServiceModule(wsdl)
-            self._wsm.write(False, output_dir=moduleDir)
+            if CONFIG_PARSER.getboolean('configuration', 'regenerate') is True:
+                self._wsm.write(False, output_dir=moduleDir)
             self._setModuleNames(self._importTypeModule, mod_dir=moduleDir)
             locator = self._getLocator()
             self._port = self._getPort(locator)

@@ -1350,6 +1350,7 @@ class SchemaDescription:
             self.initcode.set('\n%sname = name or self.__class__.literal' \
                               % ID3)
             self.initcode.write('\n%sns = ns or self.__class__.schema' % ID3)
+            self.initcode.write('\n%skw["oname"] = \'%%s xmlns=\"%%s\"\' %%(name, ns)' % ID3)
 
             self.basector.set('\n\n%s%s.__init__(self,pname=name, aname="%%s" %% name,  **kw)' % (ID3,tpc))
             typeName = self.bti.get_pythontype(None, None, tpc)

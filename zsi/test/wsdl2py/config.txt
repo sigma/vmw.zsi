@@ -4,10 +4,14 @@
 #
 # CONFIGURATION SECTIONS 
 #  [configuration] - global configuration of service tests.
+#      tracefile  -- trace request/response SOAP messages
+#      regenerate -- generate stubs, turn off to edit the "stubs" generated files
+#          
 #
 ##########################################################################
 [configuration]
 tracefile = True
+regenerate = True
 
 ##########################################################################
 # URL SECTIONS: All SOAP-1.1
@@ -89,7 +93,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_TerraService test_FreeDBService test_ZipCodeResolver
+tests =  test_TerraService test_ZipCodeResolver
 
 [doc_literal_broke]
 document = True
