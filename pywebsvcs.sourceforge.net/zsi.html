@@ -1,0 +1,2932 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>ZSI: The Zolera Soap Infrastructure</title>
+<META NAME="description" CONTENT="ZSI: The Zolera Soap Infrastructure">
+<META NAME="keywords" CONTENT="zsi">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="STYLESHEET" href="zsi.css">
+</head>
+<body>
+<DIV CLASS="navigation">
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td align="center" width="100%">ZSI: The Zolera Soap Infrastructure</td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+</tr></table>
+<br><hr>
+</DIV>
+<!--End of Navigation Panel-->
+
+<P>
+
+<div class="titlepage">
+<center>
+<h1>ZSI: The Zolera Soap Infrastructure</h1>
+<p><b><font size='+2'>Rich Salz</font></b></p>
+<p>
+	Zolera Systems, <a class="url" href="http://www.zolera.com">http://www.zolera.com</a>
+<BR>
+E-mail: <span class="email">rsalz@zolera.com</span>
+<BR></p>
+<p><strong>Release 1.1.14</strong><br>
+<strong>October 26, 2001</strong></p>
+<p>
+</center>
+</div>
+
+<P>
+<DIV CLASS="centerline" ID="par2686" ALIGN="CENTER">
+<b>ABSTRACT</b></DIV>
+
+<P>
+<tt class="module">ZSI</tt>, the Zolera SOAP Infrastructure, is a Python package that
+provides an implementation of SOAP messaging, as described in
+<em class='citetitle'><a
+ href='http://www.w3.org/TR/soap'
+ title='The SOAP 1.1 Specification'
+ >The SOAP 1.1 Specification</a></em>.
+In particular, <tt class="module">ZSI</tt> parses and generates SOAP messages, and
+converts between native Python datatypes and SOAP syntax.
+It can also be used to build applications using
+<em class='citetitle'><a
+ href='http://www.w3.org/TR/SOAP-attachments'
+ title='SOAP Messages with
+Attachments'
+ >SOAP Messages with
+Attachments</a></em>.
+<tt class="module">ZSI</tt> is ``transport neutral'', and provides only a simple
+I/O and dispatch framework; a more complete solution is the
+responsibility of the application using <tt class="module">ZSI</tt>.
+As usage patterns emerge, and common application frameworks are
+more understood, this may change.
+
+<P>
+<tt class="module">ZSI</tt> requires Python 2.0 or later and PyXML version 0.6.6 or later.
+
+<P>
+The <tt class="module">ZSI</tt> homepage is at
+<a class="url" href="http://www.zolera.com/resources/opensrc/zsi">http://www.zolera.com/resources/opensrc/zsi</a>.
+
+<P>
+
+<P>
+<DIV CLASS="centerline" ID="par2687" ALIGN="CENTER">
+<b>COPYRIGHT</b></DIV>
+
+<P>
+Copyright &#169; 2001, Zolera Systems, Inc.
+<BR>
+All Rights Reserved.
+
+<P>
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+<P>
+
+<OL>
+<LI>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer. 
+
+<P>
+</LI>
+<LI>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in
+the documentation and/or other materials provided with the
+distribution.
+
+<P>
+</LI>
+<LI>Redistributions of any form whatsoever must retain the following
+acknowledgment:
+"This product includes software developed by Zolera Systems
+(<a class="url" href="http://www.zolera.com">http://www.zolera.com</a>)."
+
+<P>
+</LI>
+</OL>
+
+<P>
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL ZOLERA SYSTEMS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+<P>
+
+<P>
+<DIV CLASS="centerline" ID="par2688" ALIGN="CENTER">
+<b>Acknowledgments</b></DIV>
+
+<P>
+We are grateful to the members of the <code>soapbuilders</code>
+mailing list (see <a class="url" href="http://groups.yahoo.com/soapbuilders">http://groups.yahoo.com/soapbuilders</a>),
+Frederick Lundh for his <code>soaplib</code> package (see
+<a class="url" href="http://www.secretlabs.com/downloads/index.htm#soap">http://www.secretlabs.com/downloads/index.htm#soap</a>),
+and Cayce Ullman and Brian Matthews for their <code>SOAP.py</code> package
+(see <a class="url" href="http://sourceforge.net/projects/pywebsvcs">http://sourceforge.net/projects/pywebsvcs</a>).
+
+<P>
+<BR>
+<BR><H2><A NAME="SECTION001000000000000000000">
+Contents</A>
+</H2>
+<!--Table of Contents-->
+
+<UL CLASS="TofC">
+<LI><A NAME="tex2html1"
+  HREF="zsi.html">1. Introduction</A>
+<UL>
+<LI><A NAME="tex2html2"
+  HREF="#SECTION002100000000000000000">1.1 How to Read this Document</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html3"
+  HREF="#SECTION003000000000000000000">2. Examples</A>
+<UL>
+<LI><A NAME="tex2html4"
+  HREF="#SECTION003100000000000000000">2.1 Simple example</A>
+<LI><A NAME="tex2html5"
+  HREF="#SECTION003200000000000000000">2.2 More complex example</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html6"
+  HREF="#SECTION004000000000000000000">3. Exceptions</A>
+<LI><A NAME="tex2html7"
+  HREF="#SECTION005000000000000000000">4. Utilities</A>
+<UL>
+<LI><A NAME="tex2html8"
+  HREF="#SECTION005100000000000000000">4.1 Low-Level Utilities</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html9"
+  HREF="#SECTION006000000000000000000">5. The <tt class="module">ParsedSoap</tt> module -- basic message handling</A>
+<LI><A NAME="tex2html10"
+  HREF="#SECTION007000000000000000000">6. The <tt class="module">TypeCode</tt> classes -- data conversions</A>
+<UL>
+<LI><A NAME="tex2html11"
+  HREF="#SECTION007100000000000000000">6.1 <tt class="class">TC.Any</tt> -- the basis of dynamic typing</A>
+<LI><A NAME="tex2html12"
+  HREF="#SECTION007200000000000000000">6.2 Void</A>
+<LI><A NAME="tex2html13"
+  HREF="#SECTION007300000000000000000">6.3 Strings</A>
+<LI><A NAME="tex2html14"
+  HREF="#SECTION007400000000000000000">6.4 Integers</A>
+<LI><A NAME="tex2html15"
+  HREF="#SECTION007500000000000000000">6.5 Floating-point Numbers</A>
+<LI><A NAME="tex2html16"
+  HREF="#SECTION007600000000000000000">6.6 Dates and Times</A>
+<LI><A NAME="tex2html17"
+  HREF="#SECTION007700000000000000000">6.7 Boolean</A>
+<LI><A NAME="tex2html18"
+  HREF="#SECTION007800000000000000000">6.8 XML</A>
+<LI><A NAME="tex2html19"
+  HREF="#SECTION007900000000000000000">6.9 Struct</A>
+<LI><A NAME="tex2html20"
+  HREF="#SECTION0071000000000000000000">6.10 Choice</A>
+<LI><A NAME="tex2html21"
+  HREF="#SECTION0071100000000000000000">6.11 Arrays</A>
+<LI><A NAME="tex2html22"
+  HREF="#SECTION0071200000000000000000">6.12 Apache Datatypes</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html23"
+  HREF="#SECTION008000000000000000000">7. The <tt class="module">SoapWriter</tt> module -- serializing data</A>
+<LI><A NAME="tex2html24"
+  HREF="#SECTION009000000000000000000">8. The <tt class="module">Fault</tt> module -- reporting errors</A>
+<LI><A NAME="tex2html25"
+  HREF="#SECTION0010000000000000000000">9. The <tt class="module">resolvers</tt> module -- fetching remote data</A>
+<LI><A NAME="tex2html26"
+  HREF="#SECTION0011000000000000000000">10. Dispatching and Invoking</A>
+<UL>
+<LI><A NAME="tex2html27"
+  HREF="#SECTION0011100000000000000000">10.1 Dispatching</A>
+<LI><A NAME="tex2html28"
+  HREF="#SECTION0011200000000000000000">10.2 The <tt class="module">client</tt> module -- sending SOAP messages</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html29"
+  HREF="#SECTION0012000000000000000000">11. ZSI Schema</A>
+<LI><A NAME="tex2html30"
+  HREF="#SECTION0013000000000000000000">About this document ...</A>
+</UL>
+<!--End of Table of Contents-->
+
+<P>
+
+<H1><A NAME="SECTION002000000000000000000">
+1. Introduction</A>
+</H1>
+
+<P>
+<tt class="module">ZSI</tt>, the Zolera SOAP Infrastructure, is a Python package that
+provides an implementation of the SOAP specification, as described in
+<em class='citetitle'><a
+ href='http://www.w3.org/TR/soap'
+ title='The SOAP 1.1 Specification'
+ >The SOAP 1.1 Specification</a></em>.
+In particular, <tt class="module">ZSI</tt> parses and generates SOAP messages, and
+converts between native Python datatypes and SOAP syntax.
+
+<P>
+<tt class="module">ZSI</tt> requires Python 2.0 or later and PyXML version 0.6.6 or later.
+
+<P>
+The <tt class="module">ZSI</tt> homepage is at
+<a class="url" href="http://www.zolera.com/resources/opensrc/zsi">http://www.zolera.com/resources/opensrc/zsi</a>.
+<tt class="module">ZSI</tt> is discussed on the Python web services mailing list, visit
+<a class="url" href="http://lists.sourceforge.net/lists/listinfo/pywebsvcs-talk">http://lists.sourceforge.net/lists/listinfo/pywebsvcs-talk</a>to subscribe.
+
+<P>
+SOAP-based processing typically involves several steps.
+The following list details the steps of a common processing model naturally
+supported by <tt class="module">ZSI</tt> (other models are certainly possible):
+
+<OL>
+<LI><tt class="module">ZSI</tt> takes data from an input stream and <i>parses</i> it, generating
+    a DOM-based parse tree as part of creating a <tt class="class">ParsedSoap</tt> object.
+    At this point the major syntactic elements of a SOAP message -- the
+    <code>Header</code>, the <code>Body</code>, etc. -- are available.
+</LI>
+<LI>The application does <i>header processing</i>.
+    More specifically, it does local dispatch and processing based on
+    the elements in the SOAP <code>Header</code>.
+    The SOAP <code>actor</code> and <code>mustUnderstand</code> attributes are
+    also handled (or at least recognized) here.
+</LI>
+<LI><tt class="module">ZSI</tt> next <i>parses</i> the <code>Body</code>, creating local Python objects
+    from the data in the SOAP message.
+    The parsing is often under the control of a list of data descriptions,
+    known as <i>typecodes</i>, defined by the application because it knows
+    what type of data it is expecting.
+    In cases where the SOAP data is known to be completely self-describing,
+    the parsing can be <i>dynamic</i> through the use of the <tt class="class">TC.Any</tt>
+    class.
+</LI>
+<LI>The application now <i>dispatches</i> to the appropriate handler
+    in order to do its ``real work.''
+    As part of its processing it may create <i>output objects</i>
+</LI>
+<LI>The application creates a <tt class="class">SoapWriter</tt> instance and outputs
+    an initial set of namespace entries and header elements.
+</LI>
+<LI>Any local data to be sent back to the client is <i>serialized</i>.
+    As with <code>Body</code> parsing, the datatypes can be described through
+    typecodes or determined dynamically (here, through introspection).
+</LI>
+<LI>In the event of any processing exceptions, a <tt class="class">Fault</tt> object
+    can be raised, created, and/or serialized.
+</LI>
+</OL>
+
+<P>
+Note that <tt class="module">ZSI</tt> is ``transport neutral'', and provides only a simple
+I/O and dispatch framework; a more complete solution is the
+responsibility of the application using <tt class="module">ZSI</tt>.
+As usage patterns emerge, and common application frameworks are
+more understood, this may change.
+
+<P>
+Within this document, <code>tns</code> is used as the prefix for the
+application's target namespace, and the term
+<i>element</i> refers to a DOM element node.)
+
+<P>
+
+<H1><A NAME="SECTION002100000000000000000">
+1.1 How to Read this Document</A>
+</H1>
+
+<P>
+Readers only interested in developing the simplest SOAP applications,
+or spending the least amount of time on building a web services
+infrastructure, should read chapters 2, 3, and 10.
+Readers who are developing complex services, and who are familiar
+with XML Schema and/or WSDL, should read this manual in order.
+This will provide them with enough information to implement the
+processing model described above.
+They can skip probably skip chapters 2 and 10.
+
+<P>
+Currently, the most cumbersome part of using <tt class="module">ZSI</tt> is
+defining the typecode objects.
+A future release of <tt class="module">ZSI</tt> may be able to
+process WSDL definitions (described in
+<em class='citetitle'><a
+ href='http://www.w3.org/TR/wsdl'
+ title='The Web Services Description Language'
+ >The Web Services Description Language</a></em>)
+and generate typecodes automatically.
+
+<H1><A NAME="SECTION003000000000000000000">
+2. Examples</A>
+</H1>
+
+<P>
+This section contains two examples.  The first shows how to use <tt class="module">ZSI</tt>
+to expose conventional CGI scripts through SOAP.
+The input parameters and return value are Python lists and the SOAP
+messages must contain all type information.
+This is appropriate for building simple schema-less applications.
+The second example shows how to to create a
+more comprehensive application that uses <tt class="module">ZSI</tt> to validate its input
+and output against a schema.
+
+<P>
+
+<H1><A NAME="SECTION003100000000000000000">
+2.1 Simple example</A>
+</H1>
+
+<P>
+Using the <tt class="module">ZSI.cgi</tt> module, it is simple to expose Python
+functions as web services.
+Each function is invoked with all the input parameters specified in the
+client's SOAP request.
+Any value returned by the function will be serialized back to the client;
+multiple values can be returned by returning a tuple.
+
+<P>
+The following code shows some simple services:
+
+<P>
+<dl><dd><pre class="verbatim">
+def hello():
+    return "Hello, world"
+
+def echo(*args):
+    return args
+
+def average(*args):
+    sum = 0
+    for i in args: sum += i
+    return sum / len(args)
+
+from ZSI import dispatch
+dispatch.AsCGI()
+</pre></dl>
+
+<P>
+Each function defines a SOAP request, so if this script is installed
+as a CGI script, a SOAP message can be posted to that script's URL with any of
+<code>hello</code>, <code>echo</code>, or <code>average</code> as the request element,
+and the value returned by the function will be sent back.
+
+<P>
+The <tt class="module">ZSI</tt> CGI dispatcher catches exceptions and sends back a SOAP fault.
+For example, a fault will be sent if the  <code>hello</code> function is given any
+arguments, or if the <code>average</code> function is given a non-integer.
+
+<P>
+If the above script is installed on the webserver running on the local
+host, and if the URL is <code>/cgi-bin/simple-test</code>, then the following
+code shows simple binding and access to the server:
+
+<P>
+<dl><dd><pre class="verbatim">
+from ZSI.client import Binding
+b = Binding(url='/cgi-bin/simple-test')
+a = apply(b.average, range(1,11))
+assert a == 5
+print b.hello()
+</pre></dl>
+
+<P>
+
+<H1><A NAME="SECTION003200000000000000000">
+2.2 More complex example</A>
+</H1>
+
+<P>
+We will now show a more complete example of a robust web service.
+It takes as input a player name and array of integers, and returns
+the average.
+It is presented in sections, following the steps detailed above.
+
+<P>
+The first section reads in a request, and parses the SOAP header.
+
+<P>
+<dl><dd><pre class="verbatim">
+from ZSI import *
+import sys
+IN, OUT = sys.stdin, sys.stdout
+
+try:
+    ps = ParsedSoap(IN)
+except ParseException, e:
+    FaultFromZSIException(e).AsSOAP(OUT)
+    sys.exit(1)
+except Exception, e:
+    # Faulted while processing; we assume it's in the header.
+    FaultFromException(e, 1).AsSOAP(OUT)
+    sys.exit(1)
+
+# We are not prepared to handle any actors or mustUnderstand elements,
+# so we'll arbitrarily fault back with the first one we found.
+a = ps.WhatActorsArePresent()
+if len(a):
+    FaultFromActor(a[0]).AsSOAP(OUT)
+    sys.exit(1)
+mu = ps.WhatMustIUnderstand()
+if len(mu):
+    uri, localname = mu[0]
+    FaultFromNotUnderstood(uri, localname).AsSOAP(OUT)
+    sys.exit(1)
+</pre></dl>
+
+<P>
+This section defines the mappings between Python objects and the SOAP
+data being transmitted.
+Recall that according to the SOAP specification, RPC input and output
+are modeled as a structure.
+
+<P>
+<dl><dd><pre class="verbatim">
+class Player:
+    def __init__(self, name):
+        pass
+Player.typecode = TC.Struct(Player, [
+                                TC.String('Name'),
+                                TC.Array('Scores', TC.Integer()),
+                                ], 'GetAverage')
+class Average:
+    def __init__(self, average):
+        self.average = average
+Average.typecode = TC.Struct(Average, [
+                                TC.Integer('average'),
+                                ], 'GetAverageResponse')
+</pre></dl>
+
+<P>
+This section parses the input, performs the application-level
+activity, and serializes the response.
+<dl><dd><pre class="verbatim">
+try:
+    player = ps.Parse(Player.typecode)
+except EvaluateError, e:
+    FaultFromZSIException(e).AsSOAP(OUT)
+    sys.exit(1)
+
+try:
+    total = 0
+    for value in player.Scores: total = total + value
+    result = Average(total / len(player.Scores))
+    sw = SoapWriter(OUT)
+    sw.serialize(result, Average.typecode)
+    sw.close()
+except Exception, e:
+    FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
+    sys.exit(1)
+</pre></dl>
+
+<P>
+In the <tt class="method">serialize()</tt> call above, the second parameter is optional,
+since <code>result</code> is an instance of the 
+<tt class="class">Average</tt> class, and the <code>Average.typecode</code> attribute is
+the typecode for class instances.
+In addition, since the <tt class="class">SoapWriter</tt> destructor will call <tt class="method">close()</tt>
+if necessary, sending a SOAP response can often be written like
+this one-liner:
+<dl><dd><pre class="verbatim">
+SoapWriter(OUT).serialize(result)
+</pre></dl>
+
+<H1><A NAME="SECTION004000000000000000000">
+3. Exceptions</A>
+</H1>
+
+<P>
+<tt class="module">ZSI</tt> defines two exception classes.
+
+<P>
+<dl><dt><b>exception <a name='l2h-1'><tt class='exception'>ParseException</tt></a></b>
+<dd>
+<tt class="module">ZSI</tt> can raise this exception while creating a <tt class="class">ParsedSoap</tt> object.
+It is a subtype of Python's <tt class="exception">Exception</tt> class.
+The string form of a <tt class="exception">ParseException</tt> object consists of a
+line of human-readable text.
+If the backtrace is available, it will be concatenated as a second line.
+</dl>
+
+<P>
+The following attributes are read-only:
+
+<P>
+<dl><dt><b><a name='l2h-2'><tt class='member'>inheader</tt></a></b>
+<dd>
+A boolean that indicates if the error was detected in the SOAP <code>Header</code>
+element.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-3'><tt class='member'>str</tt></a></b>
+<dd>
+A text string describing the error.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-4'><tt class='member'>trace</tt></a></b>
+<dd>
+A text string containing a backtrace to the error.
+This may be <code>None</code> if it was not possible, such as when there was
+a general DOM exception, or when the <code>str</code> text is believed to be
+sufficient.
+</dl>
+
+<P>
+<dl><dt><b>exception <a name='l2h-5'><tt class='exception'>EvaluateException</tt></a></b>
+<dd>
+This exception is similar to <tt class="exception">ParseException</tt>, except
+that <tt class="module">ZSI</tt> may raise it while converting between SOAP and local
+Python objects.
+</dl>
+
+<P>
+The following attributes are read-only:
+
+<P>
+<dl><dt><b><a name='l2h-6'><tt class='member'>str</tt></a></b>
+<dd>
+A text string describing the error.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-7'><tt class='member'>trace</tt></a></b>
+<dd>
+A text backtrace, as described above for <tt class="exception">ParseException</tt>.
+</dl>
+
+<H1><A NAME="SECTION005000000000000000000">
+4. Utilities</A>
+</H1>
+
+<P>
+<tt class="module">ZSI</tt> defines some utility methods that general applications
+may want to use.
+
+<P>
+<dl><dt><b><a name='l2h-8'><tt class='function'>Version</tt></a></b>()
+<dd>
+Returns a three-element tuple containing the numbers representing the
+major, minor, and release identifying the <tt class="module">ZSI</tt> version.
+
+<span class='versionnote'>New in version 1.1.</span>
+
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION005100000000000000000">
+4.1 Low-Level Utilities</A>
+</H1>
+
+<P>
+<tt class="module">ZSI</tt> also defines some low-level utilities for its own use that
+start with a leading underscore and must be imported explicitly.
+They are documented here because they can be useful for developing
+new typecode classes.
+
+<P>
+<dl><dt><b><a name='l2h-9'><tt class='function'>_valid_encoding</tt></a></b>(<var>elt</var>)
+<dd>
+Return true if the element <code>elt</code> has a SOAP encoding
+that can be handled by <tt class="module">ZSI</tt>
+(currently Section 5 of the SOAP 1.1 specification or an empty encoding
+for XML).
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-10'><tt class='function'>_backtrace</tt></a></b>(<var>elt, dom</var>)
+<dd>
+This function returns a text string that traces a ``path'' from <code>dom</code>,
+a DOM root, to <code>elt</code>, an element within that document, in
+XPath syntax.
+</dl>
+
+<P>
+Some <code>lambda</code>'s are defined so that some DOM accessors
+will return an empty list rather than <code>None</code>.
+This means that rather than writing:
+<dl><dd><pre class="verbatim">
+if elt.childNodes:
+   for N in elt.childNodes:
+      ...
+</pre></dl>
+One can write:
+<dl><dd><pre class="verbatim">
+for N in _children(elt):
+   ...
+</pre></dl>
+
+<P>
+<dl><dt><b><a name='l2h-11'><tt class='function'>_children</tt></a></b>(<var>element</var>)
+<dd>
+Returns a list of all children of the specified <code>element</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-12'><tt class='function'>_attrs</tt></a></b>(<var>element</var>)
+<dd>
+Returns a list of all attributes of the specified <code>element</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-13'><tt class='function'>_child_elements</tt></a></b>(<var>element</var>)
+<dd>
+Returns a list of all children elements of the specified <code>element</code>.
+</dl>
+
+<P>
+Other <code>lambda</code>'s return SOAP-related attributes from an element,
+or <code>None</code> if not present.
+
+<P>
+<dl><dt><b><a name='l2h-14'><tt class='function'>_find_arraytype</tt></a></b>(<var>element</var>)
+<dd>
+The value of the SOAP <code>arrayType</code> attribute.
+
+<span class='versionnote'>New in version 1.2.</span>
+
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-15'><tt class='function'>_find_attr</tt></a></b>(<var>element, name</var>)
+<dd>
+The value of the unqualified <code>name</code> attribute.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-16'><tt class='function'>_find_encstyle</tt></a></b>(<var>element</var>)
+<dd>
+The value of the SOAP <code>encodingStyle</code> attribute.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-17'><tt class='function'>_find_href</tt></a></b>(<var>element</var>)
+<dd>
+The value of the unqualified <code>href</code> attribute.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-18'><tt class='function'>_find_type</tt></a></b>(<var>element</var>)
+<dd>
+The value of the XML Schema <code>type</code> attribute.
+</dl>
+
+<H1><A NAME="SECTION006000000000000000000">
+5. The <tt class="module">ParsedSoap</tt> module -- basic message handling</A>
+</H1>
+
+<P>
+This class represents an input stream that has been parsed as a SOAP
+message.
+
+<P>
+<dl><dt><b>class <a name='l2h-19'><tt class='class'>ParsedSoap</tt></a></b>(<var>input</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+Creates a <tt class="class">ParsedSoap</tt> object from the provided input source.
+If <code>input</code> is not a string, then it must be an object with a
+<tt class="method">read()</tt> method that supports the standard Python ``file read''
+semantics.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>resolver</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">Value for the <code>resolver</code>
+attribute; see below.</td>
+    <tr><td align="left" valign="baseline"><code>trailers</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Allow trailing data elements
+to appear after the <code>Body</code>.</td></tbody>
+</table>
+
+<P>
+</dl>
+
+<P>
+The following attributes are read-only:
+
+<P>
+<dl><dt><b><a name='l2h-20'><tt class='member'>body</tt></a></b>
+<dd>
+The root of the SOAP <code>Body</code> element.
+Using the <tt class="method">GetElementNSdict()</tt> method on this attribute can be useful
+to get a dictionary to be used with the <tt class="class">SoapWriter</tt> class.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-21'><tt class='member'>body_root</tt></a></b>
+<dd>
+The element that contains the SOAP serialization root; that is,
+the element in the SOAP <code>Body</code> that ``starts off'' the data.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-22'><tt class='member'>data_elements</tt></a></b>
+<dd>
+A (possibly empty) list of all child elements of the <code>Body</code> other
+than the root.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-23'><tt class='member'>header</tt></a></b>
+<dd>
+The root of the SOAP <code>Header</code> element.
+Using the <tt class="method">GetElementNSdict()</tt> method on this attribute can be useful
+to get a dictionary to be used with the <tt class="class">SoapWriter</tt> class.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-24'><tt class='member'>header_elements</tt></a></b>
+<dd>
+A (possibly empty) list of all elements in the SOAP <code>Header</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-25'><tt class='member'>trailer_elements</tt></a></b>
+<dd>
+Returns a (possibly empty) list of all elements following the <code>Body</code>.
+If the <code>trailers</code> keyword was not used when the object was
+constructed, this attribute will not be instantiated and retrieving
+it will raise an exception.
+</dl>
+
+<P>
+The following attribute may be modified:
+
+<P>
+<dl><dt><b><a name='l2h-26'><tt class='member'>resolver</tt></a></b>
+<dd>
+If not <code>None</code>,
+this attribute can be invoked to handle absolute <code>href</code>'s in the SOAP data.
+It will be invoked as follows:
+
+<P>
+<dl><dt><b><a name='l2h-27'><tt class='method'>resolver</tt></a></b>(<var>uri, tc, ps, **keywords</var>)
+<dd>
+The <code>uri</code> parameter is the URI to resolve.
+The <code>tc</code> parameter is the typecode that needs to resolve <code>href</code>; this
+may be needed to properly interpret the content of a MIME bodypart, for example.
+The <code>ps</code> parameter is the <tt class="class">ParsedSoap</tt> object that is invoking
+the resolution (this allows a single resolver instance to handle multiple
+SOAP parsers).
+
+<P>
+Failure to resolve the URI should result in an exception being raised.
+If there is no content, return <code>None</code>; this is not the same as an
+empty string.
+If there is content, the data returned should be in a form understandable
+by the typecode.
+</dl>
+</dl>
+
+<P>
+The following methods are available:
+
+<P>
+<dl><dt><b><a name='l2h-28'><tt class='method'>Backtrace</tt></a></b>(<var>elt</var>)
+<dd>
+Returns a human-readable ``trace'' from the document root to the
+specified element.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-29'><tt class='method'>FindLocalHREF</tt></a></b>(<var>href, elt</var>)
+<dd>
+Returns the element that has an <code>id</code> attribute whose value is specified
+by the <code>href</code> fragment identifier.
+The <code>href</code> <i>must</i> be a fragment reference -- that is, it must
+start with a pound sign.
+This method raises an <tt class="exception">EvaluateException</tt> exception if the
+element isn't found.
+It is mainly for use by the parsing methods in the <tt class="module">TypeCode</tt> module.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-30'><tt class='method'>GetElementNSdict</tt></a></b>(<var>elt</var>)
+<dd>
+Return a dictionary for all the namespace entries active at the
+current element. Each dictionary key will be the prefix and the value will
+be the namespace URI.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-31'><tt class='method'>GetMyHeaderElements</tt></a></b>(<big>[</big><var>actorlist=None</var><big>]</big>)
+<dd>
+Returns a list of all elements in the <code>Header</code> that are intended for
+<i>this</i> SOAP processor.
+This includes all elements that either have no SOAP <code>actor</code>
+attribute, or whose value is either the special ``next actor'' value or
+in the <code>actorlist</code> list of URI's.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-32'><tt class='method'>IsAFault</tt></a></b>()
+<dd>
+Returns true if the message is a SOAP fault.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-33'><tt class='method'>Parse</tt></a></b>(<var>how</var>)
+<dd>
+Parses the SOAP <code>Body</code> according to the <code>how</code> parameter,
+and returns a Python object.
+If <code>how</code> is not a <tt class="class">TC.TypeCode</tt> object, then it should be a
+Python class object that has a <code>typecode</code> attribute.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-34'><tt class='method'>ResolveHREF</tt></a></b>(<var>uri, tc</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This method is invoked to resolve an absolute URI.
+If the typecode <code>tc</code> has a <code>resolver</code> attribute, it will use it
+to resolve the URI specified in the <code>uri</code> parameter,
+otherwise it will use its own <code>resolver</code>, or raise an
+<tt class="exception">EvaluateException</tt> exception.
+
+<P>
+Any <code>keyword</code> parameters will be passed to the chosen resolver.
+If no content is available, it will return <code>None</code>.
+If unable to resolve the URI it will raise an
+<tt class="exception">EvaluateException</tt> exception.
+Otherwise, the resolver should return data in a form acceptable to the
+specified typecode, <code>tc</code>.
+(This will almost always be a file-like object holding opaque data;
+for XML, it may be a DOM tree.)
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-35'><tt class='method'>WhatActorsArePresent</tt></a></b>()
+<dd>
+Returns a list of the values of all the SOAP <code>actor</code> attributes
+found in child elements of the SOAP <code>Header</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-36'><tt class='method'>WhatMustIUnderstand</tt></a></b>()
+<dd>
+Returns a list of "<tt class="samp">(uri, localname)</tt>" tuples for all elements in the
+SOAP <code>Header</code> that have the SOAP <code>mustUnderstand</code> attribute set
+to a non-zero value.
+</dl>
+
+<H1><A NAME="SECTION007000000000000000000">
+6. The <tt class="module">TypeCode</tt> classes -- data conversions</A>
+</H1>
+
+<P>
+The <tt class="module">TypeCode</tt> module defines classes used for converting data
+between SOAP data and local Python objects.
+The <tt class="class">TC.TypeCode</tt> class is the parent class of all datatypes
+understood by <tt class="module">ZSI</tt>.
+
+<P>
+All typecodes classes have the prefix <code>TC.</code>, to avoid name clashes.
+
+<P>
+<dl><dt><b>class <a name='l2h-37'><tt class='class'>TypeCode</tt></a></b>(<var>name, **keywords</var>)
+<dd>
+The <code>name</code> parameter is the name of the object; this is only
+required when a typecode appears within a <tt class="class">TC.Struct</tt> as it defines
+the attribute name used to hold the data, or within a <tt class="class">TC.Choice</tt>
+as it determines the data type.
+(Since SOAP RPC models transfer as structures, this essentially means that
+a the <code>name</code> parameter can never be <code>None</code>.)
+The name may be either a text string, or a "<tt class="samp">(uri, localname)</tt>" tuple.
+If the name (or <code>localname</code> tuple element) has a colon, the namespace
+prefix before the colon will be ignore when parsing input, but written
+when serializing for output.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>default</code></td>
+        <td align="center">n/a</td>
+        <td align="left">Value if the element is not specified.</td>
+    <tr><td align="left" valign="baseline"><code>optional</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">The element is optional; see below.</td>
+    <tr><td align="left" valign="baseline"><code>repeatable</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">If multiple instances of this
+occur in a <tt class="class">TC.Struct</tt>, collect the values into a list.
+
+<span class='versionnote'>New in version 1.2.</span>
+</td>
+    <tr><td align="left" valign="baseline"><code>typed</code></td>
+        <td align="center"><code>1</code></td>
+        <td align="left">Output type information (in the
+<code>xsi:type</code> attribute) when serializing. By special dispensation,
+items within a <tt class="class">TC.Struct</tt> object will inherit this from the
+container.</td>
+    <tr><td align="left" valign="baseline"><code>unique</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">If true, the object is unique and will
+never be ``aliased'' with another object, so the <code>id</code> attribute
+need not be output.</td></tbody>
+</table>
+
+<P>
+Optional elements are those which do not have to be an incoming
+message, or which have the XML Schema <code>nil</code> attribute set.
+When parsing the message as part of a <code>Struct</code>, then the Python
+instance attribute will not be set, or the element will not appear as
+a dictionary key.
+When being parsed as a simple type, the value <code>None</code> is returned.
+When serializing an optional element, a non-existent attribute, or a value
+of <code>None</code> is taken to mean not present, and the element is skipped.
+
+<P>
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-38'><tt class='member'>typechecks</tt></a></b>
+<dd>
+This is a class attribute.
+If true (the default) then all typecode constructors do more
+rigorous type-checking on their parameters.
+</dl>
+
+<P>
+The following methods are useful for defining new typecode classes;
+see the section on dynamic typing for more details.
+In all of the following, the <code>ps</code> parameter is a <tt class="class">ParsedSoap</tt>
+object.
+
+<P>
+<dl><dt><b><a name='l2h-39'><tt class='method'>checkname</tt></a></b>(<var>elt, ps</var>)
+<dd>
+Checks if the name and type of the element <code>elt</code> are
+correct and raises a <tt class="exception">EvaluateException</tt> if not.
+Returns the element's type as a "<tt class="samp">(uri, localname)</tt>" tuple if so.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-40'><tt class='method'>checktype</tt></a></b>(<var>elt, ps</var>)
+<dd>
+Like <tt class="method">checkname()</tt> except that the element name is ignored.
+This method is actually invoked by <tt class="method">checkname()</tt> to do the
+second half of its processing, but is useful to invoke
+directly, such as when resolving multi-reference data.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-41'><tt class='method'>nilled</tt></a></b>(<var>elt, ps</var>)
+<dd>
+If the element <code>elt</code> has data, this returns <code>0</code>.
+If it has no data, and the typecode is not optional, an
+<tt class="exception">EvaluateException</tt> is raised; if it is optional,
+a <code>1</code> is returned.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-42'><tt class='method'>simple_value</tt></a></b>(<var>elt, ps</var>)
+<dd>
+Returns the text content of the element <code>elt</code>.
+If no value is present, or the element has non-text children, an
+<tt class="exception">EvaluateException</tt> is raised.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007100000000000000000">
+6.1 <tt class="class">TC.Any</tt> -- the basis of dynamic typing</A>
+</H1>
+
+<P>
+SOAP provides a flexible set of serialization rules, ranging from
+completely self-describing to completely opaque, requiring an external
+schema. For example, the following are all possible ways of encoding an
+integer element <code>i</code> with a value of <code>12</code>:
+
+<P>
+<dl><dd><pre class="verbatim">
+&lt;tns:i xsi:type="SOAP-ENC:integer"&gt;12&lt;/tns:i&gt;
+&lt;tns:i xsi:type="xsi:nonNegativeInteger"&gt;12&lt;/tns:i&gt;
+&lt;SOAP-ENC:integer&gt;12&lt;/SOAP-ENC:integer&gt;
+&lt;tns:i&gt;12&lt;/tns:i&gt;
+</pre></dl>
+
+<P>
+The first three lines are examples of <i>typed</i> elements.
+If <tt class="module">ZSI</tt> is asked to parse any of the above examples, and a
+<tt class="class">TC.Any</tt> typecode is given, it will properly create a Python
+integer for the first three, and raise a <tt class="exception">ParseException</tt>
+for the fourth.
+
+<P>
+Compound data, such as a <code>struct</code>, may also be self-describing:
+<dl><dd><pre class="verbatim">
+&lt;tns:foo xsi:type="tns:mytype"&gt;
+    &lt;tns:i xsi:type="SOAP-ENC:integer"&gt;12&lt;/tns:i&gt;
+    &lt;tns:name xsi:type="SOAP-ENC:string"&gt;Hello world&lt;/tns:name&gt;
+&lt;/tns:foo&gt;
+</pre></dl>
+
+<P>
+If this is parsed with a <tt class="class">TC.Any</tt> typecode, either a Python dictionary
+or a sequence will be created:
+<dl><dd><pre class="verbatim">
+{   'name': u'Hello world',    'i': 12   }
+
+[ 12, u'Hello world' ]
+</pre></dl>
+Note that one preserves order, while the other preserves the element names.
+
+<P>
+<dl><dt><b>class <a name='l2h-43'><tt class='class'>Any</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+Used for parsing incoming SOAP data (that is typed), and serializing
+outgoing Python data.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>aslist</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">If true, then the data is (recursively)
+treated as a list of values.
+The default is a Python dictionary, which preserves parameter names but
+loses the ordering.
+
+<span class='versionnote'>New in version 1.1.</span>
+</td></tbody>
+</table>
+</dl>
+
+<P>
+Referring back to the compound XML data above, it is possible to create a new
+typecode capable of parsing elements of type <code>mytype</code>.
+This class would know that the <code>i</code> element is an integer,
+so that the explicit typing becomes optional, rather than required.
+
+<P>
+The rest of this section describes how to add new
+types to the <tt class="module">ZSI</tt> typecode engine.
+
+<P>
+<dl><dt><b>class <a name='l2h-44'><tt class='class'><i>NEWTYPECODE</i>(TypeCode)</tt></a></b>(<var>...</var>)
+<dd>
+The new typecode should be derived from the <tt class="class">TC.TypeCode</tt> class, and
+<tt class="method">TypeCode.__init__()</tt> must be invoked in the new class's constructor.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-45'><tt class='member'>parselist</tt></a></b>
+<dd>
+This is a class attribute, used when parsing incoming SOAP data.
+It should be a sequence of "<tt class="samp">(uri, localname)</tt>" tuples to identify
+the datatype.
+If <code>uri</code> is <code>None</code>, it is taken to mean either the XML Schema
+namespace or the SOAP encoding namespace;
+this should only be used if adding support for additional primitive types.
+If this list is empty, then the type of the incoming SOAP data is assumed
+to be correct; an empty list also means that incoming typed data cannot
+by dynamically parsed.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-46'><tt class='member'>errorlist</tt></a></b>
+<dd>
+This is a class attribute, used when reporting a parsing error.
+It is a text string naming the datatype that was expected.
+If not defined, <tt class="module">ZSI</tt> will create this attribute from the <code>parselist</code>
+attribute when it is needed.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-47'><tt class='member'>seriallist</tt></a></b>
+<dd>
+This is a class attribute, used when serializing Python objects
+dynamically.
+It specifies what types of object instances (or Python types) this
+typecode can serialize.
+It should be a sequence, where each element is a Python class object,
+a string naming the class, or a type object from Python's <tt class="module">types</tt>
+module (if the
+new typecode is serializing a built-in Python type).
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-48'><tt class='method'>parse</tt></a></b>(<var>elt, ps</var>)
+<dd>
+<tt class="module">ZSI</tt> invokes this method to
+parse the <code>elt</code> element and return its Python value.
+The <code>ps</code> parameter is the <tt class="class">ParsedSoap</tt> object, and can be
+used for dereferencing <code>href</code>'s, calling <tt class="method">Backtrace()</tt> to
+report errors, etc.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-49'><tt class='method'>serialize</tt></a></b>(<var>sw, pyobj</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+<tt class="module">ZSI</tt> invokes this method to output a Python object to a SOAP stream.
+The <code>sw</code> parameter will be a <tt class="class">SoapWriter</tt> object, and
+the <code>pyobj</code> parameter is the Python object to serialize.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>attrtext</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">Text (with leading space)
+to output as an attribute; this is normally used by the <tt class="class">TC.Array</tt> class
+to pass down indexing information.</td>
+    <tr><td align="left" valign="baseline"><code>name</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">Name to use for serialization; defaults
+to the name specified in the typecode, or a generated name.</td>
+    <tr><td align="left" valign="baseline"><code>typed</code></td>
+        <td align="center"><i>per-typecode</i></td>
+        <td align="left">Whether or not to output type
+information; the default is to use the value in the typecode.</td></tbody>
+</table>
+</dl>
+
+<P>
+Once the new typecode class has been defined, it should be registered with
+<tt class="module">ZSI</tt>'s dynamic type system by invoking the following function:
+
+<P>
+<dl><dt><b><a name='l2h-50'><tt class='function'>RegisterType</tt></a></b>(<var>class</var><big>[</big><var>, clobber=0</var><big>[</big><var>, **keywords</var><big>]</big><big>]</big>)
+<dd>
+By default, it is an error to replace an existing type registration, and
+an exception will be raised.
+The <code>clobber</code> parameter may be given to allow replacement.
+A single instance of the <code>class</code> object will be created, and
+the <code>keyword</code> parameters are passed to the constructor.
+</dl>
+
+<P>
+If the class is not registered, then instances of the class cannot be
+processed as dynamic types.
+This may be acceptable in some environments.
+
+<P>
+
+<H1><A NAME="SECTION007200000000000000000">
+6.2 Void</A>
+</H1>
+
+<P>
+A SOAP void is a Python <code>None</code>.
+
+<P>
+<dl><dt><b>class <a name='l2h-51'><tt class='class'>Void</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A <code>Void</code> is an item without a value.
+It is of marginal utility, mainly useful for interoperability tests, and
+as an optional item within a <code>Struct</code>.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007300000000000000000">
+6.3 Strings</A>
+</H1>
+
+<P>
+SOAP Strings are Python strings.
+If the value to be serialized is a Python sequence, then an <code>href</code>
+is generated, with the first element of the sequence used as the URI.
+This can be used, for example, when generating SOAP with attachments.
+
+<P>
+<dl><dt><b>class <a name='l2h-52'><tt class='class'>String</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The parent type of all SOAP strings.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>resolver</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A function that can resolve an
+absolute URI and return its content as a string, as described in the
+<tt class="class">ParsedSoap</tt> description.</td>
+    <tr><td align="left" valign="baseline"><code>strip</code></td>
+        <td align="center"><code>1</code></td>
+        <td align="left">If true, leading and trailing whitespace
+are stripped from the content.</td>
+    <tr><td align="left" valign="baseline"><code>textprotect</code></td>
+        <td align="center"><code>1</code></td>
+        <td align="left">If true, less-than and ampersand
+characters are replaced with <code>&amp;lt;</code> and <code>&amp;amp;</code>, respectively.
+
+<span class='versionnote'>New in version 1.1.</span>
+</td></tbody>
+</table>
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-53'><tt class='class'>Enumeration</tt></a></b>(<var>value_list, name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+Like <tt class="class">TC.String</tt>, but the value must be a member of
+the <code>value_list</code> sequence of text strings
+</dl>
+
+<P>
+In addition to <tt class="class">TC.String</tt>,
+the basic string, several subtypes are provided that transparently
+handle common encodings.
+
+<P>
+<dl><dt><b>class <a name='l2h-54'><tt class='class'>Base64String</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The value is encoded in Base-64.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-55'><tt class='class'>HexBinaryString</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+Each byte is encoded as its printable version.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-56'><tt class='class'>URI</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The value is URL quoted (e.g., <code>%20</code> for the space character).
+</dl>
+
+<P>
+It is often the case that a parameter will be typed as a string for
+transport purposes, but will in fact have special syntax and processing
+requirements.
+For example, a string could be used for an XPath expression, and we want
+the Python value to
+actually be the compiled expression. Here is how to do that:
+
+<P>
+<dl><dd><pre class="verbatim">
+import xml.xpath.pyxpath
+import xml.xpath.pyxpath.Compile as _xpath_compile
+class XPathString(TC.String):
+    # We don't set parselist, since this data is typed as a string
+    # for interoperability with other SOAP implementations.
+    #parselist = [ ('tns', 'xpath') ]
+
+    def __init__(self, name, **kw):
+        TC.String.__init__(self, name, **kw)
+
+    def parse(self, elt, ps):
+        val = TC.String.parse(self, elt, ps)
+        try:
+            val = _xpath_compile(val)
+        except:
+            raise EvaluateException("Invalid XPath expression",
+                        ps.Backtrace(elt))
+        return val
+</pre></dl>
+
+<P>
+
+<H1><A NAME="SECTION007400000000000000000">
+6.4 Integers</A>
+</H1>
+
+<P>
+SOAP integers are Python integers.
+
+<P>
+<dl><dt><b>class <a name='l2h-57'><tt class='class'>Integer</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The parent type of all integers.
+This class handles any of the several types (and ranges) of SOAP integers.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-58'><tt class='class'>IEnumeration</tt></a></b>(<var>value_list, name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+Like <tt class="class">TC.Integer</tt>, but the value must be a member of
+the <code>value_list</code> sequence.
+</dl>
+
+<P>
+A number of sub-classes are defined to handle smaller-ranged numbers.
+
+<P>
+<dl><dt><b>class <a name='l2h-59'><tt class='class'>Ibyte</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A signed eight-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-60'><tt class='class'>IunsignedByte</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An unsigned eight-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-61'><tt class='class'>Ishort</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A signed 16-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-62'><tt class='class'>IunsignedShort</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An unsigned 16-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-63'><tt class='class'>Iint</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A signed 32-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-64'><tt class='class'>IunsignedInt</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An unsigned 32-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-65'><tt class='class'>Ilong</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An signed 64-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-66'><tt class='class'>IunsignedLong</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An unsigned 64-bit value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-67'><tt class='class'>IpositiveInteger</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A value greater than zero.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-68'><tt class='class'>InegativeInteger</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A value less than zero.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-69'><tt class='class'>InonPositiveInteger</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A value less than or equal to zero.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-70'><tt class='class'>InonNegativeInteger</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A value greater than or equal to zero.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007500000000000000000">
+6.5 Floating-point Numbers</A>
+</H1>
+
+<P>
+SOAP floating point numbers are Python floats.
+
+<P>
+<dl><dt><b>class <a name='l2h-71'><tt class='class'>Decimal</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The parent type of all floating point numbers.
+This class handles any of the several types (and ranges) of SOAP
+floating point numbers.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-72'><tt class='class'>FPEnumeration</tt></a></b>(<var>value_list, name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+Like <tt class="class">TC.Decimal</tt>, but the value must be a member of
+the <code>value_list</code> sequence.
+Be careful of round-off errors if using this class.
+</dl>
+
+<P>
+Two sub-classes are defined to handle smaller-ranged numbers.
+
+<P>
+<dl><dt><b>class <a name='l2h-73'><tt class='class'>FPfloat</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An IEEE single-precision 32-bit floating point value.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-74'><tt class='class'>FPdouble</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An IEEE double-precision 64-bit floating point value.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007600000000000000000">
+6.6 Dates and Times</A>
+</H1>
+
+<P>
+SOAP dates and times are Python time tuples in UTC (GMT), as documented
+in the Python <tt class="module">time</tt> module.
+Time is tricky, and processing anything other than a simple absolute time
+can be difficult.
+(Even then, timezones lie in wait to trip up the unwary.)
+A few caveats are in order:
+
+<P>
+
+<OL>
+<LI>Some date and time formats will be parsed into tuples that are
+not valid time values.
+For example, 75 minutes is a valid duration, although not a legal value
+for the minutes element of a time tuple.
+
+<P>
+</LI>
+<LI>Fractional parts of a second may be lost when parsing, and may have
+extra trailing zero's when serializing.
+
+<P>
+</LI>
+<LI>Badly-formed time tuples may result in non-sensical values being serialized;
+the first six values are taken directly as year, month, day, hour, minute,
+second in UTC.
+
+<P>
+</LI>
+</OL>
+
+<P>
+In addition, badly-formed values may result in non-sensical serializations.
+
+<P>
+When serializing, an integral or floating point number is taken as
+the number of seconds since the epoch, in UTC.
+
+<P>
+<dl><dt><b>class <a name='l2h-75'><tt class='class'>Duration</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A relative time period.
+Negative durations have all values less than zero; this makes
+it easy to add a duration to a Python time tuple.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-76'><tt class='class'>Gregorian</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An absolute time period.
+This class should not be instantiated directly; use one of the <code>gXXX</code>
+classes instead.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-77'><tt class='class'>gDateTime</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A date and time.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-78'><tt class='class'>gDate</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A date.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-79'><tt class='class'>gYearMonth</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A year and month.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-80'><tt class='class'>gYear</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A year.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-81'><tt class='class'>gMonthDay</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A month and day.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-82'><tt class='class'>gDay</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A day.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-83'><tt class='class'>gTime</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+A time.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007700000000000000000">
+6.7 Boolean</A>
+</H1>
+
+<P>
+SOAP Booleans are Python integers.
+
+<P>
+<dl><dt><b>class <a name='l2h-84'><tt class='class'>Boolean</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+When marshaling zero or the word ``false'' is returned as <code>0</code>
+and any non-zero value or the word ``true'' is returned as <code>1</code>.
+When serializing, the number <code>0</code> or <code>1</code> will be generated.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007800000000000000000">
+6.8 XML</A>
+</H1>
+
+<P>
+XML is a Python DOM element node.
+If the value to be serialized is a Python string, then an <code>href</code>
+is generated, with the value used as the URI.
+This can be used, for example, when generating SOAP with attachments.
+Otherwise, the XML is typically put inside a wrapper element that sets
+the proper SOAP encoding style.
+
+<P>
+For efficiency, incoming XML is returend as a ``pointer'' into the
+DOM tree maintained within the <tt class="class">ParsedSoap</tt> object.
+If that object is going to go out of scope, the data will be destroyed
+and any XML objects will become empty elements.
+The class instance variable <code>copyit</code>, if non-zero indicates that a
+deep copy of the XML subtree will be made and returned as the value.
+Note that it is generally more efficient to keep the <tt class="class">ParsedSoap</tt>
+object alive until the XML data is no longerneeded.
+
+<P>
+<dl><dt><b>class <a name='l2h-85'><tt class='class'>XML</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This typecode represents a portion of an XML document embedded in a SOAP
+message.
+The value is the element node.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>copyit</code></td>
+        <td align="center">TC.XML.copyit</td>
+        <td align="left">Return a copy of the parsed data.</td>
+    <tr><td align="left" valign="baseline"><code>comments</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Preserve comments in output.</td>
+    <tr><td align="left" valign="baseline"><code>inline</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">The XML sub-tree is single-reference,
+so can be output in-place.</td>
+    <tr><td align="left" valign="baseline"><code>resolver</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A function that can resolve an
+absolute URI and return its content as an element node, as described in the
+<tt class="class">ParsedSoap</tt> description.</td>
+    <tr><td align="left" valign="baseline"><code>wrapped</code></td>
+        <td align="center"><code>1</code></td>
+        <td align="left">If zero, the XML is output directly,
+and not within a SOAP wrapper element.
+
+<span class='versionnote'>New in version 1.2.</span>
+</td></tbody>
+</table>
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION007900000000000000000">
+6.9 Struct</A>
+</H1>
+
+<P>
+SOAP structs are either Python dictionaries or
+instances of application-specified classes.
+
+<P>
+<dl><dt><b>class <a name='l2h-86'><tt class='class'>Struct</tt></a></b>(<var>pyclass, typecode_seq, name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This class defines a compound data structure.
+If <code>pyclass</code> is <code>None</code>, then the data will be marshaled
+into a Python dictionary, and each item in the <code>typecode_seq</code> sequence
+specifies a (possible) dictionary entry.
+Otherwise, <code>pyclass</code> must be a Python class object whose constructor
+takes a single parameter, which will be the value of the <code>name</code>
+parameter given in the <tt class="class">TC.Struct</tt> constructor.
+(This allows a single <code>pyclass</code> to be used for different typecodes.)
+The data is then marshaled into the object, and each item in the
+<code>typecode_seq</code>
+sequence specifies an attribute of the instance to set.
+
+<P>
+Note that each typecode in <code>typecode_seq</code> must have a name.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>hasextras</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Ignore any extra elements that appear
+in the in the structure.
+If <code>inorder</code> is true, extras can only appear at the end.</td>
+    <tr><td align="left" valign="baseline"><code>inorder</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Items within the structure must appear
+in the order specified in the <code>TCseq</code> sequence.</td>
+    <tr><td align="left" valign="baseline"><code>inline</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">The structure is single-reference,
+so ZSI does not have to use <code>href/id</code> encodings.</td>
+    <tr><td align="left" valign="baseline"><code>type</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A "<tt class="samp">(uri, localname)</tt>" tuple that
+defines the type of the structure.
+If present, and if the input data has a <code>xsi:type</code> attribute, then the
+namespace-qualified value of that attribute must match the value
+specified by this parameter.
+By default, type-checking is not done for structures; matching child element
+names is usually sufficient and senders rarely provide type information.</td></tbody>
+</table>
+
+<P>
+If the <code>typed</code> keyword is used, then its value is assigned to
+all typecodes in the <code>typecode_seq</code> parameter.
+If any of the typecodes in <code>typecode_seq</code> are repeatable, then the
+<code>inorder</code> keyword should not be used and the <code>hasextras</code> parameter
+<i>must</i> be used.
+
+<P>
+For example, the following C structure:
+<dl><dd><pre class="verbatim">
+struct foo {
+    int i;
+    char* text;
+};
+</pre></dl>
+could be declared as follows:
+<dl><dd><pre class="verbatim">
+class foo:
+    def __init__(self, name):
+        self.name = name
+    def __str__(self):
+        return str((self.name, self.i, self.text))
+
+foo.typecodes = TC.Struct(foo,
+    ( TC.Integer('i'), TC.String('text') ),
+    'foo')
+</pre></dl>
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION0071000000000000000000">
+6.10 Choice</A>
+</H1>
+
+<P>
+A choice is a Python two-element "<tt class="samp">(name, value)</tt>" tuple.
+The first item is a string, and the second is the actual Python object.
+The string is the discriminant, used to identify the type of the data.
+
+<P>
+<dl><dt><b>class <a name='l2h-87'><tt class='class'>Choice</tt></a></b>(<var>typecode_seq, name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+When parsing, <tt class="module">ZSI</tt> will look at the element name in the SOAP message,
+and determine which of the choices to create.
+When serializing, <tt class="module">ZSI</tt> will look at the name in the tuple and determine
+which typecode to serialize the object.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION0071100000000000000000">
+6.11 Arrays</A>
+</H1>
+
+<P>
+SOAP arrays are Python lists; multi-dimensional arrays are
+lists of lists and are indistinguishable from a SOAP array of arrays.
+Arrays may be <i>sparse</i>, in which case each element in the
+array is a tuple of "<tt class="samp">(subscript, data)</tt>" pairs.
+If an array is not sparse, a specified <i>fill</i> element will be
+used for the missing values.
+
+<P>
+<b>Currently only singly-dimensioned arrays are supported.</b>
+
+<P>
+<dl><dt><b>class <a name='l2h-88'><tt class='class'>Array</tt></a></b>(<var>atype, ofwhat, name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The <code>atype</code> parameter is a text string representing the SOAP array type.
+the <code>ofwhat</code> parameter is a typecode describing the array elements.
+</dl>
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>childnames</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">Default name to use for the child
+elements.</td>
+    <tr><td align="left" valign="baseline"><code>dimensions</code></td>
+        <td align="center"><code>1</code></td>
+        <td align="left">The number of dimensions in
+the array.</td>
+    <tr><td align="left" valign="baseline"><code>fill</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">The value to use when an array
+element is omitted.</td>
+    <tr><td align="left" valign="baseline"><code>nooffset</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Do not use the SOAP <code>offset</code>
+attribute so skip leading elements with the same value as <code>fill</code>.</td>
+    <tr><td align="left" valign="baseline"><code>sparse</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">The array is sparse.</td>
+    <tr><td align="left" valign="baseline"><code>size</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">An integer or list of integers that
+specifies the maximum array dimensions.</td>
+    <tr><td align="left" valign="baseline"><code>undeclared</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">The SOAP "<tt class="samp">arrayType</tt>" attribute
+need not appear.</td></tbody>
+</table>
+
+<P>
+
+<H1><A NAME="SECTION0071200000000000000000">
+6.12 Apache Datatypes</A>
+</H1>
+
+<P>
+The Apache SOAP project, urlhttp://xml.apache.org/soap/index.html,
+has defined two SOAP datatypes in the 
+<code>http://xml.apache.org/xml-soap</code> namespace.
+They are <tt class="class">Map</tt> and <tt class="class">SOAPStruct</tt>.
+
+<P>
+The <code>Map</code> type is encoded as a list of <code>item</code> elements.
+Each <code>item</code> has a <code>key</code> and <code>value</code> child element; these
+children must have SOAP type information.
+An Apache Map is either a Python dictionary or a list of two-element
+tuples.
+
+<P>
+<dl><dt><b>class <a name='l2h-89'><tt class='class'>Apache.Map</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An Apache map.
+Note that the class name is dotted.
+</dl>
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>aslist</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Use a list of tuples rather than
+a dictionary.</td></tbody>
+</table>
+
+<P>
+The <code>SOAPStruct</code> type is similar to a <tt class="class">TC.Struct</tt>, except that
+it is typed as a <code>SOAPStruct</code>.
+This datatype can usually be processed by using the <code>type</code> keyword in a
+<tt class="class">TC.Struct</tt> instance.
+A separate Apache <tt class="class">SOAPStruct</tt> class is also available; when used,
+a <code>SOAPStruct</code> is either a list of values or a dictionary of name
+and value pairs.
+
+<P>
+<dl><dt><b>class <a name='l2h-90'><tt class='class'>Apache.SOAPStruct</tt></a></b>(<var>name</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+An Apache SOAPStruct.
+Note that the class name is dotted.
+</dl>
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>aslist</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Use a list of values rather than
+a dictionary.</td></tbody>
+</table>
+
+<H1><A NAME="SECTION008000000000000000000">
+7. The <tt class="module">SoapWriter</tt> module -- serializing data</A>
+</H1>
+
+<P>
+The SoapWriter class is used to output SOAP messages.
+Note that its output is encoded as UTF-8; when transporting SOAP over
+HTTP it is therefore important to set the <code>charset</code> attribute
+of the <code>Content-Type</code> header.
+
+<P>
+The <tt class="class">SoapWriter</tt> class reserves some namespace prefixes:
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Prefix</b>&nbsp;</th>
+      <th align="left"><b>URI</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>SOAP-ENV</code></td>
+        <td align="left"><code>http://schemas.xmlsoap.org/soap/envelope/</code></td>
+    <tr><td align="left" valign="baseline"><code>SOAP-ENC</code></td>
+        <td align="left"><code>http://schemas.xmlsoap.org/soap/encoding/</code></td>
+    <tr><td align="left" valign="baseline"><code>ZSI</code></td>
+        <td align="left"><code>http://www.zolera.com/schemas/ZSI/</code></td>
+    <tr><td align="left" valign="baseline"><code>xsd</code></td>
+        <td align="left"><code>http://www.w3.org/2001/XMLSchema</code></td>
+    <tr><td align="left" valign="baseline"><code>xsi</code></td>
+        <td align="left"><code>http://www.w3.org/2001/XMLSchema-instance</code></td></tbody>
+</table>
+
+<P>
+<dl><dt><b>class <a name='l2h-91'><tt class='class'>SoapWriter</tt></a></b>(<var>out</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The <code>out</code> parameter is an object that has a <tt class="method">write()</tt>
+method for generating the output.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>nsdict</code></td>
+        <td align="center"><code>{}</code></td>
+        <td align="left">Dictionary of namespaces to write
+in the SOAP <code>Header</code>.</td>
+    <tr><td align="left" valign="baseline"><code>header</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A sequence of elements to output in
+the SOAP <code>Header</code>.
+It may also be a text string, in which case it is output as-is, and should
+therefore be XML text.</td></tbody>
+</table>
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-92'><tt class='method'>serialize</tt></a></b>(<var>pyobj</var><big>[</big><var>, typecode</var><big>[</big><var>, root=None</var><big>]</big><big>]</big>)
+<dd>
+This method serializes the <code>pyobj</code> Python object as directed
+by the <code>typecode</code> typecode object.
+If <code>typecode</code> is omitted, then <code>pyobj</code> should be a Python
+object instance of a class that has a <code>typecode</code> attribute.
+It returns <code>self</code>, so that serializations can be chained together, or
+so that the <tt class="method">close()</tt> method can be invoked.
+The <code>root</code> parameter may be used to explicitly indicate the root
+(main element) of a SOAP encoding, or indicate that the item is not the
+root.
+If specified, it should have the numeric value of zero or one.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-93'><tt class='method'>close</tt></a></b>(<big>[</big><var>trailer=None</var><big>[</big><var>, nsdict=None</var><big>]</big><big>]</big>)
+<dd>
+Close off the SOAP message, finishing all the pending serializations.
+If <code>trailer</code> is a string or list of elements, it is output after the
+close-tag for the <code>Body</code>.
+The <tt class="method">close()</tt> method of the originally provided out object is NOT called.
+(If it were, and the original <code>out</code> object were a <tt class="class">StringIO</tt>
+object, there would be no way to collect the data.)
+This method will be invoked automatically if the object is deleted.
+</dl>
+
+<P>
+The following methods are primarily useful for those writing new typecodes.
+
+<P>
+<dl><dt><b><a name='l2h-94'><tt class='method'>AddCallback</tt></a></b>(<var>func, arg</var>)
+<dd>
+Used by typecodes when serializing, allows them to add output after
+the SOAP <code>Body</code> is written but before the SOAP <code>Envelope</code> is closed.
+The function <tt class="method">func()</tt>
+will be called with the <tt class="class">SoapWriter</tt> object and the specified <code>arg</code>
+argument, which may be a tuple.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-95'><tt class='method'>Known</tt></a></b>(<var>obj</var>)
+<dd>
+If <code>obj</code> (which is typically the value of the Python function
+<code>id</code>) has been seen before, return <code>1</code>.
+Otherwise, remember <code>obj</code> and return <code>0</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-96'><tt class='method'>ReservedNS</tt></a></b>(<var>prefix, uri</var>)
+<dd>
+Returns true if the specified namespace <code>prefix</code> and
+<code>uri</code>
+collide with those used by the implementation.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-97'><tt class='method'>write</tt></a></b>(<var>arg</var>)
+<dd>
+This is a convenience method that calls <tt class="method">self.out.write()</tt>
+on <code>arg</code>, with the addition that if <code>arg</code> is a sequence,
+it iterates over the sequence, writing each item (that isn't <code>None</code>)
+in turn.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-98'><tt class='method'>writeNSDict</tt></a></b>(<var>nsdict</var>)
+<dd>
+Outputs <code>nsdict</code> as a namespace dictionary.
+It is assumed that an XML start-element is pending on the output
+stream.
+</dl>
+
+<H1><A NAME="SECTION009000000000000000000">
+8. The <tt class="module">Fault</tt> module -- reporting errors</A>
+</H1>
+
+<P>
+SOAP defines a <i>fault</i> message as the way for a recipient to
+indicate it was unable to process a message.
+The <tt class="module">ZSI</tt> <tt class="class">Fault</tt> class encapsulates this.
+
+<P>
+<dl><dt><b>class <a name='l2h-99'><tt class='class'>Fault</tt></a></b>(<var>code, string</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The <code>code</code> parameter is a text string identifying the SOAP fault
+code, a namespace-qualified name.
+The class attribute <code>Fault.Client</code> can be used to indicate a problem with
+an incoming message, <code>Fault.Server</code> can be used to
+indicate a problem occurred while processing the request, or <code>Fault.MU</code>
+can be used to indicate a problem with the SOAP <code>mustUnderstand</code>
+attribute.
+The <code>string</code> parameter is a human-readable text string describing the
+fault.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>actor</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A string identifying the <code>actor</code>
+attribute that caused the problem (usually because it is unknown).</td>
+    <tr><td align="left" valign="baseline"><code>detail</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A sequence
+of elements to output in the <code>detail</code> element; it may also
+be a text string, in which case it is output as-is, and should
+therefore be XML text.</td>
+    <tr><td align="left" valign="baseline"><code>headerdetail</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">Data, treated the same as
+the <code>detail</code> keyword, to be output in the SOAP header.  See
+the following paragraph.</td></tbody>
+</table>
+
+<P>
+If the fault occurred in the SOAP <code>Header</code>, the specification
+requires that the detail be sent back as an element within
+the SOAP <code>Header</code> element.
+Unfortunately, the SOAP specification does not describe how to encode
+this; <tt class="module">ZSI</tt> defines and uses a
+<code>ZSI:detail</code> element, which is analogous to the SOAP <code>detail</code>
+element.
+</dl>
+
+<P>
+The following attributes are read-only:
+
+<P>
+<dl><dt><b><a name='l2h-100'><tt class='member'>actor</tt></a></b>
+<dd>
+A text string holding the value of the SOAP <code>faultactor</code> element.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-101'><tt class='member'>code</tt></a></b>
+<dd>
+A text string holding the value of the SOAP <code>faultcode</code> element.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-102'><tt class='member'>detail</tt></a></b>
+<dd>
+A text string or sequence of elements containing holding the value of the
+SOAP <code>detail</code> element, when available.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-103'><tt class='member'>headerdetail</tt></a></b>
+<dd>
+A text string or sequence of elements containing holding the value of the
+<tt class="module">ZSI</tt> header detail element, when available.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-104'><tt class='member'>string</tt></a></b>
+<dd>
+A text string holding the value of the SOAP <code>faultstring</code> element.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-105'><tt class='method'>AsSOAP</tt></a></b>(<big>[</big><var>output=None</var><big>]</big>)
+<dd>
+This method serializes the <tt class="class">Fault</tt> object into a SOAP message.
+If the <code>output</code> parameter is not specified, the message is returned
+as a string.
+Otherwise <tt class="method">AsSOAP()</tt> will call <tt class="method">output.write()</tt> as needed
+to output the message.
+
+<span class='versionnote'>New in version 1.1; the old <code>AsSoap</code> method is still available.</span>
+
+</dl>
+
+<P>
+If other data is going to be sent with the fault, the following
+two methods can be used.
+Because some data might need to be output in the SOAP <code>Header</code>,
+serializing a fault is a two-step process.
+
+<P>
+<dl><dt><b><a name='l2h-106'><tt class='method'>DataForSOAPHeader</tt></a></b>()
+<dd>
+This method returns a text string that can be included as the
+<code>header</code> parameter for constructing a <tt class="class">SoapWriter</tt> object.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-107'><tt class='method'>serialize</tt></a></b>(<var>sw</var>)
+<dd>
+This method outputs the fault object onto the <code>sw</code> object,
+which must support a <tt class="method">write()</tt> method.
+</dl>
+
+<P>
+Some convenience functions are available to create a <tt class="class">Fault</tt>
+from common conditions.
+
+<P>
+<dl><dt><b><a name='l2h-108'><tt class='function'>FaultFromActor</tt></a></b>(<var>uri</var><big>[</big><var>, actor=None</var><big>]</big>)
+<dd>
+This function could be used when an application receives a message
+that has a SOAP <code>Header</code> element directed to an actor that
+cannot be processed.
+The <code>uri</code> parameter identifies the actor.
+The <code>actor</code> parameter can be used to specify a URI that identifies the
+application, if it is not the ultimate recipient of the SOAP message.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-109'><tt class='function'>FaultFromException</tt></a></b>(<var>ex, inheader</var><big>[</big><var>,
+    tb=None</var><big>[</big><var>, actor=None</var><big>]</big><big>]</big>)
+<dd>
+This function creates a <tt class="class">Fault</tt> from a general Python exception.
+A SOAP ``server'' fault is created.
+The <code>ex</code> parameter should be the Python exception.
+The <code>inheader</code> parameter should be true if the error was
+found on a SOAP <code>Header</code> element.
+The optional <code>tb</code> parameter may be a Python <tt class="class">traceback</tt>
+object, as returned by "<tt class="samp">sys.exc_info()[2]</tt>".
+The <code>actor</code> parameter can be used to specify a URI that identifies the
+application, if it is not the ultimate recipient of the SOAP message.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-110'><tt class='function'>FaultFromFaultMessage</tt></a></b>(<var>ps</var>)
+<dd>
+This function creates a <tt class="class">Fault</tt> from a <tt class="class">ParsedSoap</tt> object.
+It should only be used if the <tt class="method">IsAFault()</tt> method returned true.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-111'><tt class='function'>FaultFromNotUnderstood</tt></a></b>(<var>uri, localname,</var><big>[</big><var>,
+    actor=None</var><big>]</big>)
+<dd>
+This function could be used when an application receives a message with
+the SOAP <code>mustUnderstand</code> attribute that it does not understand.
+The <code>uri</code> and <code>localname</code> parameters should identify
+the unknown element.
+The <code>actor</code> parameter can be used to specify a URI that identifies the
+application, if it is not the ultimate recipient of the SOAP message.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-112'><tt class='function'>FaultFromZSIException</tt></a></b>(<var>ex</var><big>[</big><var>, actor=None</var><big>]</big>)
+<dd>
+This function creates a <tt class="class">Fault</tt> object from a <tt class="module">ZSI</tt> exception,
+<tt class="exception">ParseException</tt> or <tt class="exception">EvaluateException</tt>.
+A SOAP ``client'' fault is created.
+The <code>actor</code> parameter can be used to specify a URI that identifies the
+application, if it is not the ultimate recipient of the SOAP message.
+</dl>
+
+<H1><A NAME="SECTION0010000000000000000000">
+9. The <tt class="module">resolvers</tt> module -- fetching remote data</A>
+</H1>
+
+<P>
+The <tt class="module">resolvers</tt> module provides some functions and classes
+that can be used as the <code>resolver</code> attribute for <tt class="class">TC.String</tt>
+or <tt class="class">TC.XML</tt> typecodes.
+They process an absolute URL, as described above, and return the
+content.
+Because the <tt class="module">resolvers</tt> module can import a number of other
+large modules, it must be imported directly, as in
+"<tt class="samp">from ZSI import resolvers</tt>".
+
+<P>
+These first two functions pass the URI directly to the <tt class="method">urlopen</tt>
+function in the <tt class="module">urllib</tt> module.
+Therefore, if used directly as resolvers, a client could direct the
+SOAP application to fetch any file on the network or local disk.
+Needless to say, this could pose a security risks.
+
+<P>
+<dl><dt><b><a name='l2h-113'><tt class='function'>Opaque</tt></a></b>(<var>uri, tc, ps</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This function returns the data contained at the specified <code>uri</code>
+as a Python string.
+Base-64 decoding will be done if necessary.
+The <code>tc</code> and <code>ps</code> parameters are ignored; the <code>keywords</code>
+are passed to the <tt class="method">urlopen</tt> method.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-114'><tt class='function'>XML</tt></a></b>(<var>uri, tc, ps</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This function returns a list of the child element nodes of the XML
+document at the specified <code>uri</code>.
+The <code>tc</code> and <code>ps</code> parameters are ignored; the <code>keywords</code>
+are passed to the <tt class="method">urlopen</tt> method.
+</dl>
+
+<P>
+The <tt class="class">NetworkResolver</tt> class provides a simple-minded way to limit
+the URI's that will be resolved.
+
+<P>
+<dl><dt><b>class <a name='l2h-115'><tt class='class'>NetworkResolver</tt></a></b>(<big>[</big><var>prefixes=None</var><big>]</big>)
+<dd>
+The <code>prefixes</code> parameter is a list of strings defining the allowed
+prefixes of any URI's.
+If asked to fetch the content for a URI that does start with one of
+the prefixes, it will raise an exception.
+
+<P>
+In addition to <code>Opaque</code> and <code>XML</code> methods, this class
+provides a <code>Resolve</code> method that examines the typecode to determine
+what type of data is desired.
+</dl>
+
+<P>
+If the SOAP application is given a multi-part MIME document, the
+<tt class="class">MIMEResolver</tt> class can be used to process SOAP with Attachments.
+
+<P>
+The <tt class="class">MIMEResolver</tt> class will read the entire multipart MIME document,
+noting any <code>Content-ID</code> or <code>Content-Location</code> headers that appear
+on the headers of any of the message parts, and use them to resolve
+any <code>href</code> attributes that appear in the SOAP message.
+
+<P>
+<dl><dt><b>class <a name='l2h-116'><tt class='class'>MIMEResolver</tt></a></b>(<var>ct, f</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+The <code>ct</code> parameter is a string that contains the value of the
+MIME <code>Content-Type</code> header.
+The <code>f</code> parameter is the input stream, which should be positioned just
+after the message headers.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>seekable</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Whether or not the input stream is
+seekable; passed to the constructor for the internal <tt class="class">multifile</tt>
+object.
+
+<span class='versionnote'>Changed in version 2.0:
+default had been 1.</span>
+</td>
+    <tr><td align="left" valign="baseline"><code>next</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">A resolver object that will be
+asked to resolve the URI if it is not found in the MIME document.
+
+<span class='versionnote'>New in version 1.1.</span>
+</td>
+    <tr><td align="left" valign="baseline"><code>uribase</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">The base URI to be used when
+resolving relative URI's; this will typically be the value of the
+<code>Content-Location</code> header, if present.
+
+<span class='versionnote'>New in version 1.1.</span>
+</td></tbody>
+</table>
+</dl>
+
+<P>
+In addition to to the <code>Opaque</code>, <code>Resolve</code>, and <code>XML</code> methods
+as described above, the following method is available:
+
+<P>
+<dl><dt><b><a name='l2h-117'><tt class='method'>GetSOAPPart</tt></a></b>()
+<dd>
+This method returns a stream containing the SOAP message text.
+</dl>
+
+<P>
+The following attributes are read-only:
+
+<P>
+<dl><dt><b><a name='l2h-118'><tt class='member'>parts</tt></a></b>
+<dd>
+An array of tuples, one for each MIME bodypart found.
+Each tuple has two elements, a <tt class="class">mimetools.Message</tt> object
+which contains the headers for the bodypart, and a 
+<tt class="class">StringIO</tt> object containing the data.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-119'><tt class='member'>id_dict</tt></a></b>
+<dd>
+A dictionary whose keys are the values of any <code>Content-ID</code>
+headers, and whose value is the appropriate <code>parts</code> tuple.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-120'><tt class='member'>loc_dict</tt></a></b>
+<dd>
+A dictionary whose keys are the values of any <code>Content-Location</code>
+headers, and whose value is the appropriate <code>parts</code> tuple.
+</dl>
+
+<H1><A NAME="SECTION0011000000000000000000">
+10. Dispatching and Invoking</A>
+</H1>
+
+<P>
+
+<span class='versionnote'>New in version 1.1.</span>
+
+<P>
+<tt class="module">ZSI</tt> is focused on parsing and generating SOAP messages, and provides
+limited facilities for dispatching to the appropriate message handler.
+This is because <tt class="module">ZSI</tt> works within many client and server environments,
+and the dispatching styles for these different environments can be
+very different.
+
+<P>
+Nevertheless, <tt class="module">ZSI</tt> includes some dispatch and invocation functions.
+To use them, they must be explicitly imported, as shown in the example
+at the start of this document.
+
+<P>
+The implementation (and names) of the these classes reflects the orientation
+of using SOAP for remote procedure calls (RPC).
+
+<P>
+Both client and server share a class that defines the mechanism a
+client uses to authenticate itself.
+
+<P>
+<dl><dt><b>class <a name='l2h-121'><tt class='class'>AUTH</tt></a></b>()
+<dd>
+This class defines constants used to identify how the client
+authenticated: <code>none</code> if no authentication was provided;
+<code>httpbasic</code> if HTTP basic authentication was used, or
+<code>zsibasic</code> if <tt class="module">ZSI</tt> basic authentication (see below)) was used.
+</dl>
+
+<P>
+The <tt class="module">ZSI</tt> schema (see the last chapter of this manual)
+defines a SOAP header element, <code>BasicAuth</code>, that
+contains a name and password.
+This is similar to the HTTP basic authentication header, except
+that it can be used independently from an HTTP transport.
+
+<P>
+
+<H1><A NAME="SECTION0011100000000000000000">
+10.1 Dispatching</A>
+</H1>
+
+<P>
+The <tt class="module">ZSI.dispatch</tt> module allows you to expose Python functions as a
+web service.
+The module provides the infrastructure to parse the request, dispatch
+to the appropriate handler, and then serialize any return value
+back to the client.
+The value returned by the function will be serialized back to the client.
+To return multiple values, return a list.
+
+<P>
+If an exception occurs, a SOAP fault will be sent back to the client.
+
+<P>
+Two dispatch mechanisms are provided: one supports standard CGI
+scripts, and the other runs a dedicated server based on the
+<tt class="module">BaseHTTPServer</tt> module.
+
+<P>
+<dl><dt><b><a name='l2h-122'><tt class='method'>AsCGI</tt></a></b>(<big>[</big><var>module_list</var><big>]</big>)
+<dd>
+This method parses the CGI input and invokes a function that has the
+same name as the top-level SOAP request element.
+The optional <code>module_list</code> parameter can specify a list of modules
+(already imported) to search for functions.
+If no modules are specified, only the <tt class="module">__main__</tt> module will be searched.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-123'><tt class='method'>AsServer</tt></a></b>(<big>[</big><var>**keywords</var><big>]</big>)
+<dd>
+This creates a <tt class="class">HTTPServer</tt> object with a request handler that only
+supports the ``POST'' method.
+Dispatch is based solely on the name of the root element in the
+incoming SOAP request;
+the request URL is ignored.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>modules</code></td>
+        <td align="center"><code>(__main__,)</code></td>
+        <td align="left">List of modules containing
+functions that can be invoked.</td>
+    <tr><td align="left" valign="baseline"><code>port</code></td>
+        <td align="center"><code>80</code></td>
+        <td align="left">Port to listen on.</td></tbody>
+</table>
+
+<P>
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-124'><tt class='method'>GetClientBinding</tt></a></b>()
+<dd>
+More sophisticated scripts may want to use access the client binding object,
+which encapsulates all information about the client invoking the script.
+This function returns <code>None</code> or the binding information, an
+object of type <tt class="class">ClientBinding</tt>, described below.
+</dl>
+
+<P>
+<dl><dt><b>class <a name='l2h-125'><tt class='class'>ClientBinding</tt></a></b>(<var>...</var>)
+<dd>
+This object contains information about the client.
+It is created internally by <tt class="module">ZSI</tt>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-126'><tt class='method'>GetAuth</tt></a></b>()
+<dd>
+This returns a tuple containing information about the client identity.
+The first element will be one of the constants from the <code>AUTH</code> class
+described above.
+For HTTP or <tt class="module">ZSI</tt> basic authentication, the next two elements will be
+the name and password provided by the client.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-127'><tt class='method'>GetNS</tt></a></b>()
+<dd>
+Returns the namespace URI that the client is using, or an empty string.
+This can be useful for versioning.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-128'><tt class='method'>GetRequest</tt></a></b>()
+<dd>
+Returns the <tt class="class">ParsedSoap</tt> object of the incoming request.
+</dl>
+
+<P>
+The following attribute is read-only:
+
+<P>
+<dl><dt><b><a name='l2h-129'><tt class='member'>environ</tt></a></b>
+<dd>
+A dictionary of the environment variables.
+This is most useful when <tt class="method">AsCGI()</tt> is used.
+</dl>
+
+<P>
+
+<H1><A NAME="SECTION0011200000000000000000">
+10.2 The <tt class="module">client</tt> module -- sending SOAP messages</A>
+</H1>
+
+<P>
+<tt class="module">ZSI</tt> includes a module to connect to a SOAP server over HTTP, send requests,
+and parse the response.
+It is built on the standard Python <tt class="module">httplib</tt> module.
+It must be explicitly imported, as in
+"<tt class="samp">from ZSI.client import AUTH,Binding</tt>".
+
+<P>
+<dl><dt><b>class <a name='l2h-130'><tt class='class'>Binding</tt></a></b>(<big>[</big><var>**keywords</var><big>]</big>)
+<dd>
+This class encapsulates a connection to a server, known as a <i>binding</i>.
+A single binding may be used for multiple RPC calls.
+Between calls, modifiers may be used to change the URL being posted to,
+etc.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>auth</code></td>
+        <td align="center"><code>(AUTH.none,)</code></td>
+        <td align="left">A tuple with authentication
+    information; the first value should be one of the constants
+    from the <tt class="class">AUTH</tt> class.</td>
+    <tr><td align="left" valign="baseline"><code>host</code></td>
+        <td align="center"><code>'localhost'</code></td>
+        <td align="left">Host to connect to.</td>
+    <tr><td align="left" valign="baseline"><code>ns</code></td>
+        <td align="center">n/a</td>
+        <td align="left">Default namespace for the request.</td>
+    <tr><td align="left" valign="baseline"><code>nsdict</code></td>
+        <td align="center"><code>{}</code></td>
+        <td align="left">Namespace dictionary to send in the
+    SOAP <code>Envelope</code></td>
+    <tr><td align="left" valign="baseline"><code>port</code></td>
+        <td align="center"><code>80</code> or <code>443</code></td>
+        <td align="left">Port to connect on.</td>
+    <tr><td align="left" valign="baseline"><code>ssl</code></td>
+        <td align="center"><code>0</code></td>
+        <td align="left">Use SSL if non-zero.</td>
+    <tr><td align="left" valign="baseline"><code>tracefile</code></td>
+        <td align="center"><code>None</code></td>
+        <td align="left">An object with a <code>write</code>
+    method, where packet traces will be recorded.</td>
+    <tr><td align="left" valign="baseline"><code>url</code></td>
+        <td align="center">n/a</td>
+        <td align="left">URL to post to.</td></tbody>
+</table>
+
+<P>
+If using SSL, the <code>cert_file</code> and <code>key_file</code> keyword parameters may
+also be used.
+For details see the documentation for the <tt class="module">httplib</tt> module.
+
+<P>
+</dl>
+
+<P>
+Once a <tt class="class">Binding</tt> object has been created, the following modifiers are
+available.
+All of them return the binding object, so that multiple modifiers can
+be chained together.
+
+<P>
+<dl><dt><b><a name='l2h-131'><tt class='method'>AddHeader</tt></a></b>(<var>header, value</var>)
+<dd>
+Output the specified <code>header</code> and <code>value</code> with the HTTP
+headers.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-132'><tt class='method'>SetAuth</tt></a></b>(<var>style, name, password</var>)
+<dd>
+The <code>style</code> should be one of the constants from the <code>AUTH</code>
+class described above.
+The remaining parameters will vary depending on the <code>style</code>.
+Currently only basic authentication data of name and password are
+supported.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-133'><tt class='method'>SetNS</tt></a></b>(<var>uri</var>)
+<dd>
+Set the default namespace for the request to the specified <code>uri</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-134'><tt class='method'>SetURL</tt></a></b>(<var>url</var>)
+<dd>
+Set the URL where the post is made to <code>url</code>.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-135'><tt class='method'>ResetHeaders</tt></a></b>()
+<dd>
+Remove any headers that were added by <tt class="method">AddHeader()</tt>.
+</dl>
+
+<P>
+The following attribute may also be modified:
+
+<P>
+<dl><dt><b><a name='l2h-136'><tt class='member'>trace</tt></a></b>
+<dd>
+If this attribute is not <code>None</code>, it should be an object with a
+<code>write</code> method, where packet traces will be recorded.
+</dl>
+
+<P>
+Once the necessary parameters have been specified (at a minimum, the URL
+must have been given in the constructor are through <code>SetURL</code>),
+invocations can be made.
+
+<P>
+<dl><dt><b><a name='l2h-137'><tt class='method'>RPC</tt></a></b>(<var>url, opname, pyobj, replyclass</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This is the highest-level invocation method.
+It calls <tt class="method">Send()</tt> to send <code>pyobj</code> to the specified <code>url</code>
+to perform the <code>opname</code> operation,
+and calls <tt class="method">Receive()</tt> expecting to get a reply of the specified
+<code>replyclass</code>.
+
+<P>
+This method will raise a <tt class="exception">TypeError</tt> if the response does not
+appear to be a SOAP message, or if is valid SOAP but contains a fault.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-138'><tt class='method'>Send</tt></a></b>(<var>url, opname, pyboj</var><big>[</big><var>, **keywords</var><big>]</big>)
+<dd>
+This sends the specified <code>pyobj</code> to the specified <code>url</code>, invoking
+the <code>opname</code> method.
+The <code>url</code> can be <code>None</code> if it was specified in the <tt class="class">Binding</tt>
+constructor or if <code>SetURL</code> has been called.
+See below for a shortcut version of this method.
+
+<P>
+The following keyword arguments may be used:
+
+<P>
+<table border align="center" style="border-collapse: collapse">
+  <thead>
+    <tr class="tableheader">
+      <th align="left"><b>Keyword</b>&nbsp;</th>
+      <th align="center"><b>Default</b>&nbsp;</th>
+      <th align="left"><b>Description</b>&nbsp;</th>
+      </tr>
+    </thead>
+  <tbody valign='baseline'>
+    <tr><td align="left" valign="baseline"><code>nsdict</code></td>
+        <td align="center"><code>{}</code></td>
+        <td align="left">Namespace dictionary to send in the
+    SOAP <code>Envelope</code></td>
+    <tr><td align="left" valign="baseline"><code>requestclass</code></td>
+        <td align="center">n/a</td>
+        <td align="left">Python <code>class</code> object with a
+    <code>typecode</code> attribute specifying how to serialize the data.</td>
+    <tr><td align="left" valign="baseline"><code>requesttypecode</code></td>
+        <td align="center">n/a</td>
+        <td align="left">Typecode specifying how to serialize
+    the data.</td>
+    <tr><td align="left" valign="baseline"><code>soapaction</code></td>
+        <td align="center"><code>http://www.zolera.com</code></td>
+        <td align="left">Value for the
+    <code>SOAPAction</code> HTTP header.</td></tbody>
+</table>
+
+<P>
+</dl>
+
+<P>
+Once a message has been sent, the following read-only attributes are
+available.
+Their values will remain unchanged until another message is sent.
+
+<P>
+<dl><dt><b><a name='l2h-139'><tt class='member'>reply_code</tt></a></b>
+<dd>
+The HTTP reply code, a number.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-140'><tt class='member'>reply_headers</tt></a></b>
+<dd>
+The HTTP headers, as a <tt class="class">mimetools</tt> object.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-141'><tt class='member'>reply_msg</tt></a></b>
+<dd>
+A text string containing the HTTP reply text.
+</dl>
+
+<P>
+Methods are available to determine the type of response that came back:
+
+<P>
+<dl><dt><b><a name='l2h-142'><tt class='method'>IsSOAP</tt></a></b>()
+<dd>
+Returns true if the message appears to be a SOAP message.
+(Some servers return an HTML page under certain error conditions.)
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-143'><tt class='method'>IsAFault</tt></a></b>()
+<dd>
+Returns true if the message is a SOAP fault.
+</dl>
+
+<P>
+Having determined the type of the message (or, more likely, assuming
+it was good and catching an exception if not), the following methods
+are available to actually parse the data.
+They will continue to return the same value until
+another message is sent.
+
+<P>
+<dl><dt><b><a name='l2h-144'><tt class='method'>ReceiveRaw</tt></a></b>()
+<dd>
+Returns the unparsed message body.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-145'><tt class='method'>ReceiveSoap</tt></a></b>()
+<dd>
+Returns a <tt class="class">ParsedSOAP</tt> object containing the parsed message.
+Raises a <tt class="exception">TypeError</tt> if the message wasn't SOAP.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-146'><tt class='method'>ReceiveFault</tt></a></b>()
+<dd>
+Returns a <tt class="class">Fault</tt> object containing the SOAP fault message.
+Raises a <tt class="exception">TypeError</tt> if the message did not contain a fault.
+</dl>
+
+<P>
+<dl><dt><b><a name='l2h-147'><tt class='method'>Receive</tt></a></b>(<var>replytype</var>)
+<dd>
+Parses a SOAP message.
+The <code>replytype</code> specifies how to parse the data.
+If it s <code>None</code>, dynamic parsing will be used, usually resulting
+in a Python list.
+If <code>replytype</code> is a Python class, then the class's <code>typecode</code>
+attribute will be used, otherwise <code>replytype</code> is interpreted as
+the typecode to use for parsing the data.
+</dl>
+
+<P>
+Finally, if an attribute is fetched other than one of those described
+above, it is taken to be the <code>opname</code> of a remote procedure,
+and a callable object is returned.
+This object dynamically parses its arguments, receives the reply, and
+parses that.
+
+<P>
+<dl><dt><b><a name='l2h-148'><tt class='method'><I CLASS="slanted">opname</tt></a></b>(<var>args...</var>)
+<dd>
+Using this shortcut requires that the <tt class="method">SetURL()</tt> was invoked first.
+This method is then equivalent to:
+"<tt class="samp">RPC(None, opname, tuple(args), TC.Any())</tt>"</dl>
+</I>
+<P>
+
+<H1><A NAME="SECTION0012000000000000000000">
+11. ZSI Schema</A>
+</H1>
+<P>
+<I CLASS="slanted">The <tt class="module">ZSI</tt> schema defines two sets of elements.  One is used to enhance
+the SOAP Fault <code>detail</code> element, and to report header errors.
+The other is used to define a header element containing a name and
+password, for a class of basic authentication.
+</I>
+<P>
+<I CLASS="slanted">zsixsd.tex
+</I>
+<P>
+
+<H1><A NAME="SECTION0013000000000000000000">
+About this document ...</A>
+</H1><I CLASS="slanted">
+ </I><strong>ZSI: The Zolera Soap Infrastructure</strong>,
+October 26, 2001, Release 1.1.14
+<p> This document was generated using the <a
+    href="http://saftsack.fs.uni-bayreuth.de/~latex2ht/">
+    <strong>LaTeX</strong>2<tt>HTML</tt></a> translator.
+</p>
+
+<p> <a
+    href="http://saftsack.fs.uni-bayreuth.de/~latex2ht/">
+    <strong>LaTeX</strong>2<tt>HTML</tt></a> is Copyright &copy;
+  1993, 1994, 1995, 1996, 1997, <a
+    href="http://cbl.leeds.ac.uk/nikos/personal.html">Nikos
+    Drakos</a>, Computer Based Learning Unit, University of
+  Leeds, and Copyright &copy; 1997, 1998, <a
+    href="http://www.maths.mq.edu.au/~ross/">Ross
+    Moore</a>, Mathematics Department, Macquarie University,
+  Sydney.
+</p>
+
+<p> The application of <a
+    href="http://saftsack.fs.uni-bayreuth.de/~latex2ht/">
+    <strong>LaTeX</strong>2<tt>HTML</tt></a> to the Python
+  documentation has been heavily tailored by Fred L. Drake,
+  Jr.  Original navigation icons were contributed by Christopher
+  Petrilli.
+</p>
+
+<DIV CLASS="navigation">
+<p><hr>
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td align="center" width="100%">ZSI: The Zolera Soap Infrastructure</td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+<td><img src="../icons/blank.gif"
+  border="0" height="32"
+  alt="" width="32"></td>
+</tr></table>
+<hr>
+<span class="release-info">Release 1.1.14, documentation updated on October 26, 2001.</span>
+</DIV>
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>
