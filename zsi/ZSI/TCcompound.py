@@ -56,7 +56,7 @@ class Struct(TypeCode):
             raise TypeError(
                 'Struct ofwhat must be list or sequence, not ' + str(t))
         self.ofwhat = tuple(ofwhat)
-        if kw.has_key('typed'):
+        if pname is None and kw.has_key('typed'):
             Any.parsemap[self.type] = self
             t = kw['typed']
             for w in self.ofwhat: w.typed = t
