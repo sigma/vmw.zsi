@@ -3401,6 +3401,7 @@ class SOAPAddress:
             raise AttributeError, \
                 "SSL client not supported by this Python installation"
 
+        self.user,host = urllib.splituser(host)
         self.proto = proto
         self.host = host
         self.path = path
@@ -3443,6 +3444,12 @@ class HTTPTransport:
             t += '; charset="%s"' % encoding
         r.putheader("Content-type", t)
         r.putheader("Content-length", str(len(data)))
+
+        # if user is not a user:passwd format
+        #    we'll receive a failure from the server. . .I guess (??)
+        if addr.user != None:
+            val = base64.encodestring(addr.user) 
+            r.putheader('Authorization','Basic ' + val.replace('\012',''))
         r.putheader("SOAPAction", '"%s"' % soapaction)
 
         if config.dumpHeadersOut:
