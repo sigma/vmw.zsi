@@ -1363,7 +1363,10 @@ class SchemaDescription:
                         self.initdef += '\n%sself._%s = None' % (ID3,
                                                                  etp.getName())
 
-                    objName = '_' + e.getName()
+                    if e.getName():
+                        objName = '_' + e.getName()
+                    else:
+                        objName = '_None'   # fix
                     occurs = None
 
                     if e.isDeclaration() and e.isWildCard():
