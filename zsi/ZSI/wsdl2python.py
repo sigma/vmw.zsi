@@ -360,6 +360,7 @@ class ServiceDescription:
                               (service.getName(), service.getName())
         self.serviceBindings = ''
 
+        hasSoapBinding = False
         for p in service.getPortList():
 
             # -----------------------------
@@ -379,8 +380,9 @@ class ServiceDescription:
                     soapAddress = e
 
             if not hasSoapAddress:
-                raise WsdlGeneratorError, 'no soap address specified for port %s - not supported' % p.getName()
-
+                continue
+            else:
+                hasSoapBinding = True
                 
             # -----------------------------
 	    #  class variable address
@@ -583,6 +585,8 @@ class ServiceDescription:
 		else:
 	            self.serviceBindings += "\n"
 
+        if not hasSoapBinding:
+           raise WsdlGeneratorError, 'no soap bindings available for service %s' % service.getName()
         return
 
     def isSimpleElementDeclaration(self, op):
