@@ -239,7 +239,8 @@ class ServiceProxy:
        service that is described with WSDL. The proxy exposes methods
        that reflect the methods of the remote web service."""
 
-    def __init__(self, wsdl, service=None, port=None):
+    def __init__(self, wsdl, service=None, port=None, tracefile=None,
+                 nsdict=None):
         if not hasattr(wsdl, 'targetNamespace'):
             wsdl = WSDLTools.WSDLReader().loadFromURL(wsdl)
 #        for item in wsdl.types.items():
@@ -249,6 +250,8 @@ class ServiceProxy:
         self._port = self._service.ports[port or 0]
         self._name = self._service.name
         self._wsdl = wsdl
+        self._tracefile = tracefile
+        self._nsdict = nsdict
         binding = self._port.getBinding()
         portType = binding.getPortType()
         for item in portType.operations:
@@ -273,9 +276,13 @@ class ServiceProxy:
         params = callinfo.getInParameters()
         host = str(host)
         port = str(port)
-        binding = Binding(host=host, ssl=(protocol == 'https'),
-                          port=port, url=uri)
-        apply(getattr(binding, callinfo.methodName), '')
+
+        binding = Binding(host=host, tracefile=self._tracefile,
+                          ssl=(protocol == 'https'),
+                          port=port, url=uri, nsdict=self._nsdict)
+
+        apply(getattr(binding, callinfo.methodName), args)
+
 
 	#print binding.ReceiveRaw()
 
