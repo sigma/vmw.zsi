@@ -203,8 +203,15 @@ class HTTPTransport:
         code, msg, headers = r.getreply()
         
         content_type = headers.get("content-type","text/xml")
-        message_len = int(headers.get("Content-length", 0))
-        data = r.getfile().read(message_len)
+        content_length = headers.get("Content-length")
+        if content_length == None:
+            # No Content-Length provided; just read the whole socket
+            # This won't work with HTTP/1.1 chunked encoding
+            data = r.getfile().read()
+            message_len = len(data)
+        else:
+            message_len = int(content_length)
+            data = r.getfile().read(message_len)
 
         if(config.debug):
             print "code=",code
