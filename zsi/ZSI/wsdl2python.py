@@ -4,7 +4,7 @@
 # David W. Robertson, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import sys, re, weakref, string, warnings
+import os, sys, re, weakref, string, warnings
 import ZSI
 from ZSI.wstools.Utility import SplitQName
 from ZSI.wstools.Namespaces import SOAP, SCHEMA
@@ -188,14 +188,16 @@ class WriteServiceModule:
         self.typeDict = {}
         self.aname_func = aname_func
 
-    def write(self, schemaOnly=False):
-        """Write schema instance contents w/respect to dependency requirements, 
-           and create client interface.  Not guaranteed to work for mutual 
-           depenedencies.
+    def write(self, schemaOnly=False, output_dir="."):
+        """
+        Write schema instance contents w/respect to dependency
+        requirements, and create client interface.  Not guaranteed to
+        work for mutual depenedencies.
         """
 
-        f_types, f_services = self.get_module_names()
+        f_types, f_services = self.get_module_names(output_dir)
         hasSchema = len(self._wa.getSchemaDict())
+        
         if hasSchema:
             fd = open(f_types + ".py", 'w+')
             self.write_service_types(f_types, fd)
@@ -207,17 +209,18 @@ class WriteServiceModule:
         fd = open(f_services + ".py", 'w+')
         self.write_services(f_types, f_services, fd, hasSchema)
         fd.close()
-
         
-    def get_module_names(self):
+    def get_module_names(self, output_dir=""):
         if self._wa.getName():
             name = nonColonizedName_to_moduleName( self._wa.getName() )
         else:
             raise WsdlGeneratorError, 'could not determine a service name'
 
         name = SplitQName(name)[1]
-        f_types = '%s_services_types' % name
-        f_services = '%s_services' % name
+
+        f_types = os.path.join(output_dir, '%s_services_types' % name)
+        f_services = os.path.join(output_dir, '%s_services' % name)
+
         return f_types, f_services
 
 
@@ -251,10 +254,11 @@ class WriteServiceModule:
         for service in self._wa.getServicesList():
             sd = ServiceDescription(self.aname_func)
             if hasSchema:
-                sd.imports += ['\nfrom %s import *' % f_types]
+                sd.imports += ['\nfrom %s import *' %
+                               os.path.basename(f_types)]
                 for ns in self.nsh.getNSList():
                     sd.imports += ['\nfrom %s import \\\n    %s as %s' \
-                                  % ( f_types,
+                                  % ( os.path.basename(f_types),
                                       self.nsh.getModuleName(ns),
                                       self.nsh.getAlias(ns)) ]
 

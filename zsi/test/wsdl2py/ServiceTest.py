@@ -75,8 +75,9 @@ class ServiceTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self, methodName)
 
     def setUp(self):
-        """Generate types and services modules if no record of them
-           in the moduleDict variable.
+        """
+        Generate types and services modules if no record of them in
+        the moduleDict variable.
         """
         
         if not self.url_section or not self.name:
@@ -91,16 +92,14 @@ class ServiceTestCase(unittest.TestCase):
                 os.mkdir(moduleDir)
             except OSError, ex:
                 pass
-            os.chdir(moduleDir)
             if moduleDir not in sys.path:
                 sys.path.append(moduleDir)
             reader = WSDLReader()
             url = CONFIG_PARSER.get(self.url_section, self.name)
             wsdl = reader.loadFromURL(url)
             self._wsm = WriteServiceModule(wsdl)
-            self._wsm.write(False)
-            self._setModuleNames(self._importTypeModule)
-            os.chdir(testDir)
+            self._wsm.write(False, output_dir=moduleDir)
+            self._setModuleNames(self._importTypeModule, mod_dir=moduleDir)
             locator = self._getLocator()
             self._port = self._getPort(locator)
         
@@ -123,7 +122,11 @@ class ServiceTestCase(unittest.TestCase):
         return kw
 
     def _getModuleDirectory(self):
-            return os.getcwd() + '/stubs'
+        if not hasattr(self, 'module_directory'):
+            md = os.path.splitdrive(os.getcwd())[1]
+            self.module_directory = os.path.join(md, 'stubs')
+
+        return self.module_directory
 
     def _getLocator(self):
         """Hack to get at the Locator name, it would be much easier
@@ -201,21 +204,22 @@ class ServiceTestCase(unittest.TestCase):
             return True
         return False
 
-    def _setModuleNames(self, importTypes=True):
+    def _setModuleNames(self, importTypes=True, mod_dir="."):
         """set service and types modules key names, and import them.
 
            Some of the no schema tests do generate a types file
         """
         self._typeModuleName, self._serviceModuleName = self._wsm.get_module_names()
+
         if importTypes:
             moduleTuple = (self._typeModuleName, self._serviceModuleName)
         else:
             moduleTuple = (self._serviceModuleName,)
 
         for name in moduleTuple:
-            exec('import %s' %name)
-            self._moduleDict[name] = eval(name)
-
+            bname = os.path.basename(name)
+            exec('import %s' % bname)
+            self._moduleDict[bname] = eval(bname)
 
     def checkSection(self):
         """Should the section be checked? If I know about it.

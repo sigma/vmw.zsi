@@ -16,6 +16,7 @@ USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s]
     -f | -u     -> file or url to load wsdl from
     -x          -> process just the schema from an xsd file [no services]
     -z          -> specify a function to use to generate attribute names
+    -d          -> output directory for files
 """
 
 """
@@ -39,11 +40,12 @@ def doCommandLine():
         'fromfile': False,
         'fromurl': False,
         'schemaOnly': False,
-        'aname' : None
+        'aname' : None,
+        'output_directory' : '.'
         }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:hx')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:d:hx')
     except getopt.GetoptError, e:
         print >>sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -66,11 +68,13 @@ def doCommandLine():
             args_d['schemaOnly'] = True
         elif opt in ['-z']:
             args_d['aname'] = val
+        elif opt in ['-d']:
+            args_d['output_directory'] = val
         else:
             print USAGE
             sys.exit(-1)
-    return args_d
 
+    return args_d
 
 def formatSchemaObject(fname, schemaObj):
     """ In the case of a 'schema only' generation (-s) this creates
@@ -103,13 +107,13 @@ def get_aname_func(aname):
     amod = ".".join(args[:-1])
     afunc = args[-1]
 
-#    try:
-    exec('from %s import %s as FUNC' % (amod, afunc))
-#    except ImportError, e:
-#        e_str = "Specify a module.function to -z [%s]: " % aname
-#        print e_str, e
-#        return None
-    
+    try:
+        exec('from %s import %s as FUNC' % (amod, afunc))
+    except ImportError, e:
+        e_str = "Specify a module.function to -z [%s]: " % aname
+        print e_str, e
+        return None
+   
     assert callable(FUNC), '%s must be a callable method with one string parameter' % aname
 
     return FUNC
@@ -142,7 +146,7 @@ def main():
 
     wsm = ZSI.wsdl2python.WriteServiceModule(wsdl, aname_func = aname_func)
     
-    wsm.write(schemaOnly)
+    wsm.write(schemaOnly, output_dir=args_d['output_directory'])
     
     return
 
