@@ -30,8 +30,10 @@ The return value from a proxy method depends on the SOAP signature. If the
 remote service returns a single value, that value will be returned. If the 
 remote service returns multiple ``out'' parameters, the return value of the 
 proxy method will be a dictionary containing the out parameters indexed by 
-name.  Complex return types are also supported, meaning an aggregation of
-primitives can be returned from a service invocation.
+name.  Because \class{ServiceProxy} makes use of the ZSI serialization / 
+deserialization engine, complex return types are supported.  This means 
+that an aggregation of primitives can be returned from or passed to a service
+invocation according to any predefined hierarchical structure.
 
 
 \begin{classdesc}{ServiceProxy}{wsdl,\optional{, service\optional{, port}}}
