@@ -104,7 +104,7 @@ activity, and serializes the response.
 \begin{verbatim}
 try:
     player = ps.Parse(Player.typecode)
-except EvaluateError, e:
+except EvaluateException, e:
     FaultFromZSIException(e).AsSOAP(OUT)
     sys.exit(1)
 
