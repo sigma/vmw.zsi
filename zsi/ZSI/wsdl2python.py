@@ -1216,6 +1216,11 @@ class SchemaDescription:
 
                 self.classdef.set('\n\n%sclass %s(ZSI.TCcompound.Struct):' \
                                   %(ID1, tp.getName() + '_Dec'))
+
+                self.classvar.set( re.sub('type', 'literal',
+                                          self.classvar.getvalue()))
+                self.initcode.set('\n%sname = name or self.__class__.literal\n%sns = ns or self.__class__.schema\n%s' % ( ID3, ID3, self.initcode.getvalue()))
+                
                 return
 
 
@@ -1447,7 +1452,6 @@ class SchemaDescription:
                         occurs = self._calculateOccurance(e)
                         nsp = self.nsh.getAlias(etp.getTargetNamespace())
                         typeName = '%s.%s' % (nsp, e.getName()) + '_Dec'
-                        print e.getMinOccurs()
                         typecodelist +='%s(ns=ns%s), '\
                                         %(typeName, occurs)
 
