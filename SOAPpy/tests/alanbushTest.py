@@ -11,8 +11,9 @@ import SOAP
 ident = '$Id$'
 
 SoapEndpointURL		= 'http://www.alanbushtrust.org.uk/soap/compositions.asp'
-MethodNamespaceURI 	= 'urn:alanbushtrust-org-uk:soap:methods'
-SoapAction		= MethodNamespaceURI + "#GetCategories"
+MethodNamespaceURI 	= 'urn:alanbushtrust-org-uk:soap.methods'
+SoapAction		= MethodNamespaceURI + ".GetCategories"
 
 server = SOAP.SOAPProxy( SoapEndpointURL, namespace=MethodNamespaceURI, soapaction=SoapAction )
-print "server level>>", server.GetCategories()
+for category in server.GetCategories():
+   print category
