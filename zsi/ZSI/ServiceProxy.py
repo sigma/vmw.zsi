@@ -9,7 +9,9 @@
 
 from ZSI import *
 from ZSI.client import *
+from ZSI.typeinterpreter import BaseTypeInterpreter
 import wstools
+from wstools.Utility import DOM
 from urlparse import urlparse
 import weakref
 
@@ -19,8 +21,12 @@ class ServiceProxy:
        that reflect the methods of the remote web service."""
 
     def __init__(self, wsdl, service=None, port=None, tracefile=None,
-                 typesmodule=None, nsdict=None, soapAction=None, ns=None,
-                 op_ns=None):
+                 typesmodule=None, nsdict=None, soapAction=None, ns=None, op_ns=None, use_wsdl=False):
+        """
+        Instance data
+           use_wsdl -- if True try to construct XML Instance from 
+                   information in WSDL.
+        """
         if not hasattr(wsdl, 'targetNamespace'):
             wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
 
@@ -38,6 +44,7 @@ class ServiceProxy:
         self._soapAction = soapAction
         self._ns = ns
         self._op_ns = op_ns
+        self._use_wsdl = use_wsdl
         
         binding = self._port.getBinding()
         portType = binding.getPortType()
@@ -54,28 +61,92 @@ class ServiceProxy:
                 )
 
         callinfo = getattr(self, name).callinfo
+        soapAction = callinfo.soapAction
         url = callinfo.location
         (protocol, host, uri, query, fragment, identifier) = urlparse(url)
-        port = 80
+        port = '80'
         if host.find(':') >= 0:
             host, port = host.split(':')
 
-        #params = callinfo.getInParameters() This doesn't appear to be used at all. krj 5/21/03
-        host = str(host)
-        port = str(port)
-        
         binding = Binding(host=host, tracefile=self._tracefile,
                           ssl=(protocol == 'https'),
-                          port=port, url=uri, typesmodule=self._typesmodule,
+                          port=port, url=None, typesmodule=self._typesmodule,
                           nsdict=self._nsdict, soapaction=self._soapAction,
                           ns=self._ns, op_ns=self._op_ns)
-               
+
+        if self._use_wsdl:
+            request, response = self._getTypeCodes()
+            binding.Send(url=uri, opname=None, obj=args or kwargs,
+                         nsdict=self._nsdict, soapaction=soapAction, requesttypecode=request)
+            return binding.Receive(replytype=response)
+
         apply(getattr(binding, callinfo.methodName), args)
 
-
-	#print binding.ReceiveRaw()
-
         return binding.Receive()
+
+    def _getTypeCodes(self):
+        #XXX This sucks but we need to dereference the prefix, so
+        # we need to track down the representative DOM nodes
+        requestTC = replyTC = None
+        operation = self._port.getBinding().getPortType().operations[callinfo.methodName]
+
+        NS_WSDL = DOM.GetWSDLUri(self._wsdl.version)
+        definition = DOM.getElement(node=self._wsdl.document, name='definitions', nsuri=NS_WSDL)
+        for node in DOM.getElements(node=definition, name='message', nsuri=NS_WSDL):
+            if DOM.getAttr(node=node, name='name') == operation.input.message:
+                requestTC = self._getTypeCode(node=node, parameters=callinfo.getInParameters())
+            elif DOM.getAttr(node=node, name='name') == operation.output.message:
+                replyTC = self._getTypeCode(node=node, parameters=callinfo.getOutParameters())
+
+        if callinfo.style == 'rpc':
+            request = TC.Struct(pyclass=None, ofwhat=requestTC, pname=callinfo.methodName)
+            response = TC.Struct(pyclass=None, ofwhat=replyTC, pname='%sResponse' %callinfo.methodName)
+        else:
+            request = requestTC[0]
+            response = replyTC[0]
+
+        return request, response
+
+    def _getTypeCode(self, node, parameters):
+        bti = BaseTypeInterpreter()
+        typeCode = []
+        for part in parameters:
+            namespaceURI,localName = part.type
+
+            if part.element_type:
+                #global element
+                element = self._wsdl.types[nsuri].elements[localName]
+                name = element.attributes['name']
+                tdc = element.attributes['element']
+                typeClass = bti.get_typeclass(msg_type=tdc.getName(),
+                                              targetNamespace=tdc.getTargetNamespace())
+                tc = typeClass(name)
+                if not typeClass:
+                    element = self._wsdl.types[tdc.getTargetNamespace()].getElementDeclaration(tdc.getName())
+                    tc = self._getElement(element)
+                else:
+                    tc = typeClass(name)
+
+            else:
+                #local element
+                name = part.name
+                typeClass = bti.get_typeclass(msg_type=localName, targetNamespace=namespaceURI)
+                if not typeClass:
+                    self._wsdl.types[namespaceURI].getTypeDefinition(localName)
+                    typeClass = self._getElement()
+                tc = typeClass(name)
+            typeCode.append(tc)
+        return typeCode
+
+    def _getElement(self, element):
+        name = element.getAttribute('name')
+        tp = element.getTypeDefinition('type')
+        if type(tp) in (types.StringType, types.Unicode):
+            pass
+        return self._getType(self, name, tp)
+    
+    def _getType(self, name, tp):
+        return        
 
 
 class MethodProxy:
