@@ -92,8 +92,6 @@ class ServerCallbackDescription:
         if do_extended:
             d += '\n%sif kw.has_key(\'impl\'):' % ID2
             d += '\n%sself.impl = kw[\'impl\']' % ID3
-#            d += '\n%sif kw.has_key(\'typesmodule\'):' % ID2
-#            d += '\n%sself.typesmodule = kw[\'typesmodule\']'% ID3
 
         return d
 
@@ -109,8 +107,8 @@ class ServerCallbackDescription:
         # now take care of the method
         o  = '\n%sdef %s(self, ps):' % (ID1, self.getMethodName(op.getName()))
         o += '\n%s# input vals in request object' % ID2
-        iw = op.getInput().getMessage().getName() + 'Wrapper'
-        o += '\n%sargs = ps.Parse( %s )' % ( ID2,  iw)
+        o += '\n%sargs = ps.Parse( %s )' % ( ID2,
+                            op.getInput().getMessage().getName() + 'Wrapper')
 
         o += '\n'
         
@@ -122,7 +120,7 @@ class ServerCallbackDescription:
             for a in op.getInput().getMessage().getPartList():
                 o += '\n%s# %s is a %s' % (ID2, a.getName(),
                                            a.getType().getName())
-                o += '\n%s%s = %s.%s' % (ID2, a.getName(), iw, a.getName())
+                o += '\n%s%s = args.%s' % (ID2, a.getName(), a.getName())
             o += "\n"
             
             invocation = '\n\n%s# Invoke the method' % ID2
