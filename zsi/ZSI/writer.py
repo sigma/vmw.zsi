@@ -41,7 +41,7 @@ class SoapWriter:
 	    '  xmlns:xsd="%(xsd)s"\n' \
 	    '  xmlns:ZSI="%(ZSI)s"' % _reserved_ns,
 	if self.encoding:
-	    print >>self, '\n  SOAP-ENC:encodingStyle="%s"' % self.encoding,
+	    print >>self, '\n  SOAP-ENV:encodingStyle="%s"' % self.encoding,
 	if nsdict: self.writeNSdict(nsdict)
 	print >>self, '>'
 	header = kw.get('header')

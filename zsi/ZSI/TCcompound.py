@@ -3,7 +3,7 @@
 '''Compound typecodes.
 '''
 
-from ZSI import _copyright, _children, _attrs, _child_elements, \
+from ZSI import _copyright, _children, _child_elements, \
 	_inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
 	_find_type, \
 	EvaluateException

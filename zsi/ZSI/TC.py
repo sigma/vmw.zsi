@@ -79,7 +79,7 @@ class TypeCode:
     def SimpleHREF(self, elt, ps, tag):
 	'''Simple HREF for non-string and non-struct and non-array.
 	'''
-	if elt.hasChildNodes(): return elt
+	if len(_children(elt)): return elt
 	href = _find_href(elt)
 	if not href:
 	    if self.optional: return None
@@ -228,7 +228,7 @@ class Any(TypeCode):
     def parse(self, elt, ps):
 	(ns,type) = self.checkname(elt, ps)
 	if not type and self.nilled(elt, ps): return None
-	if not elt.hasChildNodes():
+	if len(_children(elt)) == 0:
 	    href = _find_href(elt)
 	    if not href:
 		if self.optional: return None
@@ -329,7 +329,7 @@ class Void(TypeCode):
 
     def parse(self, elt, ps):
 	self.checkname(elt, ps)
-	if elt.hasChildNodes():
+	if len(_children(elt)):
 	    raise EvaluateException('Void got a value', ps.Backtrace(elt))
 	return None
 
@@ -353,7 +353,7 @@ class String(TypeCode):
 
     def parse(self, elt, ps):
 	self.checkname(elt, ps)
-	if not elt.hasChildNodes():
+	if len(_children(elt)) == 0:
 	    href = _find_href(elt)
 	    if not href:
 		if _find_nil(elt) not in [ "true",  "1"]:
@@ -368,6 +368,7 @@ class String(TypeCode):
 	    elt = ps.FindLocalHREF(href, elt)
 	    self.checktype(elt, ps)
 	if self.nilled(elt, ps): return None
+	if len(_children(elt)) == 0: return ''
 	v = self.simple_value(elt, ps)
 	if self.strip: v = v.strip()
 	if self.textprotect: v = _textunprotect(v)
@@ -424,8 +425,8 @@ class Base64String(String):
     tag = 'SOAP-ENC:base64'
 
     def parse(self, elt, ps):
-	val = string.parse(self, elt, ps)
-	return b64decode(val.translate(_transtable, _WS))
+	val = String.parse(self, elt, ps)
+	return b64decode(val.replace(' ', '').replace('\n','').replace('\r',''))
 
     def serialize(self, sw, pyobj, **kw):
 	String.serialize(self, sw, '\n' + b64encode(pyobj), **kw)
@@ -542,22 +543,25 @@ class Integer(TypeCode):
 	print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
 		(n, kw.get('attrtext', ''), tstr, pyobj, n)
 
+# This is outside the Decimal class purely for code esthetics.
+_magicnums = { }
+try:
+    _magicnums['INF'] = float('INF')
+    _magicnums['-INF'] = float('-INF')
+except:
+    _magicnums['INF'] = float(1e300**2)
+    _magicnums['-INF'] = float(-1e300**2)
+try:
+    _magicnums['NaN'] = float('NaN')
+    _magicnums['-NaN'] = float('-NaN')
+except:
+    # The standard says NaN > INF; oh well, close enough.
+    _magicnums['NaN'] = _magicnums['INF'] - _magicnums['INF']
+    _magicnums['-NaN'] = _magicnums['-INF'] - _magicnums['-INF']
+
 class Decimal(TypeCode):
     '''Parent class for floating-point numbers.
     '''
-
-    specials = { }
-    try:
-	specials['INF'] = float('INF')
-	specials['-INF'] = float('-INF')
-	specials['NaN'] = float('NaN')
-	specials['-NaN'] = float('-NaN')
-    except:
-	specials['INF'] = float(1e300**2)
-	specials['-INF'] = float(-1e300**2)
-	# The standard says NaN > INF; oh well, close enough.
-	specials['NaN'] = float(1e300**2)
-	specials['-NaN'] = float(-1e300**2)
 
     parselist = [ (None,'decimal'), (None,'float'), (None,'double') ]
     seriallist = _floattypes
@@ -588,7 +592,7 @@ class Decimal(TypeCode):
 	# Special value?
 	if self.nilled(elt, ps): return None
 	v = self.simple_value(elt, ps)
-	m = Decimal.specials.get(v)
+	m = _magicnums.get(v)
 	if m: return m
 
 	try:
@@ -618,13 +622,13 @@ class Decimal(TypeCode):
 	else:
 	    tstr = ''
 	fmt = self.format
-	if pyobj == specials['INF']:
+	if pyobj == _magicnums['INF']:
 	    fmt, pyobj = "%s", "INF"
-	elif pyobj == specials['-INF']:
+	elif pyobj == _magicnums['-INF']:
 	    fmt, pyobj = "%s", "-INF"
-	elif pyobj == specials['NaN']:
+	elif pyobj == _magicnums['NaN']:
 	    fmt, pyobj = "%s", "NaN"
-	elif pyobj == specials['-NaN']:
+	elif pyobj == _magicnums['-NaN']:
 	    fmt, pyobj = "%s", "-NaN"
 	print >>sw, ('<%s%s%s>' + fmt + '</%s>') % \
 		(n, kw.get('attrtext', ''), tstr, pyobj, n)

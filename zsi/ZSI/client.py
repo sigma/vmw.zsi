@@ -221,13 +221,17 @@ class Binding:
 	    raise TypeError("Unexpected SOAP fault: " + msg.string)
 	if replytype == None:
 	    tc = TC.Any()
+	    data = _child_elements(self.ps.body_root)
+	    if len(data) == 0: return None
+	    return tc.parse(data[0], self.ps)
 	elif hasattr(replytype, 'typecode'):
 	    tc = replytype.typecode
 	else:
 	    tc = replytype
-	data = _child_elements(self.ps.body_root)
-	if len(data) == 0: return None
-	return tc.parse(data[0], self.ps)
+	return self.ps.Parse(tc)
+	#data = _child_elements(self.ps.body_root)
+	#if len(data) == 0: return None
+	#return tc.parse(data[0], self.ps)
 
     def __repr__(self):
 	return "<%s.Binding at 0x%x>" % (__name__, id(self))
