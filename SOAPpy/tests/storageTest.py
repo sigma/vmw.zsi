@@ -38,7 +38,7 @@ server = SOAPProxy(encoding="US-ASCII",
                    proxy=PROXY,
                    soapaction="/xmlStorageSystem",
                    http_proxy=http_proxy,
-                   config=SOAPConfig(debug=1)
+#                   config=SOAPConfig(debug=1)
                    )
 
 # Register as a new user or update user information

@@ -29,7 +29,6 @@ server = SOAPProxy("http://www.xmethods.net/interfaces/query",
 names = server.getAllServiceNames()
 
 for item in names:
-    dict = item._asdict
-    print 'name:',  dict['name']
-    print 'id  :',  dict['id']
+    print 'name:',  item['name']
+    print 'id  :',  item['id']
     print 

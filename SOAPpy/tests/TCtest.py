@@ -4,7 +4,6 @@ import sys
 sys.path.insert(1, "..")
 from SOAPpy import *
 
-
 x = '''<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 <soap:Body soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
@@ -29,11 +28,12 @@ def negfloat(x):
 # parse rules
 pr = {'Result':
       {'Book':   {'title':"string"},
-       'Person': {'age':"int",
+       'Person': {'age':'int',
                   'height':negfloat}
        }
       }
 y = parseSOAPRPC(x, rules=pr)
+print "y=",y
 assert y.Result.Person.age == 49
 assert y.Result.Person.height == -5.5
 
@@ -55,19 +55,19 @@ x = '''
 '''
 # parse rules
 pr = {'Bounds':
-      {'param': 'arrayType=string[]'
+      {'param': 'arrayType=string[]',
        }
       }
 
 pr2 = {'Bounds':
-      {'param': 'arrayType=int[4]'
+      {'param': 'arrayType=int[4]',
        }
       }
 
-y = parseSOAPRPC(x, parse_rules=pr)
+y = parseSOAPRPC(x, rules=pr)
 assert y.param[1]=='23'
 
-y = parseSOAPRPC(x, parse_rules=pr2)
+y = parseSOAPRPC(x, rules=pr2)
 assert y.param[1]==23
 
 x = '''
@@ -90,7 +90,7 @@ pr = {'Bounds':
       {'param': 'arrayType=ur-type[]'
        }
       }
-y = parseSOAPRPC(x, parse_rules=pr)
+y = parseSOAPRPC(x, rules=pr)
 assert y.param[0]==12
 assert y.param[1]=='23'
 assert y.param[2]==float(0)

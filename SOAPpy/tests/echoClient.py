@@ -8,7 +8,7 @@ sys.path.insert(1, "..")
 from SOAPpy import *
 
 # Uncomment to see outgoing HTTP headers and SOAP and incoming 
-Config.debug = 1
+#Config.debug = 1
 
 Config.BuildWithNoType = 1
 Config.BuildWithNoNamespacePrefix = 1

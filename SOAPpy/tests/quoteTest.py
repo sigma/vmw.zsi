@@ -8,7 +8,6 @@ import sys
 sys.path.insert(1, "..")
 
 from SOAPpy import SOAPProxy
-from SOAPpy import SOAP
 
 # Check for a web proxy definition in environment
 try:

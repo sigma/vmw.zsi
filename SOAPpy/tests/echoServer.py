@@ -7,8 +7,7 @@ sys.path.insert(1, "..")
 
 from SOAPpy import *
 
-Config.dumpSOAPIn = 1
-Config.dumpSOAPOut = 1
+#Config.debug = 1
 
 if Config.SSLserver:
     from M2Crypto import SSL
