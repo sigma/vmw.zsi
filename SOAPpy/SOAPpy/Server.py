@@ -52,6 +52,7 @@ import sys
 import SocketServer
 from types import *
 import BaseHTTPServer
+import thread
 
 # SOAPpy modules
 from Parser      import parseSOAPRPC
@@ -68,7 +69,15 @@ ident = '$Id$'
 
 from version import __version__
 
+################################################################################
+# Call context dictionary
+################################################################################
 
+_contexts = dict()
+
+def GetSOAPContext():
+    global _contexts
+    return _contexts[thread.get_ident()]
 
 ################################################################################
 # Server
@@ -191,6 +200,8 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return self.__last_date_time_string
 
     def do_POST(self):
+        global _contexts
+        
         status = 500
         try:
             if self.server.config.dumpHeadersIn:
@@ -278,6 +289,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             #print '<-> Named Arguments  :' + str(named_args)
              
             resp = ""
+            
             # For fault messages
             if ns:
                 nsmethod = "%s:%s" % (ns, method)
@@ -313,7 +325,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     l = method.split(".")
                     for i in l:
                         f = getattr(f, i)
-                        
             except:
                 resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
                         "No method %s found" % nsmethod,
@@ -327,24 +338,37 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         x = HeaderHandler(header, attrs)
 
                     fr = 1
+
+                    # call context book keeping
+                    # We're stuffing the method into the soapaction if there
+                    # isn't one, someday, we'll set that on the client
+                    # and it won't be necessary here
+                    # for now we're doing both
+                    if self.headers["SOAPAction"] == "\"\"":
+                        self.headers["SOAPAction"] = method
+                        
+                    thread_id = thread.get_ident()
+                    _contexts[thread_id] = SOAPContext(header, body,
+                                                       attrs, data,
+                                                       self.connection,
+                                                       self.headers,
+                                                       self.headers["SOAPAction"])
+
                     # Do an authorization check
                     if a != None:
-                        c = SOAPContext(header, body, attrs, data,
-                                        self.connection, self.headers,
-                                        self.headers["soapaction"])
-                        if not apply(a, (), {"_SOAPContext" : c,
-                                             "method" : nsmethod }):
+                        if not apply(a, (), {"_SOAPContext" :
+                                             _contexts[thread_id] }):
                             raise faultType("%s:Server" % NS.ENV_T,
                                             "Method %s failed." % nsmethod,
                                             "Authorization failed.")
+                    
                     # If it's wrapped, some special action may be needed
                     if isinstance(f, MethodSig):
                         c = None
                     
-                        if f.context:  # Build context object
-                            c = SOAPContext(header, body, attrs, data,
-                                self.connection, self.headers,
-                                self.headers["soapaction"])
+                        if f.context:  # retrieve context object
+                            c = _contexts[thread_id]
+
                         if Config.specialArgs:
                             if c:
                                 named_args["_SOAPContext"] = c
@@ -359,11 +383,9 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 strkw[str(k)] = v
                             if c:
                                 strkw["_SOAPContext"] = c
-                                strkw["method"] = nsmethod
                             fr = apply(f, (), strkw)
                         elif c:
-                            fr = apply(f, args, {'_SOAPContext':c,
-                                                 'method' : nsmethod})
+                            fr = apply(f, args, {'_SOAPContext':c})
                         else:
                             fr = apply(f, args, {})
 
@@ -384,6 +406,11 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                             {'%sResponse' % method: {'Result': fr}},
                             encoding = self.server.encoding,
                             config = self.server.config)
+
+                    # Clean up _contexts
+                    if _contexts.has_key(thread_id):
+                        del _contexts[thread_id]
+                        
                 except Exception, e:
                     import traceback
                     info = sys.exc_info()
@@ -576,7 +603,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class SOAPServer(SOAPServerBase, SocketServer.TCPServer):
 
     def __init__(self, addr = ('localhost', 8000),
-        RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
+        RequestHandler = SOAPRequestHandler, log = 0, encoding = 'UTF-8',
         config = Config, namespace = None, ssl_context = None):
 
         # Test the encoding, raising an exception if it's not known
@@ -603,7 +630,7 @@ class SOAPServer(SOAPServerBase, SocketServer.TCPServer):
 class ThreadingSOAPServer(SOAPServerBase, SocketServer.ThreadingTCPServer):
 
     def __init__(self, addr = ('localhost', 8000),
-        RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
+        RequestHandler = SOAPRequestHandler, log = 0, encoding = 'UTF-8',
         config = Config, namespace = None, ssl_context = None):
 
         # Test the encoding, raising an exception if it's not known
@@ -632,7 +659,7 @@ if hasattr(socket, "AF_UNIX"):
     class SOAPUnixSocketServer(SOAPServerBase, SocketServer.UnixStreamServer):
     
         def __init__(self, addr = 8000,
-            RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
+            RequestHandler = SOAPRequestHandler, log = 0, encoding = 'UTF-8',
             config = Config, namespace = None, ssl_context = None):
     
             # Test the encoding, raising an exception if it's not known
