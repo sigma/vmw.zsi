@@ -330,11 +330,16 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     for i in l:
                         f = getattr(f, i)
             except:
-                resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
-                                           "Method Not Found",
-                                           "%s" % nsmethod),
-                                 encoding = self.server.encoding,
-                                 config = self.server.config)
+                info = sys.exc_info()
+                try:
+                    resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
+                                               "Method Not Found",
+                                               "%s : %s %s" % (nsmethod,
+                                                                 info[0:2])),
+                                     encoding = self.server.encoding,
+                                     config = self.server.config)
+                finally:
+                    del info
                 status = 500
             else:
                 try:
