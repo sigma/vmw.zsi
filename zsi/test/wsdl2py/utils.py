@@ -3,11 +3,9 @@
 # See Copyright for copyright notice!
 ###########################################################################
 
-from __future__ import generators
-
 import unittest
-import sys, os, os.path, pickle
-import shutil, getopt
+import sys, os, os.path
+import getopt
 import StringIO, copy, re
 import unittest, ConfigParser
 import inspect
@@ -21,62 +19,10 @@ from paramWrapper import ResultsToStr
 
 """
 utils:
-    This module contains utility functions for use by test case modules, a
-    class facilitating the use of ConfigParser with multiple test cases, a
-    class facilitating test setup, a class encapsulating comparisons against
-    a test file, a test program class allowing additional command-line
-    arguments, and a test loader class with a different loading strategy than
-    the default unittest.TestLoader.
+    This module contains a class that test instances sub-class, a class
+    encapsulating comparisons against a test file, and a test program
+    class allowing additional command-line arguments.
 """
-
-class ConfigHandler(ConfigParser.ConfigParser):
-
-    def __init__(self, name="config.txt"):
-        ConfigParser.ConfigParser.__init__(self)
-            # first, look for one in this directory
-            # Done this way because it turns out read fails silently
-        self.read(name)
-        if not self.sections():
-            print '%s not found\n' % name
-            sys.exit(0)
-
-    def optionxform(self, optionstr):
-        return optionstr
-
-    
-    def getConfigNames(self, sections, numMethods, valueFunc=None):
-        """A generator which returns one value from a given config
-           file section at a time.  It also optionally calls a
-           passed-function for that value, and yields the result as well.
-        """
-
-        result = None
-        for section in sections:
-            for name, value in self.items(section):
-                for i in range(0, numMethods):
-                    yield value	# indicate which test in all cases
-                    if i == 0:
-                        result = None
-                        if valueFunc:
-                            try:
-                                result = valueFunc(value)
-                            except KeyboardInterrupt:
-                                sys.exit(-1)   # for now
-                            except:		# don't care, test will be skipped
-                                pass
-                    if valueFunc:
-                        yield result
-
-
-    def length(self, sections):
-        """Determines the total number of items in all the
-           chosen sections from a config file.
-        """
-        total = 0
-        for section in sections:
-            total += len(self.options(section))
-        return total 
-
 
 class ServiceTestCase(unittest.TestCase):
 
@@ -342,157 +288,3 @@ Examples:
             self.testRunner = unittest.TextTestRunner(verbosity=self.verbosity)
         result = self.testRunner.run(self.test)
             # may want global cleanup; sys.exit removed here
-
-
-
-
-class MatchTestLoader(unittest.TestLoader):
-    """Overrides unittest.TestLoader.loadTestsFromNames to provide a
-       simpler and less verbose way to select a subset of tests to run.
-       If all tests will always be run, use unittest.TestLoader instead. 
-
-       If a top-level test invokes test cases in other modules,
-       MatchTestLoader should be created with topLevel set to True
-       to get the correct results.  For example,
-
-       def main():
-           loader = utils.MatchTestLoader(True, None, "makeTestSuite")
-           unittest.main(defaultTest="makeTestSuite", testLoader=loader)
-
-       The defaultTest argument in the constructor indicates the test to run
-       if no additional arguments beyond the test script name are provided.
-    """
-
-    def __init__(self, topLevel, configName, defaultTest):
-        unittest.TestLoader.__init__(self)
-        self.testMethodPrefix = "test"
-        self.defaultTest = defaultTest
-        self.topLevel = topLevel
-        if configName:
-	    self.config = ConfigHandler(configName)
-        self.sections = []
-	self.nameGenerator = None
-    
-
-    def setUpArgs(self):
-        """Sets up the use of arguments from the command-line to select
-           tests to run.  There can be multiple names, both in full or as
-           a substring, on the command-line.
-        """
-        sectionList = self.config.sections()
-        self.testArgs = []
-        argv = []
-           # ignore section names in determining what to
-           # load (sys.argv can be passed into setSection,
-           # where any section names are extracted)
-        for name in sys.argv:
-            if name not in sectionList:
-                argv.append(name)
-        if not self.topLevel or (len(argv) != 1):
-            for arg in argv[1:]:
-                if arg.find("-") != 0:
-                    self.testArgs.append(arg)
-            # has the effect of loading all tests
-        if not self.testArgs:
-            self.testArgs = [None]
-
-
-    def loadTestsFromNames(self, unused, module=None):
-        """Hard-wires using the default test.  It ignores the names
-           passed into it from unittest.TestProgram, because the
-           default loader would fail on substrings or section names.
-        """
-
-        suites = unittest.TestLoader.loadTestsFromNames(self,
-                                  (self.defaultTest,), module)
-        return suites
-
-
-
-    def setSection(self, args):
-        """Sets section(s) of config file to read.
-        """
-        sectionList = self.config.sections()
-        if ((type(args) is list) or
-             (type(args) is tuple)):
-            for arg in args:
-                if arg in sectionList:
-                    self.sections.append(arg)
-            if self.sections:
-                return True
-        elif type(args) is str:
-            if args in sectionList:
-                self.sections.append(args)
-                return True
-        return False
-
-
-
-    def loadTestsFromConfig(self, testCaseClass, valueFunc=None):
-        """Loads n number of instances of testCaseClass, where
-           n is the number of items in the config file section(s).
-           getConfigNames is a generator which is used to parcel
-           out the values in the section(s) to the testCaseClass
-           instances.
-        """
-
-        self.setUpArgs()
-        numTestCases = self.getTestCaseNumber(testCaseClass)
-        self.nameGenerator = self.config.getConfigNames(self.sections,
-                                     numTestCases, valueFunc)
-        configLen = self.config.length(self.sections)
-        suite = unittest.TestSuite()
-        for i in range(0, configLen):
-            suite.addTest(self.loadTestsFromTestCase(testCaseClass))
-        return suite
-
-
-    def getTestCaseNumber(self, testCaseClass):
-        """Looks for any test methods whose name contains testStr, checking
-           if a test method has already been added.  If there is not a match,
-           it checks for an exact match with the test case name, and
-           returns the number of test cases.
-        """
-        methods = self.getTestCaseNames(testCaseClass)
-        prevAdded = []
-        counter = 0
-	for testStr in self.testArgs:
-            if testStr:
-                for m in methods:
-                    if m.find(testStr) >= 0 and m not in prevAdded:
-                        counter = counter + 1
-                        prevAdded.append(m)
-                if counter:
-                    return counter
-            if (not testStr) or (testCaseClass.__name__ == testStr):
-                for m in methods:
-                    counter = counter + 1
-                    prevAdded.append(m)
-        return counter
-
-
-    def loadTestsFromTestCase(self, testCaseClass):
-        """looks for any test methods whose name contains testStr, checking
-           if a test method has already been added.  If there is not a match,
-           it checks for an exact match with the test case name, and loads
-           all methods if so.
-        """
-        methods = self.getTestCaseNames(testCaseClass)
-        prevAdded = []
-        suites = unittest.TestSuite()
-	for testStr in self.testArgs:
-            if testStr:
-                for m in methods:
-                    if m.find(testStr) >= 0 and m not in prevAdded:
-                        suites.addTest(testCaseClass(m))
-                        prevAdded.append(m)
-        if suites.countTestCases():
-            return suites
-        for testStr in self.testArgs:
-            if (not testStr) or (testCaseClass.__name__ == testStr):
-                for m in methods:
-                    suites.addTest(testCaseClass(m))
-                    prevAdded.append(m)
-                if suites.countTestCases():
-                    return suites
-        return suites
