@@ -108,7 +108,7 @@ Required Packages
 These packages should be installed before SOAPpy.
 
 - fpconst 0.6.0 or later,
-  <http://research.warnes.net/Zope/projects/fpconst>
+  <http://research.warnes.net/projects/rzope/fpconst/>
 
 - pyXML 0.8.3 or later, <http://pyxml.sourceforge.net>
 
