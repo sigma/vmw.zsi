@@ -49,8 +49,16 @@ class FreeDBServiceTest(unittest.TestCase):
 def makeTestSuite():
     global service, portType
 
-    service, portType =  utils.testSetUp(FreeDBServiceTest,
-                    'com.systinet.demo.freedb.FreeDBService', 'FreeDBService')
+    kw = {}
+    setUp = utils.TestSetUp()
+    serviceLoc = setUp.getOption('config.txt', 'complex_types',
+                                 'com.systinet.demo.freedb.FreeDBService')
+    useTracefile = setUp.getOption('config.txt', 'configuration', 'tracefile') 
+    if useTracefile == '1':
+        kw['tracefile'] = sys.stdout
+    service, portType =  setUp.setService(FreeDBServiceTest, serviceLoc,
+                    'com.systinet.demo.freedb.FreeDBService', 'FreeDBService',
+                    **kw)
     suite = unittest.TestSuite()
     if service:
         suite.addTest(unittest.makeSuite(FreeDBServiceTest, 'test_'))

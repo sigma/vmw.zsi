@@ -9,7 +9,30 @@
 ###########################################################################
 
 ##########################################################################
-# SECTION  [no_schemas]  - 
+# SECTION [configuration] - configuration of the individual service tests.
+# 
+##########################################################################
+[configuration]
+
+tracefile = 0
+
+##########################################################################
+# SECTION [individual_tests] - tests to run and their associated services
+# 
+##########################################################################
+[individual_tests]
+
+test_FreeDBService = complex_tests com.systinet.demo.freedb.FreeDBService
+test_TerraService = complex_tests TerraService
+test_GlobalWeather = complex_tests GlobalWeather
+test_SBGGetAirFareQuote = complex_tests SBGGetAirFareQuoteService
+test_XMethods = complex_tests XMethodsQuery
+test_ZipCodeResolver = complex_tests ZipCodeResolver
+
+
+##########################################################################
+# SECTION  [no_schemas]  -  This and the following sections are primarily
+#                           for test_wsdl2py
 ##########################################################################
 [no_schemas] 
 

@@ -1,7 +1,5 @@
 import os, os.path
 import shutil, sys
-import ConfigParser, glob
-
 from ZSI import wsdl2python
 from ZSI.wstools.WSDLTools import WSDLReader
 from ZSI.wstools.TimeoutSocket import TimeoutError
@@ -11,50 +9,35 @@ from helperInterface import WriteHLSModule
 
 class ClientGenerator:
 
-    def setUp(self, configFileName, section, serviceName, codePath,
-              explicitPath):
+    def getModule(self, serviceName, serviceLoc, codePath='.'):
+        
         if not os.path.exists(codePath):
             os.mkdir(codePath)
         initPath = codePath + os.sep + '__init__.py'
         if not os.path.exists(initPath):
             self.createInit(initPath)
 
-        if section:
-            cp = ConfigParser.ConfigParser()
-            cp.read(configFileName)
-            path = cp.get(section, serviceName)
-        else:
-            path = explicitPath
-        return path, initPath
-
-
-    def getModule(self, configFileName, section, serviceName,
-                  codePath='.', explicitPath=None):
-
         if codePath not in sys.path:
             sys.path.append(codePath)
+
         helperModuleName = \
             wsdl2python.nonColonizedName_to_moduleName(serviceName) + \
                 '_services_interface'
         try:
             helper = __import__(helperModuleName)
         except ImportError:
-            path, initPath = \
-                self.setUp(configFileName, section, serviceName, codePath,
-                           explicitPath)
-
-            self.generateCode(path, codePath)
+            self.generateCode(serviceLoc, codePath)
             helper = __import__(helperModuleName)
             self.updateInit(initPath, helperModuleName)
         return helper
 
 
-    def generateCode(self, path, codePath='.'):
+    def generateCode(self, serviceLoc, codePath='.'):
         try:
-            if path[:7] == 'http://':
-                wsdl = WSDLReader().loadFromURL(path)
+            if serviceLoc[:7] == 'http://':
+                wsdl = WSDLReader().loadFromURL(serviceLoc)
             else:
-                wsdl = WSDLReader().loadFromFile(path)
+                wsdl = WSDLReader().loadFromFile(serviceLoc)
         except TimeoutError:
             print "connection timed out"
             sys.stdout.flush()

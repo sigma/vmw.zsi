@@ -76,9 +76,16 @@ class ZipCodeResolverTest(unittest.TestCase):
 def makeTestSuite():
     global service, portType, testdiff
 
-    service, portType = utils.testSetUp(ZipCodeResolverTest,
-                                  'ZipCodeResolver', 'ZipCodeResolverSoap')
     testdiff = None
+    kw = {}
+    setUp = utils.TestSetUp()
+    serviceLoc = setUp.getOption('config.txt', 'complex_types', 'ZipCodeResolver')
+    useTracefile = setUp.getOption('config.txt', 'configuration', 'tracefile') 
+    if useTracefile == '1':
+        kw['tracefile'] = sys.stdout
+    service, portType = setUp.setService(ZipCodeResolverTest, serviceLoc,
+                                  'ZipCodeResolver', 'ZipCodeResolverSoap',
+                                  **kw)
     suite = unittest.TestSuite()
     if service:
         suite.addTest(unittest.makeSuite(ZipCodeResolverTest, 'test_'))

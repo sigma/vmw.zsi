@@ -230,7 +230,14 @@ def makeTestSuite():
     global service, portType, testdiff
 
     testdiff = None
-    service, portType = utils.testSetUp(TerraServiceSoapTest, 'TerraService', 'TerraServiceSoap')
+    kw = {}
+    setUp = utils.TestSetUp()
+    serviceLoc = setUp.getOption('config.txt', 'complex_types', 'TerraService')
+    useTracefile = setUp.getOption('config.txt', 'configuration', 'tracefile') 
+    if useTracefile == '1':
+        kw['tracefile'] = sys.stdout
+    service, portType = setUp.setService(TerraServiceSoapTest, serviceLoc,
+                             'TerraService', 'TerraServiceSoap', **kw)
     suite = unittest.TestSuite()
     if service:
         suite.addTest(unittest.makeSuite(TerraServiceSoapTest, 'test_'))

@@ -54,9 +54,17 @@ class SBGAirFareQuoteTest(unittest.TestCase):
 def makeTestSuite():
     global service, portType, testdiff
 
-    service, portType = utils.testSetUp(SBGAirFareQuoteTest,
-                           'SBGGetAirFareQuoteService', 'SBGGetAirFareQuote')
     testdiff = None
+    kw = {}
+    setUp = utils.TestSetUp()
+    serviceLoc = setUp.getOption('config.txt', 'complex_types',
+                                 'SBGGetAirFareQuoteService')
+    useTracefile = setUp.getOption('config.txt', 'configuration', 'tracefile') 
+    if useTracefile == '1':
+        kw['tracefile'] = sys.stdout
+    service, portType = setUp.setService(SBGAirFareQuoteTest, serviceLoc,
+                           'SBGGetAirFareQuoteService', 'SBGGetAirFareQuote',
+                           **kw)
     suite = unittest.TestSuite()
     if service:
         suite.addTest(unittest.makeSuite(SBGAirFareQuoteTest, 'test_'))

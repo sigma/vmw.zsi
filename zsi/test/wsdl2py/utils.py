@@ -88,26 +88,40 @@ def setUpWsdl(path):
     return wsdl
 
 
-def testSetUp(testcase, serviceName, portTypeName,
-              configFileName='config.txt', section='complex_types', **kw):
+class TestSetUp:
 
-    if not hasattr(testcase, 'service'):
-        serviceModule = ClientGenerator().getModule(configFileName, section,
-                                                    serviceName, 'stubs')
-    else:
-        serviceModule = testcase.service
+    def __init__(self):
+        self.cp = None
 
-    if not serviceModule:
-        return None, None
+    def getOption(self, configFileName, section, option):
+        if not self.cp:
+            self.cp = ConfigParser.ConfigParser()
+            self.cp.read(configFileName)
 
-    try:
-        locator = serviceModule.__dict__[portTypeName + 'HLocator']
-    except KeyError:
-        print 'Test requires helper interface generation'
-        return None, None
+        if self.cp.has_option(section, option):
+            return self.cp.get(section, option)
+        else:
+            return None
 
-    portType = locator().getPortType(portTypeName, **kw)
-    return serviceModule, portType
+
+    def setService(self, testcase, serviceLoc, serviceName, portTypeName, **kw):
+        if not hasattr(testcase, 'service'):
+            serviceModule = ClientGenerator().getModule(serviceName, serviceLoc,
+                                                        'stubs')
+        else:
+            serviceModule = testcase.service
+
+        if not serviceModule:
+            return None, None
+
+        try:
+            locator = serviceModule.__dict__[portTypeName + 'HLocator']
+        except KeyError:
+            print 'Test requires helper interface generation'
+            return None, None
+
+        portType = locator().getPortType(portTypeName, **kw)
+        return serviceModule, portType
 
 
 
