@@ -79,6 +79,8 @@
 ################################################################################
 """
 
+from __future__ import nested_scopes
+
 import xml.sax
 import UserList
 import base64
@@ -3798,6 +3800,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return self.__last_date_time_string
 
     def do_POST(self):
+        status = 500
         try:
             if self.server.config.dumpHeadersIn:
                 s = 'Incoming HTTP headers'
