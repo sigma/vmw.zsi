@@ -96,7 +96,7 @@ def main():
     schemaOnly = args_d['schemaOnly']
 
     if schemaOnly:
-        reader = XMLSchema.SchemaReader()
+        reader = XMLSchema.SchemaReader(base_url=args_d['wsdl'])
     else:
         reader = WSDLTools.WSDLReader()
 
