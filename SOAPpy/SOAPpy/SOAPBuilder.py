@@ -547,9 +547,10 @@ class SOAPBuilder:
             keylist = obj.__dict__.keys()
 
             # first write out items with order information
-            for i in range(len(obj._keyord)):
-                self.dump(obj._aslist(i), obj._keyord[i], 1, ns_map)
-                keylist.remove(obj._keyord[i])
+            if hasattr(obj, '_keyord'):
+                for i in range(len(obj._keyord)):
+                    self.dump(obj._aslist(i), obj._keyord[i], 1, ns_map)
+                    keylist.remove(obj._keyord[i])
 
             # now write out the rest
             for k in keylist:

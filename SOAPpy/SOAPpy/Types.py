@@ -53,9 +53,16 @@ from NS        import NS
 from Utilities import encodeHexString, cleanDate
 from Config    import Config
 
-################################################################################
+###############################################################################
+# Utility functions
+###############################################################################
+
+def isPrivate(name): return name[0]=='_'
+def isPublic(name):  return name[0]!='_'
+
+###############################################################################
 # Types and Wrappers
-################################################################################
+###############################################################################
 
 class anyType:
     _validURIs = (NS.XSD, NS.XSD2, NS.XSD3, NS.ENC)
@@ -170,7 +177,7 @@ class anyType:
         return self.__class__.__name__[:-4]
 
     def _validNamespaceURI(self, URI, strict):
-        if not self._typed:
+        if not hasattr(self, '_typed') or not self._typed:
             return None
         if URI in self._validURIs:
             return URI
@@ -1259,8 +1266,16 @@ class compoundType(anyType):
         else:
             retval = {}
             def fun(x): retval[x.encode(encoding)] = self.__dict__[x]
-            
-            map( fun, self._keyord) 
+
+            if hasattr(self, '_keyord'):
+                map( fun, self._keyord)
+            else:
+                for name in dir(self):
+                    if isPublic(name):
+                        retval[name] = getattr(self,name)
+                        print "YES:",name
+                    else:
+                        print "NO:",name
             return retval
 
  
@@ -1585,9 +1600,6 @@ class SOAPException(Exception):
 #######
 # Convert complex SOAPpy objects to native python equivalents
 #######
-
-def isPrivate(name): return name[0]=='_'
-def isPublic(name):  return name[0]!='_'
 
 def simplify(object, level=0):
     """
