@@ -10,7 +10,7 @@ from SOAPpy import *
 #Config.debug = 1
 #Config.dumpHeadersIn = 1
 #Config.dumpSOAPIn = 1
-Config.dumpSOAPOut = 1
+#Config.dumpSOAPOut = 1
 
 # ask for returned SOAP responses to be converted to basic python types
 Config.simplify_objects = 1
