@@ -5,6 +5,7 @@
 ###########################################################################
 import sys, re
 from xml.dom.ext import SplitQName
+from xml.ns import SOAP, SCHEMA
 import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.wsdlInterface import ZSIWsdlAdapter, ZSISchemaAdapter
@@ -237,7 +238,9 @@ class WriteServiceModule:
             if self.tns_imported.has_key(ns):
                 raise WsdlGeneratorError,\
                       'suspect circular import of %s - not suported' % ns
-            self.tns_imported[ns] = 1
+            if ns not in SCHEMA.XSD_LIST and \
+               ns not in [SOAP.ENC]:
+                self.tns_imported[ns] = 1
             if self._wa.getSchemaDict().has_key(ns) and \
                    (not self.tns_wrote.has_key(ns)):
                 self.write_dependent_schema(self._wa.\
@@ -468,7 +471,7 @@ class ServiceDescription:
                                               use)
 
 
-                    if op.getOutput():
+                    if op.getOutput() and op.getOutput().getMessage():
 
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Send(None, None, request, soapaction="%s", **kw)' %(ID2, soapAction)
@@ -943,10 +946,10 @@ class SchemaDescription:
 
 
             elif not etp:
-                self.classdef = '\n\nclass %s(Struct):' % (tp.getName())
-                self.initdef  = '\n%sdef __init__(self, name=None):' % (ID1)
-                self.initdef += '\n%sStruct.__init__(self,(,),pname="%s",aname="_%s",inline=1)'\
-                                % (ID2,tp.getName(),tp.getName())
+                self.classdef = '\n\n%sclass %s(Struct):' % (ID1, tp.getName())
+                self.initdef  = '\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2)
+                self.initdef += '\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="_%s", inline=1)'\
+                                % (ID3,tp.getName(),tp.getName())
             else:
                 raise WsdlGeneratorError, 'Unknown type(%s) not handled ' \
                       % (etp.__class__)

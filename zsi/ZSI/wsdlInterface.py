@@ -964,8 +964,12 @@ class ZSIOutputAdapter(OutputInterface):
     def getMessage(self):
         """return message obj
         """
-        return ZSIMessageAdapter(self._ws,
-                                 self._ws.messages[self._output.message])
+        if self._output and \
+               hasattr(self._output, 'message'):
+            return ZSIMessageAdapter(self._ws,
+                                     self._ws.messages[self._output.message])
+        else:
+            return None
 
     def getExtensions(self):
         """return extensions
@@ -1130,6 +1134,10 @@ class ZSIExtensionFactory(ExtensionFactory):
                         ZSI.wstools.WSDLTools.HttpAddressBinding ):
             # not currently handled
             pass
+        elif isinstance(self._extObj,
+                        ZSI.wstools.WSDLTools.SoapHeaderBinding):
+            # not currently handled
+            pass
         elif isinstance( self._extObj, xml.dom.minidom.Element ):
             # XXX: wackyness in the xmlschema lib - blow it off
             pass
@@ -1270,6 +1278,8 @@ class ZSISchemaTypeAdapter(SchemaTypeInterface):
                     #ctype._def.attributes['xsd'] = tp.attributes['xsd']
                     return ctype
                 # otherwise...
+                if not tp.content:
+                    return None
                 for c in tp.content:
                     if c.isDefinition():
                         return self.__adapterWrap(c)
@@ -1545,6 +1555,8 @@ class ZSISchemaDeclarationAdapter(SchemaDeclarationInterface):
     class DefinitionContainer:
         def __init__(self):
             pass
+        def getTargetNamespace(self):
+            return self.tns
 
     def __adapterWrap(self, tp):
         if isinstance( tp, ZSI.wstools.XMLSchema.ComplexType ) or \
@@ -1619,6 +1631,7 @@ class ZSISchemaDeclarationAdapter(SchemaDeclarationInterface):
         if typ == None:
             d = ZSISchemaDeclarationAdapter.DefinitionContainer()
             d.attributes = self._dec.attributes
+            d.tns = self._dec.getTargetNamespace()
             return ZSISchemaDefinitionAdapter(d)
         else:
             return self.__adapterWrap( typ )
@@ -1687,21 +1700,29 @@ class ZSIDerivedTypesAdapter(DerivedTypesInterface):
         isDefined = None
 
         if hasattr(self._content, 'derivation'):
-            if self._content.derivation.attr_content[0].attributes.\
+            if self._content.derivation.attr_content and \
+                   self._content.derivation.attr_content[0].attributes.\
                    has_key('arrayType'):
                 t = self._content.derivation.attr_content[0].\
                     attributes['arrayType']
+            elif hasattr(self._content.derivation, 'content') and \
+                 hasattr(self._content.derivation.content, 'content') and \
+                 self._content.derivation.content.content:
+                t = self._content.derivation.content.content[0].\
+                    attributes['type'][1]
+            else:
+                raise WsdlInterfaceError, 'could not determine array type'
 
-                if t[0:3] == 'xsd':
-                    isDefined = False
-                    tns = 'http://www.w3.org/2001/XMLSchema'
-                    bti = BaseTypeInterpreter()
-                    atype = bti.get_typeclass( t[4:-2], tns )
-                else:
-                    isDefined = True
-                    ns, atype = SplitQName(t)
-                    atype = atype[:-2]
-                arrayinfo = ( t, atype, isDefined )
+            if t[0:3] == 'xsd':
+                isDefined = False
+                tns = 'http://www.w3.org/2001/XMLSchema'
+                bti = BaseTypeInterpreter()
+                atype = bti.get_typeclass( t[4:-2], tns )
+            else:
+                isDefined = True
+                ns, atype = SplitQName(t)
+                atype = atype[:-2]
+            arrayinfo = ( t, atype, isDefined )
 
         else:
             raise WsdlInterfaceError, 'has no derivation base'
