@@ -635,7 +635,7 @@ class ServiceDescription:
 			l += tp.typecode
 		    else:
 			raise WsdlGeneratorError, \
-                              'Missing attribute for <message name=%s><part name=%s>' % (message.getName(),p.getName())
+                              'Missing attribute for <message name=\"%s\"><part name=\"%s\">' % (message.getName(),p.getName())
 
 	    else:
                 # XXX: not very good wsdl - put warning message here
