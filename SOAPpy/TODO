@@ -1,5 +1,13 @@
 # $Id$
 
-- modify SOAPtest to include the other tests
-- create tests for all features, as well as for reported bugs.
+- figure out why parsing rules are brokent
+
+- generate a test harness that will run all of the test code.
+
+- create unit-tests for all features, as well as for reported bugs.
+
 - write better documentation (!!!)
+	- topics:  WSDL, Globus, Authentication, 
+	- general introduction article
+
+
