@@ -1,6 +1,18 @@
 $Id$
 
-SOAP.py
+VERSION 0.10.1
+--------------
+
+- Modified setup.py, Server.py, and Client.py to obtain SOAPpy version
+  number from a new file, version.py.
+
+- SOAP server/user-agent is now to 'SOAPpy' instead of 'SOAP.py'.
+
+- Added ident string containing CVS version to all files that were
+  lacking this.
+
+VERSION 0.10.0
+--------------
 
 CHANGES SINCE VERSION 0.9.9-pre5
 
@@ -90,6 +102,9 @@ CHANGES SINCE VERSION 0.9.8
 - Fixed a bug where lists included as parameters to SOAP method calls
   were being incorrectly named 'Results' even when another name was
   given.
+
+VERSION 0.9.8
+-------------
 
 CHANGES SINCE VERSION 0.9.7
 

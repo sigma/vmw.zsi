@@ -1,4 +1,13 @@
 
+Release 0.10.1 of SOAPpy has only minor changes
+
+1) Code now uses a single file to store version number
+
+2) Client and server now report 'SOAPpy' as the server/user-agent.
+
+3) All test scripts now use the local SOAPpy source instead of the
+   globally installed version.
+
 Release 0.10.0 of SOAPpy sports these enhancements:
 
 1) The new name handling mechanism has been enabled by default.  
