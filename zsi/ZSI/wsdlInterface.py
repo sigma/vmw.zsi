@@ -1863,8 +1863,6 @@ class ZSIElementReferenceAdapter(AdapterBase, ZSISchemaDeclarationAdapter):
         else:
             return 0
 
-    def getTargetNamespace(self):
-        return self._ref.getTargetNamespace()
 
 class ZSIModelGroupAdapter(AdapterBase, ModelGroupInterface):
     def isAll(self):
