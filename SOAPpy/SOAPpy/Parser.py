@@ -4,6 +4,7 @@ from Types     import *
 from NS        import NS
 from Utilities import *
 
+import string
 import fpconst
 import xml.sax
 from wstools.XMLname import fromXMLname
@@ -139,7 +140,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
         self.pushFrame(self.Frame(name[1], kind, attrs._attrs, rules))
 
-        self._data = '' # Start accumulating
+        self._data = [] # Start accumulating
 
     def pushFrame(self, frame):
         self._stack.append(frame)
@@ -197,7 +198,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             if href:
                 if href[0] != '#':
                     raise Error, "only do local hrefs right now"
-                if self._data != None and self._data.strip() != '':
+                if self._data != None and string.join(self._data, "").strip() != '':
                     raise Error, "hrefs can't have data"
 
                 href = href[1:]
@@ -248,7 +249,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
                 if null:
                     if len(cur) or \
-                        (self._data != None and self._data.strip() != ''):
+                        (self._data != None and string.join(self._data, "").strip() != ''):
                         raise Error, "nils can't have data"
 
                     data = None
@@ -281,11 +282,12 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
 # XXX What if rule != kind?
                 if callable(rule):
-                    data = rule(self._data)
+                    data = rule(string.join(self._data, ""))
                 elif type(rule) == DictType:
                     data = structType(name = (ns, name), attrs = attrs)
                 else:
-                    data = self.convertType(self._data, rule, attrs)
+                    data = self.convertType(string.join(self._data, ""),
+                                            rule, attrs)
 
                 break
 
@@ -309,7 +311,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
             if len(self._stack) == 3 and kind == None and \
                 len(cur) == 0 and \
-                (self._data == None or self._data.strip() == ''):
+                (self._data == None or string.join(self._data, "").strip() == ''):
                 data = structType(name = (ns, name), attrs = attrs)
                 break
 
@@ -334,14 +336,18 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
                 if kind != None:
                     try:
-                        data = self.convertType(self._data, kind, attrs)
+                        data = self.convertType(string.join(self._data, ""),
+                                                kind, attrs)
                     except UnknownTypeError:
                         data = None
                 else:
                     data = None
 
                 if data == None:
-                    data = self._data or ''
+                    if self._data == None:
+                        data = ''
+                    else:
+                        data = string.join(self._data, "")
 
                     if len(attrs) == 0:
                         try: data = str(data)
@@ -401,7 +407,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
     def characters(self, c):
         if self._data != None:
-            self._data += c
+            self._data.append(c)
 
     arrayre = '^(?:(?P<ns>[^:]*):)?' \
         '(?P<type>[^[]+)' \
