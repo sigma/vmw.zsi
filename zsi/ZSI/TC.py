@@ -265,18 +265,34 @@ class Any(TypeCode):
         if hasattr(pyobj, 'typecode'):
             pyobj.typecode.serialize(sw, pyobj, **kw)
             return
-        n = name or self.oname or 'E%x' % id(pyobj)
+
+        if hasattr(self, 'rpc'):
+            default = self.rpc
+        else:
+            default = 'E%x' % id(pyobj)
+            
+        n = name or self.oname or default
         kw['name'] = n
         tc = type(pyobj)
         if tc == types.DictType or self.aslist:
-            print >>sw, '<%s>' % n
+            if hasattr(self, 'rpc'):
+                print >>sw, '<%s>' % self.rpc
+            else:
+                if type(pyobj[0]) != types.InstanceType:
+                    print >>sw, '<%s>' % n
+
             if self.aslist:
                 for val in pyobj:
                     Any().serialize(sw, val)
             else:
                 for key,val in pyobj.items():
                     Any(pname=key).serialize(sw, val)
-            print >>sw, '</%s>' % n
+
+            if hasattr(self, 'rpc'):
+                print >>sw, '</%s>' % self.rpc
+            else:
+                if type(pyobj[0]) != types.InstanceType:
+                    print >>sw, '</%s>' % n
             return
         if tc in _seqtypes:
             if kw.get('typed', self.typed):
