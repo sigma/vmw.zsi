@@ -4,7 +4,7 @@
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
 from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
-    FaultFromFaultMessage, _child_elements, _attrs
+    FaultFromFaultMessage, _child_elements, _attrs, Path
 from ZSI.auth import AUTH
 import base64, httplib, cStringIO as StringIO, types, time
 
@@ -271,29 +271,31 @@ class Binding:
                         if type.find('element') >= 0:
                             node = _child_elements(node)[0]
                             type = node.localName
-                        try:
-                            # yes this is duplicated code and needs clean-up
-                            import ComplexTypes
-                            clazz = getattr(ComplexTypes, type)
-                            instance = clazz.typecode.parse(node, self.ps)
-                            toReturn.append(instance)
-                        except Exception, e:
-                            toReturn.append(tc.parse(node, self.ps))
+
+                        toReturn.append(self.__parse(node, type))
                     return toReturn
-            
+
+            # parse a complex or primitive type and return it
             type = data[0].localName
-            try:
-                import ComplexTypes
-                instance = getattr(ComplexTypes, type)
-                return instance.typecode.parse(data[0], self.ps)
-            except Exception, e:
-                return tc.parse(data[0], self.ps)
+            return self.__parse(data[0], type)
         elif hasattr(replytype, 'typecode'):
             tc = replytype.typecode
         else:
             tc = replytype
         return self.ps.Parse(tc)
 
+    def __parse(self, node, type):
+        try:
+            for m in Path:
+                if hasattr(m, type):
+                    clazz = eval('m.%s' % type)
+                    tc = clazz.typecode
+                    instance = tc.parse(node, self.ps)
+                    return instance
+        except Exception, e:
+            tc = TC.Any(aslist=1)
+            return tc.parse(node, self.ps)
+        
     def __repr__(self):
         return "<%s instance at 0x%x>" % (self.__class__.__name__, id(self))
 
