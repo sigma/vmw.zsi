@@ -261,24 +261,19 @@ class Any(TypeCode):
                     ps.Backtrace(elt))
         return parser.parse(elt, ps)
 
-    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', rpc=None, **kw):
         if hasattr(pyobj, 'typecode'):
             pyobj.typecode.serialize(sw, pyobj, **kw)
             return
 
-        if hasattr(self, 'rpc'):
-            default = self.rpc
-        else:
-            default = 'E%x' % id(pyobj)
-            
-        n = name or self.oname or default
+        n = name or self.oname or rpc or 'E%x' % id(pyobj)
         kw['name'] = n
         tc = type(pyobj)
         if tc == types.DictType or self.aslist:
-            if hasattr(self, 'rpc'):
-                print >>sw, '<%s>' % self.rpc
+            if rpc != None:
+                print >>sw, '<%s>' % rpc
             else:
-                if type(pyobj[0]) != types.InstanceType:
+                if type(pyobj) != types.InstanceType:
                     print >>sw, '<%s>' % n
 
             if self.aslist:
@@ -288,10 +283,10 @@ class Any(TypeCode):
                 for key,val in pyobj.items():
                     Any(pname=key).serialize(sw, val)
 
-            if hasattr(self, 'rpc'):
-                print >>sw, '</%s>' % self.rpc
+            if rpc != None:
+                print >>sw, '</%s>' % rpc
             else:
-                if type(pyobj[0]) != types.InstanceType:
+                if type(pyobj) != types.InstanceType:
                     print >>sw, '</%s>' % n
             return
         if tc in _seqtypes:
