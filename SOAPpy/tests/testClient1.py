@@ -54,7 +54,7 @@ class ClientTestCase(unittest.TestCase):
         '''This is run once after each unit test.'''
 
         self.server.kill()
-        time.sleep(2)
+        time.sleep(5)
 
     def testEcho(self):
         '''Test echo function.'''
@@ -65,7 +65,7 @@ class ClientTestCase(unittest.TestCase):
 
 
     def testNoLeak(self):
-        '''No memory leak.'''
+        '''Test for memory leak.'''
 
         gc.set_debug(gc.DEBUG_SAVEALL)
         for i in range(400):

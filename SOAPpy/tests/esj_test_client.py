@@ -7,7 +7,7 @@ import syslog, sys
 sys.path.insert (1, '..')
 import SOAPpy
 
-SOAPpy.Config.unwrap_results=0
+SOAPpy.Config.unwrap_results=1
  
 ##     def test_integer(self,pass_integer):
 ##     def test_string(self,pass_string):
@@ -15,8 +15,6 @@ SOAPpy.Config.unwrap_results=0
 ##     def test_tuple(self,pass_tuple):
 ##     def test_list(self,pass_list):
 ##     def test_dictionary(self,pass_dictionary):
-
-
 
 if __name__ == "__main__":
 
@@ -38,17 +36,11 @@ if __name__ == "__main__":
     print "result_float %s" % result_float
     
     original_tuple = (1,2,"three","four",5)
-    simplified_tuple = SOAPpy.Types.simplify(original_tuple)
-    #result_tuple = server.test_tuple(original_tuple)
-
     result_tuple = server.test_tuple(original_tuple)
 
-    print "original_tuple %s" % (str(original_tuple))
-    print "result_tuple %s" % (str(result_tuple))
+    print "original_tuple %s" % str(original_tuple)
+    print "result_tuple %s" % str(result_tuple)
 
-    print dir(result_tuple)
-    print result_tuple.data
-    
     original_list = [5,4,"three",2,1]
     result_list = server.test_list(original_list)
     print "original_list %s" % original_list

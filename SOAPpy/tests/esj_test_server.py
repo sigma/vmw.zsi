@@ -7,8 +7,6 @@ import syslog, sys
 sys.path.insert (1, '..')
 import SOAPpy
 
-SOAPpy.Config.unwrap_results=1
-
 class test_service:
     def test_integer(self,pass_integer):
         print type(pass_integer)
@@ -23,26 +21,20 @@ class test_service:
         return pass_float
 
     def test_tuple(self,pass_tuple):
-        return_tuple = SOAPpy.Types.simplify(pass_tuple)
-        print type(return_tuple)
-        return return_tuple
+        print type(pass_tuple), pass_tuple
+        return pass_tuple
 
     def test_list(self,pass_list):
-        print type(pass_list)
+        print type(pass_list), pass_list
         return pass_list
 
     def test_dictionary(self,pass_dictionary):
-        print type(pass_dictionary)
+        print type(pass_dictionary), pass_dictionary
         return pass_dictionary
 
 
-
-
-
-    
-                   
-                 
 server = SOAPpy.SOAPServer(("localhost",9999))
+SOAPpy.Config.unwrap_results=1
 
 access_object = test_service()
 server.registerObject(access_object)

@@ -4,8 +4,26 @@ This file contains various python scripts for testing SOAPpy.
 
 They all work without generating errors EXCEPT:
 
-- SOAPtest.py  	  Fails the 'testArray' test because I 'referenced' elements are included in the return object.  All other tests pass.
-- TCtest.py       All tests fail because something is currently wrong with the parse rules support.  
-- storageTest.py  Fails because the hard-coded user/password combination is no longer valid.
+- SOAPtest.py  
+
+    Fails the 'testArray' test because 'referenced' elements are
+    included in the return object.  All other tests pass.
+
+- TCtest.py
+
+    All tests fail because something is currently wrong with the
+    parse rules support.
+
+- storageTest.py
+
+    Fails because the hard-coded user/password combination is no
+    longer valid.
+
+- translateTest.py 
+
+    Fails (gracefully) with a message that the service is no longer
+    available.
+
+
 
 GRW 2003-12-18
