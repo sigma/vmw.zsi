@@ -34,10 +34,6 @@ section is not written to the results file.  Instead, the output
 is printed out.  In that case it may be useful to redirect the
 output to a file, since the output may be lengthy.
 
-Some remote method calls, particularly test_SBGGetAirFareQuote
-in SBGAirFareQuoteTest may take awhile to return.
-
-
 -----------------------------------------------
 
 Description of what modules test:
@@ -97,21 +93,6 @@ searchByCode, searchByName, searchByRegion
     request:  request containing only primitive type
     response:  SOAP-ENC array containing defined type, which
               contains primitives, setting of nillable
-
-
-***********************************************
-
-test module:  test_SBGGetAirFareQuote.py
-binding:  rpc/encoded
-
-getAirFareQuote
-  request:  complex type containing primitives
-  response:  SOAP-ENC array containing sequence used as struct,
-             sequence includes dateTime primitive
-
-getAirlines
-  request:  empty request
-  response:  SOAP-ENC array containing primitive
 
 
 ***********************************************
@@ -224,6 +205,19 @@ GetTileMetaFromTileId:
 
 
 ***********************************************
+
+test module:  test_threatService.py
+binding:  rpc/encoded
+
+threatLevel
+
+  request:  empty request
+  response:  local element
+
+
+
+***********************************************
+
 
 test module:  test_XMethodsQuery.py
 binding:  rpc/encoded
