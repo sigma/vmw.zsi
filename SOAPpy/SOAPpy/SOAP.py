@@ -3568,7 +3568,7 @@ class SOAPProxy:
         
 
     def invoke(self, method, args):
-        self.__call(method, args, {})
+        return self.__call(method, args, {})
         
     def __call(self, name, args, kw, ns = None, sa = None, hd = None,
         ma = None):
