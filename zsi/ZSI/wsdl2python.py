@@ -1111,7 +1111,7 @@ class SchemaDescription:
                 typecodelist += self._complexTypeAllOrSequence(tp, mg)
                 
             elif mg.isChoice():
-                typecodelist += self._ComplexTypeChoice(tp, mg)
+                typecodelist += self._complexTypeChoice(tp, mg)
                     
             else:
                 # if we get here, we hit a "void" model group.  ie:
@@ -1324,7 +1324,7 @@ class SchemaDescription:
 
             typecodelist = 'ZSI.TCcompound.Choice(['
 		    
-            for e in mg.getContents():
+            for e in mg.getContent():
                         
                 if e.isDeclaration() and e.isElement():
                             
@@ -1370,7 +1370,7 @@ class SchemaDescription:
             else:
                     pass
 
-            return typecode
+            return typecodelist
 
         def _complexTypecodeLogic( self, typecodelist ):
 
