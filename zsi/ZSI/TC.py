@@ -145,7 +145,9 @@ class TypeCode:
 
         # Parse the QNAME.
         list = type.split(':')
-        if len(list) != 2:
+        if len(list) == 1:
+            list = [None,list[0]]
+        elif len(list) != 2:
             raise EvaluateException('Malformed type attribute (not two colons)',
                     ps.Backtrace(elt))
         uri = ps.GetElementNSdict(elt).get(list[0])
