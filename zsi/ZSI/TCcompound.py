@@ -150,7 +150,7 @@ class Struct(TypeCode):
 
     def serialize(self, sw, pyobj, inline=None, name=None, attrtext='', **kw):
         if inline or self.inline:
-            self.cb(sw, pyobj, **kw)
+            self.cb(sw, pyobj, name=name, **kw)
         else:
             objid = '%x' % id(pyobj)
             n = name or self.oname or ('E' + objid)
