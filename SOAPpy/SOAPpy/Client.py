@@ -144,10 +144,8 @@ class HTTPTransport:
             real_path = addr.path
 
         if addr.proto == 'httpg':
-            from pyGlobus.io import CHANNEL_MODE, DELEGATION_MODE, GSIHTTP
-            CHANNEL_MODE = 1
-            DELEGATION_MODE = 1
-            r = GSIHTTP(real_addr)
+            from pyGlobus.io import GSIHTTP
+            r = GSIHTTP(real_addr, tcpAttr = config.tcpAttr)
         elif addr.proto == 'https':
             r = httplib.HTTPS(real_addr)
         else:
@@ -339,11 +337,46 @@ class SOAPProxy:
             header = hd, methodattrs = ma, encoding = self.encoding,
             config = self.config, noroot = self.noroot)
 
+
+        call_retry = 0
+        try:
+
         r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
                                                 encoding = self.encoding,
                                                 http_proxy = self.http_proxy,
                                                 config = self.config)
 
+        except Exception, ex:
+            #
+            # Call failed.
+            #
+            # See if we have a fault handling vector installed in our
+            # config. If we do, invoke it. If it returns a true value,
+            # retry the call. 
+            #
+            # In any circumstance other than the fault handler returning
+            # true, reraise the exception. This keeps the semantics of this
+            # code the same as without the faultHandler code.
+            #
+
+            if hasattr(self.config, "faultHandler"):
+                if callable(self.config.faultHandler):
+                    call_retry = self.config.faultHandler(self.proxy, ex)
+                    if not call_retry:
+                        raise
+                else:
+                    raise
+            else:
+                raise
+
+        if call_retry:
+            r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
+                                                    encoding = self.encoding,
+                                                    http_proxy = self.http_proxy,
+                                                    config = self.config)
+            
+
+        print r
         p, attrs = parseSOAPRPC(r, attrs = 1)
 
         try:
