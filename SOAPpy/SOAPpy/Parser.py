@@ -913,6 +913,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
         raise UnknownTypeError, "unknown type `%s'" % (t[0] + ':' + t[1])
 
+
 ################################################################################
 # call to SOAPParser that keeps all of the info
 ################################################################################
@@ -953,9 +954,10 @@ def parseSOAP(xml_str, attrs = 0):
     return t.body
 
 
-def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None):
+def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None,
+                 config=Config):
     t = _parseSOAP(xml_str, rules = rules)
-    p = t.body._aslist[0]
+    p = t.body[0]
 
     # Empty string, for RPC this translates into a void
     if type(p) in (type(''), type(u'')) and p in ('', u''):
@@ -964,6 +966,19 @@ def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None):
             if k[0] != "_":
                 name = k
         p = structType(name)
+
+    if config.unwrap_results:
+
+        # Unwrap named and unnamed parameters, but not private 
+        # attributes
+        for i in p._keys():
+            if i[0] != "_":
+                if type(p)==dict:
+                    tmp = simplify(p[i])
+                    p[i] = tmp
+                else:
+                    tmp = simplify(getattr(p, i))
+                    setattr(p,i,tmp)
 
     if header or body or attrs:
         ret = (p,)
