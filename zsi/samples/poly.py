@@ -9,10 +9,10 @@ Based on code and text from Dan Gunter <dkgunter@lbl.gov>.
 The TC.Choice typecode can be used to create a polymorphic type for
 a specified set of object types.  Here's how:
     1.  Define all your data classes (D1, D2, ...). If they derive from
-	a common base class (Base), some feel you get "cleaner" code.
+        a common base class (Base), some feel you get "cleaner" code.
     2.  Create a typecode class (TC_D1, TC_D2, ...) for each data class.
     3.  Create a "base" typecode that uses TC.Choice to do the actual
-	parsing and serializing.  Two versions are shown, below.
+        parsing and serializing.  Two versions are shown, below.
 Then you can instantiate, e.g., an Array that can handle multiple
 datatypes with: 
     TC.Array("base-class-name", TC_Base(), "MyArray") 
@@ -35,8 +35,8 @@ class TC_Base(TC.TypeCode):
         return self.choice.parse(elt, ps)[1]
 
     def serialize(self, sw, pyobj, **kw):
-	if not isinstance(pyobj, Base):
-	    raise TypeError(str(pyobj.__class__) + " not in type hierarchy")
+        if not isinstance(pyobj, Base):
+            raise TypeError(str(pyobj.__class__) + " not in type hierarchy")
         if isinstance(pyobj, D1):
             self.choice.serialize(sw, ('D1', pyobj), **kw)
         elif isinstance(pyobj, D2):
@@ -46,40 +46,40 @@ class TC_Base(TC.TypeCode):
         return
 
     def __getattr__(self, attr):
-	if attr == 'choice':
-	    choice = TC.Choice((D1.typecode, D2.typecode), 'Item')
-	    self.__dict__['choice'] = choice
-	    return choice
-	raise AttributeError(attr)
+        if attr == 'choice':
+            choice = TC.Choice((D1.typecode, D2.typecode), 'Item')
+            self.__dict__['choice'] = choice
+            return choice
+        raise AttributeError(attr)
 
 ## Another version that takes a dictionary that maps element names to
 ## the python class.
 
 class TC_Polymorphic(TC.TypeCode):
     def __init__(self, name2class, pname=None, **kw):
-	TC.TypeCode.__init__(self, pname, **kw)
-	self.name2class = name2class
+        TC.TypeCode.__init__(self, pname, **kw)
+        self.name2class = name2class
 
     def parse(self, elt, ps):
         return self.choice.parse(elt, ps)[1]
 
     def serialize(self, sw, pyobj, **kw):
-	self.choice.serialize(sw,
-	    (self.class2name[pyobj.__class__], pyobj), **kw)
+        self.choice.serialize(sw,
+            (self.class2name[pyobj.__class__], pyobj), **kw)
 
     def __getattr__(self, attr):
-	if attr == 'choice':
-	    choice = TC.Choice(
-		[getattr(v, 'typecode') for k,v in self.name2class.items()],
-		'Item')
-	    self.__dict__['choice'] = choice
-	    return choice
-	if attr == 'class2name':
-	    class2name = {}
-	    for k,v in self.name2class.items(): class2name[v] = k
-	    self.__dict__['class2name'] = class2name
-	    return class2name
-	raise AttributeError(attr)
+        if attr == 'choice':
+            choice = TC.Choice(
+                [getattr(v, 'typecode') for k,v in self.name2class.items()],
+                'Item')
+            self.__dict__['choice'] = choice
+            return choice
+        if attr == 'class2name':
+            class2name = {}
+            for k,v in self.name2class.items(): class2name[v] = k
+            self.__dict__['class2name'] = class2name
+            return class2name
+        raise AttributeError(attr)
 
 class P1: pass
 class P2: pass
@@ -94,13 +94,13 @@ test = '''<SOAP-ENV:Envelope
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
     <SOAP-ENV:Body xmlns='test-uri'>
-	<array SOAP-ENC:arrayType="Base">
-	    <i>34</i>
-	    <s>hello</s>
-	    <s>34</s>
-	    <i>12</i>
-	    <s>goodbye</s>
-	</array>
+        <array SOAP-ENC:arrayType="Base">
+            <i>34</i>
+            <s>hello</s>
+            <s>34</s>
+            <i>12</i>
+            <s>goodbye</s>
+        </array>
     </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>'''
 

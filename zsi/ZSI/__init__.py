@@ -61,7 +61,7 @@ _stringtypes = [ _types.StringType, _types.UnicodeType ]
 _attrs = lambda E: (E.attributes and E.attributes.values()) or []
 _children = lambda E: E.childNodes or []
 _child_elements = lambda E: [ n for n in (E.childNodes or [])
-			if n.nodeType == _Node.ELEMENT_NODE ]
+                        if n.nodeType == _Node.ELEMENT_NODE ]
 
 _find_arraytype = lambda E: E.getAttributeNS(_SOAP.ENC, "arrayType")
 _find_encstyle = lambda E: E.getAttributeNS(_SOAP.ENV, "encodingStyle")
@@ -74,16 +74,16 @@ except:
     _empty_nsuri_list = [ None, '' ]
 def _find_attr(E, attr):
     for nsuri in _empty_nsuri_list:
-	try:
-	    v = E.getAttributeNS(nsuri, attr)
-	    if v: return v
-	except: pass
+        try:
+            v = E.getAttributeNS(nsuri, attr)
+            if v: return v
+        except: pass
     return None
 _find_href = lambda E: _find_attr(E, "href")
 _find_xsi_attr = lambda E, attr: \
-		E.getAttributeNS(_SCHEMA.XSI3, attr) \
-		or E.getAttributeNS(_SCHEMA.XSI1, attr) \
-		or E.getAttributeNS(_SCHEMA.XSI2, attr)
+                E.getAttributeNS(_SCHEMA.XSI3, attr) \
+                or E.getAttributeNS(_SCHEMA.XSI1, attr) \
+                or E.getAttributeNS(_SCHEMA.XSI2, attr)
 _find_type = lambda E: _find_xsi_attr(E, "type")
 
 _textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
@@ -95,12 +95,12 @@ def _valid_encoding(elt):
     enc = _find_encstyle(elt)
     if not enc or enc == _SOAP.ENC: return 1
     for e in enc.split():
-	if e.startswith(_SOAP.ENC):
-	    # XXX Is this correct?  Once we find a Sec5 compatible
-	    # XXX encoding, should we check that all the rest are from
-	    # XXX that same base?  Perhaps.  But since the if test above
-	    # XXX will surely get 99% of the cases, leave it for now.
-	    return 1
+        if e.startswith(_SOAP.ENC):
+            # XXX Is this correct?  Once we find a Sec5 compatible
+            # XXX encoding, should we check that all the rest are from
+            # XXX that same base?  Perhaps.  But since the if test above
+            # XXX will surely get 99% of the cases, leave it for now.
+            return 1
     return 0
 
 def _backtrace(elt, dom):
@@ -109,16 +109,16 @@ def _backtrace(elt, dom):
     '''
     s = ''
     while elt != dom:
-	name, parent = elt.nodeName, elt.parentNode
-	if parent == None: break
-	matches = [ c for c in _child_elements(parent) 
-			if c.nodeName == name ]
-	if len(matches) == 1:
-	    s = '/' + name + s
-	else:
-	    i = matches.index(elt) + 1
-	    s = ('/%s[%d]' % (name, i)) + s
-	elt = parent
+        name, parent = elt.nodeName, elt.parentNode
+        if parent == None: break
+        matches = [ c for c in _child_elements(parent) 
+                        if c.nodeName == name ]
+        if len(matches) == 1:
+            s = '/' + name + s
+        else:
+            i = matches.index(elt) + 1
+            s = ('/%s[%d]' % (name, i)) + s
+        elt = parent
     return s
 
 
@@ -129,18 +129,18 @@ class ParseException(Exception):
     '''
 
     def __init__(self, str, inheader, elt=None, dom=None):
-	Exception.__init__(self)
-	self.str, self.inheader, self.trace = str, inheader, None
-	if elt and dom:
-	    self.trace = _backtrace(elt, dom)
+        Exception.__init__(self)
+        self.str, self.inheader, self.trace = str, inheader, None
+        if elt and dom:
+            self.trace = _backtrace(elt, dom)
 
     def __str__(self):
-	if self.trace:
-	    return self.str + '\n[Element trace: ' + self.trace + ']'
-	return self.str
+        if self.trace:
+            return self.str + '\n[Element trace: ' + self.trace + ']'
+        return self.str
 
     def __repr__(self):
-	return "<%s.ParseException at 0x%x>" % (__name__, id(self))
+        return "<%s.ParseException at 0x%x>" % (__name__, id(self))
 
 
 class EvaluateException(Exception):
@@ -148,16 +148,16 @@ class EvaluateException(Exception):
     '''
 
     def __init__(self, str, trace=None):
-	Exception.__init__(self)
-	self.str, self.trace = str, trace
+        Exception.__init__(self)
+        self.str, self.trace = str, trace
 
     def __str__(self):
-	if self.trace:
-	    return self.str + '\n[Element trace: ' + self.trace + ']'
-	return self.str
+        if self.trace:
+            return self.str + '\n[Element trace: ' + self.trace + ']'
+        return self.str
 
     def __repr__(self):
-	return "<%s.EvaluateException at 0x%x>" % (__name__, id(self))
+        return "<%s.EvaluateException at 0x%x>" % (__name__, id(self))
 
 
 ##

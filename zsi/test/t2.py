@@ -13,10 +13,10 @@ IN='''<SOAP-ENV:Envelope
 <SOAP-ENV:Body>
 <GetAverage>
     <Scores SOAP-ENC:arrayType="xsd:integer">
-	<i>84</i>
-	<xxi>101</xxi>
-	<foi>200</foi>
-	<izzz>4</izzz>
+        <i>84</i>
+        <xxi>101</xxi>
+        <foi>200</foi>
+        <izzz>4</izzz>
     </Scores>
     <Name>John Doe</Name>
 </GetAverage>

@@ -58,6 +58,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Binding replytype is optional; standards replytype not replyclass
     -	Document other tests to-do in interop/README
     -	Document ZSI typecode naming better.
+    -	Add 'docstyle' to AsServer
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!

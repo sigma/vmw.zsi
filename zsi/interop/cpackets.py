@@ -70,15 +70,15 @@ phalanx_badhref_test = '''<SOAP-ENV:Envelope xmlns:SOAP-ENV='http://schemas.xmls
 
 someones_b64_test = '''<S:Envelope
       S:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'
-	    xmlns:S='http://schemas.xmlsoap.org/soap/envelope/'
-		  xmlns:E='http://schemas.xmlsoap.org/soap/encoding/'
-			xmlns:a='http://soapinterop.org/'
-			      xmlns:b='http://www.w3.org/2001/XMLSchema-instance'>
-			      <S:Body>
-			      <a:echoBase64><inputBase64
-			      b:type='E:base64'>AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T1</inputBase64>
-			      </a:echoBase64>
-			      </S:Body></S:Envelope>'''
+            xmlns:S='http://schemas.xmlsoap.org/soap/envelope/'
+                  xmlns:E='http://schemas.xmlsoap.org/soap/encoding/'
+                        xmlns:a='http://soapinterop.org/'
+                              xmlns:b='http://www.w3.org/2001/XMLSchema-instance'>
+                              <S:Body>
+                              <a:echoBase64><inputBase64
+                              b:type='E:base64'>AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T1</inputBase64>
+                              </a:echoBase64>
+                              </S:Body></S:Envelope>'''
 
 phalanx_void_test = '''<SOAP-ENV:Envelope
  xmlns="http://www.example.com/schemas/TEST"
@@ -185,8 +185,8 @@ apache_float_test = '''<?xml version="1.0" encoding="UTF-8"?>
  <SOAP-ENV:Body>
    <ns1:echoFloat xmlns:ns1="http://soapinterop.org/">
       <inputFloat xsi:type="xsd:float">3.7</inputFloat>
-	</ns1:echoFloat>
-	 </SOAP-ENV:Body>
+        </ns1:echoFloat>
+         </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>'''
 
 testlist = (
@@ -197,7 +197,7 @@ testlist = (
     ( 'echovoid', phalanx_void_test, None),
     ( 'simple2struct', wm_simple_as_struct_test, None),
     ( 'multipart', multipart_test,
-	'Content-type: multipart/related; boundary="sep"\r\n' ),
+        'Content-type: multipart/related; boundary="sep"\r\n' ),
     ( 'int href test', phalanx_int_href_test, None),
     ( 'apache float', apache_float_test, None),
     ( 'bad href test', phalanx_badhref_test, None),

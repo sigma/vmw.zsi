@@ -38,11 +38,11 @@ of the copyright holder.
     schemaLocation="http://schemas.xmlsoap.org/soap/envelope/"/>
 
   <!--  Soap doesn't define a fault element to use when we want
-	to fault because of header problems. -->
+        to fault because of header problems. -->
   <element name="detail" type="SOAPFAULT:detail"/>
 
   <!--  A URIFaultDetail element typically reports an unknown
-	mustUnderstand element. -->
+        mustUnderstand element. -->
   <element name="URIFaultDetail" type="tns:URIFaultDetail"/>
   <complexType name="URIFaultDetail">
     <sequence>
@@ -53,7 +53,7 @@ of the copyright holder.
   </complexType>
 
   <!--  An ActorFaultDetail element typically reports an actor
-	attribute was found that cannot be processed. -->
+        attribute was found that cannot be processed. -->
   <element name="ActorFaultDetail" type="tns:ActorFaultDetail"/>
   <complexType name="ActorFaultDetail">
     <sequence>
@@ -63,12 +63,12 @@ of the copyright holder.
   </complexType>
 
   <!--  A ParseFaultDetail or a FaultDetail element are typically
-	used when there was parsing or "business-logic" errors.
-	The TracedFault type is intended to provide a human-readable
-	string that describes the error (in more detail then the
-	SOAP faultstring element, which is becoming codified),
-	and a human-readable "trace" (optional) that shows where
-	within the application that the fault happened. -->
+        used when there was parsing or "business-logic" errors.
+        The TracedFault type is intended to provide a human-readable
+        string that describes the error (in more detail then the
+        SOAP faultstring element, which is becoming codified),
+        and a human-readable "trace" (optional) that shows where
+        within the application that the fault happened. -->
   <element name="ParseFaultDetail" type="tns:TracedFault"/>
   <element name="FaultDetail" type="tns:TracedFault"/>
   <complexType name="TracedFault">

@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 intext='''Return-Path: <rsalz@zolera.com>
 Received: from zolera.com (os390.zolera.com [10.0.1.9])
-	by zolera.com (8.11.0/8.11.0) with ESMTP id f57I2sf00832
-	for <rsalz@zolera.com>; Thu, 7 Jun 2001 14:02:54 -0400
+        by zolera.com (8.11.0/8.11.0) with ESMTP id f57I2sf00832
+        for <rsalz@zolera.com>; Thu, 7 Jun 2001 14:02:54 -0400
 Sender: rsalz@zolera.com
 Message-ID: <3B1FC1D1.FF6B21B4@zolera.com>
 Date: Thu, 07 Jun 2001 14:02:57 -0400
@@ -46,7 +46,7 @@ Content-Disposition: inline;
 Digitial Signatures in a Web Services World
 
 An influential Forrestor report created the term inverted security: it's
-not about who you keep out, it's about who you let in.	Customer portals,
+not about who you keep out, it's about who you let in.  Customer portals,
 without a costly PKI deployment or application integration issues.
 
 --------------68E4BAC5B266315E42428C64
@@ -87,10 +87,10 @@ from xml.dom.ext.reader import PyExpat
 OUT = sys.stdout
 
 typecode = TC.Struct(None, [
-		TC.String('b64'),
-		TC.String('stringtest'),
-		TC.XML('xmltest'),
-	    ])
+                TC.String('b64'),
+                TC.String('stringtest'),
+                TC.XML('xmltest'),
+            ])
 
 try:
     istr = StringIO.StringIO(intext)

@@ -39,6 +39,6 @@ if  m.gettype()[0:10] == "multipart/":
     xml = cid.GetSOAPPart()
     print 'xml=', xml.getvalue()
     for h,b in cid.parts:
-	print h, b.read()
+        print h, b.read()
     dom = PyExpat.Reader().fromStream(xml)
     print dom

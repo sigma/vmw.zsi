@@ -16,31 +16,31 @@ def bar():
 results = []
 for key,val in tests.__dict__.items():
     try:
-	if key[0:4] == "test" and int(key[4:]) > 0: results.append((key,val))
+        if key[0:4] == "test" and int(key[4:]) > 0: results.append((key,val))
     except:
-	pass
+        pass
 results.sort(lambda a,b: cmp(a[0], b[0]))
 
 if 1:
     class zParseException: pass
     for key,val in results:
-	try:
-	    print "\n", "." * 60, key
-	    ps = ParsedSoap(val)
-	except ParseException, e:
-	    print "SOAP ParseException:", e
-	    f = FaultFromZSIException(e)
-	    print f.AsSOAP()
-	    print `e`
-	    continue
-	wmiu = ps.WhatMustIUnderstand()
-	if len(wmiu): print "mustUnderstand", len(wmiu), wmiu
-	actors = ps.WhatActorsArePresent()
-	if len(actors): print "actors", len(actors), actors
-	mine = ps.GetMyHeaderElements(['foobar', 'next'])
-	if len(mine):
-	    print "mine", len(mine), \
-		'[', ', '.join([m.nodeName for m in mine]), ']'
+        try:
+            print "\n", "." * 60, key
+            ps = ParsedSoap(val)
+        except ParseException, e:
+            print "SOAP ParseException:", e
+            f = FaultFromZSIException(e)
+            print f.AsSOAP()
+            print `e`
+            continue
+        wmiu = ps.WhatMustIUnderstand()
+        if len(wmiu): print "mustUnderstand", len(wmiu), wmiu
+        actors = ps.WhatActorsArePresent()
+        if len(actors): print "actors", len(actors), actors
+        mine = ps.GetMyHeaderElements(['foobar', 'next'])
+        if len(mine):
+            print "mine", len(mine), \
+                '[', ', '.join([m.nodeName for m in mine]), ']'
 
 datatest = '''<SOAP-ENV:Envelope
   xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
@@ -52,39 +52,39 @@ datatest = '''<SOAP-ENV:Envelope
   <t:sometag SOAP-ENV:mustUnderstand="1">you must grok sometag</t:sometag>
   </SOAP-ENV:Header>
     <SOAP-ENV:Body xmlns='test-uri'>
-	<root SOAP-ENC:root='1'/>
-	<Price xsi:type='xsd:integer'>34</Price>	<!-- 0 -->
-	<SOAP-ENC:byte>44</SOAP-ENC:byte>	<!-- 1 -->
-	<Name>This is the name</Name>	<!-- 2 -->
-	<n2><xmldoc><![CDATA[<greeting>Hello</greeting>]]></xmldoc></n2> <!-- 3 -->
-	<n3 href='#zzz' xsi:type='SOAP-ENC:string'/>		<!-- 4 -->
-	<n64>a GVsbG8=</n64>		<!-- 5 -->
-	<SOAP-ENC:string>Red</SOAP-ENC:string>	<!-- 6 -->
-	<a2 href='#tri2'/>		<!-- 7 -->
-	<a2><i>12</i><t>rich salz</t></a2> <!-- 8 -->
-	<xsd:hexBinary>3F2041</xsd:hexBinary> <!-- 9 -->
-	<nullint xsi:nil='1'/> <!-- 10 -->
-	<Anytest><urt-i xsi:type='SOAP-ENC:byte'>12</urt-i>
-	<urt-t id="urtid"
-		xsi:type="xsd:string">rich salz</urt-t></Anytest> <!-- 11 -->
-	<uri>"http://foo.com/%7Esalz"</uri> <!-- 12 -->
-	<floattest>		<!-- 13 -->
-	    <a>6.9</a> <b>-0</b> <c>INF</c>
-	</floattest>
-	<atest SOAP-ENC:offset='[3]' SOAP-ENC:arrayType="x">	<!-- 14 -->
-	    <i>12</i>
-	    <SOAP-ENC:integer id='n13'>13</SOAP-ENC:integer>
-	    <i>14</i>
-	    <i>15</i>
-	    <i>16</i>
-	    <i>17</i>
-	</atest>
-	<sarray SOAP-ENC:arrayType="struct"> <!-- 15 -->
-	    <i href="#zzz" xsi:type='xsd:string'/>
-	    <i href="#urtid"/>
-	    <thing href="#n13"/>
-	</sarray>
-	<xpath>//sarray</xpath> <!-- 16 -->
+        <root SOAP-ENC:root='1'/>
+        <Price xsi:type='xsd:integer'>34</Price>        <!-- 0 -->
+        <SOAP-ENC:byte>44</SOAP-ENC:byte>       <!-- 1 -->
+        <Name>This is the name</Name>   <!-- 2 -->
+        <n2><xmldoc><![CDATA[<greeting>Hello</greeting>]]></xmldoc></n2> <!-- 3 -->
+        <n3 href='#zzz' xsi:type='SOAP-ENC:string'/>            <!-- 4 -->
+        <n64>a GVsbG8=</n64>            <!-- 5 -->
+        <SOAP-ENC:string>Red</SOAP-ENC:string>  <!-- 6 -->
+        <a2 href='#tri2'/>              <!-- 7 -->
+        <a2><i>12</i><t>rich salz</t></a2> <!-- 8 -->
+        <xsd:hexBinary>3F2041</xsd:hexBinary> <!-- 9 -->
+        <nullint xsi:nil='1'/> <!-- 10 -->
+        <Anytest><urt-i xsi:type='SOAP-ENC:byte'>12</urt-i>
+        <urt-t id="urtid"
+                xsi:type="xsd:string">rich salz</urt-t></Anytest> <!-- 11 -->
+        <uri>"http://foo.com/%7Esalz"</uri> <!-- 12 -->
+        <floattest>             <!-- 13 -->
+            <a>6.9</a> <b>-0</b> <c>INF</c>
+        </floattest>
+        <atest SOAP-ENC:offset='[3]' SOAP-ENC:arrayType="x">    <!-- 14 -->
+            <i>12</i>
+            <SOAP-ENC:integer id='n13'>13</SOAP-ENC:integer>
+            <i>14</i>
+            <i>15</i>
+            <i>16</i>
+            <i>17</i>
+        </atest>
+        <sarray SOAP-ENC:arrayType="struct"> <!-- 15 -->
+            <i href="#zzz" xsi:type='xsd:string'/>
+            <i href="#urtid"/>
+            <thing href="#n13"/>
+        </sarray>
+        <xpath>//sarray</xpath> <!-- 16 -->
   <z xmlns='myns' xsi:type='SOAP-ENC:string' id='zzz'>The value of n3</z>
   <zz xmlns='myns2' id='tri2'><inner
   xmlns='myns2' ><f1>content</f1><sec xmlns='myns2'
@@ -94,11 +94,11 @@ datatest = '''<SOAP-ENV:Envelope
 
 class myclass:
     def __init__(self, name):
-	self.name = name or id(self)
-	self.z = 'z value'
+        self.name = name or id(self)
+        self.z = 'z value'
     def __str__(self):
-	return 'myclass-%s-(%d,"%s")' % (self.name, self.i, self.t) + \
-		str(self.z)
+        return 'myclass-%s-(%d,"%s")' % (self.name, self.i, self.t) + \
+                str(self.z)
 
 from xml.dom.ext.c14n import Canonicalize
 ps = ParsedSoap(datatest)
@@ -162,7 +162,7 @@ print '=' * 60
 
 print TC.Array('x', TC.Any()).parse(elts[15], ps)
 print TC.Struct(None,
-	(TC.FPfloat('a'), TC.Decimal('b'), TC.FPdouble('c'))).parse(elts[13],ps)
+        (TC.FPfloat('a'), TC.Decimal('b'), TC.FPdouble('c'))).parse(elts[13],ps)
 if 1:
     import sys, time
     nsdict = ps.GetElementNSdict(ps.header)
@@ -195,12 +195,12 @@ if 1:
 
 if 0:
     try:
-	a = bar()
+        a = bar()
     except Exception, e:
-	f = FaultFromException(e, 0, sys.exc_info()[2])
-	print f.AsSOAP()
+        f = FaultFromException(e, 0, sys.exc_info()[2])
+        print f.AsSOAP()
     print \
-	FaultFromNotUnderstood('myuri', 'dalocalname', actor='cher').AsSOAP()
+        FaultFromNotUnderstood('myuri', 'dalocalname', actor='cher').AsSOAP()
     FaultFromActor('actor:i:dont:understand').AsSOAP(sys.stdout)
 
 sys.exit(0)

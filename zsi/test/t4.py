@@ -31,9 +31,9 @@ except Exception, e:
 
 print 'resolving'
 typecode = TC.Struct(None, [
-		TC.XML('xmltest'),
-		TC.String('stringtest', resolver=r.Opaque),
-	    ])
+                TC.XML('xmltest'),
+                TC.String('stringtest', resolver=r.Opaque),
+            ])
 try:
     dict = ps.Parse(typecode)
 #except EvaluateException, e:
