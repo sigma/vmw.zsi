@@ -3,7 +3,7 @@
 import sys
 from distutils.core import setup
 
-_url = "http://www.zolera.com/resources/opensrc/zsi"
+_url = "http://pywebsvcs.sf.net/"
 
 import ConfigParser
 cf = ConfigParser.ConfigParser()
