@@ -82,8 +82,15 @@ class Struct(TypeCode):
         c = _child_elements(elt)
         count = len(c)
         if self.nilled(elt, ps): return None
-        if count > len(self.ofwhat) and not self.hasextras:
-            raise EvaluateException('Too many sub-elements', ps.Backtrace(elt))
+        repeatable_args = False
+        for tc in self.ofwhat:
+            if tc.repeatable:
+                repeatable_args = True
+                break
+
+        if not repeatable_args:
+            if count > len(self.ofwhat) and not self.hasextras:
+                raise EvaluateException('Too many sub-elements', ps.Backtrace(elt))
 
         # Create the object.
         v = {}
