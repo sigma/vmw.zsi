@@ -4,10 +4,9 @@ Release 0.11.0 of SOAPpy
 
 - New/Changed configuration settings:
 
-  - Config.unwrap_results=1 now converts all SOAPpy objects into basic
-  Python types (list, dictionary, tuple, double, float, etc.).  This
-  includes converting faultTypes into raised exceptions.  By default,
-  Config.unwrap_results=0.
+  - Config.simplify_objects=1 now converts all SOAPpy objects into basic
+  Python types (list, dictionary, tuple, double, float, etc.).  By default,
+  Config.simplify_objects=0 for backward compatibility.
 
   - Config.dict_encoding='ascii' converts the keys of dictionaries
   (e.g. created when Config.unwrap_results=1) to ascii == plain python
@@ -17,7 +16,8 @@ Release 0.11.0 of SOAPpy
   - Config.strict_range=1 forces the SOAP parsing routines to perform
   range checks on recieved SOAP float and double objects.  When
   Config.strict_range=0, the default, parsing does not perform range
-  checking.  In either case, range checking is performed when
+  checking (except for detecting overflows, which always occurs).  In
+  either case, range checking is performed when
   generating SOAP float and double objects.
 
 - Fixes for WSDLProxy.
@@ -33,6 +33,8 @@ Release 0.11.0 of SOAPpy
 
   - New README file listing what test scripts fail and why.
 
+- Initial support for Globus via pyGlobus contributed by Ivan
+  R. Judson <judson@mcs.anl.gov>.
 
 Release 0.10.4 of SOAPpy 
 ------------------------
@@ -91,4 +93,340 @@ Enhancements:
    server so that multiple clients will be automatically multiplexed.
 
 
-See the changelog for a detailed list of changes from previous releases.
+VERSION 0.10.4
+--------------
+
+- Integrated a simple patch submitted by Erik Westra that dramatically
+  improves parser performance.
+
+- WSDL tools now uses m2crypto for SSL if it's installed.
+
+- Various other WSDL changes.
+
+VERSION 0.10.3
+--------------
+
+- Removed import of obsoleted ieee753.py.  Now use the fpconst module
+  proposed by PEP 754, available from 
+  <http://www.analytics.washington.edu/Zope/projects/fpconst/>
+
+- SOAPpy should no longer depend on pyXML.
+
+VERSION 0.10.2
+--------------
+
+- Fixed client support for basic authentication
+
+- Fixed import error in Client.py
+
+- Improved Client parsing of namespaces to support stateful SOAP servers.
+
+VERSION 0.10.1
+--------------
+
+- Modified setup.py, Server.py, and Client.py to obtain SOAPpy version
+  number from a new file, version.py.
+
+- SOAP server/user-agent is now to 'SOAPpy' instead of 'SOAP.py'.
+
+- Added ident string containing CVS version to all files that were
+  lacking this.
+
+VERSION 0.10.0
+--------------
+
+CHANGES SINCE VERSION 0.9.9-pre5
+
+- Major Change: The huge file SOAPpy/SOAP.py (4,122 lines, 131K) has
+  been split into 10 separate files: 
+	Client.py	NS.py		SOAPBuilder.py	Utilities.py
+	Config.py	Parser.py	Server.py	
+	Errors.py	SOAP.py		Types.py	
+  This should ease navigation and maintenance.
+
+- A new CVS module 'wstools' was created to hold code which is used by
+  both ZSI and SOAPpy.  While this module is stored separately in CVS,
+  it will be distributed as an integral part of both ZSI and SOAPpy,
+  and will be included as an 'internal' module by both.  In the SOAPpy
+  source, it lives in the directory SOAPpy/wstools.   
+
+- The files XMLname.py, ieee754.py, have been moved into SOAPpy/wstools.
+
+- Added TODO file
+
+- Fix bug in getNS that caused loss of namespace by using better
+  pattern matching to find the namespace in the SOAP message.  Fixes bug 
+  678239 
+
+- Added Mark Bucciarelli's <mark@hubcapconsulting.com> patch to
+  provide wsdl code on properly structured .GET requests to the server.
+
+- Added client support for WSDL, ported from ZSI by Mark Bucciarelli
+  <mark@hubcapconsulting.com>
+
+- Added ThreadingSOAPServer which inherits from ThreadingTCPServer
+  server so that muliple clients will be automatically multiplexed.
+
+- Removed some files from /test for services that no longer exist.
+
+
+CHANGES SINCE VERSION 0.9.9-pre4
+--------------------------------
+
+- Added client support for WSDL, ported from ZSI by Mark Bucciarelli
+  <mark@hubcapconsulting.com>.
+
+CHANGES SINCE VERSION 0.9.9-pre3
+--------------------------------
+
+- Code shared between SOAPpy and ZSI now lives in
+  SOAPpy/SOAPpy/wstools and is stored in a separate CVS package.  This
+  will allow ZSI and SOAPpy to keep these files synchronized.
+
+CHANGES SINCE VERSION 0.9.9-pre2
+--------------------------------
+
+- Fixed trivial compilation bug on Win32: Only define
+  SOAPUnixSocketServer if the Unix domain sockets are supported
+
+CHANGES SINCE VERSION 0.9.9-pre1
+--------------------------------
+
+- Added request for nested scopes, should now work properly in python
+  2.1 with named argument calls.
+
+- Fixed bug caused by omission of the ieee754 module from __init__.py.
+
+- SOAPpy now provides a SOAPUnixSocketServer class, which uses a unix
+  domain socket instead of a network TCP/IP socket for communication. A
+  corresponding client will be provided in the future.  [This class
+  has not yet been tested.]
+
+CHANGES SINCE VERSION 0.9.8
+---------------------------
+
+- IEEE 754 floating point specials (Inf, -Inf, NaN) should now be
+  properly and consistently handled on all platforms. 
+
+  Added code to explicitly check for and handle IEEE 754 floating
+  point specials (Inf, -Inf, NaN). This replaces an ugly hack for 
+  systems whose python float() doesn't understand the strings "Inf",
+  "NaN", etc.  Floating point specials should now be properly handled
+  on all operating systems.  
+
+  ***SOAPpy should now work properly on all versions of Microsoft Windows.***
+
+  A new module, ieee754 contains the functions required to detect and
+  create NaN, Inf, and -Inf values.  This module should be usable in
+  other contexts.
+
+- *** The new argument handling method (via SOAPpy.SOAP.Config.specialArgs=1)
+  is now enabled by default.***
+
+- Changed all references to actzero.com in SOAP.py to pywebscvs.sf.net.
+
+- Fixed a bug where lists included as parameters to SOAP method calls
+  were being incorrectly named 'Results' even when another name was
+  given.
+
+CHANGES SINCE VERSION 0.9.7
+---------------------------
+
+- Modified structure to allow installation using Python distutils
+  (i.e. setup.py).  Access to the SOAPpy library now requires: 
+     from SOAPpy import SOAP
+
+- I (Gregory R. Warnes) have implemented an experimental and
+  non-standard method of handling named and unnamed arguments.  This
+  mechanism is enabled in SOAPpy by setting
+  SOAPpy.SOAP.Config.specialArgs=1.
+
+  When enabled, parameters with names of the form _#### (i.e.,
+  matching the regexp "^_[0-9]+") are assumed to be unnamed parameters
+  and are passed to the method in numeric order.  All other parameters
+  are assumed to be named and are passed using the xml tag id as the
+  parameter name.  Outgoing SOAP method calls now always generate
+  names in this way--whether or not specialArgs is enabled--instead of
+  using the pattern v#####.  
+
+  See the file README.MethodParameterNaming for more details.
+
+- Added noroot parameter to the SOAPBuilder and SOAPProxy objects
+  in order to provide compatibility with an older version of
+  EasySOAP (v0.2) that balked if the SOAP-ENC:root parameter was
+  included.(Brad Knotwell)
+
+- Added support for namespace-rewriting (used by Apache v2.x SOAP server for
+  error conditions as well as stateful communication) (Christopher Blunck)
+
+- Added string <-> str conversion for array types (Python 2.2+)
+  (Christopher Blunck)
+
+- Added convenience method (invoke) to SOAPProxy that calls __call (not sure
+  if it is necessary - feel free to remove if you want) (Christopher Blunck)
+
+- Python 'float' are equivalent to SOAP 'double'.  Modified dump_float
+  and dump_list to use SOAP type string 'double'
+  appropriately. (Gregory R. Warnes)
+
+- Add basic authentication (Brad Knotwell)
+
+- Fixes to enable proper handling of SOAP faults by the client:
+  - Fixed test of whether message content is text/xml when recieving a fault.
+  - Added __call__ method to exception classes to match the current API.
+  - The faultType.__repr__() method now print details if present
+  (Gregory R. Warnes)
+
+- Added XMLnam.py which provides toXMLname() and fromXMLname() for
+  properly encoding xml tag names per the SOAP 2.1 (draft)
+  specification. (Gregory R. Warnes)
+
+- Added calls to toXMLname() and fromXMLname() so that tags names are
+  properly encoded.  This resolves bug [ 548785 ] 'Error passing dict
+  keys containing space.'  (Gregory R. Warnes)
+
+- Added code to cgi encode contents of tags when they are not a
+  recognized type.  Fixes bug [ 549551 ] 'Error when passing
+  non-standard types'. (Gregory R. Warnes)
+
+- Added __init__.py, so that SOAPpy can be used like a standard python
+  module. (Gregory R. Warnes)
+
+
+VERSION 0.9.7 (6/27/01)
+-----------------------
+
+- Fixed the unamed ordered parameters bug
+- Added the ability to specify a http_proxy
+- Added a patch provided by Tim MiddelKoop to allow printing of proxy objects
+- Added the contrib directory and included a medusa implementation of a 
+  SOAP.py server by Ng Pheng Siong
+
+
+VERSION 0.9.6 (6/08/01)
+-----------------------
+
+- The date and time types now check their initial values when the type
+  is created, not when the data is marshalled.
+- The date and time types are now parsed and returned as tuples (for
+  multi-element types) or scalars (for single element types) in UTC and thus
+  can represent the entire range of SOAP dates.
+- If an element doesn't have a type but has a name with a namespace, the
+  name is tried as the type.
+- Untyped compound types with more than one element and all the elements
+  the same name are turned into an array when parsing.
+- When parsing a structType, elements with the same name are placed in a
+  list instead of saving just the last one. _getItemsAsList can be used to
+  get an element of a structure as a list, whether there was one or many
+  occurances of the item.
+- Added schemaNamespace, schemaNamespaceURI, and namespaceStyle
+  configuration options. namespaceStyle takes one of 1999, 2000, or 2001,
+  and sets typesNamespace, typesNamespaceURI, schemaNamespace, and
+  schemaNamespaceURI.
+- Normalized the type class names, replacing Compound with compoundType,
+  Struct with structType, Header with headerType, Body with bodyType, Array
+  with arrayType, TypedArray with typedArrayType, Fault with faultType, and
+  urType with anyType.
+- Attributes now appear on an element itself instead of the element's
+  parent. For elements parsed to builtin python types, the attributes are
+  stored in a dictionary keyed by the element's python id. The dictionary
+  is in the Context object, can be returned from parseSOAP*, and can be
+  returned from method calls if the returnAllAttrs configuration option
+  is set.
+- isinstance is used to check for a class, so classes can be subtyped.
+- An encoding of None can be specified to not include encoding information.
+- Problems with the SOAPProxy URL are now reported when the SOAPProxy
+  instance is created instead of when the first method call is made.
+- The Binary, Boolean and DateTime types have been removed in favor of
+  binaryType, booleanType, and dateTimeType.
+
+
+VERSION 0.9.5 (5/16/01)
+-----------------------
+
+- Should parse and build all 1999, 2000, 2001, and SOAP-ENC datatypes.
+- Initial handling of multi-dimensional, partial, and sparse arrays.
+- Supports SSL clients (if Python built with OpenSSL).
+- Supports SSL servers (if M2Crypto installed).
+- Applies defaults to SOAPproxy URLs (nice for command-line tools).
+- Added the _SOAPContext object, gives registered server functions more info
+  about the current call.
+- Now assumes that any type that isn't in a schema could be a struct.
+- Added the Config object, now config options can be set globally or on an
+  individual call level.
+- Deprecated the DateTime, Binary and Boolean types, should now 
+  use dateTimeType, binaryType and booleanType.
+- Includes N+I interop suite.
+- Various bug fixes and improvements.
+
+VERSION 0.9 (5/01/01)
+-----------------------
+
+- The Envelope now just contains definitions for namespaces actually used
+  (Builder)
+- Namespace definitions are inherited by children but not siblings (Builder)
+- Further improved multi-reference parsing -- it handles circular references
+  (Parser)
+- Added support for building recursive and circular types using references
+  (Builder)
+- More types
+- Proper handling of overflow and underflow integral and floating point
+  types (Parser)
+- More interop
+- Various bug fixes and improvements
+
+VERSION 0.8.5 (4/25/01)
+-----------------------
+
+- buildSOAP, SOAPProxy, SOAPServer now taking encoding argument
+- Much improved multi-referencing (Parser)
+- Added base64 and dateTime to interop suite
+- Various bug fixes
+
+VERSION 0.8 (4/23/01)
+-----------------------
+
+- Added more types
+- Early multi-referencing support (Parser)
+- Reorganized the parser, much cleaner now
+- Preserve whitepsace in strings (per the standard)
+- Full XML attribute support (Parser/Builder)
+- Object (de)serialization now maintains element order
+- Fixed the zero-length array problem
+- Made indentation uniform (spaces not tabs)
+- Made Header and Body work more like real structs
+- Changed the parseSOAP api, now returns the body structure, 
+  instead of a list of body elements
+- Changed the soapaction and namespaces for the interop server
+- New silabclient options
+- Initial encoding support
+
+VERSION 0.7 (4/19/01)
+-----------------------
+
+- Fixed a bug that caused nothing to work with Python 2.1
+- Float work arounds for WIN32 (others?)
+- DateTime parsing for WIN32
+- Beginnings of XML attribute support
+- Better interop
+
+VERSION 0.6 (4/18/01)
+-----------------------
+
+- Fixed numerous bugs (dateTime, float precision, Response Element, null
+  strings)
+- Added more types
+- Homogeneous typed arrays
+- Added support for more schemas
+- Early Header support and mustUnderstand and actor
+- Added interop suite
+- Passes validator
+- Interop greatly improved, passes all client tests for Frontier,
+  SOAP::LITE.
+
+VERSION 0.5 (4/17/01)
+-----------------------
+
+- Initial public release
+
+
