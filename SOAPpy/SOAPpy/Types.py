@@ -1551,13 +1551,14 @@ class arrayType(UserList.UserList, compoundType):
 
 class typedArrayType(arrayType):
     def __init__(self, data = None, name = None, typed = None, attrs = None,
-        offset = 0, rank = None, asize = 0, elemsname = None):
+        offset = 0, rank = None, asize = 0, elemsname = None, complexType = 0):
 
         arrayType.__init__(self, data, name, attrs, offset, rank, asize,
             elemsname)
 
         self._typed = 1
         self._type = typed
+        self._complexType = complexType
 
 class faultType(structType, Error):
     def __init__(self, faultcode = "", faultstring = "", detail = None):
@@ -1590,10 +1591,41 @@ class faultType(structType, Error):
 
 class SOAPException(Exception):
     def __init__(self, code="", string="", detail=None):
-        self.args = ("SOAPpy SOAP Exception", code, string, detail)
+        self.value = ("SOAPpy SOAP Exception", code, string, detail)
         self.code = code
         self.string = string
         self.detail = detail
+
+    def __str__(self):
+        return repr(self.value)
+
+class RequiredHeaderMismatch(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class MethodNotFound(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class AuthorizationFailed(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class MethodFailed(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
         
 #######
 # Convert complex SOAPpy objects to native python equivalents
@@ -1617,8 +1649,18 @@ def simplify(object, level=0):
         return object
     
     if isinstance( object, faultType ):
-        se = SOAPException(object.faultcode, object.faultstring, object.detail)
-        raise se
+        if object.faultstring == "Required Header Misunderstood":
+            raise RequiredHeaderMismatch(object.detail)
+        elif object.faultstring == "Method Not Found":
+            raise MethodNotFound(object.detail)
+        elif object.faultstring == "Authorization Failed":
+            raise AuthorizationFailed(object.detail)
+        elif object.faultstring == "Method Failed":
+            raise MethodFailed(object.detail)
+        else:
+            se = SOAPException(object.faultcode, object.faultstring,
+                               object.detail)
+            raise se
     elif isinstance( object, arrayType ):
         data = object._aslist()
         for k in range(len(data)):
