@@ -454,7 +454,7 @@ class SOAPBuilder:
                     self.config.strictNamespaces)
                 if ns:
                     ns, ndecl = self.genns(ns_map, ns)
-                    t = ns + sample._type
+                    t = ns + str(sample._type)
                 else:
                     t = 'ur-type'
             else:
