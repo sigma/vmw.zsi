@@ -1147,7 +1147,14 @@ class SchemaDescription:
                     self.precede  = '%s' % (tpc)
                     self.classdef.set('\n\n%sclass %s(%s):' \
                                       % (ID1, tp.getName() + '_Def', tpc))
-                    self.basector.set('\n%s%s.__init__(self,pname="%s",optional=1,repeatable=1)' % (ID3,tpc,tp.getName()))
+                    self.initcode.set('\n%saname = None' % ID3 )
+                    self.initcode.write('\n%sif name:' % ID3)
+                    self.initcode.write('\n%skw["pname"] = name' \
+                                        % ID4)
+                    self.initcode.write('\n%skw["aname"] = "_%%s" %% name' \
+                                        % ID4)
+                    self.basector.set('\n%s%s.__init__(self, **kw)'\
+                                      % (ID3,tpc))
                 else:
                     typeName = 'Any'
                     # XXX: currently, unions will get shuffled thru here.
@@ -1561,7 +1568,7 @@ class SchemaDescription:
                         tpc = None
                         tpc = etp.getTypeclass()
 
-                        if tpc:
+                        if tpc and e.isXSD():
                             typeName = self.bti.get_pythontype(None, None, tpc)
                             if not typeName:
                                 typeName = 'Any'

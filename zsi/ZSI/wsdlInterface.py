@@ -588,6 +588,11 @@ class SchemaDeclarationInterface:
         """
         raise NotImplementedError, 'abstract method not implemented'
 
+    def isXSD(self):
+        """boolean - checks if it's defined in the xsd ns
+        """
+        raise NotImplementedError, 'abstract method not implemented'
+
     def isElementReference(self):
         """boolean - an element ref?
         """
@@ -1494,6 +1499,13 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
 
     def isDeclaration(self):
         return False
+
+    def isRestriction(self):
+        if hasattr(self._def, 'content'):
+            if isinstance(self._def.content, Restriction):
+                print "YES"
+        
+        return False
     
     def getTargetNamespace(self):
         """get NS
@@ -1627,6 +1639,7 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
             if hasattr(self._def, 'content') and \
                    isinstance(self._def.content, ZSI.wstools.XMLSchema.\
                               SimpleType.Restriction):
+                
                 bti = self.__class__.bti
                 tpc = bti.get_typeclass( self._def.content.attributes['base'][1],
                                          self._def.content.attributes['base'][0])
@@ -1728,6 +1741,13 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
         else:
             return False
 
+    def isXSD(self):
+        if self._dec.attributes.has_key('type'):
+            if self._dec.attributes['type'][0] in SCHEMA.XSD_LIST:
+                return True
+            
+        return False
+            
     def isElementReference(self):
         return False
 
