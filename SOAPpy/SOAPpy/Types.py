@@ -1230,20 +1230,36 @@ class compoundType(anyType):
             raise Error, "a compound can't be instantiated directly"
 
         anyType.__init__(self, data, name, typed, attrs)
-        self._aslist    = []
-        self._asdict    = {}
         self._keyord    = []
 
         if type(data) == DictType:
             self.__dict__.update(data)
 
+    def _aslist(self, item=None):
+        if item:
+            return self.__dict__[self._keyord[item]]
+        else:
+            return map( lambda x: self.__dict__[x], self._keyord)
+
+    def _asdict(self, item=None):
+        if item:
+            return self.__dict__[item]
+        else:
+            retval = {}
+            def fun(x): retval[x] = self.__dict__[x]
+            
+            map( fun, self._keyord) 
+            return retval
+
+ 
     def __getitem__(self, item):
         if type(item) == IntType:
-            return self._aslist[item]
-        return getattr(self, item)
+            return self.__dict__[self._keyord[item]]
+        else:
+            return getattr(self, item)
 
     def __len__(self):
-        return len(self._aslist)
+        return len(self._keyord)
 
     def __nonzero__(self):
         return 1
@@ -1252,30 +1268,24 @@ class compoundType(anyType):
         return filter(lambda x: x[0] != '_', self.__dict__.keys())
 
     def _addItem(self, name, value, attrs = None):
-        d = self._asdict
 
-        if d.has_key(name):
-            if type(d[name]) != ListType:
-                d[name] = [d[name]]
-            d[name].append(value)
+        if name in self._keyord:
+            if type(self.__dict__[name]) != ListType:
+                self.__dict__[name] = [self.__dict__[name]]
+            self.__dict__[name].append(value)
         else:
-            d[name] = value
-
-        self._keyord.append(name)
-        self._aslist.append(value)
-        self.__dict__[name] = d[name]
-
+            self.__dict__[name] = value
+            self._keyord.append(name)
+            
     def _placeItem(self, name, value, pos, subpos = 0, attrs = None):
-        d = self._asdict
 
-        if subpos == 0 and type(d[name]) != ListType:
-            d[name] = value
+        if subpos == 0 and type(self.__dict__[name]) != ListType:
+            self.__dict__[name] = value
         else:
-            d[name][subpos] = value
+            self.__dict__[name][subpos] = value
 
         self._keyord[pos] = name
-        self._aslist[pos] = value
-        self.__dict__[name] = d[name]
+
 
     def _getItemAsList(self, name, default = []):
         try:
@@ -1290,7 +1300,7 @@ class compoundType(anyType):
 
 class structType(compoundType):
     def __str__(self):
-        return str(self._asdict)
+        return str(self._asdict())
     pass
 
 class headerType(structType):
@@ -1512,3 +1522,29 @@ class faultType(structType, Error):
 
     def __call__(self):
         return (self.faultcode, self.faultstring, self.detail)        
+
+#######
+# Convert complex SOAPpy objects to native python equivalents
+#######
+
+def simplify(object ):
+    """
+    Unwrap SOAPpy objects to get 'raw' python objects
+    
+    Currently handles
+    - structType --> dictionary
+    - arrayType  --> array
+    """
+
+    if isinstance( object, structType ):
+        data = object._asdict()
+        for k in data.keys():
+            data[k] = simplify(data[k])
+        return data
+    elif isinstance( object, arrayType ):
+        return map(simplify, object._aslist())
+    else:
+        return object
+        
+
+
