@@ -93,8 +93,11 @@ class SOAPAddress:
         if not path:
             path = '/'
 
-        if proto not in ('http', 'https'):
+        if proto not in ('http', 'https', 'httpg'):
             raise IOError, "unsupported SOAP protocol"
+        if proto == 'httpg' and not config.GSIclient:
+            raise AttributeError, \
+                  "GSI client not supported by this Python installation"
         if proto == 'https' and not config.SSLclient:
             raise AttributeError, \
                 "SSL client not supported by this Python installation"
@@ -131,6 +134,14 @@ class HTTPTransport:
 
         import httplib
 
+        # If we are configured to use GSI, set it up
+        if hasattr(config, "channel_mode") and \
+               hasattr(config, "delegation_mode"):
+            from pyGlobus.io import CHANNEL_MODE, DELEGATION_MODE, GSIHTTP
+            CHANNEL_MODE = config.channel_mode
+            DELEGATION_MODE = config.delegation_mode
+        # end GSI stuff
+        
         if not isinstance(addr, SOAPAddress):
             addr = SOAPAddress(addr, config)
 
@@ -141,8 +152,10 @@ class HTTPTransport:
         else:
             real_addr = addr.host
             real_path = addr.path
-            
-        if addr.proto == 'https':
+
+        if addr.proto == 'httpg':
+            r = GSIHTTP(real_addr)
+        elif addr.proto == 'https':
             r = httplib.HTTPS(real_addr)
         else:
             r = httplib.HTTP(real_addr)
@@ -190,7 +203,18 @@ class HTTPTransport:
 
         # read response line
         code, msg, headers = r.getreply()
+        
+        content_type = headers.get("content-type","text/xml")
+        message_len = int(headers.get("Content-length", 0))
+        data = r.getfile().read(message_len)
 
+        if(config.debug):
+            print "code=",code
+            print "msg=", msg
+            print "headers=", headers
+            print "content-type=", content_type
+            print "data=", data
+                
         if config.dumpHeadersIn:
             s = 'Incoming HTTP headers'
             debugHeader(s)
@@ -201,7 +225,13 @@ class HTTPTransport:
                 print "HTTP/0.9 %d %s" % (code, msg)
             debugFooter(s)
 
-        data = r.getfile().read()
+        def startswith(string, val):
+            return string[0:len(val)] == val
+        
+        if code == 500 and not \
+               ( startswith(content_type, "text/xml") and message_len > 0 ):
+            raise HTTPError(code, msg)
+
         if config.dumpSOAPIn:
             s = 'Incoming SOAP'
             debugHeader(s)
@@ -213,13 +243,6 @@ class HTTPTransport:
         if code not in (200, 500):
             raise HTTPError(code, msg)
 
-        def startswith(string, val):
-            return string[0:len(val)] == val
-
-        content_type = headers.get("content-type","text/xml")
-        
-        if code == 500 and not startswith(content_type, "text/xml"):
-            raise HTTPError(code, msg)
 
         # get the new namespace
         if namespace is None:
@@ -255,8 +278,14 @@ class SOAPProxy:
         self.http_proxy     = http_proxy
         self.config         = config
         self.noroot         = noroot
-        
 
+        # GSI Additions
+        if hasattr(config, "channel_mode") and \
+               hasattr(config, "delegation_mode"):
+            self.channel_mode = config.channel_mode
+            self.delegation_mode = config.delegation_mode
+        #end GSI Additions
+        
     def invoke(self, method, args):
         return self.__call(method, args, {})
         

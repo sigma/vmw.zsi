@@ -322,6 +322,10 @@ class SOAPBuilder:
 
     def dump_float(self, obj, tag, typed = 1, ns_map = {}):
         if Config.debug: print "In dump_float."
+
+        if Config.strict_range:
+            doubleType(obj)
+
         if fpconst.is_PosInf(obj):
             obj = "INF"
         elif fpconst.is_NegInf(obj):
@@ -330,9 +334,6 @@ class SOAPBuilder:
             obj = "NaN"
         else:
             obj = str(obj)
-
-        # range check
-        Types.doubleType._checkValueSpace(obj)
 
 	# Note: python 'float' is actually a SOAP 'double'.
         self.out.append(self.dumper(None, "double", obj, tag, typed, ns_map,

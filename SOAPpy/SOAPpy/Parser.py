@@ -974,7 +974,8 @@ def parseSOAP(xml_str, attrs = 0):
 
 
 def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None,
-                 config=Config):
+                 config=Config, unwrap_outer=1):
+
     t = _parseSOAP(xml_str, rules = rules)
     p = t.body[0]
 
@@ -987,20 +988,10 @@ def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None,
         p = structType(name)
 
     if config.unwrap_results:
-        # Unwrap named and unnamed parameters, but not private 
-        # attributes
-        
-        p = simplify(p)
-
-        #if isinstance(p, compoundType):
-        #    for i in p._keys():
-        #        if i[0] != "_": setattr(p,i, simplify(getattr(p, i)))
-        #elif type(p)==dict:
-        #    for i in p.keys():
-        #        if i[0] != "_": p[i] = simplify(p[i])
-        #elif type(p)==list:
-        #    for i in range(len(p)): p[i] = simplify(p[i])
-                
+        if unwrap_outer:
+            p = simplify(p)
+        else:
+            p = simplify_contents(p)
 
     if header or body or attrs:
         ret = (p,)

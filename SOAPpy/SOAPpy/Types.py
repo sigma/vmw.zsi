@@ -181,7 +181,7 @@ class stringType(anyType):
             raise ValueError, "must supply initial %s value" % self._type
 
         if type(data) not in (StringType, UnicodeType):
-            raise AttributeError, "invalid %s type" % self._type
+            raise AttributeError, "invalid %s type:" % self._type
 
         return data
 
@@ -276,7 +276,7 @@ class floatType(anyType):
         if type(data) not in (IntType, LongType, FloatType) or \
             data < -3.4028234663852886E+38 or \
             data >  3.4028234663852886E+38:
-            raise ValueError, "invalid %s value" % self._type
+            raise ValueError, "invalid %s value: %s" % (self._type, repr(data))
 
         return data
 
@@ -291,7 +291,7 @@ class doubleType(anyType):
         if type(data) not in (IntType, LongType, FloatType) or \
             data < -1.7976931348623158E+308 or \
             data  > 1.7976931348623157E+308:
-            raise ValueError, "invalid %s value" % self._type
+            raise ValueError, "invalid %s value: %s" % (self._type, repr(data))
 
         return data
 
@@ -1302,14 +1302,14 @@ class compoundType(anyType):
             return d
         return [d]
 
-
-class structType(compoundType):
     def __str__(self):
         return anyType.__str__(self) + ": " + str(self._asdict())
-    pass
 
     def __repr__(self):
         return self.__str__()
+
+class structType(compoundType):
+    pass
 
 class headerType(structType):
     _validURIs = (NS.ENV,)
@@ -1417,6 +1417,9 @@ class arrayType(UserList.UserList, compoundType):
 
     def __nonzero__(self):
         return 1
+
+    def __str__(self):
+        return anyType.__str__(self) + ": " + str(self._aslist())
 
     def _keys(self):
         return filter(lambda x: x[0] != '_', self.__dict__.keys())
@@ -1569,36 +1572,99 @@ class faultType(structType, Error):
 # Convert complex SOAPpy objects to native python equivalents
 #######
 
-def simplify(object, level=0, skip_private=0 ):
+def isPrivate(name): return name[0]=='_'
+def isPublic(name):  return name[0]!='_'
+
+def simplify(object, level=0):
     """
-    Unwrap SOAPpy objects to get 'raw' python objects
+    Convert the SOAPpy objects and thier contents to simple python types.
+
+    This function converts the passed 'container' object, and all public
+    subobjects (private subobjects have names that start with '_').
     
     Currently handles
     - faultType    --> raise python exception
     - arrayType    --> array
     - compoundType --> dictionary
     """
-
+    
     if level>10: return object
-
-
+    
     if isinstance( object, faultType ):
         for k in object._keys():
-            if (not skip_private) and (k[0] != "_"):
+            if isPublic(k):
                 setattr(object, k, simplify(object[k], level=level+1))
         raise object
     elif isinstance( object, arrayType ):
         data = object._aslist()
-        for k in range(len(data)): data[k] = simplify(data[k], level=level+1)
+        for k in range(len(data)):
+            data[k] = simplify(data[k], level=level+1)
         return data
-    elif isinstance( object, compoundType ):
+    elif isinstance( object, compoundType ) or isinstance(object, structType):
         data = object._asdict()
         for k in data.keys():
-            if (not skip_private) and (k[0] != "_"):
+            if isPublic(k):
                 data[k] = simplify(data[k], level=level+1)
         return data
+    elif type(object)==dict:
+        for k in object.keys():
+            if isPublic(k):
+                object[k] = simplify(object[k])
+        return object
+    elif type(object)==list:
+        for k in range(len(object)):
+            object[k] = simplify(object[k])
+        return object
     else:
         return object
-        
+
+
+def simplify_contents(object, level=0):
+    """
+    Convert the contents of SOAPpy objects to simple python types.
+
+    This function converts the sub-objects contained in a 'container'
+    object to simple python types.
+    
+    Currently handles
+    - faultType    --> raise python exception
+    - arrayType    --> array
+    - compoundType --> dictionary
+    """
+    
+    """
+    Unwrap the *contents* of a SOAPpy object
+    """
+    
+    if level>10: return object
+
+    if isinstance( object, faultType ):
+        for k in object._keys():
+            if isPublic(k):
+                setattr(object, k, simplify(object[k], level=level+1))
+        raise object
+    elif isinstance( object, arrayType ): 
+        data = object._aslist()
+        for k in range(len(data)):
+            object[k] = simplify(data[k], level=level+1)
+    elif isinstance(object, structType):
+        data = object._asdict()
+        for k in data.keys():
+            if isPublic(k):
+                setattr(object, k, simplify(data[k], level=level+1))
+    elif isinstance( object, compoundType ) :
+        data = object._asdict()
+        for k in data.keys():
+            if isPublic(k):
+                object[k] = simplify(data[k], level=level+1)
+    elif type(object)==dict:
+        for k in object.keys():
+            if isPublic(k):
+                object[k] = simplify(object[k])
+    elif type(object)==list:
+        for k in range(len(object)):
+            object[k] = simplify(object[k])
+    
+    return object
 
 

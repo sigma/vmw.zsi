@@ -135,26 +135,41 @@ class SOAPServerBase:
 
         return sock, addr
 
-    def registerObject(self, object, namespace = ''):
-        if namespace == '': namespace = self.namespace
+    def registerObject(self, object, namespace = '', path = ''):
+        if namespace == '' and path == '': namespace = self.namespace
+        if namespace == '' and path != '':
+            namespace = path.replace("/", ":")
+            if namespace[0] == ":": namespace = namespace[1:]
         self.objmap[namespace] = object
 
-    def registerFunction(self, function, namespace = '', funcName = None):
+    def registerFunction(self, function, namespace = '', funcName = None,
+                         path = ''):
         if not funcName : funcName = function.__name__
-        if namespace == '': namespace = self.namespace
+        if namespace == '' and path == '': namespace = self.namespace
+        if namespace == '' and path != '':
+            namespace = path.replace("/", ":")
+            if namespace[0] == ":": namespace = namespace[1:]
         if self.funcmap.has_key(namespace):
             self.funcmap[namespace][funcName] = function
         else:
             self.funcmap[namespace] = {funcName : function}
 
-    def registerKWObject(self, object, namespace = ''):
-        if namespace == '': namespace = self.namespace
+    def registerKWObject(self, object, namespace = '', path = ''):
+        if namespace == '' and path == '': namespace = self.namespace
+        if namespace == '' and path != '':
+            namespace = path.replace("/", ":")
+            if namespace[0] == ":": namespace = namespace[1:]
         for i in dir(object.__class__):
             if i[0] != "_" and callable(getattr(object, i)):
                 self.registerKWFunction(getattr(object,i), namespace)
 
     # convenience  - wraps your func for you.
-    def registerKWFunction(self, function, namespace = '', funcName = None):
+    def registerKWFunction(self, function, namespace = '', funcName = None,
+                           path = ''):
+        if namespace == '' and path == '': namespace = self.namespace
+        if namespace == '' and path != '':
+            namespace = path.replace("/", ":")
+            if namespace[0] == ":": namespace = namespace[1:]
         self.registerFunction(MethodSig(function,keywords=1), namespace,
         funcName)
 
@@ -183,7 +198,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.headers.headers))
                 debugFooter(s)
 
-            data = self.rfile.read(int(self.headers["content-length"]))
+            data = self.rfile.read(int(self.headers["Content-length"]))
             #            data = data.encode('ascii','replace')
 
             if self.server.config.dumpSOAPIn:
@@ -195,7 +210,8 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 debugFooter(s)
 
             (r, header, body, attrs) = \
-                parseSOAPRPC(data, header = 1, body = 1, attrs = 1)
+                parseSOAPRPC(data, header = 1, body = 1, attrs = 1,
+                             unwrap_outer=0)
 
             method = r._name
             args   = r._aslist()
@@ -234,17 +250,25 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     else:
                         named_args[str(k)] = v
                         
+                if len(self.path) == 1:
+                    ns = None
+                else:
+                    ns = self.path.replace("/", ":")
+                    if ns[0] == ":": ns = ns[1:]
                 # get order
-                keylist = ordered_args.keys()
-                keylist.sort()
+            
+            # authorization method
+            a = None
+            keylist = ordered_args.keys()
+            keylist.sort()
 
-                # create list in proper order w/o names
-                tmp = map( lambda x: ordered_args[x], keylist)
-                ordered_args = tmp
+            # create list in proper order w/o names
+            tmp = map( lambda x: ordered_args[x], keylist)
+            ordered_args = tmp
 
-                #print '<-> Argument Matching Yielded:'
-                #print '<-> Ordered Arguments:' + str(ordered_args)
-                #print '<-> Named Arguments  :' + str(named_args)
+            #print '<-> Argument Matching Yielded:'
+            #print '<-> Ordered Arguments:' + str(ordered_args)
+            #print '<-> Named Arguments  :' + str(named_args)
              
 
             ns = r._ns
@@ -260,14 +284,33 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if self.server.funcmap.has_key(ns) and \
                     self.server.funcmap[ns].has_key(method):
                     f = self.server.funcmap[ns][method]
-                else: # Now look at registered objects
+
+                    # look for the authorization method
+                    if self.server.config.authMethod != None:
+                        authmethod = self.server.config.authMethod
+                        if self.server.funcmap.has_key(ns) and \
+                               self.server.funcmap[ns].has_key(authmethod):
+                            a = self.server.funcmap[ns][authmethod]
+                            print "Found function %s" % authmethod
+                else:
+                    # Now look at registered objects
                     # Check for nested attributes. This works even if
                     # there are none, because the split will return
                     # [method]
                     f = self.server.objmap[ns]
+                    
+                    # Look for the authorization method
+                    if self.server.config.authMethod != None:
+                        authmethod = self.server.config.authMethod
+                        if hasattr(f, authmethod):
+                            a = getattr(f, authmethod)
+                            print "Found object %s" % authmethod
+
+                    # then continue looking for the method
                     l = method.split(".")
                     for i in l:
                         f = getattr(f, i)
+                        
             except:
                 resp = buildSOAP(faultType("%s:Client" % NS.ENV_T,
                         "No method %s found" % nsmethod,
@@ -280,8 +323,17 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     if header:
                         x = HeaderHandler(header, attrs)
 
+                    fr = 1
+                    # Do an authorization check
+                    if a != None:
+                        c = SOAPContext(header, body, attrs, data,
+                                        self.connection, self.headers,
+                                        self.headers["soapaction"])
+                        if not apply(a, (), {"_SOAPContext" : c}):
+                            raise faultType("%s:Server" % NS.ENV_T,
+                                            "Method %s failed." % nsmethod,
+                                            "Authorization failed.")
                     # If it's wrapped, some special action may be needed
-                    
                     if isinstance(f, MethodSig):
                         c = None
                     
@@ -289,7 +341,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                             c = SOAPContext(header, body, attrs, data,
                                 self.connection, self.headers,
                                 self.headers["soapaction"])
-
                         if Config.specialArgs:
                             if c:
                                 named_args["_SOAPContext"] = c
@@ -488,7 +539,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", 'text/html')
             self.end_headers()
-
             self.wfile.write('''\
 <title>
 <head>Error!</head>
@@ -542,6 +592,7 @@ class SOAPServer(SocketServer.TCPServer, SOAPServerBase):
         self.allow_reuse_address= 1
 
         SocketServer.TCPServer.__init__(self, addr, RequestHandler)
+
 
 class ThreadingSOAPServer(SocketServer.ThreadingTCPServer, SOAPServerBase):
 

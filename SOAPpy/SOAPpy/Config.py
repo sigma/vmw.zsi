@@ -37,7 +37,11 @@ ident = '$Id$'
 
 import copy, socket
 from types import *
+
 try: from M2Crypto import SSL
+except: pass
+
+try: from pyGlobus import io
 except: pass
 
 from NS import NS 
@@ -47,7 +51,7 @@ from NS import NS
 ################################################################################
 
 class SOAPConfig:
-    __readonly = ('SSLserver', 'SSLclient')
+    __readonly = ('SSLserver', 'SSLclient', 'GSIserver', 'GSIclient')
 
     def __init__(self, config = None, **kw):
         d = self.__dict__
@@ -63,9 +67,10 @@ class SOAPConfig:
                 if k[0] != '_':
                     d[k] = v
         else:
-            # Setting debug also sets returnFaultInfo, dumpFaultInfo,
+            # Setting debug also sets returnFaultInfo, 
             # dumpHeadersIn, dumpHeadersOut, dumpSOAPIn, and dumpSOAPOut
             self.debug = 0
+            self.dumpFaultInfo = 1
             # Setting namespaceStyle sets typesNamespace, typesNamespaceURI,
             # schemaNamespace, and schemaNamespaceURI
             self.namespaceStyle = '1999'
@@ -88,7 +93,18 @@ class SOAPConfig:
             # corresponding python types. (structType --> dict,
             # arrayType --> array)
             self.unwrap_results = 0
-            
+
+            # Per-class authorization method
+            self.authMethod = None
+
+            # Globus Support
+            try: io; d['GSIserver'] = 1
+            except: d['GSIserver'] = 0
+                        
+            try: io; d['GSIclient'] = 1
+            except: d['GSIclient'] = 0
+
+            # SSL Support
             try: SSL; d['SSLserver'] = 1
             except: d['SSLserver'] = 0
 
@@ -151,7 +167,6 @@ class SOAPConfig:
         elif name == 'debug':
             d[name]                     = \
                 d['returnFaultInfo']    = \
-                d['dumpFaultInfo']      = \
                 d['dumpHeadersIn']      = \
                 d['dumpHeadersOut']     = \
                 d['dumpSOAPIn']         = \
