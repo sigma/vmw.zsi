@@ -10,7 +10,7 @@ try:
     from xml.dom.ext import Canonicalize
 except:
     from ZSI.compat import SOAP, Canonicalize
-import sys, traceback, cStringIO as StringIO
+import traceback, cStringIO as StringIO
 
 class Fault:
     '''SOAP Faults.
@@ -66,7 +66,10 @@ class Fault:
         sw = SoapWriter(output, **mykw)
         self.serialize(sw)
         sw.close()
-        if s: return s.getvalue()
+        if s: 
+            return s.getvalue()
+        else:
+            return None
     AsSoap = AsSOAP
 
 def FaultFromNotUnderstood(uri, localname, actor=None):
