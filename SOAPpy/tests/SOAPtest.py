@@ -6,14 +6,17 @@
 #
 ################################################################################
 
+ident = '$Id$'
+
 import urllib
 import sys
 import unittest
 
 sys.path.insert(1, "..")
 from SOAPpy import *
-
-ident = '$Id$'
+config=Config
+config.unwrap_results=0
+#config.debug=True
 
 # as borrowed from jake.soapware.org for float compares.
 def nearlyeq(a, b, prec = 1e-7):
@@ -518,15 +521,15 @@ class SOAPTestCase(unittest.TestCase):
         x = arrayType(['a', 'b', 'c'])
         y = buildSOAP(x)
         z = parseSOAP(y)
-        self.assertEquals(z._1._elemsname, 'item')
-        self.assertEquals(z._1, x)
+        self.assertEquals(z.v1._elemsname, 'item')
+        self.assertEquals(z.v1, x)
 
     def testStringArray2(self):
         x = arrayType(['d', 'e', 'f'], elemsname = 'elementals')
         y = buildSOAP(x)
         z = parseSOAP(y)
-        self.assertEquals(z._1._elemsname, 'elementals')
-        self.assertEquals(z._1, x)
+        self.assertEquals(z.v1._elemsname, 'elementals')
+        self.assertEquals(z.v1, x)
 
     def testInt1(self):
         my_xml = '''
@@ -923,9 +926,11 @@ class SOAPTestCase(unittest.TestCase):
 
 
     def testInstantiations(self):
-        # string, ENTITY, ID, IDREF, language, Name, NCName, NMTOKEN, QName, untypedType
-        for t in (stringType, ENTITYType, IDType, IDREFType, languageType, NameType,
-            NCNameType, NMTOKENType, QNameType, untypedType):
+        # string, ENTITY, ID, IDREF, language, Name, NCName,
+        # NMTOKEN, QName, untypedType
+        for t in (stringType, ENTITYType, IDType, IDREFType,
+                  languageType, NameType, NCNameType, NMTOKENType,
+                  QNameType, untypedType):
             # First some things that shouldn't be taken as the current type
 
             test = (10, (), [], {})
@@ -1178,9 +1183,13 @@ class SOAPTestCase(unittest.TestCase):
 
         # Can we give it a name and no type?
 
+        #print
         x = t(1, name = 'George', typed = 0)
+        #print "x=",x
         y = buildSOAP(x)
+        #print "y=",y
         z = parseSOAP(y)
+        #print "z=",z
 
         test = 'true'
         if z.George != test:
@@ -3316,6 +3325,7 @@ class SOAPTestCase(unittest.TestCase):
         b = untypedType('earth', name = 'b')
 
         x = buildSOAP((a, b))
+        #print "x=",x
 
         self.failUnless(x.find('<a xsi:type="xsd:string" SOAP-ENC:root="1">hello</a>') != -1)
         self.failUnless(x.find('<b SOAP-ENC:root="1">earth</b>') != -1)
@@ -3574,8 +3584,9 @@ Brought Death into the World, and all our woe,''',
         #print "x=",x
 
         xml = env % '''<SOAP-ENV:Body>
-<SOAP-ENC:Array SOAP-ENC:arrayType="xsd:string[][2]">
+<SOAP-ENC:Array SOAP-ENC:arrayType="xsd:string[3]">
    <item href="#array-1"/>
+   <item href="#array-2"/>
    <item href="#array-2"/>
 </SOAP-ENC:Array>
 <SOAP-ENC:Array id="array-1" SOAP-ENC:arrayType="xsd:string[3]">
@@ -3591,7 +3602,8 @@ Brought Death into the World, and all our woe,''',
 
         x = parseSOAPRPC(xml)
 
-        self.assertEquals( x ,  [['r1c1', 'r1c2', 'r1c3'], ['r2c1', 'r2c2']])
+        self.assertEquals( x ,  [['r1c1', 'r1c2', 'r1c3'],
+                                 ['r2c1', 'r2c2'], ['r2c1', 'r2c2']])
 
         xml = env % '''<SOAP-ENV:Body>
 <SOAP-ENC:Array SOAP-ENC:arrayType="xsd:string[2,3]">
