@@ -3511,9 +3511,8 @@ class HTTPTransport:
                 print "HTTP/0.9 %d %s" % (code, msg)
             debugFooter(s)
 
+        data = r.getfile().read()
         if config.dumpSOAPIn:
-            data = r.getfile().read()
-
             s = 'Incoming SOAP'
             debugHeader(s)
             print data,
@@ -3538,9 +3537,6 @@ class HTTPTransport:
         else:
             new_ns = self.getNS(namespace, data)
         
-        if not config.dumpSOAPIn:
-            data = r.getfile().read()
-
         # return response payload
         return data, new_ns
 
