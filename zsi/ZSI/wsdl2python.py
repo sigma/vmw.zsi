@@ -4,7 +4,7 @@
 # David W. Robertson, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import sys, re
+import sys, re, weakref
 from xml.dom.ext import SplitQName
 from xml.ns import SOAP, SCHEMA
 import ZSI
@@ -962,7 +962,9 @@ class SchemaDescription:
             else:
                 exec( 'tw = %s' % defaultWriter )
 
-            tw.fromType(tp)
+            ref = weakref.ref(self)
+
+            tw.fromType(tp, ref)
             if tw.precede:
                 if self.class_dict.has_key(tw.precede):
                     self.class_dict[tw.precede].append(tw)
@@ -1027,7 +1029,7 @@ class SchemaDescription:
             self.typeDict = {}
 	    return
 
-	def fromType(self, myType):
+	def fromType(self, myType, parentRef):
             """myType -- Type representation
             """
 
