@@ -11,6 +11,7 @@ from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.wstools.Utility import Collection
 import xml
 from xml.dom.ext import SplitQName
+from xml.ns import SCHEMA
 
 ###########################################################################
 # "Virtual" superclasses for the wsdl adapters
@@ -1554,7 +1555,9 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                         # the contents of the nested model group.
                         for x in c.content:
                             if self.__adapterWrap( x ):
-                                group.append( self.__adapterWrap( x ) )
+                                t = self.__adapterWrap(x)
+                                t._dec.attributes['nillable'] = u"true"
+                                group.append( t )
                     else:
                         if self.__adapterWrap( c ):
                             group.append( self.__adapterWrap( c ) )
@@ -1638,11 +1641,12 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                      isinstance(self._def.content,
                                 ZSI.wstools.XMLSchema.SimpleType.List):
                 # XXX: for xsd:list - nacient support
-                bti = self.__class__.bti
-                tpc = bti.get_typeclass( self._def.content.\
-                                         attributes['itemType'][1],
-                                         self._def.content.\
-                                         attributes['itemType'][0] )
+                if self._def.content.attributes.has_key('itemType'):
+                    bti = self.__class__.bti
+                    tpc = bti.get_typeclass( self._def.content.\
+                                             attributes['itemType'][1],
+                                             self._def.content.\
+                                             attributes['itemType'][0] )
             elif self._def.content:
                 pass
 
@@ -1911,15 +1915,18 @@ class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
             else:
                 raise WsdlInterfaceError, 'could not determine array type'
 
-            if t[0:4] == 'xsd:':
+            prefix, localName = SplitQName(t)
+            namespaceURI = self._content.getXMLNS(prefix)
+
+            if namespaceURI in SCHEMA.XSD_LIST:
                 isDefined = False
-                tns = 'http://www.w3.org/2001/XMLSchema'
                 bti = self.__class__.bti
-                atype = bti.get_typeclass( t[4:-2], tns )
+                atype = bti.get_typeclass( localName[:-2], namespaceURI )
             else:
                 isDefined = True
                 ns, atype = SplitQName(t)
                 atype = atype[:-2]
+                
             arrayinfo = ( t, atype, isDefined )
 
         else:
