@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from SOAPpy.SOAP import *
+from SOAPpy import *
 import sys
 
 x = '''<?xml version="1.0" encoding="utf-8"?>
@@ -31,7 +31,7 @@ pr = {'Result':
                   'height':negfloat}
        }
       }
-y = parseSOAPRPC(x, parse_rules=pr)
+y = parseSOAPRPC(x, rules=pr)
 assert y.Result.Person.age == 49
 assert y.Result.Person.height == -5.5
 

@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert (1, '..')
 
-from SOAPpy import SOAP
+from SOAPpy import *
 
 ident = '$Id$'
 
@@ -92,7 +92,7 @@ def dealCard ():
 
 namespace = 'http://soapinterop.org/'
 
-server = SOAP.SOAPServer (("localhost", 12027))
+server = SOAPServer (("localhost", 12027))
 
 server.registerKWFunction (dealHand, namespace)
 server.registerKWFunction (dealArrangedHand, namespace)

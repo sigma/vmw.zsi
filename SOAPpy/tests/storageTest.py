@@ -1,26 +1,29 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2001 actzero, inc. All rights reserved.
-
-import sys, os, time, signal
-
-sys.path.insert (1, '..')
-
-from SOAPpy import SOAP
-
 ident = '$Id$'
 
-#PROXY="http://data.ourfavoritesongs.com"
-PROXY="http://localhost:15500"
-EMAIL="bennett@actzero.com"
-NAME="Bennett"
+import sys, os, time, signal, re
+from SOAPpy import SOAPProxy, SOAPConfig, SOAPUserAgent
+
+# Check for a web proxy definition in environment
+try:
+   proxy_url=os.environ['http_proxy']
+   phost, pport = re.search('http://([^:]+):([0-9]+)', proxy_url).group(1,2)
+   http_proxy = "%s:%s" % (phost, pport)
+except:
+   http_proxy = None
+
+
+PROXY="http://www.soapware.org/xmlStorageSystem"
+EMAIL="SOAPpy@actzero.com"
+NAME="test_user"
 PASSWORD="mypasswd"
 
 MY_PORT=15600
 
 def resourceChanged (url):
     print "\n##### NOTIFICATION MESSAGE: Resource %s has changed #####\n" % url
-    return SOAP.booleanType(1)
+    return booleanType(1)
 
 def printstatus (cmd, stat):
     print
@@ -30,14 +33,15 @@ def printstatus (cmd, stat):
         print "### %s successful: %s ###" % (cmd, stat.message)
     return not stat.flError
 
-server = SOAP.SOAPProxy(encoding="US-ASCII", 
-	proxy=PROXY,
-	soapaction="/xmlStorageSystem"
-	)
-#	, config=SOAP.SOAPConfig(debug=1))
+server = SOAPProxy(encoding="US-ASCII", 
+                   proxy=PROXY,
+                   soapaction="/xmlStorageSystem",
+                   http_proxy=http_proxy,
+                   config=SOAPConfig(debug=1)
+                   )
 
 # Register as a new user or update user information
-reg = server.registerUser(email=EMAIL, name=NAME, password=PASSWORD, clientPort=MY_PORT, userAgent=SOAP.SOAPUserAgent())
+reg = server.registerUser(email=EMAIL, name=NAME, password=PASSWORD, clientPort=MY_PORT, userAgent=SOAPUserAgent())
 printstatus("registerUser", reg)
 
 # See what this server can do
@@ -90,7 +94,7 @@ if pid == 0:
     print
     print "## Starting notification server ##"
 
-    s = SOAP.SOAPServer(('localhost', MY_PORT))
+    s = SOAPServer(('localhost', MY_PORT))
     s.registerFunction(resourceChanged)
     s.serve_forever()
 

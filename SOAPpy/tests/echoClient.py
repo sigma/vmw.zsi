@@ -4,18 +4,18 @@
 
 import sys
 
-from SOAPpy import SOAP
+from SOAPpy import *
 
-# Uncomment to see outgoing HTTP headers and SOAP and incoming SOAP.
-SOAP.Config.debug = 1
+# Uncomment to see outgoing HTTP headers and SOAP and incoming 
+Config.debug = 1
 
-SOAP.Config.BuildWithNoType = 1
-SOAP.Config.BuildWithNoNamespacePrefix = 1
+Config.BuildWithNoType = 1
+Config.BuildWithNoNamespacePrefix = 1
 
 if len(sys.argv) > 1 and sys.argv[1] == '-s':
-    server = SOAP.SOAPProxy("https://localhost:9900")
+    server = SOAPProxy("https://localhost:9900")
 else:
-    server = SOAP.SOAPProxy("http://localhost:9900")
+    server = SOAPProxy("http://localhost:9900")
 
 # Echo...
 
@@ -32,5 +32,5 @@ print server.echo_wkw(third = "three", first = "one", second = "two")
 print server.echo_wc("moo")
 
 # ...with a header
-hd = SOAP.headerType(data = {"mystring": "Hello World"})
+hd = headerType(data = {"mystring": "Hello World"})
 print server._hd(hd).echo_wc("moo")

@@ -1,16 +1,22 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2001 actzero, inc. All rights reserved.
-
-import sys
-
-sys.path.insert (1, '..')
-
-from SOAPpy import SOAP
-
 ident = '$Id$'
 
-server = SOAP.SOAPProxy("http://soap.4s4c.com/whois/soap.asp",
-    namespace = "http://www.pocketsoap.com/whois")
+import os, re
+from SOAPpy import SOAPProxy
 
-print "whois>>", server.whois(name = "actzero.com")
+# Check for a web proxy definition in environment
+try:
+   proxy_url=os.environ['http_proxy']
+   phost, pport = re.search('http://([^:]+):([0-9]+)', proxy_url).group(1,2)
+   proxy = "%s:%s" % (phost, pport)
+except:
+   proxy = None
+
+server = SOAPProxy("http://www.SoapClient.com/xml/SQLDataSoap.WSDL",
+                   http_proxy=proxy)
+
+print "whois>>", server.ProcessSRL(SRLFile="WHOIS.SRI",
+                                   RequestName="whois",
+                                   key = "microsoft.com")
+

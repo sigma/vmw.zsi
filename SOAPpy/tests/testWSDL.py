@@ -1,10 +1,22 @@
+#!/usr/bin/env python
+
 import unittest
-import os
+import os, re
 import sys
 sys.path.insert (1, '..')
 import SOAPpy
 
 ident = '$Id$'
+
+# Check for a web proxy definition in environment
+try:
+   proxy_url=os.environ['http_proxy']
+   phost, pport = re.search('http://([^:]+):([0-9]+)', proxy_url).group(1,2)
+   http_proxy = "%s:%s" % (phost, pport)
+except:
+   http_proxy = None
+
+
 
 class IntegerArithmenticTestCase(unittest.TestCase):
 
@@ -47,7 +59,7 @@ class IntegerArithmenticTestCase(unittest.TestCase):
     def testParseWsdlString(self):
         '''Parse XMethods TemperatureService wsdl from a string.'''
 
-        wsdl = SOAPpy.WSDL.Proxy(self.wsdlstr1)
+        wsdl = SOAPpy.WSDL.Proxy(self.wsdlstr1, http_proxy=http_proxy)
         self.assertEquals(len(wsdl.methods), 1)
         method = wsdl.methods.values()[0]
         self.assertEquals(method.methodName, 'getTemp')
@@ -67,7 +79,7 @@ class IntegerArithmenticTestCase(unittest.TestCase):
         except (IOError, OSError):
             self.assert_(0, 'Cound not find wsdl file "%s"' % file)
 
-        wsdl = SOAPpy.WSDL.Proxy(fname)
+        wsdl = SOAPpy.WSDL.Proxy(fname, http_proxy=http_proxy)
         self.assertEquals(len(wsdl.methods), 1)
         method = wsdl.methods.values()[0]
         self.assertEquals(method.methodName, 'getTemp')
@@ -78,7 +90,7 @@ class IntegerArithmenticTestCase(unittest.TestCase):
     def testParseWsdlUrl(self):
         '''Parse XMethods TemperatureService wsdl from a url.'''
 
-        wsdl = SOAPpy.WSDL.Proxy('http://www.xmethods.net/sd/2001/TemperatureService.wsdl')
+        wsdl = SOAPpy.WSDL.Proxy('http://www.xmethods.net/sd/2001/TemperatureService.wsdl', http_proxy=http_proxy)
         self.assertEquals(len(wsdl.methods), 1)
         method = wsdl.methods.values()[0]
         self.assertEquals(method.methodName, 'getTemp')
@@ -90,7 +102,7 @@ class IntegerArithmenticTestCase(unittest.TestCase):
         '''Parse TemperatureService and call getTemp.'''
 
         zip = '01072'
-        proxy = SOAPpy.WSDL.Proxy(self.wsdlstr1)
+        proxy = SOAPpy.WSDL.Proxy(self.wsdlstr1, http_proxy=http_proxy)
         temp = proxy.getTemp(zip)
         print 'Temperature at', zip, 'is', temp
 

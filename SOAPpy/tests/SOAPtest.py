@@ -10,7 +10,7 @@ import urllib
 import sys
 import unittest
 
-from SOAPpy.SOAP import *
+from SOAPpy import *
 
 ident = '$Id$'
 
@@ -333,7 +333,7 @@ class SOAPTestCase(unittest.TestCase):
     xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance"
     xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/">
     <SOAP-ENV:Body>
-        <v1 xsi:type="xsd:int" SOAP-ENC:root="1">1</v1>
+        <_1 xsi:type="xsd:int" SOAP-ENC:root="1">1</_1>
     </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>'''
 
@@ -517,15 +517,15 @@ class SOAPTestCase(unittest.TestCase):
         x = arrayType(['a', 'b', 'c'])
         y = buildSOAP(x)
         z = parseSOAP(y)
-        self.assertEquals(z.v1._elemsname, 'item')
-        self.assertEquals(z.v1, x)
+        self.assertEquals(z._1._elemsname, 'item')
+        self.assertEquals(z._1, x)
 
     def testStringArray2(self):
         x = arrayType(['d', 'e', 'f'], elemsname = 'elementals')
         y = buildSOAP(x)
         z = parseSOAP(y)
-        self.assertEquals(z.v1._elemsname, 'elementals')
-        self.assertEquals(z.v1, x)
+        self.assertEquals(z._1._elemsname, 'elementals')
+        self.assertEquals(z._1, x)
 
     def testInt1(self):
         my_xml = '''
@@ -828,7 +828,7 @@ class SOAPTestCase(unittest.TestCase):
         xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
         xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance">
         <SOAP-ENV:Body>
-            <v1 xsi:type="xsd:%(type)s"%(attrs)s>%(value)s</v1>
+            <_1 xsi:type="xsd:%(type)s"%(attrs)s>%(value)s</_1>
         </SOAP-ENV:Body>
     </SOAP-ENV:Envelope>''' % {'schema': schema, 'type': type, 'value': value,
         'attrs': attrs}
@@ -3327,16 +3327,16 @@ class SOAPTestCase(unittest.TestCase):
 </SOAP-ENV:Envelope>'''
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[4]" SOAP-ENC:offset="[2]" xsi:type="SOAP-ENC:Array">
-    <v2 SOAP-ENC:arrayType="xsd:int[2]" xsi:type="SOAP-ENC:Array">
+<_1 SOAP-ENC:arrayType="xsd:int[4]" SOAP-ENC:offset="[2]" xsi:type="SOAP-ENC:Array">
+    <_2 SOAP-ENC:arrayType="xsd:int[2]" xsi:type="SOAP-ENC:Array">
         <item>1</item>
         <item>2</item>
-    </v2>
-    <v3 SOAP-ENC:arrayType="xsd:int[2]" xsi:type="SOAP-ENC:Array">
+    </_2>
+    <_3 SOAP-ENC:arrayType="xsd:int[2]" xsi:type="SOAP-ENC:Array">
         <item>3</item>
         <item>4</item>
-    </v3>
-</v1>
+    </_3>
+</_1>
 </SOAP-ENV:Body>'''
 
         x = parseSOAPRPC(xml)
@@ -3344,7 +3344,7 @@ class SOAPTestCase(unittest.TestCase):
         self.assertEquals( x ,  [None, None, [1, 2], [3, 4]])
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[3,4,2]" SOAP-ENC:offset="[17]" xsi:type="SOAP-ENC:Array">
+<_1 SOAP-ENC:arrayType="xsd:int[3,4,2]" SOAP-ENC:offset="[17]" xsi:type="SOAP-ENC:Array">
     <item>1</item>
     <item>2</item>
     <item>3</item>
@@ -3352,7 +3352,7 @@ class SOAPTestCase(unittest.TestCase):
     <item>5</item>
     <item>6</item>
     <item>7</item>
-</v1>
+</_1>
 </SOAP-ENV:Body>'''
 
         x = parseSOAPRPC(xml)
@@ -3364,7 +3364,7 @@ class SOAPTestCase(unittest.TestCase):
         ])
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[3,4,2]" xsi:type="SOAP-ENC:Array">
+<_1 SOAP-ENC:arrayType="xsd:int[3,4,2]" xsi:type="SOAP-ENC:Array">
     <item SOAP-ENC:position="[17]">-17</item>
     <item SOAP-ENC:position="[13]">13</item>
     <item SOAP-ENC:position="[22]">-22</item>
@@ -3372,7 +3372,7 @@ class SOAPTestCase(unittest.TestCase):
     <item SOAP-ENC:position="[17]">17</item>
     <item SOAP-ENC:position="[23]">23</item>
     <item SOAP-ENC:position="[6]">6</item>
-</v1>
+</_1>
 </SOAP-ENV:Body>'''
 
         x = parseSOAPRPC(xml)
@@ -3384,12 +3384,12 @@ class SOAPTestCase(unittest.TestCase):
         ])
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[4]" SOAP-ENC:offset="[3]" xsi:type="SOAP-ENC:Array">
+<_1 SOAP-ENC:arrayType="xsd:int[4]" SOAP-ENC:offset="[3]" xsi:type="SOAP-ENC:Array">
     <item SOAP-ENC:position="[2]">2</item>
     <item SOAP-ENC:position="[0]">0</item>
     <item SOAP-ENC:position="[1]">1</item>
     <item SOAP-ENC:position="[3]">3</item>
-</v1>
+</_1>
 </SOAP-ENV:Body>'''
 
         x = parseSOAPRPC(xml)
@@ -3397,8 +3397,8 @@ class SOAPTestCase(unittest.TestCase):
         self.assertEquals( x ,  [0, 1, 2, 3])
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,3,4]" SOAP-ENC:offset="[23]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,3,4]" SOAP-ENC:offset="[23]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         x = parseSOAPRPC(xml)
@@ -3417,10 +3417,10 @@ class SOAPTestCase(unittest.TestCase):
         ])
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[4]" SOAP-ENC:offset="[3]" xsi:type="SOAP-ENC:Array">
+<_1 SOAP-ENC:arrayType="xsd:int[4]" SOAP-ENC:offset="[3]" xsi:type="SOAP-ENC:Array">
     <item>2</item>
     <item>3</item>
-</v1>
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3432,8 +3432,8 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,0,4]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,0,4]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3445,8 +3445,8 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,3,-4]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,3,-4]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3458,8 +3458,8 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,3,4.4]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,3,4.4]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3471,8 +3471,8 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,hello,4]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,hello,4]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3484,8 +3484,8 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,3,4]" SOAP-ENC:offset="[-4]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,3,4]" SOAP-ENC:offset="[-4]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3497,8 +3497,8 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,3,4]" SOAP-ENC:offset="[24]" xsi:type="SOAP-ENC:Array">
-</v1>
+<_1 SOAP-ENC:arrayType="xsd:int[2,3,4]" SOAP-ENC:offset="[24]" xsi:type="SOAP-ENC:Array">
+</_1>
 </SOAP-ENV:Body>'''
 
         try:
@@ -3510,10 +3510,10 @@ class SOAPTestCase(unittest.TestCase):
             pass
 
         xml = env % '''<SOAP-ENV:Body>
-<v1 SOAP-ENC:arrayType="xsd:int[2,3,4]" xsi:type="SOAP-ENC:Array">
+<_1 SOAP-ENC:arrayType="xsd:int[2,3,4]" xsi:type="SOAP-ENC:Array">
     <item SOAP-ENC:position="0">2</item>
     <item>3</item>
-</v1>
+</_1>
 </SOAP-ENV:Body>'''
 
         try:

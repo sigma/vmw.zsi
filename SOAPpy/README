@@ -18,15 +18,56 @@ Contributions by:
 	Mark Bucciarelli <mark@hubcapconsulting.com> (ported WSDL
              client from ZSI)
 
+
+INCLUDED:
+- General SOAP Parser based on sax.xml (requires Python 2.0)
+- General SOAP Builder
+- SOAP Proxy for RPC client code
+- SOAP Server framework for RPC server code
+
+FEATURES:
+- Handles all of the types in the BDG
+- Handles faults 
+- Allows namespace specification
+- Allows SOAPAction specification
+- Homogeneous typed arrays
+- Supports multiple schemas
+- Header support (mustUnderstand and actor)
+- XML attribute support
+- Multi-referencing support (Parser/Builder)
+- Understands SOAP-ENC:root attribute
+- Good interop, passes all client tests for Frontier, SOAP::LITE, SOAPRMI
+- Encodings
+- SSL clients (with OpenSSL configured in to Python)
+- SSL servers (with OpenSSL configured in to Python and M2Crypto installed)
+- Encodes XML tags per SOAP 1.2 name mangling specification (Gregory Warnes)
+- Automatic stateful SOAP server support (Apache v2.x) (blunck2)
+
+TODO:
+- Timeout on method calls - MCU
+- Arrays (sparse, multidimensional and partial) - BLM
+- Clean up data types - BLM
+- Type coercion system (Builder) - MCU
+- Early WSDL Support - MCU
+- Attachments - BLM
+- setup.py - MCU
+- mod_python example - MCU
+- medusa example - MCU
+- Documentation - JAG
+- Look at performance
+- Put into standard 'setup.py' module format to ease installation
+
+
 MANIFEST:
 
 README	      
 CHANGELOG     
-SOAPpy/*      Source code for the package
-setup.py      Python installation control file
-tests/*       examples
-validate/*    interop client and servers
-bid/*	      N+I interop client and server
+SOAPpy/*            Source code for the package
+SOAPpy/wstools/*    Source code for WSDL tools
+setup.py            Python installation control file
+tests/*             examples
+validate/*          interop client and servers
+bid/*	            N+I interop client and server
 
 INSTALLATION 
 
@@ -55,6 +96,26 @@ for how to customize Modules/Setup, and make sure the socket module with
 SSL support lines are uncommented). If you want to use an SSL server, in
 addition to building your Python for OpenSSL, you'll need to build and
 install M2Crypto (http://www.pobox.org.sg/home/ngps/m2/).
+
+WSDL NOTES:
+
+Release 0.9.9 and later include logic for dealing with web service
+description language (WSDL) files.  
+
+   - SOAPpy.WSDL provides a SOAP Proxy object that parses a WSDL file
+   and provides access to the listed services:
+
+        url = 'http://www.xmethods.org/sd/2001/TemperatureService.wsdl'
+        zip = '01072'
+        proxy = SOAPpy.WSDL.Proxy(url)
+        temp = proxy.getTemp(zip)
+        print 'Temperature at', zip, 'is', temp
+
+    - On the server, you can allow the cleint to download the WSDL for
+    a service by sending a request of the form by adding a do_GET
+    method to the SOAPRequestHandler.  [Not yet working when
+    debug=FALSE. Add example here when working]
+
 
 COMPATIBILITY WITH BROKEN EasySOAP SOAP SERVERS:
 

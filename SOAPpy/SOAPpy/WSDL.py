@@ -3,7 +3,7 @@
 Rudimentary support.'''
 
 import wstools
-import SOAP
+from Client import SOAPProxy, SOAPAddress
 
 class Proxy:
     '''WSDL Proxy.
@@ -76,7 +76,7 @@ class Proxy:
             callinfo = wstools.WSDLTools.callInfoFromWSDL(port, operation.name)
             self.methods[callinfo.methodName] = callinfo
 
-        self.soapproxy = SOAP.SOAPProxy('http://localhost/dummy.webservice')
+        self.soapproxy = SOAPProxy('http://localhost/dummy.webservice')
 
     def __str__(self): 
         s = ''
@@ -92,7 +92,7 @@ class Proxy:
         if name not in self.methods.keys(): raise AttributeError, name
 
         callinfo = self.methods[name]
-        self.soapproxy.proxy = SOAP.SOAPAddress(callinfo.location)
+        self.soapproxy.proxy = SOAPAddress(callinfo.location)
         self.soapproxy.namespace = callinfo.namespace
         self.soapproxy.soapaction = callinfo.soapAction
         return self.soapproxy.__getattr__(name)

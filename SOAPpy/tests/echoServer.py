@@ -4,12 +4,12 @@
 
 import sys
 
-from SOAPpy import SOAP
+from SOAPpy import *
 
-SOAP.Config.dumpSOAPIn = 1
-SOAP.Config.dumpSOAPOut = 1
+Config.dumpSOAPIn = 1
+Config.dumpSOAPOut = 1
 
-if SOAP.Config.SSLserver:
+if Config.SSLserver:
     from M2Crypto import SSL
 
 # Simple echo
@@ -66,7 +66,7 @@ def echo_wkw(**kw):
     return kw['first'] + kw['second'] + kw['third']
 
 if len(sys.argv) > 1 and sys.argv[1] == '-s':
-    if not SOAP.Config.SSLserver:
+    if not Config.SSLserver:
         raise RuntimeError, \
             "this Python installation doesn't have OpenSSL and M2Crypto"
     ssl_context = SSL.Context()
@@ -74,7 +74,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-s':
 else:
     ssl_context = None
 
-server = SOAP.SOAPServer(('localhost',9900), ssl_context = ssl_context)
+server = SOAPServer(('localhost',9900), ssl_context = ssl_context)
 
 server.registerFunction(echo)
 
@@ -83,7 +83,7 @@ o = echoBuilder()
 server.registerObject(o)
 
 # Register a function which gets called with the Context object
-server.registerFunction(SOAP.MethodSig(echo_wc, keywords = 0, context = 1))
+server.registerFunction(MethodSig(echo_wc, keywords = 0, context = 1))
 
 # Register a function that takes keywords
 server.registerKWFunction(echo_wkw)

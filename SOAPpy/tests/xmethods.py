@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2001 actzero, inc. All rights reserved.
+ident = '$Id$'
+
+import os, re
+from SOAPpy import SOAPProxy
+
+# Check for a web proxy definition in environment
+try:
+   proxy_url=os.environ['http_proxy']
+   phost, pport = re.search('http://([^:]+):([0-9]+)', proxy_url).group(1,2)
+   proxy = "%s:%s" % (phost, pport)
+except:
+   proxy = None
+
+ 
+print "##########################################"
+print " SOAP services registered at xmethods.net"
+print "##########################################"
+
+server = SOAPProxy("http://www.xmethods.net/interfaces/query",
+                        namespace = 'urn:xmethods-delayed-quotes',
+                        http_proxy=proxy)
+
+names = server.getAllServiceNames()
+
+for item in names:
+    dict = item._asdict
+    print 'name:',  dict['name']
+    print 'id  :',  dict['id']
+    print 

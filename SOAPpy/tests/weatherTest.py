@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2001 actzero, inc. All rights reserved.
-
-import sys
-
-sys.path.insert (1, '..')
-
-from SOAPpy import SOAP
-
 ident = '$Id$'
 
-SoapEndpointURL	= 'http://services.xmethods.net/soap/servlet/rpcrouter'
+import os, re
+from SOAPpy import SOAPProxy
+
+# Check for a web proxy definition in environment
+try:
+   proxy_url=os.environ['http_proxy']
+   phost, pport = re.search('http://([^:]+):([0-9]+)', proxy_url).group(1,2)
+   proxy = "%s:%s" % (phost, pport)
+except:
+   proxy = None
+
+SoapEndpointURL	= 'http://services.xmethods.net:80/soap/servlet/rpcrouter'
 MethodNamespaceURI = 'urn:xmethods-Temperature'
 
 # Do it inline ala SOAP::LITE, also specify the actually ns
 
-server = SOAP.SOAPProxy(SoapEndpointURL)
+server = SOAPProxy(SoapEndpointURL, http_proxy=proxy)
 print "inline", server._ns('ns1', MethodNamespaceURI).getTemp(zipcode='94063')

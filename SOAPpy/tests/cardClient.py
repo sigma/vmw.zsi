@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert (1, '..')
 
-from SOAPpy import SOAP
+from SOAPpy import *
 
 ident = '$Id$'
 
@@ -14,7 +14,7 @@ endpoint = "http://localhost:12027/xmethodsInterop"
 sa = "urn:soapinterop"
 ns = "http://soapinterop.org/"
 
-serv = SOAP.SOAPProxy(endpoint, namespace=ns, soapaction=sa)
+serv = SOAPProxy(endpoint, namespace=ns, soapaction=sa)
 try: hand =  serv.dealHand(NumberOfCards = 13, StringSeparator = '\n')
 except: print "no dealHand"; hand = 0
 try: sortedhand = serv.dealArrangedHand(NumberOfCards=13,StringSeparator='\n')
@@ -25,3 +25,4 @@ except: print "no card"; card = 0
 print "*****hand****\n",hand,"\n*********"
 print "******sortedhand*****\n",sortedhand,"\n*********"
 print "card:",card
+
