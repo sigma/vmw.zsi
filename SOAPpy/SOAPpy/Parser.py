@@ -807,40 +807,41 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 l = self.floatlimits[t[1]]
                 s = d.strip().lower()
 
-                if s == "nan":
-                    return fpconst.NaN
-                elif s == "inf":
-                    return fpconst.PosInf
-                elif s == "-inf":
-                    return fpconst.NegInf
-
                 d = float(s)
 
                 if config.strict_range:
                     if d < l[1]: raise UnderflowError
                     if d > l[2]: raise OverflowError
+                else:
+                    # some older SOAP impementations (notably SOAP4J,
+                    # Apache SOAP) return "infinity" instead of "INF"
+                    # so check the first 3 characters for a match.
+                    if s == "nan":
+                        return fpconst.NaN
+                    elif s[0:3] in ("inf", "+inf"):
+                        return fpconst.PosInf
+                    elif s[0:3] == "-inf":
+                        return fpconst.NegInf
 
-                if str(d).lower() == 'nan':
+                if fpconst.isNaN(d):
                     if s != 'nan':
-                        raise ValueError, "invalid %s" % t[1]
-                elif str(d).lower() == '-inf':
+                        raise ValueError, "invalid %s: %s" % (t[1], s)
+                elif fpconst.isNegInf(d):
                     if s != '-inf':
-                        raise UnderflowError, "%s too small" % t[1]
-                elif str(d).lower() == 'inf':
+                        raise UnderflowError, "%s too small: %s" % (t[1], s)
+                elif fpconst.isPosInf(d):
                     if s != 'inf':
-                        raise OverflowError, "%s too large" % t[1]
-                elif d < 0:
-                    if d < l[1]:
-                        raise UnderflowError, "%s too small" % t[1]
-                elif d > 0:
-                    if d < l[0] or d > l[2]:
-                        raise OverflowError, "%s too large" % t[1]
+                        raise OverflowError, "%s too large: %s" % (t[1], s)
+                elif d < 0 and d < l[1]:
+                        raise UnderflowError, "%s too small: %s" % (t[1], s)
+                elif d > 0 and ( d < l[0] or d > l[2] ):
+                        raise OverflowError, "%s too large: %s" % (t[1], s)
                 elif d == 0:
                     if type(self.zerofloatre) == StringType:
                         self.zerofloatre = re.compile(self.zerofloatre)
 
                     if self.zerofloatre.search(s):
-                        raise UnderflowError, "invalid %s" % t[1]
+                        raise UnderflowError, "invalid %s: %s" % (t[1], s)
 
                 return d
             if t[1] in ("dateTime", "date", "timeInstant", "time"):

@@ -19,7 +19,7 @@ config.strict_range=1
 
 
 # run these tests with this variable set both to 1 and 0
-config.simplify_objects=1
+config.simplify_objects=0
 
 # as borrowed from jake.soapware.org for float compares.
 def nearlyeq(a, b, prec = 1e-7):

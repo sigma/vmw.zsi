@@ -326,11 +326,11 @@ class SOAPBuilder:
         if Config.strict_range:
             doubleType(obj)
 
-        if fpconst.is_PosInf(obj):
+        if fpconst.isPosInf(obj):
             obj = "INF"
-        elif fpconst.is_NegInf(obj):
+        elif fpconst.isNegInf(obj):
             obj = "-INF"
-        elif fpconst.is_NaN(obj):
+        elif fpconst.isNaN(obj):
             obj = "NaN"
         else:
             obj = str(obj)

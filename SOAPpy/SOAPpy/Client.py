@@ -356,10 +356,11 @@ class SOAPProxy:
             try:
                 count = 0
                 for i in p.__dict__.keys():
-                    if i[0] != "_":  # don't move the private stuff
+                    if i[0] != "_":  # don't count the private stuff
                         count += 1
                         t = getattr(p, i)
-                if count == 1: p = t # Only one piece of data, bubble it up
+                if count == 1: # Only one piece of data, bubble it up
+                    p = t 
             except:
                 pass
 
