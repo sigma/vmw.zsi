@@ -13,7 +13,9 @@ The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
 \lineiii{\code{keepdom}}{\code{0}}{Do not release the DOM when this
-object is destroyed.
+object is destroyed. To access the DOM object, use the
+{\method{GetDomAndReader()}} method. The reader object is necessary to 
+properly free the DOM structure using {\method{reader.releaseNode(dom)}}.
 \versionadded{1.2}}
 \lineiii{\code{readerclass}}{\code{None}}{Class used to create DOM-creating
 XML readers; described below.
@@ -115,6 +117,14 @@ attribute, or whose value is either the special ``next actor'' value or
 in the \code{actorlist} list of URI's.
 \end{methoddesc}
 
+\begin{methoddesc}{GetDomAndReader}{}
+Returns a tuple containing the dom and reader objects, \code{(dom, reader)}.
+Unless keepdom is true, the dom and reader objects will go out of scope
+when the ParsedSoap instance is deleted. If keepdom is true, the reader
+object is needed to properly clean up the dom tree with 
+\method{reader.releaseNode(dom)}.
+\end{methoddesc}
+
 \begin{methoddesc}{IsAFault}{}
 Returns true if the message is a SOAP fault.
 \end{methoddesc}
@@ -159,8 +169,6 @@ The \code{readerclass} parameter specifies which one to use.
 The default is to use the DOM provided with the PyXML package developed
 by the Python XML SIG, provided through the \class{PyExpat.Reader} class
 in the \module{xml.dom.ext.reader} module.
-To use the \code{cDomlette} DOM provided by the 4Suite package, use the
-\class{RawExpatReader} class in the \module{Ft.Lib.cDomlette} module.
 
 The specified reader class must support the following methods:
 
@@ -181,3 +189,23 @@ specification.
 While only a small subset of specification is used, the particular
 methods and attributes used by \ZSI{} are available only
 by inspecting the source.
+
+To use the \code{cDomlette} DOM provided by the 4Suite package, use the
+\class{NonvalidatingReader} class in the \module{Ft.Xml.Domlette} module.
+Due to name changes in the 1.0 version of 4Suite, a simple adapter class
+is required to use this DOM implementation. 
+
+\begin{verbatim}
+from 4Suite.Xml.Domlette import NonvalidatingReaderBase
+
+class 4SuiteAdapterReader(NonvalidatingReaderBase):
+
+    def fromString(self, str):
+        return self.parseString(str)
+
+    def fromStream(self, stream):
+        return self.parseStream(stream)
+
+    def releaseNode(self, node):
+        pass
+\end{verbatim}
