@@ -35,7 +35,7 @@ class ServiceProxy:
         binding = self._port.getBinding()
         portType = binding.getPortType()
         for item in portType.operations:
-            callinfo = callInfoFromWSDL(self._port, item.name)
+            callinfo = wstools.WSDLTools.callInfoFromWSDL(self._port, item.name)
             method = MethodProxy(self, callinfo)
             setattr(self, item.name, method)
 
