@@ -437,7 +437,8 @@ class ServiceDescription:
             myBinding['defs']['__init__'] += '\n%skw["url"] =  urlparse.urlparse(addr)[2]' %(ID3)
             myBinding['defs']['__init__'] += '\n%sself.binding = client.Binding(**kw)' %(ID2)
 
-            
+            operationDict = {}
+
             for op in p.getBinding().getPortType().getOperationList():
                 # -----------------------------
                 #  REQUIREMENTS SOAP Bindings
@@ -482,6 +483,7 @@ class ServiceDescription:
 
                 if op.getInput():
                     inputName = op.getInput().getMessage().getName()
+                    operationDict[op.getName()] = [inputName, None]
                     # these have been moved here to build up the typecodes
                     # needed to generate types in the docstrings
                     self.messages[inputName] = self.__class__.MessageWriter()
@@ -493,6 +495,7 @@ class ServiceDescription:
                     outputName = None
                     if op.getOutput() and op.getOutput().getMessage():
                         outputName = op.getOutput().getMessage().getName()
+                        operationDict[op.getName()][1] = outputName
                         self.messages[outputName] = \
                                       self.__class__.MessageWriter()
                         self.messages[outputName].\
@@ -567,6 +570,8 @@ class ServiceDescription:
 		self.serviceBindings += "\n%s\n" \
                                         % (myBinding['defs']['__init__'])
 		del myBinding['defs']['__init__']
+                if operationDict:
+                    self.serviceBindings += ID2 + "self.opDict = self._generateOpDict()\n"
                 keys = myBinding['defs'].keys()
                 keys.sort()
                 for mn in keys:
@@ -574,6 +579,24 @@ class ServiceDescription:
 		    self.serviceBindings += "\n%s\n" %(d)
 		else:
 	            self.serviceBindings += "\n"
+
+                if operationDict:
+                    self.serviceBindings += '\n' + ID1 + 'def _generateOpDict(self):\n'
+                    self.serviceBindings += ID2 + 'opDict = {}\n'
+                    for name, wrapperList in operationDict.items():
+                        self.serviceBindings += ID2 + "opDict['%s'] = [%sWrapper(), %sWrapper()]\n" % (name, wrapperList[0], wrapperList[1])
+                    self.serviceBindings += ID2 + 'return opDict\n'
+
+                        # returns operation dictionary
+                    self.serviceBindings += '\n' + ID1 + 'def _getOperations(self):\n'
+                    self.serviceBindings += ID2 + 'return self.opDict\n'
+
+                        # adds get input wrapper method
+                    self.serviceBindings += '\n' + ID1 + 'def _getInputWrapper(self, opName):\n'
+                    self.serviceBindings += ID2 + 'return self.opDict[opName][0]\n'
+                        # adds get output wrapper method
+                    self.serviceBindings += '\n' + ID1 + 'def _getOutputWrapper(self, opName):\n'
+                    self.serviceBindings += ID2 + 'return self.opDict[opName][1]\n'
         
         return
 
