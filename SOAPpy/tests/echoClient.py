@@ -9,29 +9,77 @@ from SOAPpy import *
 
 # Uncomment to see outgoing HTTP headers and SOAP and incoming 
 #Config.debug = 1
+#Config.dumpHeadersIn = 1
+#Config.dumpSOAPIn = 1
+#Config.dumpSOAPOut = 1
+Config.unwrap_results = 1
 
-Config.BuildWithNoType = 1
-Config.BuildWithNoNamespacePrefix = 1
+#Config.BuildWithNoType = 1
+#Config.BuildWithNoNamespacePrefix = 1
 
 if len(sys.argv) > 1 and sys.argv[1] == '-s':
+    pathserver = SOAPProxy("https://localhost:9900/pathtest")
+elif len(sys.argv) > 1 and sys.argv[1] == '-g':
+    server = SOAPProxy("httpg://localhost:9900")
+    pathserver = SOAPProxy("httpg://localhost:9900/pathtest")
     server = SOAPProxy("https://localhost:9900")
 else:
+    pathserver = SOAPProxy("http://localhost:9900/pathtest")
     server = SOAPProxy("http://localhost:9900")
 
 # Echo...
 
 # ...in an object
-print server.echo_ino("moo")
+try:
+    print server.echo_ino("moo")
+except KeyboardInterrupt:
+    pass
+#except Exception, e:
+#    print "Caught exception: ", e
+#    print "Got unexpected exception: %s %s %s" % sys.exc_info()
+try:
+    print pathserver.echo_ino("cow")
+except Exception, e:
+    print "Caught exception: ", e
 
 # ...in an object in an object
-print server.prop.echo2("moo")
+try:
+    print server.prop.echo2("moo")
+except Exception, e:
+    print "Caught exception: ", e
+
+try:
+    print pathserver.prop.echo2("cow")
+except Exception, e:
+    print "Caught exception: ", e
 
 # ...with keyword arguments 
-print server.echo_wkw(third = "three", first = "one", second = "two")
+try:
+    print server.echo_wkw(third = "three", first = "one", second = "two")
+except Exception, e:
+    print "Caught exception: ", e
+try:
+    print pathserver.echo_wkw(third = "three", first = "one", second = "two")
+except Exception, e:
+    print "Caught exception: ", e
 
 # ...with a context object
-print server.echo_wc("moo")
+try:
+    print server.echo_wc("moo")
+except Exception, e:
+    print "Caught exception: ", e
+try:
+    print pathserver.echo_wc("cow")
+except Exception, e:
+    print "Caught exception: ", e
 
 # ...with a header
 hd = headerType(data = {"mystring": "Hello World"})
-print server._hd(hd).echo_wc("moo")
+try:
+    print server._hd(hd).echo_wc("moo")
+except Exception, e:
+    print "Caught exception: ", e
+try:
+    print pathserver._hd(hd).echo_wc("cow")
+except Exception, e:
+    print "Caught exception: ", e
