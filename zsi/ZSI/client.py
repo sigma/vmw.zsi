@@ -292,6 +292,9 @@ class Binding:
                 tc = clazz.typecode
                 instance = tc.parse(node, self.ps)
                 return instance
+            else:
+                tc = TC.Any(aslist=1)
+                return tc.parse(node, self.ps)                
         except Exception, e:
             tc = TC.Any(aslist=1)
             return tc.parse(node, self.ps)
