@@ -17,12 +17,15 @@ The methods can be called with either positional or keyword arguments;
 the argument types must be compatible with the types specified in the
 WSDL description.
 
-The following example shows a simple language translation service:
+The following example shows a simple language translation service that makes
+use of the complex type structures defined in the module BabelTypes:
 
 \begin{verbatim}
 from ZSI.wsdl import ServiceProxy
+import BabelTypes
 
-service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl')
+service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
+		       typesmodule=BabelTypes)
 value = service.BabelFish('en_de', 'This is a test!')
 \end{verbatim}
 
