@@ -1556,7 +1556,11 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                         for x in c.content:
                             if self.__adapterWrap( x ):
                                 t = self.__adapterWrap(x)
-                                t._dec.attributes['nillable'] = u"true"
+                                if hasattr(t, '_ref'):
+                                    # it's an element ref then
+                                    t._ref.attributes['nillable'] = u"true"
+                                else:
+                                    t._dec.attributes['nillable'] = u"true"
                                 group.append( t )
                     else:
                         if self.__adapterWrap( c ):
