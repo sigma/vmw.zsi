@@ -458,6 +458,12 @@ class QName(String):
     parselist = [ (None,'QName') ]
     tag = 'QName'
 
+class Token(String):
+    '''an xsd:token type
+    '''
+    parselist = [ (None, 'token') ]
+    tag = 'token'
+
 class Base64String(String):
     '''A Base64 encoded string.
     '''
