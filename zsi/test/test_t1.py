@@ -130,7 +130,7 @@ class t1TestCase(unittest.TestCase):
         self.failUnlessEqual(TC.Struct(None,(TC.FPfloat('a'), TC.Decimal('b'),
                                             TC.FPdouble('c'))).parse(elts[13],ps),
                                             {'a': 6.9000000000000004, 'c':
-                                                1e30000, 'b': 0.0})
+                                                TC._make_inf(), 'b': 0.0})
         nsdict = ps.GetElementNSdict(ps.header)
         nsdict[''] = "http://www.zolera.com/ns/"
         nsdict['q'] = 'q-namespace-uri' 
