@@ -938,6 +938,7 @@ class SchemaDescription:
                        (ID1, schema.getTargetNamespace())
 
 	self.body = ''
+        self.last = ''
         
         self.class_dict = {}
         self.class_list = []
@@ -950,6 +951,8 @@ class SchemaDescription:
         self.body += '\n%s = %s' \
                      % ( self.nsh.getAlias(schema.getTargetNamespace()),
                          self.nsh.getModuleName(schema.getTargetNamespace()))
+        if self.last:
+            self.body += self.last
 
     def generate(self, sdict, alternateWriter):
 
