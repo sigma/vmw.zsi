@@ -1,6 +1,6 @@
 Copyright (c) 2001-2003
 
-SOAP.py 0.9.9-pre2
+SOAP.py 0.10.3
 
 Current Maintainers: 	
 
@@ -43,7 +43,7 @@ FEATURES:
 - Encodes XML tags per SOAP 1.2 name mangling specification (Gregory Warnes)
 - Automatic stateful SOAP server support (Apache v2.x) (blunck2)
 
-TODO:
+TODO: (See RELEASE_INFO and CHANGELOG for recent changes)
 - Timeout on method calls - MCU
 - Arrays (sparse, multidimensional and partial) - BLM
 - Clean up data types - BLM
