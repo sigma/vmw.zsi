@@ -2856,7 +2856,7 @@ class SOAPBuilder:
         self.methodattrs= methodattrs
         self.use_refs   = use_refs
         self.config     = config
-        self.out        = ''
+        self.out        = []
         self.tcounter   = 0
         self.ncounter   = 1
         self.icounter   = 1
@@ -2881,7 +2881,7 @@ class SOAPBuilder:
             # Call genns to record that we've used SOAP-ENV.
             self.depth += 1
             body_ns = self.genns(ns_map, NS.ENV)[0]
-            self.out += "<%sBody>\n" % body_ns
+            self.out.append("<%sBody>\n" % body_ns)
 
         if self.method:
             self.depth += 1
@@ -2895,8 +2895,8 @@ class SOAPBuilder:
             else:
                 methodns, n = '', ''
 
-            self.out += '<%s%s%s%s%s>\n' % \
-                (methodns, self.method, n, a, self.genroot(ns_map))
+            self.out.append('<%s%s%s%s%s>\n' % (
+                methodns, self.method, n, a, self.genroot(ns_map)))
 
         try:
             if type(self.args) != TupleType:
@@ -2926,7 +2926,7 @@ class SOAPBuilder:
             raise
 
         if self.method:
-            self.out += "</%s%s>\n" % (methodns, self.method)
+            self.out.append("</%s%s>\n" % (methodns, self.method))
             self.depth -= 1
 
         if self.body:
@@ -2939,23 +2939,23 @@ class SOAPBuilder:
             for obj, tag in self.multirefs:
                 self.dump(obj, tag, typed = typed, ns_map = ns_map)
 
-            self.out += "</%sBody>\n" % body_ns
+            self.out.append("</%sBody>\n" % body_ns)
             self.depth -= 1
 
         if self.envelope:
-            e = map (lambda ns: 'xmlns:%s="%s"' % (ns[1], ns[0]),
+            e = map (lambda ns: ' xmlns:%s="%s"' % (ns[1], ns[0]),
                 self.envns.items())
 
-            self.out = '<' + self._env_top + ' '.join([''] + e) + '>\n' + \
-                self.out + \
-                self._env_bot
+            self.out = ['<', self._env_top] + e + ['>\n'] + \
+                       self.out + \
+                       [self._env_bot]
 
         if self.encoding != None:
-            self.out = self._xml_enc_top % self.encoding + self.out
+            self.out.insert(0, self._xml_enc_top % self.encoding)
+            return ''.join(self.out).encode(self.encoding)
 
-            return self.out.encode(self.encoding)
-
-        return self._xml_top + self.out
+        self.out.insert(0, self._xml_top)
+        return ''.join(self.out)
 
     def gentag(self):
         self.tcounter += 1
@@ -3026,7 +3026,8 @@ class SOAPBuilder:
             if self.multis and self.depth == 2:
                 return ' id="i%d"' % n
 
-        self.out += '<%s href="#i%d"%s/>\n' % (tag, n, self.genroot(ns_map))
+        self.out.append('<%s href="#i%d"%s/>\n' %
+                        (tag, n, self.genroot(ns_map)))
         return None
 
     # dumpers
@@ -3047,8 +3048,8 @@ class SOAPBuilder:
             else:
                 obj_type = type(obj).__name__
 
-            self.out += self.dumper(None, obj_type, obj, tag, typed,
-                ns_map, self.genroot(ns_map))
+            self.out.append(self.dumper(None, obj_type, obj, tag, typed,
+                                        ns_map, self.genroot(ns_map)))
 
         self.depth -= 1
 
@@ -3090,8 +3091,8 @@ class SOAPBuilder:
             obj = str(obj).upper()
         elif obj == 'nan':
             obj = 'NaN'
-        self.out += self.dumper(None, "float", obj, tag, typed, ns_map,
-            self.genroot(ns_map))
+        self.out.append(self.dumper(None, "float", obj, tag, typed, ns_map,
+                                    self.genroot(ns_map)))
 
     def dump_string(self, obj, tag, typed = 0, ns_map = {}):
         tag = tag or self.gentag()
@@ -3103,8 +3104,8 @@ class SOAPBuilder:
         try: data = obj._marshalData()
         except: data = obj
 
-        self.out += self.dumper(None, "string", cgi.escape(data), tag,
-            typed, ns_map, self.genroot(ns_map), id)
+        self.out.append(self.dumper(None, "string", cgi.escape(data), tag,
+                                    typed, ns_map, self.genroot(ns_map), id))
 
     dump_str = dump_string # For Python 2.2+
     dump_unicode = dump_string
@@ -3113,7 +3114,8 @@ class SOAPBuilder:
         tag = tag or self.gentag()
         ns = self.genns(ns_map, self.config.schemaNamespaceURI)[0]
 
-        self.out += '<%s %snull="1"%s/>\n' % (tag, ns, self.genroot(ns_map))
+        self.out.append('<%s %snull="1"%s/>\n' %
+                        (tag, ns, self.genroot(ns_map)))
 
     dump_NoneType = dump_None # For Python 2.2+
 
@@ -3187,10 +3189,10 @@ class SOAPBuilder:
         ens, edecl = self.genns(ns_map, NS.ENC)
         ins, idecl = self.genns(ns_map, self.config.schemaNamespaceURI)
 
-        self.out += \
-            '<%s %sarrayType="%s[%d]" %stype="%sArray"%s%s%s%s%s%s>\n' %\
+        self.out.append(
+            '<%s %sarrayType="%s[%d]" %stype="%sArray"%s%s%s%s%s%s>\n' %
             (tag, ens, t, len(data), ins, ens, ndecl, edecl, idecl,
-                self.genroot(ns_map), id, a)
+             self.genroot(ns_map), id, a))
 
         typed = not same_type
 
@@ -3200,7 +3202,7 @@ class SOAPBuilder:
         for i in data:
             self.dump(i, elemsname, typed, ns_map)
 
-        self.out += '</%s>\n' % tag
+        self.out.append('</%s>\n' % tag)
 
     dump_tuple = dump_list
 
@@ -3214,14 +3216,14 @@ class SOAPBuilder:
         try: a = obj._marshalAttrs(ns_map, self)
         except: a = ''
 
-        self.out += '<%s%s%s%s>\n' % \
-            (tag, id, a, self.genroot(ns_map))
+        self.out.append('<%s%s%s%s>\n' % 
+                        (tag, id, a, self.genroot(ns_map)))
 
         for (k, v) in obj.items():
             if k[0] != "_":
                 self.dump(v, k, 1, ns_map)
 
-        self.out += '</%s>\n' % tag
+        self.out.append('</%s>\n' % tag)
 
     dump_dict = dump_dictionary # For Python 2.2+
 
@@ -3240,13 +3242,13 @@ class SOAPBuilder:
         if isinstance(obj, faultType):    # Fault
             cns, cdecl = self.genns(ns_map, NS.ENC)
             vns, vdecl = self.genns(ns_map, NS.ENV)
-            self.out += '''<%sFault %sroot="1"%s%s>
+            self.out.append('''<%sFault %sroot="1"%s%s>
 <faultcode>%s</faultcode>
 <faultstring>%s</faultstring>
-''' % (vns, cns, vdecl, cdecl, obj.faultcode, obj.faultstring)
+''' % (vns, cns, vdecl, cdecl, obj.faultcode, obj.faultstring))
             if hasattr(obj, "detail"):
                 self.dump(obj.detail, "detail", typed, ns_map)
-            self.out += "</%sFault>\n" % vns
+            self.out.append("</%sFault>\n" % vns)
             return
 
         r = self.genroot(ns_map)
@@ -3255,7 +3257,7 @@ class SOAPBuilder:
         except: a = ''
 
         if isinstance(obj, voidType):     # void
-            self.out += "<%s%s%s></%s>\n" % (tag, a, r, tag)
+            self.out.append("<%s%s%s></%s>\n" % (tag, a, r, tag))
             return
 
         id = self.checkref(obj, tag, ns_map)
@@ -3270,7 +3272,7 @@ class SOAPBuilder:
             if ns:
                 ns, ndecl = self.genns(ns_map, ns)
                 tag = ns + tag
-            self.out += "<%s%s%s%s%s>\n" % (tag, ndecl, id, a, r)
+            self.out.append("<%s%s%s%s%s>\n" % (tag, ndecl, id, a, r))
 
             # If we have order use it.
             order = 1
@@ -3294,7 +3296,7 @@ class SOAPBuilder:
                 for v, k in self.multirefs:
                     self.dump(v, k, typed = typed, ns_map = ns_map)
 
-            self.out += '</%s>\n' % tag
+            self.out.append('</%s>\n' % tag)
 
         elif isinstance(obj, anyType):
             t = ''
@@ -3309,17 +3311,17 @@ class SOAPBuilder:
                     t = ' %stype="%s%s"%s%s' % \
                         (ins, ons, obj._type, ondecl, indecl)
 
-            self.out += '<%s%s%s%s%s>%s</%s>\n' % \
-                (tag, t, id, a, r, obj._marshalData(), tag)
+            self.out.append('<%s%s%s%s%s>%s</%s>\n' %
+                            (tag, t, id, a, r, obj._marshalData(), tag))
 
         else:                           # Some Class
-            self.out += '<%s%s%s>\n' % (tag, id, r)
+            self.out.append('<%s%s%s>\n' % (tag, id, r))
 
             for (k, v) in obj.__dict__.items():
                 if k[0] != "_":
                     self.dump(v, k, 1, ns_map)
 
-            self.out += '</%s>\n' % tag
+            self.out.append('</%s>\n' % tag)
 
 
 ################################################################################

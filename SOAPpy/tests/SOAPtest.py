@@ -53,6 +53,13 @@ ws = ' \t\r\n'
 N = None
                    
 class SOAPTestCase(unittest.TestCase):
+    # big message
+    def notestBigMessage(self):
+        x=[]
+        for y in string.lowercase:
+            x.append(y*999999)
+        buildSOAP(x)
+        
     # test arrayType
     def testArrayType(self):
         x = structType( {"name":"widg1","quantity":200,
