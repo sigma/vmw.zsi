@@ -1304,10 +1304,12 @@ class SOAPTestCase(unittest.TestCase):
             ('http://some/namespace', 'namespaceURIattr1'): 3})
         x._setAttr(('http://some/other/namespace', 'namespaceURIattr2'), 4)
 
-        self.assertEquals( x._getAttr('nonamespaceURI') ,  '1')
-        self.assertEquals( x._getAttr('NonenamespaceURI') ,  '2')
-        self.assertEquals( x._getAttr(('http://some/namespace', 'namespaceURIattr1')) ,  '3')
-        self.assertEquals( x._getAttr(('http://some/other/namespace', 'namespaceURIattr2')) ,  '4')
+        self.assertEquals( x._getAttr('nonamespaceURI') ,  1)
+        self.assertEquals( x._getAttr('NonenamespaceURI') ,  2)
+        self.assertEquals( x._getAttr(('http://some/namespace',
+                                       'namespaceURIattr1')) ,  3)
+        self.assertEquals( x._getAttr(('http://some/other/namespace',
+                                       'namespaceURIattr2')) ,  4)
         self.assertEquals( x._getAttr('non-extant attr') ,  None)
 
         y = buildSOAP(x)
