@@ -93,7 +93,7 @@ datatest = '''<SOAP-ENV:Envelope
 </SOAP-ENV:Envelope>'''
 
 class myclass:
-    def __init__(self, name):
+    def __init__(self, name=None):
         self.name = name or id(self)
         self.z = 'z value'
     def __str__(self):
