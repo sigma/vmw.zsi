@@ -864,6 +864,7 @@ class ZSIPortTypeAdapter(PortTypeInterface):
 
         for op in self._portType.operations.values():
             operations.append(ZSIOperationAdapter(self._ws, op))
+        operations.sort(lambda x, y:  cmp(x.getName(), y.getName()))
             
         return operations
 
