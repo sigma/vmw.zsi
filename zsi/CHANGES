@@ -1,6 +1,7 @@
-Changes for xxx released xxx:
+Changes for 1.4.1 released 11-Nov-2003:
     -   Make "docstyle" work for returning data, too (Alexis Marrero-Narvaez)
     -   TC.Struct.typed will output xsi:type parameter now.
+    -   Numerous bug fixes
 
 Changes for 1.4, released 09-Sep-2003:
     -   Ouput XML prolog in SoapWriter
@@ -14,7 +15,7 @@ Changes for 1.4, released 09-Sep-2003:
     -   Arrays of ComplexTypes can now be deserialized
     -   User can specify which module contains complex type definitions
     -   Mod_Python support for dispatch to multiple functions within a module
-    -   In client.py, try to get port from URL if available (via Wichert Akkerman)
+    -   In client.py, try to get port from URL if available (Wichert Akkerman)
     -   Add ZSIException as parent for ZSI exception classes, FaultException
         class, and raise that if we get unexpected fault in client (Wichert)
     -   Add auth_header keyword param to client Send method (Phillip Pearson)
