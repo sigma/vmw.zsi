@@ -399,7 +399,11 @@ class SOAPBuilder:
             sample = data[0]
             empty = 0
         except:
-            sample = structType()
+            # preserve type if present
+            if getattr(obj,"_typed",None) and getattr(obj,"_type",None):
+                sample = typedArrayType(typed=obj._type)
+            else:
+                sample = structType()
             empty = 1
 
         # First scan list to see if all are the same type

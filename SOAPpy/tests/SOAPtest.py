@@ -11,6 +11,7 @@ ident = '$Id$'
 import urllib
 import sys
 import unittest
+import re
 
 sys.path.insert(1, "..")
 from SOAPpy import *
@@ -3780,6 +3781,16 @@ epnedUwrkPzedWU9AL7c/oN7rk65UuPWf7V8c/4E9bc=</dsig:Modulus>
 </soap:Envelope>'''
 
         x = parseSOAPRPC(xml)
+
+    def testZeroLengthTypedArray(self):
+        """
+        Test that zero length typed arrays maintain thier type information when
+        converted to a SOAP message.
+        """
+        empty_int = typedArrayType(typed="int")
+        empty_int_message = buildSOAP( empty_int )
+        self.assertNotEquals( re.search("xsd:int\[0\]", empty_int_message),
+                               None )
 
 if __name__ == '__main__':
 

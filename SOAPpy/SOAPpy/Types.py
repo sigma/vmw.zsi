@@ -89,7 +89,7 @@ class anyType:
             self._setAttrs(attrs)
 
     def __str__(self):
-        if self._name:
+        if hasattr(self,'_name') and self._name:
             return "<%s %s at %d>" % (self.__class__, self._name, id(self))
         return "<%s at %d>" % (self.__class__, id(self))
 
@@ -1273,9 +1273,6 @@ class compoundType(anyType):
                 for name in dir(self):
                     if isPublic(name):
                         retval[name] = getattr(self,name)
-                        print "YES:",name
-                    else:
-                        print "NO:",name
             return retval
 
  
@@ -1559,6 +1556,7 @@ class typedArrayType(arrayType):
         arrayType.__init__(self, data, name, attrs, offset, rank, asize,
             elemsname)
 
+        self._typed = 1
         self._type = typed
 
 class faultType(structType, Error):
