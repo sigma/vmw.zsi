@@ -8,6 +8,9 @@ sys.path.insert (1, '..')
 import SOAPpy
 
 class test_service:
+
+    run = 1
+    
     def test_integer(self,pass_integer):
         print type(pass_integer)
         return pass_integer
@@ -32,10 +35,14 @@ class test_service:
         print type(pass_dictionary), pass_dictionary
         return pass_dictionary
 
+    def quit(self):
+        self.run = 0
 
 server = SOAPpy.SOAPServer(("localhost",9999))
 SOAPpy.Config.simplify_objects=1
 
 access_object = test_service()
 server.registerObject(access_object)
-server.serve_forever()
+
+while access_object.run:
+    server.handle_request()

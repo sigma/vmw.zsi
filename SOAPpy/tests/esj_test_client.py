@@ -68,3 +68,4 @@ if __name__ == "__main__":
     assert(result_dictionary==original_dictionary)
     print
     
+    server.quit()
