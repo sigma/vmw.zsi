@@ -8,6 +8,7 @@ Copyright 2001, Zolera Systems, Inc.  All Rights Reserved.
 _copyright = """ZSI:  Zolera Soap Infrastructure.
 
 Copyright 2001, Zolera Systems, Inc.  All Rights Reserved.
+Copyright 2002-2003, Rich Salz. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),

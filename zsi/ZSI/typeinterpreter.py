@@ -1,6 +1,6 @@
 ############################################################################
 # Joshua R. Boverhof, LBNL
-# See Copyright for copyright notice!
+# See LBNLCopyright for copyright notice!
 ###########################################################################
 import types, copy
 import ZSI

@@ -1,7 +1,7 @@
 ############################################################################
 # Joshua R. Boverhof, LBNL
 # Monte M. Goode, LBNL
-# See Copyright for copyright notice!
+# See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, re
 from xml.dom.ext import SplitQName
