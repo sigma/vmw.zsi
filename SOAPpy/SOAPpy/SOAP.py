@@ -94,9 +94,9 @@ import string
 import sys
 import time
 import SocketServer
-from XMLname import toXMLname, fromXMLname
+from wstools.XMLname import toXMLname, fromXMLname
 from types import *
-import ieee754
+import wstools.ieee754
 import BaseHTTPServer
 
 try: from M2Crypto import SSL
