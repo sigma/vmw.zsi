@@ -3659,22 +3659,16 @@ class SOAPProxy:
             self.__ns   	= ns
             self.__sa   	= sa
             self.__hd   	= hd
-            self.__ma       = ma
-            self.__config   = config
-            self.__action   = 0
-            if self.__name[0] == "_":
-                if self.__name in ["__repr__","__str__"]:
-                    self.__action = 1
-                else:
-                    self.__action = 2
-            else:
-                self._action = 3
+            self.__ma           = ma
+            self.__config       = config
+            return
 
         def __call__(self, *args, **kw):
-            if self.__action == 1:
-                return self.__repr__()
-            elif self.__action == 2:
-                return self.__f_call(*args, **kw)
+            if self.__name[0] == "_":
+                if self.__name in ["__repr__","__str__"]:
+                    return self.__repr__()
+                else:
+                    return self.__f_call(*args, **kw)
             else:
                 return self.__r_call(*args, **kw)
                         
