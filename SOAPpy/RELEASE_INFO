@@ -1,3 +1,39 @@
+
+Release 0.11.0 of SOAPpy
+------------------------
+
+- New/Changed configuration settings:
+
+  - Config.unwrap_results=1 now converts all SOAPpy objects into basic
+  Python types (list, dictionary, tuple, double, float, etc.).  This
+  includes converting faultTypes into raised exceptions.  By default,
+  Config.unwrap_results=0.
+
+  - Config.dict_encoding='ascii' converts the keys of dictionaries
+  (e.g. created when Config.unwrap_results=1) to ascii == plain python
+  strings instead of unicode strings.  This variable can be set to any
+  encoding known to string.encode().
+
+  - Config.strict_range=1 forces the SOAP parsing routines to perform
+  range checks on recieved SOAP float and double objects.  When
+  Config.strict_range=0, the default, parsing does not perform range
+  checking.  In either case, range checking is performed when
+  generating SOAP float and double objects.
+
+- Fixes for WSDLProxy.
+
+- Scripts in the test/ directory 
+
+  - Verbose debugging messages have been turned off..
+
+  - SOAPtest.py now functions when Config.unwrap_results=1
+
+  - SOAPtest.py now sets Config.strict_range=1 so that range
+    checks are be properly tested.
+
+  - New README file listing what test scripts fail and why.
+
+
 Release 0.10.4 of SOAPpy 
 ------------------------
 
