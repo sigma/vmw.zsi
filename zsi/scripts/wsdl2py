@@ -7,13 +7,16 @@
 import sys, getopt
 import ZSI
 from ZSI.wsdl2python import WriteServiceModule
-from ZSI.wstools import WSDLTools
+from ZSI.wstools import WSDLTools, XMLSchema
 
-USAGE = """Usage: ./wsdl2py -f wsdlfile | -u url [-h]
+USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s]
   where:
     wsdl        -> wsdl file to generate typecodes from.
     -h          -> prints this message and exits.
+    -f | -u     -> file or url to load wsdl from
+    -x          -> process just the schema from an xsd file [no services]
 """
+
 """
 wsdl2py
 
@@ -31,9 +34,10 @@ eg. <definition name='SampleService'>
 def doCommandLine():
     """ Get command line options, print usage message if incorrect.
     """
-    args_d = { 'fromfile': False, 'fromurl': False }
+    args_d = { 'fromfile': False, 'fromurl': False, 'schemaOnly': False }
+    
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:h')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:hx')
     except getopt.GetoptError, e:
         print >>sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -52,10 +56,32 @@ def doCommandLine():
         elif opt in ['-u']:
             args_d['wsdl'] = val
             args_d['fromurl'] = True
+        elif opt in ['-x']:
+            args_d['schemaOnly'] = True
         else:
             print USAGE
             sys.exit(-1)
     return args_d
+
+
+def formatSchemaObject(fname, schemaObj):
+    """ In the case of a 'schema only' generation (-s) this creates
+        a fake wsdl object that will function w/in the adapters
+        and allow the generator to do what it needs to do.
+    """
+    
+    class fake:
+        pass
+
+    f = fake()
+
+    tmp = fname.split('.')
+
+    f.name  = tmp[0] + '_' + tmp[1]
+    f.types = { schemaObj.targetNamespace : schemaObj }
+
+    return f
+    
 
 
 def main():
@@ -64,13 +90,25 @@ def main():
     """
     args_d = doCommandLine()
 
-    reader = WSDLTools.WSDLReader()
+    schemaOnly = args_d['schemaOnly']
+
+    if schemaOnly:
+        reader = XMLSchema.SchemaReader()
+    else:
+        reader = WSDLTools.WSDLReader()
+
     if args_d['fromfile']:
         wsdl = reader.loadFromFile(args_d['wsdl'])
     elif args_d['fromurl']:
         wsdl = reader.loadFromURL(args_d['wsdl'])
+
+    if schemaOnly:
+        wsdl = formatSchemaObject(args_d['wsdl'], wsdl)
+
     wsm = ZSI.wsdl2python.WriteServiceModule(wsdl)
-    wsm.write()
+    
+    wsm.write(schemaOnly)
+    
     return
 
 if __name__ == '__main__':
