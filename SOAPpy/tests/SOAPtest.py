@@ -32,11 +32,13 @@ def negfloat(x):
 class Book(structType):
     def __init__(self):
         self.title = "Title of a book"
-
+        structType.__init__(self)
+        
 class Person(structType):
     def __init__(self):
         self.age = "49"
         self.height = "5.5"
+        structType.__init__(self)
 
 class Result(structType):
     def __init__(self):
