@@ -10,7 +10,7 @@ import shutil, getopt
 import StringIO, copy, re
 import unittest, ConfigParser
 from ZSI import wsdl2python
-from pyGridWare.GWSDLTools import GWSDLReader
+from ZSI.wstools.WSDLTools import WSDLReader
 
 """
 utils:
@@ -82,9 +82,9 @@ def setUpWsdl(path):
     """Load a WSDL given a file path or a URL.
     """
     if path[:7] == 'http://':
-        wsdl = GWSDLReader().loadFromURL(path)
+        wsdl = WSDLReader().loadFromURL(path)
     else:
-        wsdl = GWSDLReader().loadFromFile(path)
+        wsdl = WSDLReader().loadFromFile(path)
     return wsdl
 
 
