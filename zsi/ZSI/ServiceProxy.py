@@ -7,6 +7,8 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 
+from xml.dom.ext import SplitQName
+from xml.ns import WSDL
 from ZSI import *
 from ZSI.client import *
 from ZSI.typeinterpreter import BaseTypeInterpreter
@@ -40,7 +42,7 @@ class ServiceProxy:
         self._wsdl = wsdl
         self._tracefile = tracefile
         self._typesmodule = typesmodule
-        self._nsdict = nsdict
+        self._nsdict = nsdict or {}
         self._soapAction = soapAction
         self._ns = ns
         self._op_ns = op_ns
@@ -222,18 +224,38 @@ class ServiceProxy:
         ofwhat = []
         if not (tp.isDefinition() and tp.isComplex()):
             raise EvaluateException, 'only supporting complexType definition'
-        elif not tp.content.isModelGroup():
-            raise EvaluateException, 'only supporting a model group, no derivations'
+        elif tp.content.isComplex():
+            if hasattr(tp.content, 'derivation') and tp.content.derivation.isRestriction():
+                derived = tp.content.derivation
+                typeClass = self._getTypeClass(*derived.getAttribute('base'))
+                if typeClass == TC.Array:
+                    attrs = derived.attr_content[0].attributes[WSDL.BASE]
+                    prefix, localName = SplitQName(attrs['arrayType'])
+                    nsuri = derived.attr_content[0].getXMLNS(prefix=prefix)
+                    localName = localName.split('[')[0]
+                    simpleTypeClass = self._getTypeClass(namespaceURI=nsuri, localName=localName)
+                    if simpleTypeClass:
+                        ofwhat = simpleTypeClass()
+                    else:
+                        tp = self._wsdl.types[nsuri].types[localName]
+                        ofwhat = self._getType(tp=tp, name=None, literal=literal, local=True, namespaceURI=nsuri)
+                else:
+                    raise EvaluateException, 'only support soapenc:Array restrictions'
+                return typeClass(atype=name, ofwhat=ofwhat, pname=name, childNames='item')
+            else:
+                raise EvaluateException, 'complexContent only supported for soapenc:Array derivations'
+        elif tp.content.isModelGroup():
+            modelGroup = tp.content
+            for item in modelGroup.content:
+                ofwhat.append(self._getElement(item, literal=literal, local=True))
 
-        modelGroup = tp.content
-        for item in modelGroup.content:
-            ofwhat.append(self._getElement(item, literal=literal, local=True))
+            tc = TC.Struct(pyclass=None, ofwhat=ofwhat, pname=name)
+            if not local:
+                self._globalElement(tc, namespaceURI=namespaceURI, literal=literal)
+            return tc
 
-        tc = TC.Struct(pyclass=None, ofwhat=ofwhat, pname=name)
-        if not local:
-            self._globalElement(tc, namespaceURI=namespaceURI, literal=literal)
-        return tc
-    
+        raise EvaluateException, 'only supporting complexType w/ model group, or soapenc:Array restriction'
+   
     def _getTypeClass(self, namespaceURI, localName):
         """Returns a typecode class representing the type we are looking for.
            localName -- name of the type we are looking for.
