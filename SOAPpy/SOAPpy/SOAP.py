@@ -1,9 +1,10 @@
 #!/usr/bin/python
 ################################################################################
 #
-# SOAP.py 0.9.7 - Cayce Ullman    (cayce@actzero.com)
-#                 Brian Matthews  (blm@actzero.com)
-#                 Gregory Warnes  (gregory_r_warnes@groton.pfizer.com)
+# SOAP.py 0.9.7 - Cayce Ullman       (cayce@actzero.com)
+#                 Brian Matthews     (blm@actzero.com)
+#                 Gregory Warnes     (gregory_r_warnes@groton.pfizer.com)
+#                 Christopher Blunck (blunck@gst.com)
 #
 # INCLUDED:
 # - General SOAP Parser based on sax.xml (requires Python 2.0)
@@ -27,6 +28,7 @@
 # - SSL clients (with OpenSSL configured in to Python)
 # - SSL servers (with OpenSSL configured in to Python and M2Crypto installed)
 # - Encodes XML tags per SOAP 1.2 name mangling specification
+# - Automatic stateful SOAP server support (Apache v2.x) (blunck2)
 #
 # TODO:
 # - Timeout on method calls - MCU
@@ -1749,7 +1751,7 @@ class faultType(structType, Error):
             except AttributeError: pass
 
     def __repr__(self):
-        if self.detail:
+        if getattr(self, 'detail', None) != None:
             return "<Fault %s: %s: %s>" % (self.faultcode,
                                            self.faultstring,
                                            self.detail)
@@ -3208,6 +3210,10 @@ class SOAPBuilder:
                     t = 'ur-type'
             else:
 		typename = type(sample).__name__
+
+                # For Python 2.2+
+                if type(sample) == StringType: typename = 'string'
+                
 		# HACK: python 'float' is actually a SOAP 'double'.
 		if typename=="float": typename="double"  
                 t = self.genns(ns_map, self.config.typesNamespaceURI)[0] + \
@@ -3419,8 +3425,14 @@ class SOAPAddress:
 
 
 class HTTPTransport:
+    # gets the namespace from the data based on a previous namespace
+    def getNS(self, original_namespace, data):
+        start = data.find(original_namespace)
+        stop = data.find('"', start)
+        return data[start:stop]
+    
     # Need a Timeout someday?
-    def call(self, addr, data, soapaction = '', encoding = None,
+    def call(self, addr, data, namespace, soapaction = '', encoding = None,
         http_proxy = None, config = Config):
 
         import httplib
@@ -3519,8 +3531,11 @@ class HTTPTransport:
         if not config.dumpSOAPIn:
             data = r.getfile().read()
 
+        # get the new namespace
+        new_ns = self.getNS(namespace, data)
+        
         # return response payload
-        return data
+        return data, new_ns
 
 ################################################################################
 # SOAP Proxy
@@ -3548,6 +3563,9 @@ class SOAPProxy:
         self.config         = config
         
 
+    def invoke(self, method, args):
+        self.__call(method, args, {})
+        
     def __call(self, name, args, kw, ns = None, sa = None, hd = None,
         ma = None):
 
@@ -3577,9 +3595,10 @@ class SOAPProxy:
             header = hd, methodattrs = ma, encoding = self.encoding,
             config = self.config)
 
-        r = self.transport.call(self.proxy, m, sa, encoding = self.encoding,
-                                http_proxy = self.http_proxy,
-                                config = self.config)
+        r, self.namespace = self.transport.call(self.proxy, m, ns, sa,
+                                                encoding = self.encoding,
+                                                http_proxy = self.http_proxy,
+                                                config = self.config)
 
         p, attrs = parseSOAPRPC(r, attrs = 1)
 
@@ -3590,6 +3609,7 @@ class SOAPProxy:
             throw_struct = 0
 
         if throw_struct:
+            print p
             raise p
 
         # Bubble a regular result up, if there is only element in the
