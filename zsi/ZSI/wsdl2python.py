@@ -1044,30 +1044,22 @@ class SchemaDescription:
 	    tp = myType
 
             if tp.isSimpleType():
-                # extracted into a definition object
                 self.name = tp.getName() + '_Def'
                 self._fromSimpleType(tp)
 
 	    elif tp.isWildCard():
-                # extracted into a declaration object
                 self._fromWildCard(tp)
 
             elif tp.isElement():
-                # problematic - tp.getType is called but the original
-                # object is still employed.  see if this can be reworked
-                # using the underlying object or a declaration extraction.
-                # the type object is also used in the underlying 'second
-                # tier' methods as well.  this is a bitch.
                 self.name = tp.getName() + '_Dec'
                 self._fromElement(tp)
 
 	    elif tp.isComplexType():
-                # extracted into a definition object
                 self.name = tp.getName() + '_Def'
                 self._fromComplexType(tp)
 
             elif tp.isAttribute():
-                # currently a 'pass class' extraction not important
+
                 self._fromAttribute(tp)
 
 	    else:
