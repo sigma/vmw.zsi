@@ -387,7 +387,7 @@ class SOAPBuilder:
     dump_NoneType = dump_None # For Python 2.2+
 
     def dump_list(self, obj, tag, typed = 1, ns_map = {}):
-        if Config.debug: print "In dump_list.", "obj=", obj
+        if Config.debug: print "In dump_list.",  "obj=", obj
         tag = tag or self.gentag()
         tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
 
@@ -396,9 +396,10 @@ class SOAPBuilder:
         else:
             data = obj
 
-        id = self.checkref(obj, tag, ns_map)
-        if id == None:
-            return
+        if typed:
+            id = self.checkref(obj, tag, ns_map)
+            if id == None:
+                return
 
         try:
             sample = data[0]
@@ -448,7 +449,7 @@ class SOAPBuilder:
                     typename = "SOAPStruct"
 
                 t = ns + typename
-
+                                
             elif isinstance(sample, anyType):
                 ns = sample._validNamespaceURI(self.config.typesNamespaceURI,
                     self.config.strictNamespaces)
@@ -481,20 +482,22 @@ class SOAPBuilder:
         ens, edecl = self.genns(ns_map, NS.ENC)
         ins, idecl = self.genns(ns_map, self.config.schemaNamespaceURI)
 
-        self.out.append(
-            '<%s %sarrayType="%s[%d]" %stype="%sArray"%s%s%s%s%s%s>\n' %
-            (tag, ens, t, len(data), ins, ens, ndecl, edecl, idecl,
-             self.genroot(ns_map), id, a))
+        if typed:
+            self.out.append(
+                '<%s %sarrayType="%s[%d]" %stype="%sArray"%s%s%s%s%s%s>\n' %
+                (tag, ens, t, len(data), ins, ens, ndecl, edecl, idecl,
+                 self.genroot(ns_map), id, a))
 
-        typed = not same_type
-
-        try: elemsname = obj._elemsname
-        except: elemsname = "item"
-
+        if typed:
+            try: elemsname = obj._elemsname
+            except: elemsname = "item"
+        else:
+            elemsname = tag
+            
         for i in data:
-            self.dump(i, elemsname, typed, ns_map)
+            self.dump(i, elemsname, not same_type, ns_map)
 
-        self.out.append('</%s>\n' % tag)
+        if typed: self.out.append('</%s>\n' % tag)
 
     dump_tuple = dump_list
 
