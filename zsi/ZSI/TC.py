@@ -26,6 +26,18 @@ _is_xsd_or_soap_ns = lambda ns: ns in [
                         SCHEMA.XSD3, SOAP.ENC, SCHEMA.XSD1, SCHEMA.XSD2, ]
 _find_nil = lambda E: _find_xsi_attr(E, "null") or _find_xsi_attr(E, "nil")
 
+
+def _get_object_id(pyobj):
+    x = id(pyobj)
+    # Python 2.3.x will generate a FutureWarning for negative IDs, so
+    # we use a different prefix character to ensure uniqueness, and
+    # call abs() to avoid the warning.
+    if x < 0:
+        return 'x%x' % abs(x)
+    else:
+        return 'o%x' % x
+
+
 class TypeCode:
     '''The parent class for all parseable SOAP types.
     Class data:
@@ -274,7 +286,7 @@ class Any(TypeCode):
             pyobj.typecode.serialize(sw, pyobj, **kw)
             return
 
-        n = name or self.oname or rpc or 'E%x' % id(pyobj)
+        n = name or self.oname or rpc or 'E%s' % _get_object_id(pyobj)
         if self.ons:
             n = '%s:%s' % (self.ons, n)
         kw['name'] = n
@@ -385,7 +397,7 @@ class Void(TypeCode):
         return None
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        n = name or self.oname or ('E%x' % id(pyobj))
+        n = name or self.oname or ('E%s' % _get_object_id(pyobj))
         print >>sw, '''<%s%s xsi:nil="1"/>''' % (n, attrtext)
 
 class String(TypeCode):
@@ -425,7 +437,7 @@ class String(TypeCode):
         return v
 
     def serialize(self, sw, pyobj, name=None, attrtext='', orig=None, **kw):
-        objid = '%x' % id(pyobj)
+        objid = _get_object_id(pyobj)
         n = name or self.oname or ('E' + objid)
         if type(pyobj) in _seqtypes:
             print >>sw, '<%s%s href="%s"/>' % (n, attrtext, pyobj[0])
@@ -618,7 +630,7 @@ class Integer(TypeCode):
         return v
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        n = name or self.oname or ('E%x' % id(pyobj))
+        n = name or self.oname or ('E%s' % _get_object_id(pyobj))
         if kw.get('typed', self.typed):
             tstr = ' xsi:type="xsd:%s"' % (self.tag or 'integer')
         else:
@@ -748,7 +760,7 @@ class Decimal(TypeCode):
         return fp
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        n = name or self.oname or ('E%x' % id(pyobj))
+        n = name or self.oname or ('E%s' % _get_object_id(pyobj))
         if kw.get('typed', self.typed):
             tstr = ' xsi:type="xsd:%s"' % (self.tag or 'decimal')
         else:
@@ -789,7 +801,7 @@ class Boolean(TypeCode):
         return 0
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
-        n = name or self.oname or ('E%x' % id(pyobj))
+        n = name or self.oname or ('E%s' % _get_object_id(pyobj))
         if kw.get('typed', self.typed):
             tstr = ' xsi:type="xsd:boolean"'
         else:
@@ -847,7 +859,7 @@ class XML(TypeCode):
             Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
                 comments=self.comments)
             return
-        objid = '%x' % id(pyobj)
+        objid = _get_object_id(pyobj)
         n = name or self.oname or ('E' + objid)
         if type(pyobj) in _stringtypes:
             print >>sw, '<%s%s href="%s"/>' % (n, attrtext, pyobj)
@@ -859,7 +871,7 @@ class XML(TypeCode):
 
     def cb(self, sw, pyobj, unsuppressedPrefixes=[]):
         if sw.Known(pyobj): return
-        objid = '%x' % id(pyobj)
+        objid = _get_object_id(pyobj)
         n = self.pname or ('E' + objid)
         print >>sw, '<%s SOAP-ENC:encodingStyle="" id="%s">' % (n, objid)
         Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,

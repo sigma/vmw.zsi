@@ -7,7 +7,7 @@ from ZSI import _copyright, _children, _child_elements, \
         _inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
         _find_type, \
         EvaluateException
-from ZSI.TC import TypeCode, Any
+from ZSI.TC import TypeCode, Any, _get_object_id
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 import re, types
 
@@ -152,14 +152,14 @@ class Struct(TypeCode):
         if inline or self.inline:
             self.cb(sw, pyobj, name=name, **kw)
         else:
-            objid = '%x' % id(pyobj)
+            objid = _get_object_id(pyobj)
             n = name or self.oname or ('E' + objid)
             print >>sw, '<%s%s href="#%s"/>' % (n, attrtext, objid)
             sw.AddCallback(self.cb, pyobj)
 
     def cb(self, sw, pyobj, name=None, **kw):
         if not self.mutable and sw.Known(pyobj): return
-        objid = '%x' % id(pyobj)
+        objid = _get_object_id(pyobj)
         n = name or self.oname or ('E' + objid)
         if self.inline:
             print >>sw, '<%s>' % n
@@ -339,7 +339,7 @@ class Array(TypeCode):
     def serialize(self, sw, pyobj, name=None, attrtext='', childnames=None,
     **kw):
         if not self.mutable and sw.Known(pyobj): return
-        objid = '%x' % id(pyobj)
+        objid = _get_object_id(pyobj)
         n = name or self.oname or ('E' + objid)
         offsettext = ''
         if not self.sparse and not self.nooffset:
