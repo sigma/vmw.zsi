@@ -915,6 +915,8 @@ class SchemaDescription:
 
         self.header += '\nclass %s:' % \
                        self.nsh.getModuleName(schema.getTargetNamespace())
+        self.header += "\n%stargetNamespace = '%s'" % \
+                       (ID1, schema.getTargetNamespace())
 
 	self.body = ''
         
