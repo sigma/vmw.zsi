@@ -474,6 +474,12 @@ Badly-formed time tuples may result in non-sensical values being serialized;
 the first six values are taken directly as year, month, day, hour, minute,
 second in UTC.
 
+\item
+Although the classes \class{Duration} and \class{Gregorian} are defined, they 
+are for internal use only and should not be included in any \class{TypeCode}
+you define.  Instead, use the classes beginning with a lower case g in your
+typecodes.
+
 \end{enumerate}
 
 In addition, badly-formed values may result in non-sensical serializations.
