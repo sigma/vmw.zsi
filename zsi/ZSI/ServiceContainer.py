@@ -3,7 +3,7 @@
    -- use with wsdl2py generated modules.
 '''
 
-import urlparse, types, os, sys, cStringIO as StringIO
+import urlparse, types, os, sys, thread, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ZSI import ParseException, FaultFromException
 from ZSI import _copyright, _seqtypes, resolvers
@@ -25,6 +25,22 @@ Classes:
     SOAPRequestHandler
     ServiceContainer
 """
+
+class SOAPContext:
+    def __init__(self, container, xmldata, ps, connection, httpheaders,
+                 soapaction):
+
+        self.container = container
+        self.xmldata    = xmldata
+        self.parsedsoap = ps
+        self.connection = connection
+        self.httpheaders= httpheaders
+        self.soapaction = soapaction
+
+_contexts = dict()
+def GetSOAPContext():
+    global _contexts
+    return _contexts[thread.get_ident()]
 
 def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw):
     '''Send ParsedSoap instance to ServiceContainer, which dispatches to
@@ -116,6 +132,8 @@ class SOAPRequestHandler(BaseSOAPRequestHandler):
     def do_POST(self):
         '''The POST command.
         '''
+        global _contexts
+        
         soapAction = self.headers.getheader('SOAPAction').strip('\'"')
         post = self.path
         if not post:
@@ -132,15 +150,27 @@ class SOAPRequestHandler(BaseSOAPRequestHandler):
                 ps = ParsedSoap(xml, resolver=cid.Resolve)
             else:
                 length = int(self.headers['content-length'])
-                ps = ParsedSoap(self.rfile.read(length))
+                xml = self.rfile.read(length)
+                ps = ParsedSoap(xml)
         except ParseException, e:
             self.send_fault(FaultFromZSIException(e))
         except Exception, e:
             # Faulted while processing; assume it's in the header.
             self.send_fault(FaultFromException(e, 1, sys.exc_info()[2]))
         else:
+            # Keep track of calls
+            thread_id = thread.get_ident()
+            _contexts[thread_id] = SOAPContext(self.server, xml, ps,
+                                               self.connection,
+                                               self.headers, soapAction)
+
+            
             _Dispatch(ps, self.server, self.send_xml, self.send_fault, 
                 post=post, action=soapAction)
+
+            # Clean up after the call
+            if _contexts.has_key(thread_id):
+                del _contexts[thread_id]
 
 
 class ServiceContainer(HTTPServer):
