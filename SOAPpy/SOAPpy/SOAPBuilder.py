@@ -272,7 +272,6 @@ class SOAPBuilder:
 
         try:
             meth = getattr(self, "dump_" + type(obj).__name__)
-            meth(obj, tag, typed, ns_map)
         except AttributeError:
             if type(obj) == LongType:
                 obj_type = "integer"
@@ -281,6 +280,9 @@ class SOAPBuilder:
 
             self.out.append(self.dumper(None, obj_type, obj, tag, typed,
                                         ns_map, self.genroot(ns_map)))
+        else:
+            meth(obj, tag, typed, ns_map)
+
 
         self.depth -= 1
 
@@ -534,7 +536,7 @@ class SOAPBuilder:
 
             # first write out items with order information
             for i in range(len(obj._keyord)):
-                self.dump(obj.aslist(i), obj._keyord[i], 1, ns_map)
+                self.dump(obj._aslist(i), obj._keyord[i], 1, ns_map)
                 keylist.remove(obj._keyord[i])
 
             # now write out the rest
