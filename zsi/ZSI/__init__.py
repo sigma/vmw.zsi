@@ -209,6 +209,9 @@ TC.RegisterType(TC.gMonthDay)
 TC.RegisterType(TC.gDay)
 TC.RegisterType(TC.gTime)
 TC.RegisterType(TC.Apache.Map)
-from ServiceProxy import *
+try:
+    from ServiceProxy import *
+except:
+    pass
 
 if __name__ == '__main__': print _copyright
