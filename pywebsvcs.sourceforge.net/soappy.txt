@@ -1,6 +1,6 @@
-Copyright (c) 2001-2003
-
-SOAP.py 0.10.3
+==============================================
+SOAPpy - Simple to use SOAP library for Python 
+==============================================
 
 Current Maintainers: 	
 
@@ -17,16 +17,31 @@ Contributions by:
 	Brad Knotwell <b.knotwell@f5.com>
 	Mark Bucciarelli <mark@hubcapconsulting.com> (ported WSDL
              client from ZSI)
+	Ivan R. Judson 	<judson@mcs.anl.gov> (Globus support)
+	Kirk Strauser <kirk@daycos.com>
+	Antonio Beamud Montero <antonio.beamud@linkend.com> (patches
+  	     for integrating SOAPpy into Zope)
 
+Copyright (c) 2002-2003, Pfizer, Inc.
+Copyright (c) 2001, Cayce Ullman.
+Copyright (c) 2001, Brian Matthews.
+All rights reserved, see the file LICENSE for conditions of use.
+
+Introduction
+------------
+
+The goal of the SOAPpy team is to provide a full-featured SOAP library
+for Python that is very simple to use and that fully supports dynamic
+interaction between clients and servers.
 
 INCLUDED:
-- General SOAP Parser based on sax.xml (requires Python 2.0)
+- General SOAP Parser based on sax.xml
 - General SOAP Builder
 - SOAP Proxy for RPC client code
 - SOAP Server framework for RPC server code
 
 FEATURES:
-- Handles all of the types in the BDG
+- Handles all SOAP 1.0 types
 - Handles faults 
 - Allows namespace specification
 - Allows SOAPAction specification
@@ -38,303 +53,133 @@ FEATURES:
 - Understands SOAP-ENC:root attribute
 - Good interop, passes all client tests for Frontier, SOAP::LITE, SOAPRMI
 - Encodings
-- SSL clients (with OpenSSL configured in to Python)
-- SSL servers (with OpenSSL configured in to Python and M2Crypto installed)
+- SSL clients (with Python compiled with OpenSSL support)
+- SSL servers (with Python compiled with OpenSSL support and M2Crypto
+  installed)
 - Encodes XML tags per SOAP 1.2 name mangling specification (Gregory Warnes)
 - Automatic stateful SOAP server support (Apache v2.x) (blunck2)
+- WSDL client support
+- Early WSDL server support
 
 TODO: (See RELEASE_INFO and CHANGELOG for recent changes)
-- Timeout on method calls - MCU
-- Arrays (sparse, multidimensional and partial) - BLM
-- Clean up data types - BLM
-- Type coercion system (Builder) - MCU
-- Early WSDL Support - MCU
-- Attachments - BLM
-- setup.py - MCU
-- mod_python example - MCU
-- medusa example - MCU
-- Documentation - JAG
-- Look at performance
-- Put into standard 'setup.py' module format to ease installation
-
+- Timeout on method calls
+- Advanced arrays (sparse, multidimensional and partial)
+- Attachments
+- mod_python example
+- medusa example
+- Improved documentation
 
 MANIFEST:
 
-README	      
-CHANGELOG     
-SOAPpy/*            Source code for the package
-SOAPpy/wstools/*    Source code for WSDL tools
-setup.py            Python installation control file
-tests/*             examples
-validate/*          interop client and servers
-bid/*	            N+I interop client and server
+    Files
+    -----
+
+    README	        This file
+    RELEASE_NOTES       General information about each release
+    CHANGELOG           Detailed list of changes
+    TODO		List of tasks that need to be done
+
+    setup.py            Python installation control files
+    MANIFEST
+    MANIFEST.in
+    
+    SOAPpy.spec*        RPM package control file
+
+    Directories
+    -----------
+
+    SOAPpy/*            Source code for the package
+    SOAPpy/wstools/*    Source code for WSDL tools
+    tests/*             unit tests and examples
+    validate/*          interop client and servers
+    bid/*		N+I interop client and server
+    doc/*		Documentation
+    contrib/		Contributed examples (also see test/)
+    docs/		Documentation
+    tools/              Misc tools useful for the SOAPpy developers
+    zope/               Patches to Zope allowing it to provide SOAP services
+
 
 INSTALLATION 
 
-SOAPpy depends on the following packages:
+Required Packages
+-----------------
 
-- fpconst <http://www.analytics.washington.edu/Zope/projects/fpconst>
-- (optional) pyXML   <http://pyxml.sourceforge.net> 
+These packages should be installed before SOAPpy.
 
+- fpconst 0.6.0 or later,
+  <http://www.analytics.washington.edu/Zope/projects/fpconst>
+
+- pyXML 0.8.3 or later, <http://pyxml.sourceforge.net>
+
+Optional
+--------
+
+These packages provide support for optional SOAPpy features.
+
+- pyGlobus, optional support for Globus,
+  <http://www-itg.lbl.gov/gtg/projects/pyGlobus/>
+
+- M2Crypto.SSL, optional support for server-side SSL
+  <http://sandbox.rulemaker.net/ngps/m2/>
+
+- If Python is compiled with SSL support (Python 2.3 does so by
+  default), client-side use of SSL is supported
+
+Installation
+------------
 
 As of version 0.9.8 SOAPpy can be installed using the standard python
-package installation tools.  Executing the commands
+package installation tools.  
 
-    $ python setup.py build
-    $ python setup.py install
+To install:
 
-(the second as root) should install SOAPpy into the appropriate Python
-library directory.
+  1) Unpack the distribution package:
 
-IMPORTANT NOTE:
+     On Windows, use your favorite zip file uncompression tool.
 
-It appears that there are some memory leaks in the Python 2.0 pyexpat, so
-if you run a server under Python 2.0, eventually it will run out of memory.
-We *strongly* recommend upgrading to Python 2.1, which doesn't exhibit the
-memory leak (and has a number of other bug fixes and additional features).
+     On Unix: 
 
-SSL NOTE:
+     $ tar -xvzf SOAPpy-$VERSION$.tar.gz
 
-If you want to use either an SSL client or server, you'll need to have
-OpenSSL (http://www.openssl.org/) available, and build your Python with
-OpenSSL support (see the README in the top of the Python source directory
-for how to customize Modules/Setup, and make sure the socket module with
-SSL support lines are uncommented). If you want to use an SSL server, in
-addition to building your Python for OpenSSL, you'll need to build and
-install M2Crypto (http://www.pobox.org.sg/home/ngps/m2/).
+     if you have gnu tar, otherwise
 
-WSDL NOTES:
+     $ gzcat SOAPpy-$VERSION$.tar.gz | tar -xvf -
 
-Release 0.9.9 and later include logic for dealing with web service
-description language (WSDL) files.  
+  2) Change into the source directory
 
-   - SOAPpy.WSDL provides a SOAP Proxy object that parses a WSDL file
-   and provides access to the listed services:
+     $ cd SOAPpy-$VERSION$
 
-        url = 'http://www.xmethods.org/sd/2001/TemperatureService.wsdl'
-        zip = '01072'
-        proxy = SOAPpy.WSDL.Proxy(url)
-        temp = proxy.getTemp(zip)
-        print 'Temperature at', zip, 'is', temp
+  3) Compile the package 
 
-    - On the server, you can allow the cleint to download the WSDL for
-    a service by sending a request of the form by adding a do_GET
-    method to the SOAPRequestHandler.  [Not yet working when
-    debug=FALSE. Add example here when working]
+     $ python setup.py build
 
+  4) Install the package as root
 
-COMPATIBILITY WITH BROKEN EasySOAP SOAP SERVERS:
+     $ su 
+     Password: XXXXXX
+     $ python setup.py install
 
-Some older SOAP servers, e.g. EasySOAP (v0.2) balk if the
-"SOAP-ENC:root" parameter is included.  To permit interaction with
-such servers, an optional 'noroot' argument is provided to the
-SOAPProxy constructor.  Use 'noroot=1' to force the "SOAP-ENC:root"
-parameter to be ommited.
 
-HOWTO:
+QUICK START
 
-The easiest way to get up to speed is to run and read the scripts in the
-tests directory. Better documentation is coming.
+A simple "Hello World" http SOAP server:
 
-Here are some examples of how to use SOAP.py:
+      import SOAPpy
+      def hello():
+	  return "Hello World"
 
+      server = SOAP.SOAPServer(("localhost", 8080))
+      server.registerFunction(hello)
+      server.serve_forever()
 
-CLIENT EXAMPLES:
+And the corresponding client:
 
-## CODE
-from SOAPpy import SOAPProxy
-server = SOAPProxy("http://localhost:8080/")
-print server.echo("Hello world")
-## /CODE
+      import SOAPpy
+      server = SOAPpy.SOAPProxy("http://localhost:8080/")
+      print server.hello()
+      
+For further information see the files in the doc/ directory.
 
-This opens a connection to the server listening on localhost:8080, calls the
-method echo with the ordered parameter of "Hello World", and prints the
-results.
 
-
-## CODE
-from SOAPpy import SOAPProxy
-server = SOAPProxy("https://localhost:8443/")
-print server.echo("Hello world")
-## /CODE
-
-This opens a secure connection to the SSL server listening on
-localhost:8443, calls the method echo with the ordered parameter of
-"Hello World" and prints the results. Python must be built with OpenSSL.
-
-
-## CODE
-from SOAPpy import SOAPProxy
-server = SOAPProxy("http://services.xmethods.com/soap",
-        	        namespace = "urn:xmethods-delayed-quotes")
-print server.getQuote(symbol = "IBM")
-## /CODE
-
-This calls method getQuote that is in the namespace URI of
-urn:xmethods-delayed-quotes on server services.xmethods.com. getQuote is
-passed a named parameter, symbol.
-
-
-## CODE
-from SOAPpy import SOAPProxy
-server = SOAPProxy("http://services.xmethods.com/soap")
-
-print server._ns("urn:xmethods-delayed-quotes").getQuote(symbol = "IBM")
-## /CODE
-
-This does the same thing as the previous example, however namespace is
-specified inline on a per call basis rather than at the server level.
-
-
-## CODE
-from SOAPpy import SOAPProxy
-server = SOAPProxy("http://services.xmethods.com/soap",
-			soapaction = "http://somesite.com/myaction")
-
-print server._ns("urn:xmethods-delayed-quotes").getQuote(symbol = "IBM")
-## /CODE
-
-This is the same quote call with a soapaction specified.
-
-
-## CODE
-from SOAPpy import SOAPProxy
-server = SOAPProxy("http://services.xmethods.com:80/soap")
-
-ns = "urn:xmethods-delayed-quotes")
-sa = "http://somesite.com/myaction"
-my_call = server._ns(ns)._sa(sa)
-my_call.getQuote(symbol = "IBM")
-my_call.getQuote(symbol = "IBM")
-my_call.getQuote(symbol = "IBM")
-## /CODE
-
-The same example, this time with both the soapaction and the namespace
-specified inline and saved in a local variable for getQuote to be called
-against.
-
-** What SOAP.py does with the results of a call could seem surprising. If
-there is only one element in the structType that has the return value and
-unwrap_results is turned on (the default) it will bubble up the single
-attribute, otherwise it will return you a structType object with all of the
-attributes.
-
-
-
-SERVER EXAMPLES:
-
-## CODE
-from SOAPpy import SOAPServer
-def echo(s):
-    return s + s # repeats a string twice
-
-server = SOAPServer(("localhost", 8080))
-server.registerFunction(echo)
-server.serve_forever()
-## /CODE
-
-This exposes the function echo (that takes an unnamed arguement) on a server
-running on localhost:8080.
-
-
-## CODE
-from SOAPpy import SOAPServer
-def echo(s):
-    return s + s # repeats a string twice
-
-server = SOAPServer()
-server.registerFunction(echo, "echo-space")
-server.serve_forever()
-## /CODE
-
-The same as above, but this time the method is available in the namespace
-"echo-space".
-
-
-## CODE
-from SOAPpy import SOAPServer
-
-class echoBuilder:
-    def echo(self, val):
-        return val + val
-
-server = SOAPServer()
-e = echoBuilder()
-server.registerObject(e)
-server.serve_forever()
-## /CODE
-
-This registers the whole instance of the object echoBuilder, e.  Every
-method of the instance is exposed on the server.
-
-
-## CODE
-from SOAPpy import SOAPServer
-
-def echo(**kw):
-    return kw['first'] + kw['second'] + kw['third']
-
-server = SOAPServer()
-server.registerKWFunction(echo)
-server.serve_forever()
-## /CODE
-
-This time the method echo is exposed and it expects named arguments. The
-main thing to notice here is the use of the method registerKWFunction over
-registerFunction.
-
-
-## CODE
-from SOAPpy import SOAPServer
-
-from M2Crypto import SSL
-
-def echo(s):
-    return s+s # repeats a string twice
-
-ssl_context = SSL.Context()
-ssl_context.load_cert('server.pem')
-
-server = SOAPServer(("localhost",8443), ssl_context = ssl_context)
-server.registerFunction(echo)
-server.serve_forever()
-## /CODE
-
-This exposes the function echo (taking an unnamed arguement) on a server
-accepting SSL connections at localhost:8443. Ng Pheng Siong's M2Crypto
-package (available at <http://www.pobox.org.sg/home/ngps/m2/>) must be
-installed. Also see tests/silabserver.py.
-
-
-Copyright (c) 2002-2003, Pfizer, Inc.
-Copyright (c) 2001, Cayce Ullman.
-Copyright (c) 2001, Brian Matthews.
-
-All rights reserved.
-
-LICENSE:
-----------------------------------------------------------------------------
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-Neither the name of actzero, inc. nor the names of its contributors may
-be used to endorse or promote products derived from this software without
-specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-DAMAGE.
+$Id$
