@@ -150,7 +150,9 @@ class Binding:
             tc = TC.Any(opname, aslist=1)
 
         # Determine the SOAP auth element.
-        if self.auth_style & AUTH.zsibasic:
+        if kw.has_key('auth_header'):
+            auth_header = kw['auth_header']
+        elif self.auth_style & AUTH.zsibasic:
             auth_header = _AuthHeader % (self.auth_user, self.auth_pass)
         else:
             auth_header = None
