@@ -6,48 +6,43 @@
 
 import sys, types
 import ZSI
-from ZSI.typeinterpreter import BaseTypeInterpreter
 
 """
 paramWrapper:
     This is a utility module containing convenience functions for
-    dealing with parameters and results from a remote method call.
+    converting parameters and results involved with a ZSI remote
+    method call to a string format suitable for printing.
 """
 
-RESULT_STR = 0
-PARAMS_STR = 1
-PARAMS_TREE = 2
-
-class ParamWrapper:
-    """Convenience class for handling parameters and results
-       from a remote method call.
+class TypecodeStrRep:
+    """Builds up a type dictionary that can be used by sub-classes
+       for building a string result.
     """
 
-    def __init__(self, obj, outputType=RESULT_STR):
-        self.bti = BaseTypeInterpreter()
-        self.isInput = False
+    def __init__(self, obj):
         self.stringBuf = ''
         self.typeDict = {}
         self.topObj = obj
 
+            # namespace alias dictionary
+        self.nspAliases = {}
+            # namespace handling class
+        self.nsh = ZSI.wsdl2python.NamespaceHash()
+
         self.recurseTypecodes(obj, self.typeDict)
-        strList = ['\n']
-        if outputType != PARAMS_TREE:
-            if outputType == RESULT_STR:
-                initStr = 'response.'
-                self.recurseBuildResults(self.typeDict, strList, initStr)
-            elif outputType == PARAMS_STR:
-                initStr = ''
-                self.recurseBuildParams(self.typeDict, strList, initStr)
-            self.stringBuf = ''.join(strList)
         
-
-    def __str__(self):
-        return self.stringBuf
-
 
     def getDictionary(self):
         return self.typeDict
+
+
+    def getFullName(self, schema, aname):
+        '''Get qualified name of element, with the namespace alias.
+        '''
+
+        name = self.nsh.namespace_to_moduleName(schema)
+        qname = self.nspAliases[name] + '.' + aname 
+        return qname
 
 
     def recurseTypecodes(self, obj, typedict):
@@ -91,6 +86,18 @@ class ParamWrapper:
             #print 'typecodes not yet', obj
 
 
+class ParamsToStr(TypecodeStrRep):
+
+    def __init__(self, obj):
+        TypecodeStrRep.__init__(self, obj)
+        strList = ['\n']
+        initStr = ''
+        self.recurseBuildParams(self.typeDict, strList, initStr)
+        self.stringBuf = ''.join(strList)
+
+    def __str__(self):
+        return self.stringBuf
+
     def recurseBuildParams(self, obj, strList, fieldStr):
         if type(obj) is types.DictType:
             for name, value in obj.items():
@@ -108,6 +115,20 @@ class ParamWrapper:
                     strList.append('%s: %s, optional\n' % (fieldStr[:-1], obj[0]))
                 else:
                     strList.append('%s: %s\n' % (fieldStr[:-1], obj[0]))
+
+
+class ResultsToStr(TypecodeStrRep):
+
+    def __init__(self, obj):
+        TypecodeStrRep.__init__(self, obj)
+        strList = ['\n']
+        initStr = 'response.'
+        self.recurseBuildResults(self.typeDict, strList, initStr)
+        self.stringBuf = ''.join(strList)
+
+
+    def __str__(self):
+        return self.stringBuf
 
 
     def recurseBuildResults(self, obj, strList, fieldStr):

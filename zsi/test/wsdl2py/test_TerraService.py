@@ -9,7 +9,7 @@ import os
 from ZSI import EvaluateException, FaultException
 
 import utils
-from paramWrapper import ParamWrapper
+from paramWrapper import ResultsToStr
 from clientGenerator import ClientGenerator
 
 """
@@ -32,7 +32,7 @@ class TerraServiceTest(unittest.TestCase):
         TerraServiceSoap = service.TerraServiceLocator().getTerraServiceSoap(**kw)
 
         if not testdiff:
-            testdiff = utils.TestDiff(self, 'generatedCode')
+            testdiff = utils.TestDiff(self, 'diffs')
             if deleteFile:
                 testdiff.deleteFile('TerraService.diffs')
             testdiff.setDiffFile('TerraService.diffs')
@@ -45,7 +45,7 @@ class TerraServiceTest(unittest.TestCase):
         request._place._State = 'Washington'
         request._place._Country = 'United States'
         response = TerraServiceSoap.ConvertPlaceToLonLatPt(request)   
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_ConvertPlaceToLonLatPt_x1(self):
         request = service.ConvertPlaceToLonLatPtSoapInWrapper()
@@ -61,7 +61,7 @@ class TerraServiceTest(unittest.TestCase):
         request._point._Lon = -122.64
         request._point._Lat = 48.29
         response = TerraServiceSoap.ConvertLonLatPtToNearestPlace(request)   
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def later_ConvertLonLatPtToNearestPlace_x1(self):
         request = service.ConvertLonLatPtToNearestPlaceSoapInWrapper()
@@ -77,7 +77,7 @@ class TerraServiceTest(unittest.TestCase):
         request._point._Lon = -122.64
         request._point._Lat = 48.29
         response = TerraServiceSoap.ConvertLonLatPtToUtmPt(request)  
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_ConvertUtmPtToLonLatPt(self):
         request = service.ConvertUtmPtToLonLatPtSoapInWrapper()
@@ -86,7 +86,7 @@ class TerraServiceTest(unittest.TestCase):
         request._utm._Y =  5348595.96493
         request._utm._Zone =  10
         response = TerraServiceSoap.ConvertUtmPtToLonLatPt(request)  
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_CountPlacesInRect(self):
         request = service.CountPlacesInRectSoapInWrapper()
@@ -98,7 +98,7 @@ class TerraServiceTest(unittest.TestCase):
         request._lowerright._Lat = request._upperleft._Lon - 1.0
         request._ptype = "HillMountain"
         response = TerraServiceSoap.CountPlacesInRect(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def later_CountPlacesInRect_x1(self):
         request = service.CountPlacesInRectSoapInWrapper()
@@ -119,7 +119,7 @@ class TerraServiceTest(unittest.TestCase):
         request._displayPixWidth = 2
         request._displayPixHeight = 2
         response = TerraServiceSoap.GetAreaFromPt(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
         '''TerraService no longer likes these parameters'''
     def badparams_GetAreaFromRect(self):
@@ -133,7 +133,7 @@ class TerraServiceTest(unittest.TestCase):
         request._theme = 'Topo'
         request._scale = "Scale2m"
         response = TerraServiceSoap.GetAreaFromRect(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetAreaFromTileId(self):
         request = service.GetAreaFromTileIdSoapInWrapper()
@@ -147,7 +147,7 @@ class TerraServiceTest(unittest.TestCase):
         request._displayPixWidth = 2
         request._displayPixHeight = 2
         response = TerraServiceSoap.GetAreaFromTileId(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetLatLonMetrics(self):
         request = service.GetLatLonMetricsSoapInWrapper()
@@ -155,7 +155,7 @@ class TerraServiceTest(unittest.TestCase):
         request._point._Lon = -122.64
         request._point._Lat = 48.29
         response = TerraServiceSoap.GetLatLonMetrics(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
         # derived type (enum) problem
     def later_GetPlaceFacts(self):
@@ -165,7 +165,7 @@ class TerraServiceTest(unittest.TestCase):
         request._place._State = 'Washington'
         request._place._Country = 'United States'
         response = TerraServiceSoap.GetPlaceFacts(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
         # derived type (enum) problem
         # also consistent timeout problem for this call
@@ -175,7 +175,7 @@ class TerraServiceTest(unittest.TestCase):
         request._MaxItems = 5
         request._imagePresence = 0
         #response = TerraServiceSoap.GetPlaceList(request)
-        #testdiff.failUnlessEqual(ParamWrapper(response))
+        #testdiff.failUnlessEqual(ResultsToStr(response))
         self.failUnlessRaises(EvaluateException, TerraServiceSoap.GetPlaceList, request)
 
     def test_GetPlaceListInRect(self):
@@ -191,13 +191,13 @@ class TerraServiceTest(unittest.TestCase):
         request._ptype = "HillMountain"
         request._MaxItems = 3
         response = TerraServiceSoap.GetPlaceListInRect(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTheme(self):
         request = service.GetThemeSoapInWrapper()
         request._theme = 'Topo'
         response = TerraServiceSoap.GetTheme(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTile(self):
         request = service.GetTileSoapInWrapper()
@@ -208,7 +208,7 @@ class TerraServiceTest(unittest.TestCase):
         request._id._X = 20
         request._id._Y = 20
         response = TerraServiceSoap.GetTile(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTileMetaFromLonLatPt(self):
         request = service.GetTileMetaFromLonLatPtSoapInWrapper()
@@ -218,7 +218,7 @@ class TerraServiceTest(unittest.TestCase):
         request._point._Lat = 48.29
         request._scale = "Scale4m"
         response = TerraServiceSoap.GetTileMetaFromLonLatPt(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
     def test_GetTileMetaFromTileId(self):
         request = service.GetTileMetaFromTileIdSoapInWrapper()
@@ -229,7 +229,7 @@ class TerraServiceTest(unittest.TestCase):
         request._id._X = 20
         request._id._Y = 20
         response = TerraServiceSoap.GetTileMetaFromTileId(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
 def setUp():
     global testdiff

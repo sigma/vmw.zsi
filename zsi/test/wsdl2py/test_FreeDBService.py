@@ -8,7 +8,7 @@ import sys, unittest
 from ZSI import FaultException
 
 import utils
-from paramWrapper import ParamWrapper
+from paramWrapper import ResultsToStr
 from clientGenerator import ClientGenerator
 
 """
@@ -29,7 +29,7 @@ class FreeDBServiceTest(unittest.TestCase):
         global FreeDBService
 
         if not testdiff:
-            testdiff = utils.TestDiff(self, 'generatedCode')
+            testdiff = utils.TestDiff(self, 'diffs')
             testdiff.setDiffFile('FreeDBService.diffs')
 
         #kw = {'tracefile':sys.stdout}
@@ -43,23 +43,23 @@ class FreeDBServiceTest(unittest.TestCase):
         request._artist = 'Jayhawks'
         request._category = 'rock'
         response = FreeDBService.getDetails(request)
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_search(self):
         response = FreeDBService.search('Ted Nugent and the Amboy Dukes')
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_searchByTitle(self):
         response = FreeDBService.searchByTitle('Ummagumma')
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_searchByTrack(self):
         response = FreeDBService.searchByTrack('Species of Animals')
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_searchByArtist(self):
         response = FreeDBService.searchByArtist('Steppenwolf')
-        print ParamWrapper(response)
+        print ResultsToStr(response)
     
 
 def setUp():

@@ -8,7 +8,7 @@ import sys, unittest
 from ZSI import EvaluateException
 
 import utils
-from paramWrapper import ParamWrapper
+from paramWrapper import ResultsToStr
 from clientGenerator import ClientGenerator
 
 """
@@ -31,7 +31,7 @@ class GlobalWeatherTest(unittest.TestCase):
         global GlobalWeather
 
         if not testdiff:
-            testdiff = utils.TestDiff(self, 'generatedCode')
+            testdiff = utils.TestDiff(self, 'diffs')
             testdiff.setDiffFile('GlobalWeather.diffs')
 
         kw = {}
@@ -42,55 +42,55 @@ class GlobalWeatherTest(unittest.TestCase):
     
         # problem with 'NaN' in pressure._delta field
         # not a valid response - not fixable on our end
-    def error_getWeatherReport(self):
+    def p_getWeatherReport(self):
         request = service.getWeatherReportWrapper()
             # airport code
         request._code = 'SFO'
         response = GlobalWeather.getWeatherReport(request)
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_getStation(self):
         request = service.getStationWrapper()
         request._code = 'SFO'
         response = StationInfo.getStation(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_isValidCode(self):
         request = service.isValidCodeWrapper()
         request._code = 'SFO'
         response = StationInfo.isValidCode(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_listCountries(self):
         request = service.listCountriesWrapper()
         response = StationInfo.listCountries(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_searchByCode(self):
         request = service.searchByCodeWrapper()
         request._code = 'SFO'
         response = StationInfo.searchByCode(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_searchByCountry(self):
         request = service.searchByCountryWrapper()
         request._country = 'Australia'
         response = StationInfo.searchByCountry(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
         # can't find what valid name is, returns empty result
     def test_searchByName(self):
         request = service.searchByNameWrapper()
         request._name = 'San Francisco Airport'
         response = StationInfo.searchByName(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
         # can't find what valid region is, returns empty result
     def test_searchByRegion(self):
         request = service.searchByRegionWrapper()
         request._region = 'Europe'
         response = StationInfo.searchByRegion(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
 
 def setUp():

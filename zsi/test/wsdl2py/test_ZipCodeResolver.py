@@ -8,7 +8,7 @@ import sys, unittest
 from ZSI import FaultException
 
 import utils
-from paramWrapper import ParamWrapper
+from paramWrapper import ResultsToStr
 from clientGenerator import ClientGenerator
 
 """
@@ -36,7 +36,7 @@ class ZipCodeResolverTest(unittest.TestCase):
         ZipCodeResolverSoap = service.ZipCodeResolverLocator().getZipCodeResolverSoap(**kw)
 
         if not testdiff:
-            testdiff = utils.TestDiff(self, 'generatedCode')
+            testdiff = utils.TestDiff(self, 'diffs')
             testdiff.setDiffFile('ZipCodeResolver.diffs')
     
     def test_CorrectedAddressHtml(self):
@@ -45,7 +45,7 @@ class ZipCodeResolverTest(unittest.TestCase):
         request._city = 'Berkeley'
         request._state = 'California'
         response = ZipCodeResolverSoap.CorrectedAddressHtml(request)
-        print ParamWrapper(response)
+        print ResultsToStr(response)
     
     def test_CorrectedAddressXml(self):
         request = service.CorrectedAddressXmlSoapInWrapper()
@@ -53,7 +53,7 @@ class ZipCodeResolverTest(unittest.TestCase):
         request._city = 'Berkeley'
         request._state = 'California'
         response = ZipCodeResolverSoap.CorrectedAddressXml(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_FullZipCode(self):
         request = service.FullZipCodeSoapInWrapper()
@@ -61,7 +61,7 @@ class ZipCodeResolverTest(unittest.TestCase):
         request._city = 'Berkeley'
         request._state = 'California'
         response = ZipCodeResolverSoap.FullZipCode(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_ShortZipCode(self):
         request = service.ShortZipCodeSoapInWrapper()
@@ -69,12 +69,12 @@ class ZipCodeResolverTest(unittest.TestCase):
         request._city = 'Berkeley'
         request._state = 'California'
         response = ZipCodeResolverSoap.ShortZipCode(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
     def test_VersionInfo(self):
         request = service.VersionInfoSoapInWrapper()
         response = ZipCodeResolverSoap.VersionInfo(request)   
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
 
 
 def setUp():

@@ -13,8 +13,9 @@ class ClientGenerator:
               explicitPath):
         if not os.path.exists(codePath):
             os.mkdir(codePath)
-        if not os.path.exists(codePath + os.sep + '__init__.py'):
-            self.createInit(codePath + os.sep + '__init__.py')
+        initPath = codePath + os.sep + '__init__.py'
+        if not os.path.exists(initPath):
+            self.createInit(initPath)
 
         if section:
             cp = ConfigParser.ConfigParser()
@@ -22,22 +23,27 @@ class ClientGenerator:
             path = cp.get(section, serviceName)
         else:
             path = explicitPath
-        sys.path.append(codePath)
-        return path
+        return path, initPath
 
 
     def getModule(self, configFileName, section, serviceName,
                   codePath='.', explicitPath=None):
 
-        moduleName = wsdl2python.nonColonizedName_to_moduleName(serviceName)
+        if codePath not in sys.path:
+            sys.path.append(codePath)
+        moduleName = \
+            wsdl2python.nonColonizedName_to_moduleName(serviceName) + \
+                '_services'
         try:
-            service = __import__(moduleName + '_services')
+            service = __import__(moduleName)
         except ImportError:
-            path = self.setUp(configFileName, section, serviceName, codePath,
-                       explicitPath)
+            path, initPath = \
+                self.setUp(configFileName, section, serviceName, codePath,
+                           explicitPath)
 
             self.generateCode(path, codePath)
-            service = __import__(moduleName + '_services')
+            service = __import__(moduleName)
+            self.updateInit(initPath, moduleName)
         return service
 
 
@@ -61,7 +67,19 @@ class ClientGenerator:
     def createInit(self, path):
         fd = open(path, 'w')
         fd.write('__all__= [\n')
-        for filename in glob.glob('test_*.py'):
-            fd.write('        "%s",\n' % filename)
-        fd.write('        ]\n')
+        fd.write('          ]\n')
+        fd.close()
+
+    def updateInit(self, fname, module):
+        fd = open(fname, 'r')
+        lines = fd.readlines()
+        fd.close()
+            # isn't called unless initial import failed,
+            # so there won't be duplicates 
+        fd = open(fname, 'w')
+        fd.write('__all__= [\n')
+        for line in lines[1:-1]:
+            fd.write(line)
+        fd.write('         "%s.py",\n' % module)
+        fd.write('          ]\n')
         fd.close()

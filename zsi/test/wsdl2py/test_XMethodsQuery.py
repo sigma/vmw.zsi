@@ -8,7 +8,7 @@ import sys, unittest
 from ZSI import EvaluateException
 
 import utils
-from paramWrapper import ParamWrapper
+from paramWrapper import ResultsToStr
 from clientGenerator import ClientGenerator
 
 """
@@ -29,40 +29,41 @@ class XMethodsQueryTest(unittest.TestCase):
         global testdiff
         global XMethodsPort
 
-        kw = {'tracefile': sys.stdout}
+        kw = {}
+        #kw = {'tracefile': sys.stdout}
         XMethodsPort = service.XMethodsQueryLocator().getXMethodsQuerySoapPortType(**kw)
         if not testdiff:
-            testdiff = utils.TestDiff(self, 'generatedCode')
+            testdiff = utils.TestDiff(self, 'diffs')
             testdiff.setDiffFile('XMethodsQuery.diffs')
 
 
     def test_getAllServiceNames(self):
         request = service.getAllServiceNames2SoapInWrapper()
         response = XMethodsPort.getAllServiceNames(request)   
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_getAllServiceSummaries(self):
         request = service.getAllServiceSummaries1SoapInWrapper()
         response = XMethodsPort.getAllServiceSummaries(request)   
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_getServiceDetail(self):
         request = service.getServiceDetail4SoapInWrapper()
         request._id = 'uuid:A29C0D6C-5529-0D27-A91A-8E02D343532B'
         response = XMethodsPort.getServiceDetail(request)   
-        print ParamWrapper(response)
+        print ResultsToStr(response)
     
     def test_getServiceNamesByPublisher(self):
         request = service.getServiceNamesByPublisher3SoapInWrapper()
         request._publisherID = 'xmethods.net'
         response = XMethodsPort.getServiceNamesByPublisher(request)   
-        print ParamWrapper(response)
+        print ResultsToStr(response)
     
     def test_getServiceSummariesByPublisher(self):
         request = service.getServiceSummariesByPublisher0SoapInWrapper()
         request._publisherID = 'xmethods.net'
         response = XMethodsPort.getServiceSummariesByPublisher(request)   
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
 
 def setUp():

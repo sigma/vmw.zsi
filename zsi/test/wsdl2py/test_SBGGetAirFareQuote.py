@@ -9,7 +9,7 @@ import time
 from ZSI import EvaluateException
 
 import utils
-from paramWrapper import ParamWrapper
+from paramWrapper import ResultsToStr
 from clientGenerator import ClientGenerator
 
 """
@@ -31,7 +31,7 @@ class SBGGetAirFareQuoteServiceTest(unittest.TestCase):
         global SBGAirFareQuote
 
         if not testdiff:
-            testdiff = utils.TestDiff(self, 'generatedCode')
+            testdiff = utils.TestDiff(self, 'diffs')
             testdiff.setDiffFile('SBGGetAirFareQuoteService.diffs')
           
         kw = {}
@@ -49,12 +49,12 @@ class SBGGetAirFareQuoteServiceTest(unittest.TestCase):
         request._in0._originAirport = 'SFO'
         request._in0._destinationAirport = 'CMH'
         response = SBGAirFareQuote.getAirFareQuote(request)
-        print ParamWrapper(response)
+        print ResultsToStr(response)
 
     def test_getAirlines(self):
         request = service.getAirlinesRequestWrapper()
         response = SBGAirFareQuote.getAirlines(request)
-        testdiff.failUnlessEqual(ParamWrapper(response))
+        testdiff.failUnlessEqual(ResultsToStr(response))
     
 
 def setUp():
