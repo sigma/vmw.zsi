@@ -48,6 +48,7 @@ from types import *
 from Errors    import *
 from NS        import NS
 from Utilities import encodeHexString, cleanDate
+from Config    import Config
 
 ################################################################################
 # Types and Wrappers
@@ -1243,12 +1244,14 @@ class compoundType(anyType):
         else:
             return map( lambda x: self.__dict__[x], self._keyord)
 
-    def _asdict(self, item=None):
+    def _asdict(self, item=None, encoding=Config.dict_encoding):
         if item:
+            if type(item) in (UnicodeType,StringType):
+                item = item.encode(encoding)
             return self.__dict__[item]
         else:
             retval = {}
-            def fun(x): retval[x] = self.__dict__[x]
+            def fun(x): retval[x.encode(encoding)] = self.__dict__[x]
             
             map( fun, self._keyord) 
             return retval
@@ -1304,6 +1307,9 @@ class structType(compoundType):
     def __str__(self):
         return anyType.__str__(self) + ": " + str(self._asdict())
     pass
+
+    def __repr__(self):
+        return self.__str__()
 
 class headerType(structType):
     _validURIs = (NS.ENV,)
@@ -1380,6 +1386,40 @@ class arrayType(UserList.UserList, compoundType):
                 a = b
 
             self.data = a
+
+
+    def _aslist(self, item=None):
+        if item:
+            return self.data[int(item)]
+        else:
+            return self.data
+
+    def _asdict(self, item=None, encoding=Config.dict_encoding):
+        if item:
+            if type(item) in (UnicodeType,StringType):
+                item = item.encode(encoding)
+            return self.data[int(item)]
+        else:
+            retval = {}
+            def fun(x): retval[str(x).encode(encoding)] = self.data[x]
+            
+            map( fun, range(len(self.data)) )
+            return retval
+ 
+    def __getitem__(self, item):
+        try:
+            return self.data[int(item)]
+        except ValueError:
+            return getattr(self, item)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __nonzero__(self):
+        return 1
+
+    def _keys(self):
+        return filter(lambda x: x[0] != '_', self.__dict__.keys())
 
     def _addItem(self, name, value, attrs):
         if self._full:
@@ -1529,24 +1569,33 @@ class faultType(structType, Error):
 # Convert complex SOAPpy objects to native python equivalents
 #######
 
-def simplify(object, level=0 ):
+def simplify(object, level=0, skip_private=0 ):
     """
     Unwrap SOAPpy objects to get 'raw' python objects
     
     Currently handles
-    - structType --> dictionary
-    - arrayType  --> array
+    - faultType    --> raise python exception
+    - arrayType    --> array
+    - compoundType --> dictionary
     """
 
-    if level>3: return object
+    if level>10: return object
 
-    if isinstance( object, structType ):
-        data = object._asdict()
-        for k in data.keys(): data[k] = simplify(data[k], level=level+1)
-        return data
+
+    if isinstance( object, faultType ):
+        for k in object._keys():
+            if (not skip_private) and (k[0] != "_"):
+                setattr(object, k, simplify(object[k], level=level+1))
+        raise object
     elif isinstance( object, arrayType ):
         data = object._aslist()
-        for k in object._aslist(): data[k] <- simplify(data[k], level=level+1)
+        for k in range(len(data)): data[k] = simplify(data[k], level=level+1)
+        return data
+    elif isinstance( object, compoundType ):
+        data = object._asdict()
+        for k in data.keys():
+            if (not skip_private) and (k[0] != "_"):
+                data[k] = simplify(data[k], level=level+1)
         return data
     else:
         return object

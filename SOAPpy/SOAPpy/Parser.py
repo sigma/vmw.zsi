@@ -764,7 +764,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
     }
     zerofloatre = '[1-9]'
 
-    def convertType(self, d, t, attrs):
+    def convertType(self, d, t, attrs, config=Config):
         dnn = d or ''
 
         if t[0] in NS.EXSD_L:
@@ -803,7 +803,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 if d in ('1', 'true'):
                     return 1
                 raise AttributeError, "invalid boolean value"
-            if self.floatlimits.has_key (t[1]):
+            if t[1] in ('double','float'):
                 l = self.floatlimits[t[1]]
                 s = d.strip().lower()
 
@@ -815,6 +815,10 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                     return fpconst.NegInf
 
                 d = float(s)
+
+                if config.strict_range:
+                    if d < l[1]: raise UnderflowError
+                    if d > l[2]: raise OverflowError
 
                 if str(d).lower() == 'nan':
                     if s != 'nan':
@@ -986,14 +990,16 @@ def parseSOAPRPC(xml_str, header = 0, body = 0, attrs = 0, rules = None,
         # Unwrap named and unnamed parameters, but not private 
         # attributes
         
-        if isinstance(p, compoundType):
-            for i in p._keys():
-                if i[0] != "_": setattr(p,i, simplify(getattr(p, i)))
-        elif type(p)==dict:
-            for i in p.keys():
-                if i[0] != "_": p[i] = simplify(p[i])
-#        elif type(p)==list:
-#            for i in range(len(p)): p[i] = simplify(p[i])
+        p = simplify(p)
+
+        #if isinstance(p, compoundType):
+        #    for i in p._keys():
+        #        if i[0] != "_": setattr(p,i, simplify(getattr(p, i)))
+        #elif type(p)==dict:
+        #    for i in p.keys():
+        #        if i[0] != "_": p[i] = simplify(p[i])
+        #elif type(p)==list:
+        #    for i in range(len(p)): p[i] = simplify(p[i])
                 
 
     if header or body or attrs:

@@ -197,10 +197,6 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             (r, header, body, attrs) = \
                 parseSOAPRPC(data, header = 1, body = 1, attrs = 1)
 
-            print "r=", r
-            for k,v in r.__dict__.items():
-                print "   ", k,'=',v
-
             method = r._name
             args   = r._aslist()
             kw     = r._asdict()

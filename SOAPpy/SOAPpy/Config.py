@@ -74,6 +74,11 @@ class SOAPConfig:
             self.buildWithNamespacePrefix = 1
             self.returnAllAttrs = 0
 
+            # Strict checking of range for floats and doubles
+            self.strict_range = 0
+
+            # Default encoding for dictionary keys
+            self.dict_encoding = 'ascii'
 
             # New argument name handling mechanism.  See
             # README.MethodParameterNaming for details

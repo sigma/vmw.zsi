@@ -331,6 +331,9 @@ class SOAPBuilder:
         else:
             obj = str(obj)
 
+        # range check
+        Types.doubleType._checkValueSpace(obj)
+
 	# Note: python 'float' is actually a SOAP 'double'.
         self.out.append(self.dumper(None, "double", obj, tag, typed, ns_map,
                                     self.genroot(ns_map)))
