@@ -1468,7 +1468,8 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
              isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference):
             return ZSISchemaDeclarationAdapter(tp)
         if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
-            return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'))
+            return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'),
+                                              tp)
         else:
             raise TypeError, 'unknown adapter type: %s' % tp
 
@@ -1764,8 +1765,36 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
             return 0
 
 class ZSIElementReferenceAdapter(AdapterBase, ZSISchemaDeclarationAdapter):
+    def __init__(self, declaration, reference):
+        ZSISchemaDeclarationAdapter.__init__(self, declaration)
+        self._ref = reference
+        
     def isElementReference(self):
         return True
+
+    def getMinOccurs(self):
+        """min occurs in local element dec
+        """
+        if self._ref.attributes.has_key('minOccurs'):
+            return self._ref.attributes['minOccurs']
+        else:
+            return 1
+
+    def getMaxOccurs(self):
+        """max occurs in local element dec
+        """
+        if self._ref.attributes.has_key('maxOccurs'):
+            return self._ref.attributes['maxOccurs']
+        else:
+            return 1
+
+    def isNillable(self):
+        """see if an element is nillable
+        """
+        if self._ref.attributes.has_key('nillable'):
+            return self._ref.attributes['nillable']
+        else:
+            return 0
 
 class ZSIModelGroupAdapter(AdapterBase, ModelGroupInterface):
     def isAll(self):
@@ -1803,7 +1832,8 @@ class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
              isinstance(tp, ZSI.wstools.XMLSchema.AttributeReference):
             return ZSISchemaDeclarationAdapter(tp)
         if isinstance( tp, ZSI.wstools.XMLSchema.ElementReference ):
-            return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'))
+            return ZSIElementReferenceAdapter(tp.getElementDeclaration('ref'),
+                                              tp)
         else:
             raise TypeError, 'unknown adapter type: %s' % tp
 
