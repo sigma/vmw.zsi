@@ -723,7 +723,10 @@ class WsdlInterfaceLimitation(Exception):
     pass
 
 class AdapterBase:
-    """mixin class for universal functionaltiy"""
+    """mixin class for universal functionality"""
+
+    bti = BaseTypeInterpreter()
+    
     def mangle(self, s):
         """process any strings we cant have illegal chracters in"""
         if s:
@@ -1165,7 +1168,7 @@ class ZSITypeAdapter(AdapterBase, TypeInterface):
             if isinstance(elementref,
                           ZSI.wstools.XMLSchema.ElementDeclaration ):
                 if elementref.attributes.has_key('type'):
-                    bt = BaseTypeInterpreter()
+                    bt = self.__class__.bti
                     ptype = bt.get_pythontype( elementref.\
                                                attributes['type'][1],
                                                elementref.\
@@ -1582,7 +1585,7 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
             if hasattr(self._def, 'content') and \
                    isinstance(self._def.content, ZSI.wstools.XMLSchema.\
                               SimpleType.Restriction):
-                bti = BaseTypeInterpreter()
+                bti = self.__class__.bti
                 tpc = bti.get_typeclass( self._def.content.attributes['base'][1],
                                          self._def.content.attributes['base'][0])
             elif isinstance(self._def,
@@ -1591,7 +1594,7 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
                     # ie: tpc = None
                     pass
                 else:
-                    bti = BaseTypeInterpreter()
+                    bti = self.__class__.bti
                     tpc = bti.get_typeclass( self._def.attributes['type'][1],
                                              self._def.attributes['type'][0] )
             elif self._def.content:
@@ -1812,7 +1815,7 @@ class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
             if t[0:4] == 'xsd:':
                 isDefined = False
                 tns = 'http://www.w3.org/2001/XMLSchema'
-                bti = BaseTypeInterpreter()
+                bti = self.__class__.bti
                 atype = bti.get_typeclass( t[4:-2], tns )
             else:
                 isDefined = True
@@ -1908,7 +1911,7 @@ class ZSIDerivedTypesAdapter(AdapterBase, DerivedTypesInterface):
 
         if hasattr( self._content, 'derivation' ):
             if self._content.derivation.attributes.has_key('base'):
-                bti = BaseTypeInterpreter()
+                bti = self.__class__.bti
                 return bti.get_typeclass( self._content.derivation.\
                                           attributes['base'][1],
                                           self._content.derivation.\
