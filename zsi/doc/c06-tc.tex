@@ -605,6 +605,18 @@ and not within a SOAP wrapper element.
 \end{tableiii}
 \end{classdesc}
 
+When serializing, it may be necessary to specify which namespace prefixes
+are ``active'' in the XML.
+This is done by using the \code{unsuppressedPrefixes} parameter when
+calling the \method{serialize()} method.
+(This will only work when XML is the top-level item being serialized,
+such as when using typecodes and document-style interfaces.)
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{unsuppressedPrefixes}}{[]}{An array of strings
+identifying the namespace prefixes that should be output.}
+\end{tableiii}
+
 \section{Struct}
 
 SOAP structs are either Python dictionaries or

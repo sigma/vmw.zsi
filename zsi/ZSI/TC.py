@@ -803,9 +803,11 @@ class XML(TypeCode):
         if self.copyit: return c[0].cloneNode(1)
         return c[0]
 
-    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='',
+    unsuppressedPrefixes=[], **kw):
         if not self.wrapped:
-            Canonicalize(pyobj, sw, comments=self.comments)
+            Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
+                comments=self.comments)
             return
         objid = '%x' % id(pyobj)
         n = name or self.oname or ('E' + objid)
