@@ -26,7 +26,7 @@ html:	$M.html
 $M.ps: $(SOURCES)
 	$(MKHOWTO) --dvi $M.tex
 	dvips -N0 -t $(PAPER) -o $@ $M.dvi
-	@rm $M.dvi
+	rm $M.dvi
 $M.pdf: $(SOURCES)
 	$(MKHOWTO) --pdf $M.tex
 $M.html: $(SOURCES)

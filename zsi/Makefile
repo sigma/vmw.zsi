@@ -11,7 +11,7 @@ ins:
 kit:	ver doc rpm	# make a kit
 
 rpm:
-	@rm -f dist/*
+	rm -f dist/*
 	$(PYTHON) setup.py bdist_rpm --python=$(PYTHON)
 
 doc:			# build the docs
@@ -22,8 +22,5 @@ ver:			# update the build number
 
 .PHONY: all ins kit rpm doc ver
 
-ZSI/version.py:		setup.cfg
-	$(PYTHON) newver.py
-
-doc/version.tex:	setup.cfg
+ZSI/version.py doc/version.tex:	setup.cfg
 	$(PYTHON) newver.py
