@@ -169,7 +169,7 @@ A simple "Hello World" http SOAP server:
       def hello():
 	  return "Hello World"
 
-      server = SOAP.SOAPServer(("localhost", 8080))
+      server = SOAPpy.SOAPServer(("localhost", 8080))
       server.registerFunction(hello)
       server.serve_forever()
 
