@@ -589,24 +589,25 @@ class Integer(TypeCode):
         print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
                 (n, attrtext, tstr, pyobj, n)
 
+# See credits, below.
+def _make_inf():
+    x = 2.0
+    x2 = x * x
+    i = 0
+    while i < 100 and x != x2:
+        x = x2
+        x2 = x * x
+        i = i + 1
+    if x != x2:
+        raise ValueError("This machine's floats go on forever!")
+    return x
+
 # This is outside the Decimal class purely for code esthetics.
 _magicnums = { }
 try:
     _magicnums['INF'] = float('INF')
     _magicnums['-INF'] = float('-INF')
 except:
-    # See credits, below.
-    def _make_inf():
-        x = 2.0
-        x2 = x * x
-        i = 0
-        while i < 100 and x != x2:
-            x = x2
-            x2 = x * x
-            i = i + 1
-        if x != x2:
-            raise ValueError("This machine's floats go on forever!")
-        return x
     _magicnums['INF'] = _make_inf()
     _magicnums['-INF'] = -_magicnums['INF']
 
