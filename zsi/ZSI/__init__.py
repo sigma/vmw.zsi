@@ -124,7 +124,7 @@ def _backtrace(elt, dom):
 
 ##
 ##  Exception classes.
-class ZSIException(Exceptoin):
+class ZSIException(Exception):
     '''Base class for all ZSI exceptions.
     '''
     pass
