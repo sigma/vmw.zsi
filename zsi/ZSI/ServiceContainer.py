@@ -63,9 +63,11 @@ def AsServer(port=80, services=()):
 
 
 class NoSuchService(Exception): pass
+class NoSuchMethod(Exception): pass
+class NotAuthorized(Exception): pass
+class ServiceAlreadyPresent(Exception): pass
 class PostNotSpecified(Exception): pass
 class SOAPActionNotSpecified(Exception): pass
-
 
 class ServiceSOAPBinding:
     """Binding defines the set of wsdl:binding operations, it takes as input a
@@ -78,9 +80,16 @@ class ServiceSOAPBinding:
 
     """
     soapAction = {}
-
+    auth_method = None
+    
     def __init__(self, post):
         self.post = post
+
+    def authorize(self, auth_info, post, action):
+        if self.auth_method:
+            return getattr(self, self.auth_method)(auth_info, post, action)
+        else:
+            return 1
 
     def __call___(self, action, ps):
         return self.getOperation(action)(ps)
@@ -147,34 +156,38 @@ class ServiceContainer(HTTPServer):
         '''
         def __init__(self):
             self.__dict = {}
-            self.__post_dict = {}
 
         def __str__(self):
             return str(self.__dict)
 
         def getNode(self, url):
-            node = self.__dict
-            scheme,netloc,path,query,fragment = urlparse.urlsplit(url)
-            try:
-                dir = path.split('/')[1:]
-                for i in dir:
-                    node = node[i]
-            except KeyError, ex:
-                raise NoSuchService, 'No service(%s) in ServiceContainer' %path
-            return node
+            path = urlparse.urlsplit(url)[2]
 
+            if self.__dict.has_key(path):
+                return self.__dict[path]
+            else:
+                raise NoSuchService, 'No service(%s) in ServiceContainer' %path
+            
         def setNode(self, service, url):
             if not isinstance(service, ServiceSOAPBinding):
                raise TypeError, 'A Service must implement class ServiceSOAPBinding'
-            scheme,netloc,path,query,fragment = urlparse.urlsplit(url)
-            self.__post_dict[path] = service
-            node = self.__dict
-            dir = path.split('/')[1:]
-            for i in dir[:-1]:
-                if not node.has_key(i): node[i] = {}
-                node = node[i]
-            node[dir[-1]] = service
+            path = urlparse.urlsplit(url)[2]
+            
+            if self.__dict.has_key(path):
+                raise ServiceAlreadyPresent, 'Service(%s) already in ServiceContainer' % path
+            else:
+                self.__dict[path] = service
 
+        def removeNode(self, url):
+            path = urlparse.urlsplit(url)[2]
+
+            if self.__dict.has_key(path):
+                node = self.__dict[path]
+                del self.__dict[path]
+                return node
+            else:
+                raise NoSuchService, 'No service(%s) in ServiceContainer' %path
+            
     def __init__(self, server_address, RequestHandlerClass=SOAPRequestHandler):
         '''server_address -- 
            RequestHandlerClass -- 
@@ -200,14 +213,23 @@ class ServiceContainer(HTTPServer):
         '''
         self._nodes.setNode(service, post)
 
+    def removeNode(self, post):
+        '''post -- POST HTTP value
+        '''
+        self._nodes.removeNode(post)
+        
     def getCallBack(self, post, action):
         '''post -- POST HTTP value
            action -- SOAP Action value
         '''
         node = self.getNode(post)
+        
         if node is None:
-            raise NoSuchFunction
-        return node.getOperation(action)
-
+            raise NoSuchMethod, "Method (%s) not found at path (%s)" % (action,
+                                                                        path)
+        if node.authorize(None, post, action):
+        	return node.getOperation(action)
+        else:
+            raise NotAuthorized, "Authorization failed for method %s" % action
 
 if __name__ == '__main__': print _copyright
