@@ -1,0 +1,88 @@
+#! /bin/sh
+DEST=${XKMSHOME-/opt/xkms}/openssl
+CONF=${DEST}/xkms.conf
+REQCONF=${DEST}/req.conf
+ME=`basename $0`
+
+##  Basic sanity checks.
+if [ ! -f ${CONF} ] ; then
+    echo ${ME}: ${CONF} not found. 2>&1
+    exit 1
+fi
+if [ ! -f ${REQCONF} ] ; then
+    echo ${ME}: ${REQCONF} not found. 2>&1
+    exit 1
+fi
+
+##  Parse JCL.
+case "$*" in
+"") ;;
+*)
+    echo ${ME}:  Usage error. 2>&1
+    exit 1
+esac
+
+if [ -f ${DEST}/root_ca/key.pem ] ; then
+    echo '' 2>&1
+    echo '**' 2>&1
+    echo "**  Warning ${DEST}/root_ca/key.pem still present!" 2>&1
+    echo '**' 2>&1
+fi
+
+echo ''
+echo -n 'Hostname where server will be running: '
+read HOST
+echo -n 'Full email address of server administrator: '
+read ADMIN
+
+#  Make an XKMS Service keypair and cert request
+echo ''
+echo '**'
+echo '**  CREATING XKMS SERVICE KEYPAIR'
+echo '**'
+cat ${REQCONF} >${REQCONF}.tmp
+echo 'commonName_default = XKMS Service' >>${REQCONF}.tmp
+echo "emailAddress_default = ${ADMIN}" >>${REQCONF}.tmp
+openssl req -config ${REQCONF}.tmp -newkey rsa:1024 \
+        -out ${DEST}/xkms_ca/certreq.pem -keyout ${DEST}/xkms_ca/key.pem
+rm ${REQCONF}.tmp
+
+##  Have the Level-1 CA sign the XKMS Service cert
+echo ''
+echo '**'
+echo '**  HAVING THE LEVEL1 CA SIGN THE XKMS CERTIFICATE'
+echo '**'
+openssl ca -config ${CONF} -name level1_ca \
+        -out ${DEST}/xkms_ca/cert.pem -in ${DEST}/xkms_ca/certreq.pem
+
+##  Make an SSL keypair and cert request
+echo ''
+echo '**'
+echo '**  CREATING SSL KEYPAIR'
+echo '**'
+cat ${REQCONF} >${REQCONF}.tmp
+echo "commonName_default = ${HOST}" >>${REQCONF}.tmp
+echo "emailAddress_default = ${ADMIN}" >>${REQCONF}.tmp
+openssl req -config ${REQCONF}.tmp -newkey rsa:1024 \
+        -out ${DEST}/ssl/certreq.pem -keyout ${DEST}/ssl/key.pem
+rm ${REQCONF}.tmp
+
+echo ''
+echo '**'
+echo '**  STRIPPING PASSWORD FROM SSL KEY'
+echo '**'
+openssl rsa -inform pem <${DEST}/ssl/key.pem >${DEST}/ssl/plainkey.pem
+
+
+##  Have the Level-1 CA sign the SSL cert
+echo ''
+echo '**'
+echo '**  HAVING THE LEVEL1 CA SIGN THE SSL CERTIFICATE'
+echo '**'
+openssl ca -config ${CONF} -name level1_ca -extensions ssl_cert_ext \
+        -out ${DEST}/ssl/cert.pem -in ${DEST}/ssl/certreq.pem
+
+echo ''
+echo '**'
+echo '**  DONE'
+echo '**'

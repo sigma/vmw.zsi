@@ -1,0 +1,69 @@
+#! /bin/sh
+DEST=${XKMSHOME-/opt/xkms}/openssl
+CONF=${DEST}/xkms.conf
+REQCONF=${DEST}/req.conf
+ME=`basename $0`
+
+##  Basic sanity checks.
+if [ ! -f ${CONF} ] ; then
+    echo ${ME}: ${CONF} not found. 2>&1
+    exit 1
+fi
+if [ ! -f ${REQCONF} ] ; then
+    echo ${ME}: ${REQCONF} not found. 2>&1
+    exit 1
+fi
+
+##  Parse JCL.
+case "$*" in
+"") ;;
+*)
+    echo ${ME}:  Usage error. 2>&1
+    exit 1
+esac
+
+##  Make a root keypair and a cert request
+echo ''
+echo '**'
+echo '**  GENERATING ROOT KEYPAIR'
+echo '**'
+cat ${REQCONF} >${REQCONF}.tmp
+openssl req -config ${REQCONF}.tmp -newkey rsa:2048 \
+        -out ${DEST}/root_ca/certreq.pem -keyout ${DEST}/root_ca/key.pem
+rm ${REQCONF}.tmp
+
+##  Self-sign the request, make text version of public key.
+echo ''
+echo '**'
+echo '**  SELF-SIGNING THE ROOT KEY'
+echo '**'
+openssl x509 -req -signkey ${DEST}/root_ca/key.pem \
+        -extensions ca_cert -sha1 -days 1500 \
+        -in ${DEST}/root_ca/certreq.pem -out temp.pem
+openssl x509 -text -in temp.pem -out ${DEST}/root_ca/cert.pem
+rm -f temp.pem
+
+##  Make a Level-1 CA keypair and a cert request
+echo ''
+echo '**'
+echo '**  GENERATING A LEVEL-1 CA KEYPAIR'
+echo '**'
+cat ${REQCONF} >${REQCONF}.tmp
+echo 'commonName_default = Level 1 CA' >>${REQCONF}.tmp
+openssl req -config ${REQCONF}.tmp -newkey rsa:1024 \
+        -out ${DEST}/level1_ca/certreq.pem -keyout ${DEST}/level1_ca/key.pem
+rm ${REQCONF}.tmp
+
+##  Have the ROOT CA sign the Level1 CA
+echo ''
+echo '**'
+echo '**  HAVING THE ROOT SIGN the LEVEL-1 CA'
+echo '**'
+openssl ca -config ${CONF} -name root_ca \
+        -noemailDN -out ${DEST}/level1_ca/cert.pem -in ${DEST}/level1_ca/certreq.pem
+
+echo ''
+echo '**'
+echo '**  DONE WITH THE ROOT, PLEASE TAKE THE KEY OFF-LINE...'
+echo '**  ... NOW!'
+echo '**'

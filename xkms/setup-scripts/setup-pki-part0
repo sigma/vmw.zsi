@@ -1,0 +1,117 @@
+#! /bin/sh
+DEST=${XKMSHOME-/opt/xkms}/openssl
+CONF=${DEST}/xkms.conf
+REQCONF=${DEST}/req.conf
+ME=`basename $0`
+
+##  Basic sanity check.
+if [ ! -d ${DEST} ] ; then
+    echo ${ME}: ${DEST} not found. 2>&1
+    exit 1
+fi
+
+##  Parse JCL.
+RESTART='no'
+case "$*" in
+"") ;;
+--restart)
+    RESTART=yes
+    ;;
+*)
+    echo ${ME}:  Usage error. 2>&1
+    exit 1
+esac
+
+if [ "$RESTART" = "yes" ] ;then
+    echo ''
+    echo '**'
+    echo '**  REMOVING PREVIOUS CONFIGURATION'
+    echo '**'
+    find ${DEST}/. -type f -a ! -name `basename ${CONF}` | xargs rm
+fi
+
+echo ''
+echo '**'
+echo '**  CREATING DIRECTORY HIERARCHY'
+echo '**'
+
+##  Create home for each CA.
+for D in ${DEST}/ssl ${DEST}/root_ca ${DEST}/level1_ca ${DEST}/xkms_ca ; do
+    test -d ${D} || mkdir ${D} || exit 1
+done
+
+##  Create items within each CA.
+##  See ${CONF} for what needs to be created.
+for CA in root level1 xkms ; do
+    D=${DEST}/${CA}_ca
+    test -f ${D}/serial.txt || echo '01' > ${D}/serial.txt
+    touch ${D}/db.txt
+    test -d ${D}/certs || mkdir ${D}/certs
+    test -d ${D}/crls || mkdir ${D}/crls
+done
+test ! -f ${CONF} || cp xkms.conf ${CONF}
+
+
+echo ''
+echo '**'
+echo '**  CREATING DEFAULT CERTIFICATE PARAMETERS'
+echo '**'
+
+CC=''
+while test -z "$CC" ; do
+    echo -n 'Enter two-letter country code:  '
+    read CC
+    case "$CC" in
+    [A-Za-z][A-Za-z])
+        CC=`echo $CC | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`
+        ;;
+    *) CC='' ;;
+    esac
+done
+
+echo -n 'Enter organization name:  '
+read O
+
+sed -e "s/%CC%/$CC/" -e "s/%O%/$O/" << 'EOF' >${DEST}/req.conf
+##  This file was automatically generated.
+##  Edits to it will be lost if the system is reconfigured.
+
+[ req ]
+default_bits       = 1024
+default_keyfile    = privkey.pem
+distinguished_name = req_dn
+string_mask        = nombstr  # legal charsets; this seems a portable value
+
+[ req_dn ]
+countryName              = Country Code
+countryName_value        = %CC%
+organizationName         = Organization Name
+organizationName_value   = %O%
+organizationalUnitName   = Organizational Unit (i.e., department)
+commonName               = Common Name (i.e., name of person or server)
+commonName_max           = 80
+emailAddress             = Email Address
+emailAddress_max         = 64
+EOF
+
+echo ''
+echo '**'
+echo '**  Mixing up the random-number generator'
+echo '**'
+echo 'Please type some (random) text; enter a blank line when done:'
+echo >/tmp/r$$
+LINE=x
+while test ! -z "${LINE}" ; do
+    echo -n '> '
+    read LINE
+    echo "${LINE}" >>/tmp/r$$
+done
+echo -n 'Status: '
+openssl rand -rand /tmp/r$$ 0
+rm /tmp/r$$
+
+
+echo ''
+echo '**'
+echo '**  DONE'
+echo '**'
