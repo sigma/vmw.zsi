@@ -3,6 +3,10 @@ SOAP.py
 
 CHANGES SINCE VERSION 0.9.7
 
+- Modified structure to allow installation using Python distutils
+  (i.e. setup.py).  Access to the SOAPpy library now requires: 
+     from SOAPpy import SOAP
+
 - I (Gregory R. Warnes) have implemented an experimental and
   non-standard method of handling named and unnamed arguments.  This
   mechanism is enabled in SOAPpy by setting
