@@ -178,13 +178,8 @@ class WriteServiceModule:
             raise WsdlGeneratorError, 'could not determine a service name'
 
         name = SplitQName(name)[1]
-        if ((name.find("Service") != -1) or
-            (name.find("service") != -1)):
-            f_types = '%s_types' % name
-            f_services = name
-        else:
-            f_types = '%s_services_types' % name
-            f_services = '%s_services' % name
+        f_types = '%s_services_types' % name
+        f_services = '%s_services' % name
         return f_types, f_services
 
 
