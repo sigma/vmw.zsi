@@ -6,8 +6,7 @@
 ###########################################################################
 import sys, unittest
 from ZSI import FaultException
-import utils
-from paramWrapper import ResultsToStr
+from utils import ServiceTestCase, TestProgram
 
 """
 Unittest for contacting the threatService Web service.
@@ -21,7 +20,7 @@ SERVICE_NAME = 'threatService'
 PORT_NAME = 'threat'
 
 
-class threatServiceTest(utils.ServiceTestCase):
+class threatServiceTest(ServiceTestCase):
     """Test case for threatService Web service
     """
     
@@ -41,8 +40,7 @@ class threatServiceTest(utils.ServiceTestCase):
 
     def test_threatLevel(self):
         request = self.portType.inputWrapper('threatLevel')
-        response = self.portType.threatLevel(request)
-        print ResultsToStr(response)
+        self.handleResponse(self.portType.threatLevel,request)
 
 
 def makeTestSuite():
@@ -52,4 +50,4 @@ def makeTestSuite():
 
 
 if __name__ == "__main__" :
-    utils.TestProgram(defaultTest="makeTestSuite")
+    TestProgram(defaultTest="makeTestSuite")
