@@ -227,7 +227,7 @@ class WriteServiceModule:
             if self._importlib:
                 exec( 'obj = %s' % self._importlib )
                 if hasattr(obj, 'clientimports' ):
-                    sd.imports += obj.typeimports
+                    sd.imports += obj.clientimports
                     
             sd.fromWsdl(service)
             sd.write(fd)
