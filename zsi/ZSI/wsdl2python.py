@@ -1362,7 +1362,7 @@ class SchemaDescription:
                         tclist = ''
                         
                     # end cheating....
-                    
+
                     self.precede  = '%s%s' % ( dt.getDerivation(), '_Def' )
                     nsp = self.nsh.getAlias(tp.getTargetNamespace())
                     self.classdef.set('\n\n%sclass %s(%s):' \
@@ -1421,6 +1421,22 @@ class SchemaDescription:
                     self.typeDoc('', '_element', typeName)
                 else:
                     raise WsdlGeneratorError, 'failed to handle array!'
+            elif '%s' % tc == 'ZSI.TC.Any':
+                # this is a 'special case' - it's possible in schema to
+                # extend an xsd:anyType - anyType is not currently
+                # really well supported, this is something of a
+                # preliminary fix.
+                self.classdef.set('\n\n%sclass %s(ZSI.TCcompound.Struct):' \
+                                  %(ID1, tp.getName() + '_Def'))
+                self.classvar.set('\n%s# short term fix for derived anyType' \
+                                  % ID2)
+                self.classvar.write("\n%sschema = '%s'" % \
+                                    (ID2, tp.getTargetNamespace()))
+                self.classvar.write("\n%stype = '%s'" % (ID2,tp.getName()))
+                self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2)
+                typecodelist = '[ZSI.TC.Any(*kw), ]'
+                self._complexTypecodeLogic(typecodelist)
+                
             else:
                 raise WsdlGeneratorError, 'failed to handle complex content'
             
@@ -1430,6 +1446,8 @@ class SchemaDescription:
             dt = tp.getDerivedTypes()
 
             if dt.isSimpleContent() and dt.getTypeclass():
+                # XXX: this is also catching extension/restriction
+                # of simple types and will need some attention later
                 self.classdef.set('\n\n%sclass %s(%s):' \
                                   % (ID1, tp.getName() + '_Def',
                                      dt.getTypeclass()))
@@ -1447,6 +1465,25 @@ class SchemaDescription:
                 self.basector.set('\n\n%s%s.__init__(self, pname=name, **kw)' \
                                   %( ID3, dt.getTypeclass()))
                 return
+            elif dt.isRestriction() or dt.isExtension():
+                self.precede  = '%s%s' % ( dt.getDerivation(), '_Def' )
+                nsp = self.nsh.getAlias(tp.getTargetNamespace())
+                self.classdef.set('\n\n%sclass %s(%s):' \
+                                  %(ID1, tp.getName() + '_Def',
+                                    dt.getDerivation() + '_Def'))
+                self.classvar.set('\n%s# rudimentary support' % ID2)
+                self.classvar.write('\n%stag = "%s"' % (ID2, tp.getName()))
+                self.classvar.write('\n%sliteral = "%s"' %(ID2, tp.getName()))
+                self.classvar.write('\n%sschema = "%s"' % \
+                                    (ID2, tp.getTargetNamespace()))
+                
+                self.initdef.set('\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2)
+                self.initcode.set('\n%sname = name or self.__class__.literal'\
+                                  % ID3)
+                self.initcode.write('\n%sns = ns or self.__class__.schema' \
+                                    % ID3)
+                self.basector.set('\n\n%s%s.__init__(self, name=name, ns=ns, **kw)' \
+                                  %( ID3, dt.getDerivation() + '_Def'))
             else:
                 raise WsdlGeneratorError, \
                       'could not determine simple content base'
@@ -1533,7 +1570,6 @@ class SchemaDescription:
 
                     elif etp.isDefinition() and etp.isComplexType():
                         occurs = self._calculateOccurance(e)
-
                         nsp = self.nsh.getAlias(etp.getTargetNamespace())
                         typeName = '%s.%s' % (nsp,etp.getName()) + '_Def'
                         typecodelist  += '%s(name="%s", ns=ns%s), ' \
