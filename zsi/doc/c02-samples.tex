@@ -245,27 +245,35 @@ def savePerson(person):
   fp.close()
 \end{verbatim}
 
-In order for \ZSI{} to properly deserialize the returned complex type into
-a \class{Person} instance, either the class and its typecode must be defined
-in a module named \module{ComplexTypes} somewhere in the import path,
-or the expected return
-type must be passed to the \code{Binding.Receive} method.
-The first method is preferred, as the code is easier to read.
+In order for \ZSI{} to transparently deserialize the returned complex type into
+a \class{Person} instance, you must append \class{ZSI.Path} with a module that
+defines the class and its typecode.  Alternatively, you could explicitly
+tell \ZSI{} what class to instantiate by passing the class to the
+\code{Binding.Receive} method.  The first method is preferred, as the code is
+easier to read.
 
 The following fragment shows both styles:
 
 \begin{verbatim}
 from ZSI.client import Binding
-b = Binding(url='/cgi-bin/complex-test')
-person = b.getPerson('christopher')
+from ZSI import Path
 
-# Explictly stating what to get back.
+# Explicitly stating what to get back.
+from MyComplexTypes import Person
 a = apply(b.getPerson, 'christopher')
 person = b.Receive(Person)
+
+
+# Transparent deserialization
+import MyComplexTypes
+b = Binding(url='/cgi-bin/complex-test', typesmodule=MyComplexTypes)
+person = b.getPerson('christopher')
 \end{verbatim}
 
-If the instance has a \code{typecode} attribute, then serialization
-can be performed without further definition:
+Because the returned complex type is defined in a class registered in 
+\class{ZSI.Path}, transparent deserialization is possible.  When sending
+complex types to the server, transparent serialization does not require you to
+register your module in \class{ZSI.Path}:
 
 \begin{verbatim}
 from ZSI.client import Binding
