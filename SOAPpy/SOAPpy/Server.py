@@ -353,7 +353,9 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     # isn't one, someday, we'll set that on the client
                     # and it won't be necessary here
                     # for now we're doing both
-                    if self.headers["SOAPAction"] == "\"\"":
+
+                    if "SOAPAction".lower() not in self.headers.keys() or \
+                       self.headers["SOAPAction"] == "\"\"":
                         self.headers["SOAPAction"] = method
                         
                     thread_id = thread.get_ident()
