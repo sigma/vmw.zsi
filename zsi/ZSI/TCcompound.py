@@ -165,7 +165,7 @@ class Struct(TypeCode):
             print >>sw, '<%s>' % n
         else:
             if kw.get('typed', self.typed):
-                attrtext = ' xmlns="%s" xsi:type="%s"' % (self.type[0], self.type[1])
+                attrtext = ' xmlns="%s" xsi:type="%s" ' % (self.type[0], self.type[1])
             else:
                 attrtext = ''
             print >>sw, '<%s %sid="%s">' % (n, attrtext, objid)
