@@ -153,7 +153,7 @@ class WriteServiceModule:
         self._importlib  = importlib
         self._typewriter = typewriter
 
-    def write(self):
+    def write(self, schemaOnly=False):
         """Write schema instance contents w/respect to dependency requirements, 
            and create client interface.  Not guaranteed to work for mutual 
            depenedencies.
@@ -165,6 +165,9 @@ class WriteServiceModule:
             fd = open(f_types + ".py", 'w+')
             self.write_service_types(f_types, fd)
             fd.close()
+
+        if schemaOnly:
+            return
 
         fd = open(f_services + ".py", 'w+')
         self.write_services(f_types, f_services, fd, hasSchema)
