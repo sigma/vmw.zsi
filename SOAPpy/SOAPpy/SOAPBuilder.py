@@ -109,8 +109,7 @@ class SOAPBuilder:
 
         if self.header:
             # Create a header.
-            header_ns = self.genns(ns_map, NS.ENV)[0]
-            self.dump(self.header, "%sHeader" % header_ns, typed = typed)
+            self.dump(self.header, "Header", typed = typed)
             self.header = None # Wipe it out so no one is using it.
 
         if self.body:
