@@ -1,83 +1,99 @@
 #!/usr/bin/env python
-import unittest, sys, tests
+import unittest, sys, tests_good, tests_bad
 from ZSI import *
+from xml.dom.ext import PrettyPrint
 
 class t1TestCase(unittest.TestCase):
     "Test case wrapper for old ZSI t1 test case"
 
     def setUp(self):
-        self.results = []
-        for key,val in tests.__dict__.items():
+        self.goodTests = []
+        self.badTests = []
+        for key,val in tests_good.__dict__.items():
             try:
                 if key[0:4] == "test" and int(key[4:]) > 0:
-                    self.results.append((key,val))
+                    self.goodTests.append((key,val))
             except:
                 pass
-        self.results.sort(lambda a,b: cmp(a[0], b[0]))
+        for key,val in tests_bad.__dict__.items():
+            try:
+                if key[0:4] == "test" and int(key[4:]) > 0:
+                    self.badTests.append((key,val))                    
+            except:
+                pass
+        self.goodTests.sort(lambda a,b: cmp(a[0], b[0]))
+        self.badTests.sort(lambda a,b: cmp(a[0], b[0]))
 
     def checkt1(self):
-        for key,val in self.results:
-            try:
-                print "\n", "." * 60, key
-                ps = ParsedSoap(val)
-            except ParseException, e:
-                print "SOAP ParseException:", e 
-                f = FaultFromZSIException(e)
-                print f.AsSOAP()
-                print `e` 
-                continue
-            wmiu = ps.WhatMustIUnderstand() 
-            if len(wmiu): 
-                print "mustUnderstand", len(wmiu), wmiu 
-            actors = ps.WhatActorsArePresent() 
-            if len(actors): 
-                print "actors", len(actors), actors 
-            mine = ps.GetMyHeaderElements(['foobar', 'next']) 
-            if len(mine): 
-                print "mine", len(mine), \
-                    '[', ', '.join([m.nodeName for m in mine]), ']'
+        for key,val in self.badTests:
+            print "\n", "." * 60, key
+            self.failUnlessRaises(ParseException, ParsedSoap, val)
+        for key,val in self.goodTests:
+            print "\n", "." * 60, key
+            ps = ParsedSoap(val)
+#        for key,val in self.badTests:                
+#            try:
+#                print "\n", "." * 60, key
+#                ps = ParsedSoap(val)
+#            except ParseException, e:
+#                print "SOAP ParseException:", e 
+#                f = FaultFromZSIException(e)
+#                print f.AsSOAP()
+#                print `e` 
+#                continue
+#            wmiu = ps.WhatMustIUnderstand() 
+#            if len(wmiu): 
+#                print "mustUnderstand", len(wmiu), wmiu 
+#                actors = ps.WhatActorsArePresent() 
+#                if len(actors): 
+#                    print "actors", len(actors), actors 
+#                mine = ps.GetMyHeaderElements(['foobar', 'next']) 
+#                if len(mine): 
+#                    print "mine", len(mine), \
+#                        '[', ', '.join([m.nodeName for m in mine]), ']'
         ps = ParsedSoap(datatest)
         #print ps.GetElementNSdict(ps.dom)
         elts = ps.data_elements
-        print "XXX: elts is:"
-        for item in elts:
-            print item
-        print elts[10]
+#        print "XXX: elts is:"
+#        for item in elts:
+#            print item
+#        print elts[10]
 
-        #print TC.IpositiveInteger(None).parse(elts[0], ps)
-        print 'opt int = ', TC.Integer(None, optional=1).parse(elts[10], ps)
-        print 'opt byte = ', TC.Ibyte(None, optional=1).parse(elts[10], ps)
-        #print 'non-opt int = ', TC.Integer(None, optional=0).parse(elts[10], ps)
+        self.failUnlessEqual(TC.Integer(None, optional=1).parse(elts[10], ps),
+                                                                        None)
+        self.failUnlessEqual(TC.Ibyte(None, optional=1).parse(elts[10], ps),
+                                                                        None)
         B = [ TC.Integer('Price'), TC.Integer('p2'), TC.String(unique=1) ]
-        print TC.Integer(('test-uri', 'Price')).parse(elts[0], ps)
-        print B[0].parse(elts[0], ps)
-        print B[1].parse(elts[1], ps)
-        print B[2].parse(elts[2], ps)
-        print TC.HexBinaryString().parse(elts[9], ps)
-        print TC.String('Name').parse(elts[2], ps)
-        i = TC.Any('Price').parse(elts[0], ps)
-        print 'ur#1', type(i), i
-        i = TC.Any('n3').parse(elts[4], ps)
-        print 'ur#2', type(i), i
-        print TC.XML('n2').parse(elts[3], ps)
-        #nodelist = TC.XML('a2').parse(elts[7], ps)
-        #print 'n2="' + TC.String('n2').parse(elts[3], ps) + '"'
-        print TC.String('n3').parse(elts[4], ps)
-        print TC.Base64String('n64').parse(elts[5], ps)
-        print TC.String('n64').parse(elts[5], ps)
+        self.failUnlessEqual(TC.Integer(('test-uri', 'Price')).parse(elts[0], ps), 
+                                                        34)
+        self.failUnlessEqual(B[0].parse(elts[0], ps), 34)
+        self.failUnlessEqual(B[1].parse(elts[1], ps), 44)
+        self.failUnlessEqual(B[2].parse(elts[2], ps), u"This is the name")
+        self.failUnlessEqual(TC.HexBinaryString().parse(elts[9], ps), "? A")
+        self.failUnlessEqual(TC.String('Name').parse(elts[2], ps), 
+                                                    u"This is the name")
+        self.failUnlessEqual(TC.Any('Price').parse(elts[0], ps), 34)
+        self.failUnlessEqual(TC.Any('n3').parse(elts[4], ps), 
+                                                    u"The value of n3")
+        TC.XML('n2').parse(elts[3], ps)
+        nodelist = TC.XML('a2').parse(elts[7], ps)
+        self.failUnlessEqual(TC.String('n3').parse(elts[4], ps), 
+                                                    u"The value of n3")
+        self.failUnlessEqual(TC.Base64String('n64').parse(elts[5], ps),
+                                                    u"hello")
+        self.failUnlessEqual(TC.String('n64').parse(elts[5], ps),
+                                                    u"a GVsbG8=")
         enum = TC.Enumeration(['Red', 'Blue', 'Green'], 'color')
-        print enum.parse(elts[6], ps)
-        #print TC.Integer('zzz').parse(elts[0], ps)
-
-        print 'enum=', TC.IEnumeration([44,46,47]).parse(elts[1],ps)
-        #S = TC.Struct(myclass, [TC.IunsignedShort('i'), TC.String('t')])
-        #print S.parse(elts[8], ps)
+        self.failUnlessEqual(enum.parse(elts[6], ps), u'Red')
+        self.failUnlessEqual(TC.IEnumeration([44,46,47]).parse(elts[1],ps),
+                                                        44)
         S = TC.Struct(None, [TC.String('t'), TC.Integer('i')], inorder=0)
         pyobj = S.parse(elts[8], ps)
         S2 = TC.Struct(myclass, [TC.IunsignedShort('i'), TC.String('q:z',
         optional=1), TC.String('t')], 'a2', typed=0)
         pyobj2 = S2.parse(elts[8], ps)
-        print 'uri=', TC.URI().parse(elts[12], ps)
+        self.failUnlessEqual(TC.URI().parse(elts[12], ps), 
+                                            u'"http://foo.com/~salz"')
         print pyobj == pyobj2, pyobj, pyobj2
 
         tcary = TC.Array('SOAP-ENC:int', TC.Integer())
