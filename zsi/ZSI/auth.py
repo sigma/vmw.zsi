@@ -9,6 +9,11 @@ import base64, os, sys
 
 _b64_decode = base64.decodestring
 
+# Typecode to parse a ZSI BasicAuth header.
+_auth_tc = TC.Struct(None,
+                        [ TC.String('Name'), TC.String('Password') ],
+                        extras=1)
+
 class AUTH:
     '''Constants for authentication mechanisms.
     '''

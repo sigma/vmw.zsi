@@ -1,7 +1,7 @@
 # $Header$
 
 # Where is the doc-builder program?
-PYSRCDIR=	/home/rsalz/py/Python-2.1
+PYSRCDIR=	/opt/sources/Python-2.2.1
 MKHOWTO=	$(PYSRCDIR)/Doc/tools/mkhowto
 #PAPER=		a4
 PAPER=		letter

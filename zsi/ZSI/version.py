@@ -1,2 +1,2 @@
 # Auto-generated file; do not edit
-Version = (1, 2, 5)
+Version = (1, 2, 6)

@@ -1,3 +1,12 @@
+Changes for 1.3, released xx-May-2002:
+    -	Fixed parsing bug evidenced by dW article
+    -	Style: use defaulted parameters not kw.get()
+    -	Style: avoid __dict__ and use standard attribute fetch
+    -	Fix dispatch to actually dispatch (Laroche Denis)
+    -   Fix some typo's (thanks adalke)
+    -   In TCCompound, include class name in exception, not just object name
+    -   ZSI homepage is at pywebsvcs.sf.net now, not www.zolera.com (sigh...)
+
 Changes for 1.2, released 05-Mar-2002:
     -	Replace with X copyright; GNU compatible now
     -	newver writes date into version.tex

@@ -7,12 +7,7 @@ import os, sys, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ZSI import *
 from ZSI import _child_elements, _copyright, _seqtypes, resolvers
-from ZSI.auth import AUTH, ClientBinding
-
-# Typecode to parse a ZSI BasicAuth header.
-_auth_tc = TC.Struct(None,
-                        [ TC.String('Name'), TC.String('Password') ],
-                        extras=1)
+from ZSI.auth import _auth_tc, AUTH, ClientBinding
 
 
 # Client binding information is stored in a global. We provide an accessor
@@ -92,7 +87,7 @@ def AsCGI(modules=None):
     ct = os.environ['CONTENT_TYPE']
     try:
         if ct.startswith('multipart/'):
-            cid = resolvers.MIMEResolver(ct, self.stdin)
+            cid = resolvers.MIMEResolver(ct, sys.stdin)
             xml = cid.GetSOAPPart()
             ps = ParsedSoap(xml, resolver=cid.Resolve)
         else:

@@ -105,7 +105,7 @@ class Binding:
         self.url = url
         return self
 
-    def ResetHeaders():
+    def ResetHeaders(self):
         '''Empty the list of additional headers.
         '''
         self.user_headers = []

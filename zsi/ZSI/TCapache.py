@@ -41,7 +41,7 @@ class _Map(TypeCode):
             tstr = ' xsi:type="A:Map" xmlns:A="%s"' % Apache.NS
         else:
             tstr = ''
-        print >>sw, "<%s%s%s>" % n, attrtext or '', tstr
+        print >>sw, "<%s%s%s>" % (n, attrtext or '', tstr)
         if self.aslist:
             for k,v in pyobj:
                 self.tc.serialize(sw, {'key': k, 'value': v}, name='item')

@@ -134,7 +134,7 @@ class Struct(TypeCode):
         try:
             pyobj = self.pyclass(self.aname)
         except Exception, e:
-            raise TypeError("Constructing %s: %s" % (self.pname, str(e)))
+            raise TypeError("Constructing %s(%s): %s" % (self.pname, self.pyclass.__name__, str(e)))
         for key in v.keys():
             setattr(pyobj, key, v[key])
         return pyobj
