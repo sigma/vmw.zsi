@@ -437,8 +437,6 @@ class ServiceDescription:
             myBinding['defs']['__init__'] += '\n%skw["url"] =  urlparse.urlparse(addr)[2]' %(ID3)
             myBinding['defs']['__init__'] += '\n%sself.binding = client.Binding(**kw)' %(ID2)
 
-            operationDict = {}
-
             for op in p.getBinding().getPortType().getOperationList():
                 # -----------------------------
                 #  REQUIREMENTS SOAP Bindings
@@ -483,7 +481,6 @@ class ServiceDescription:
 
                 if op.getInput():
                     inputName = op.getInput().getMessage().getName()
-                    operationDict[op.getName()] = [inputName, None]
                     # these have been moved here to build up the typecodes
                     # needed to generate types in the docstrings
                     self.messages[inputName] = self.__class__.MessageWriter()
@@ -495,7 +492,6 @@ class ServiceDescription:
                     outputName = None
                     if op.getOutput() and op.getOutput().getMessage():
                         outputName = op.getOutput().getMessage().getName()
-                        operationDict[op.getName()][1] = outputName
                         self.messages[outputName] = \
                                       self.__class__.MessageWriter()
                         self.messages[outputName].\
@@ -570,8 +566,7 @@ class ServiceDescription:
 		self.serviceBindings += "\n%s\n" \
                                         % (myBinding['defs']['__init__'])
 		del myBinding['defs']['__init__']
-                if operationDict:
-                    self.serviceBindings += ID2 + "self.opDict = self._generateOpDict()\n"
+
                 keys = myBinding['defs'].keys()
                 keys.sort()
                 for mn in keys:
@@ -580,24 +575,6 @@ class ServiceDescription:
 		else:
 	            self.serviceBindings += "\n"
 
-                if operationDict:
-                    self.serviceBindings += '\n' + ID1 + 'def _generateOpDict(self):\n'
-                    self.serviceBindings += ID2 + 'opDict = {}\n'
-                    for name, wrapperList in operationDict.items():
-                        self.serviceBindings += ID2 + "opDict['%s'] = [%sWrapper(), %sWrapper()]\n" % (name, wrapperList[0], wrapperList[1])
-                    self.serviceBindings += ID2 + 'return opDict\n'
-
-                        # returns operation dictionary
-                    self.serviceBindings += '\n' + ID1 + 'def _getOperations(self):\n'
-                    self.serviceBindings += ID2 + 'return self.opDict\n'
-
-                        # adds get input wrapper method
-                    self.serviceBindings += '\n' + ID1 + 'def _getInputWrapper(self, opName):\n'
-                    self.serviceBindings += ID2 + 'return self.opDict[opName][0]\n'
-                        # adds get output wrapper method
-                    self.serviceBindings += '\n' + ID1 + 'def _getOutputWrapper(self, opName):\n'
-                    self.serviceBindings += ID2 + 'return self.opDict[opName][1]\n'
-        
         return
 
     def isSimpleElementDeclaration(self, op):
@@ -1393,7 +1370,7 @@ class SchemaDescription:
                         if not typeName:
                             typeName = 'Any'
 
-                    self.basector.set("\n%s%s.__init__(self, '%s', %s%s(name='element'), pname=name, aname='_%%s' %% name, oname='%%s xmlns=\"%s\"' %% name, **kw)" \
+                    self.basector.set("\n%s%s.__init__(self, '%s', %s%s(name=None), pname=name, aname='_%%s' %% name, oname='%%s xmlns=\"%s\"' %% name, **kw)" \
                                       % (ID3, tc, arrayinfo[0], nsp,
                                          atype, tp.getTargetNamespace()))
                         
@@ -1442,6 +1419,7 @@ class SchemaDescription:
                 
             for e in mg.getContent():
                 if e.isDeclaration() and e.isElement():
+
                     etp = None
                             
                     if e.getType():
@@ -1463,10 +1441,9 @@ class SchemaDescription:
 
                     if e.isDeclaration() and e.isWildCard():
                         occurs = self._calculateOccurance(e)
-                                    
+
                         typeName = 'Any'
-                        typecodelist += 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
-                                        %(e.getName(),e.getName(),occurs)
+                        typecodelist += self._getWildcardTypecode(e, occurs)
 
                     elif e.isDeclaration() and e.isAnyType():
                         typeName = 'XML'
@@ -1604,23 +1581,30 @@ class SchemaDescription:
             if self.hasRepeatable:
                 extraFlags += 'hasextras=1, '
 
+
+            self.initcode.write('\n\n%sTClist = %s' % (ID3, typecodelist))
+            self.initcode.write('\n\n%soname = name' % ID3)
+
+
             self.initcode.write('\n\n%sif name:' % ID3)
-            self.initcode.write('\n%sTClist = %s' % (ID4, typecodelist))
-            self.initcode.write('\n%soname = name' % ID4)
+            self.initcode.write("\n%saname = '_%%s' %% name" % ID4)
             self.initcode.write('\n%sif ns:' % ID4)
             self.initcode.write("\n%soname += ' xmlns=\"%%s\"' %% ns" % ID5)
             self.initcode.write('\n%selse:' % ID4)
             self.initcode.write("\n%soname += ' xmlns=\"%%s\"' %% self.__class__.schema"%(ID5))
+            self.initcode.write("\n%selse:" % ID3)
+            self.initcode.write("\n%saname = None" % ID4)
 
-            self.basector.write('\n\n%sZSI.TCcompound.Struct.__init__(' % ID4)
+            self.basector.write('\n\n%sZSI.TCcompound.Struct.__init__(' % ID3)
             self.basector.write('self, self.__class__, TClist,')
-            self.basector.write('\n%s%spname=name, inorder=0,' % (ID4,
+            self.basector.write('\n%s%spname=name, inorder=0,' % (ID3,
                                                                   ' ' * 31))
-            self.basector.write('\n%s%saname="_%%s" %% name, oname=oname,'\
-                                % (ID4,
-                                   ' ' * 31))
-            self.basector.write('\n%s%s%s**kw)' % (ID4, ' ' * 31,
+            self.basector.write('\n%s%saname=aname, oname=oname,'\
+                                % (ID3, ' ' * 31))
+            self.basector.write('\n%s%s%s**kw)' % (ID3, ' ' * 31,
                                                    extraFlags))
+
+
 
         def _complexTypeHandleAttributes(self, tp):
             # XXX: need to revisit attributes - incomplete
@@ -1666,3 +1650,8 @@ class SchemaDescription:
                 self.typeList.append([objName, typeName, False])
             else:
                 self.typeList.append([objName, typeName, True])
+
+
+        def _getWildcardTypecode(self, e, occurs):
+            return 'ZSI.TC.Any(pname="%s",aname="_%s"%s), '\
+                   %(e.getName(),e.getName(),occurs)
