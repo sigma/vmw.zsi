@@ -5,7 +5,7 @@
 
 from ZSI import *
 from ZSI import _copyright
-import base64, os, sys
+import base64, os
 
 _b64_decode = base64.decodestring
 
