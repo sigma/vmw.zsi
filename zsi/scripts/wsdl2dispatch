@@ -117,11 +117,16 @@ class ServerCallbackDescription:
         o += '\n%sargs = ps.Parse( %s() )' \
                   % ( ID2, op.getInput().getMessage().getName() \
                       + 'Wrapper' )
-        o += '\n\n%s# assign return values to response object' % ID2
-        o += '\n%sresponse = %s()' \
-                  % ( ID2, op.getOutput().getMessage().getName() \
-                      + 'Wrapper' )
-        o += '\n\n%sreturn response' % ID2
+
+        if op.getOutput().getMessage() is not None:
+            o += '\n\n%s# assign return values to response object' % ID2
+            o += '\n%sresponse = %s()' \
+                 % ( ID2, op.getOutput().getMessage().getName() \
+                     + 'Wrapper' )
+            o += '\n\n%sreturn response' % ID2
+        else:
+            o += '\n\n%s# NO output' % ID2
+            o += '\n\n%sreturn None' % ID2
 
         self.methods.append(o)
 
