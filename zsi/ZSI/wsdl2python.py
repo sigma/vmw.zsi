@@ -1145,8 +1145,8 @@ class SchemaDescription:
                     self.initdef += '\n%sif name:' % ID3
                     self.initdef += '\n%sTCList = []' % ID4
                     self.initdef += '\n%s%s.%s.__init__(self, name=name, ns=ns, **kw)' % (ID4, nsp, dt.getDerivation() + '_Def' )
-                    self.initdef += '\n%sself.ofwhat += self.ofwhat + tuple(TCList)' % ID4
-                    self.initdef += '\n%sself.lenofwhat += self.lenofwhat + len(TCList)' % ID4
+                    self.initdef += '\n%sself.ofwhat += tuple(TCList)' % ID4
+                    self.initdef += '\n%sself.lenofwhat += len(TCList)' % ID4
                 else:
                     self.classdef   = '\n\n%sclass %s:' % (ID1,
                                                            tp.getName() \
