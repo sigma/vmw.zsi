@@ -36,8 +36,6 @@ $M.html: $(SOURCES)
 
 zsixsd.tex: zsi.xsd
 	sed -e '1,/-->/d' zsi.xsd | expand >$@
-version.tex: ../setup.cfg
-	( cd .. && make doc/version.tex )
 
 clean:
 	rm -f *.aux *.idx *.ilg *.ind *.log *.toc *.bkm *.syn *.pla *.how

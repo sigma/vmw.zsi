@@ -10,8 +10,8 @@ cf = ConfigParser.ConfigParser()
 cf.read('setup.cfg')
 major = cf.getint('version', 'major')
 minor = cf.getint('version', 'minor')
-release = cf.getint('version', 'release')
-_version = "%d.%d.%d" % ( major, minor, release )
+patchlevel = cf.getint('version', 'patchlevel')
+_version = "%d.%d.%d" % ( major, minor, patchlevel )
 
 try:
     open('ZSI/version.py', 'r').close()
