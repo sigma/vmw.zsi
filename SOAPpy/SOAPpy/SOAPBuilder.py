@@ -334,6 +334,8 @@ class SOAPBuilder:
         if Config.debug: print "In dump_float."
         tag = tag or self.gentag()
 
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
+
         if Config.strict_range:
             doubleType(obj)
 
@@ -353,6 +355,7 @@ class SOAPBuilder:
     def dump_string(self, obj, tag, typed = 0, ns_map = {}):
         if Config.debug: print "In dump_string."
         tag = tag or self.gentag()
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
 
         id = self.checkref(obj, tag, ns_map)
         if id == None:
@@ -381,6 +384,7 @@ class SOAPBuilder:
     def dump_list(self, obj, tag, typed = 1, ns_map = {}):
         if Config.debug: print "In dump_list.", "obj=", obj
         tag = tag or self.gentag()
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
 
         if type(obj) == InstanceType:
             data = obj.data
@@ -477,6 +481,7 @@ class SOAPBuilder:
     def dump_dictionary(self, obj, tag, typed = 1, ns_map = {}):
         if Config.debug: print "In dump_dictionary."
         tag = tag or self.gentag()
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
 
         id = self.checkref(obj, tag, ns_map)
         if id == None:
@@ -504,6 +509,7 @@ class SOAPBuilder:
                 tag = obj._name
             else:
                 tag = self.gentag()
+        tag = toXMLname(tag) # convert from SOAP 1.2 XML name encoding
 
         if isinstance(obj, arrayType):      # Array
             self.dump_list(obj, tag, typed, ns_map)
