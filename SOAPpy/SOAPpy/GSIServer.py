@@ -58,7 +58,7 @@ import BaseHTTPServer
 
 # SOAPpy modules
 from Parser      import parseSOAPRPC
-from Config      import Config
+from Config      import SOAPConfig
 from Types       import faultType, voidType, simplify
 from NS          import NS
 from SOAPBuilder import buildSOAP
@@ -74,10 +74,15 @@ from Server import *
 from pyGlobus.io import GSITCPSocketServer, ThreadingGSITCPSocketServer
 from pyGlobus import ioc
 
-Config.channel_mode = ioc.GLOBUS_IO_SECURE_CHANNEL_MODE_GSI_WRAP
-Config.delegation_mode = ioc.GLOBUS_IO_SECURE_DELEGATION_MODE_FULL_PROXY
-Config.tcpAttr = None
-Config.authMethod = "_authorize"
+def GSIConfig():
+    config = SOAPConfig()
+    config.channel_mode = ioc.GLOBUS_IO_SECURE_CHANNEL_MODE_GSI_WRAP
+    config.delegation_mode = ioc.GLOBUS_IO_SECURE_DELEGATION_MODE_FULL_PROXY
+    config.tcpAttr = None
+    config.authMethod = "_authorize"
+    return config
+
+Config = GSIConfig()
 
 class GSISOAPServer(GSITCPSocketServer, SOAPServerBase):
     def __init__(self, addr = ('localhost', 8000),
