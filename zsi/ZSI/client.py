@@ -83,8 +83,8 @@ class Binding:
             self.port = port
         elif url:
             hp = urlparse.urlsplit(url)
-            if hp and hp.find(':'):
-                self.port = int(hp.split(':', 2)[1])
+            if hp and hp[1].find(':') != -1:
+                self.port = int(hp[1].split(':', 2)[1])
         if not self.ssl:
             if self.port is None: self.port = httplib.HTTP_PORT
         else:
