@@ -7,23 +7,23 @@ The Makefile automates many of the more mechanical aspects of the
 process.
 
 The documentation is built using the same documentation tools used for
-the standard Python documentation.  See below for information on
-getting and setting up those tools.
+the standard Python documentation.  See `Documentation Tools`_ for
+information on getting and setting up those tools.
 
 1.  Announce your intent to make a release on the mailing list.  This
     gives folks a day or so to respond with info or last-minute
     checkins.
 
-2.  Edit setup.cfg to set the version number in the [version] section,
-    if appropriate.  If you change the version number, set the
-    "release" in the [bdist_rpm] section to 1.
+2.  Edit setup.cfg to set the version number in the ``[version]``
+    section, if appropriate.  If you change the version number, set
+    the ``release`` setting in the ``[bdist_rpm]`` section to 1.
 
-3.  Make sure CHANGES is up to date, including the release number at
+3.  Make sure CHANGES is up to date, including the version number at
     the top.
 
 4.  Commit all changes to CVS.
 
-5.  Tag the CVS repository.  Release tags are of the form
+5.  Tag the CVS repository.  Release tags are of the form::
 
         "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
 
@@ -33,10 +33,11 @@ getting and setting up those tools.
     "RC" and the serial is the number of the candidate for this
     particular software version ("1", "2", etc.).
 
-    You'll need to tag the wstools package separately, but using the
-    same tag.
+    You'll need to tag the ``wstools`` package separately, but using
+    the same tag.
 
-6.  Export the tagged sources from CVS.  You'll need to 
+6.  Export the tagged sources from CVS.  You'll need to run the
+    commands::
 
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG zsi
         cd zsi/ZSI/
