@@ -321,18 +321,15 @@ The value is URL quoted (e.g., \code{\%20} for the space character).
 It is often the case that a parameter will be typed as a string for
 transport purposes, but will in fact have special syntax and processing
 requirements.
-For example, a string could be used for an XPath expression, and we want
-the Python value to
+For example, a string could be used for an XPath expression, but it is
+more convenient for the Python value to
 actually be the compiled expression. Here is how to do that:
 
 \begin{verbatim}
 import xml.xpath.pyxpath
 import xml.xpath.pyxpath.Compile as _xpath_compile
-class XPathString(TC.String):
-    # We don't set parselist, since this data is typed as a string
-    # for interoperability with other SOAP implementations.
-    #parselist = [ ('tns', 'xpath') ]
 
+class XPathString(TC.String):
     def __init__(self, name, **kw):
         TC.String.__init__(self, name, **kw)
 
@@ -345,6 +342,23 @@ class XPathString(TC.String):
                         ps.Backtrace(elt))
         return val
 \end{verbatim}
+
+In particular, it is common to send XML as a string, using entity
+encoding to protect the ampersand and less-than characters.
+
+\begin{classdesc}{XMLString}{name\optional{, **keywords}}
+Parses the data as a string, but returns an XML DOM object.
+For serialization, takes an XML DOM (or element node), and outputs
+it as a string.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{readerclass}}{\code{None}}{Class used to create DOM-creating
+XML readers; described in the \class{ParsedSoap} chapter.}
+\end{tableiii}
+
+\end{classdesc}
 
 \section{Integers}
 
