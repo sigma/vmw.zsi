@@ -727,7 +727,7 @@ class AdapterBase:
     def mangle(self, s):
         """process any strings we cant have illegal chracters in"""
         if s:
-            return re.sub('[-./:]', '_', s)
+            return re.sub('[-./: ]', '_', s)
         else:
             return None
 
@@ -737,9 +737,9 @@ class ZSIWsdlAdapter(AdapterBase, WsdlInterface):
         """return name of definition, or None
         """
         if self._wsdl.name:
-            return self._wsdl.name
+            return self.mangle(self._wsdl.name)
         elif self._wsdl.services:
-            return self._wsdl.services[0].name
+            return self.mangle(self._wsdl.services[0].name)
         else:
             return None
 
@@ -779,7 +779,7 @@ class ZSIServiceAdapter(AdapterBase, ServiceInterface):
         """return name of service, or None
         """
         if self._service.name:
-            return self._service.name
+            return self.mangle(self._service.name)
         else:
             return None
 
@@ -867,7 +867,7 @@ class ZSIPortTypeAdapter(AdapterBase, PortTypeInterface):
         """return name of portType, or None
         """
         if self._portType.name:
-            return self._portType.name
+            return self.mangle(self._portType.name)
         else:
             return None
 
@@ -1046,7 +1046,10 @@ class ZSIMessageAdapter(AdapterBase, MessageInterface):
     def getName(self):
         """return name of operation, or None
         """
-        return (self._message.name or None)
+        if self._message.name:
+            return self.mangle(self._message.name)
+        else:
+            return None
 
     def getPartList(self):
         """return list of parts
