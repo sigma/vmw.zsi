@@ -157,28 +157,46 @@ class ServiceContainer(HTTPServer):
         def __str__(self):
             return str(self.__dict)
 
-        def getNode(self, url):
-            path = urlparse.urlsplit(url)[2]
-
+        def getNode(self, path):
+            if path.startswith("/"):
+                path = path[1:]
+                
             if self.__dict.has_key(path):                
 
                 return self.__dict[path]
             else:
                 raise NoSuchService, 'No service(%s) in ServiceContainer' %path
+
+        def getPathForNode(self, node):
+            path = None
+
+            for k,v in self.__dict.items():
+                if node == v:
+                    path = k
+
+            if node:
+                if path.startswith("/"):
+                    path = path[1:]
+                
+                return path
+            else:
+                raise NoSuchService, 'No service(%s) in ServiceContainer' %node
             
-        def setNode(self, service, url):
+        def setNode(self, service, path):
+            if path.startswith("/"):
+                path = path[1:]
+                
             if not isinstance(service, ServiceSOAPBinding):
                raise TypeError, 'A Service must implement class ServiceSOAPBinding'
-            path = urlparse.urlsplit(url)[2]
-            
             if self.__dict.has_key(path):
                 raise ServiceAlreadyPresent, 'Service(%s) already in ServiceContainer' % path
             else:
                 self.__dict[path] = service
 
-        def removeNode(self, url):
-            path = urlparse.urlsplit(url)[2]
-
+        def removeNode(self, path):
+            if path.startswith("/"):
+                path = path[1:]
+                
             if self.__dict.has_key(path):
                 node = self.__dict[path]
                 del self.__dict[path]
@@ -203,19 +221,32 @@ class ServiceContainer(HTTPServer):
     def getNode(self, post):
         '''post -- POST HTTP value
         '''
-        return self._nodes.getNode(post)
+        path = urlparse.urlsplit(post)[2]
+        return self._nodes.getNode(path)
 
     def setNode(self, service, post):
         '''service -- service instance
            post -- POST HTTP value
         '''
-        self._nodes.setNode(service, post)
+        path = urlparse.urlsplit(post)[2]
+        self._nodes.setNode(service, path)
 
     def removeNode(self, post):
         '''post -- POST HTTP value
         '''
-        self._nodes.removeNode(post)
-        
+        path = urlparse.urlsplit(post)[2]
+        self._nodes.removeNode(path)
+
+    def getPath(self, node):
+        return self._nodes.getPathForNode(node)
+
+    def getURL(self, node):
+        path = self._nodes.getPathForNode(node)
+        return self.makeURL(path)
+
+    def makeURL(self, path):
+        return "http://%s:%d/%s" % (self.server_name, self.server_port, path)
+    
     def getCallBack(self, post, action):
         '''post -- POST HTTP value
            action -- SOAP Action value
