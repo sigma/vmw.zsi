@@ -37,17 +37,6 @@ def _dict_to_tuple(d):
     return retval
 
 
-def _time_str(pyobj, prefix=None):
-    '''Format a time string from a tuple.
-    '''
-    if 1 in map(lambda x: x < 0, pyobj[0:6]):
-	pyobj = map(abs, pyobj)
-	neg = '-' + prefix
-    else:
-	neg = prefix
-    return '%s%dY%dM%dDT%dH%dM%dS' % \
-	( neg, pyobj[0], pyobj[1], pyobj[2], pyobj[3], pyobj[4], pyobj[5])
-
 
 class Duration(TypeCode):
     '''Time duration.
@@ -80,7 +69,13 @@ class Duration(TypeCode):
 
     def serialize(self, sw, pyobj, **kw):
 	n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
-	val = _time_str(pyobj, 'P')
+	if 1 in map(lambda x: x < 0, pyobj[0:6]):
+	    pyobj = map(abs, pyobj)
+	    neg = '-'
+	else:
+	    neg = ''
+	val = '%sP%dY%dM%dDT%dH%dM%dS' % \
+	    ( neg, pyobj[0], pyobj[1], pyobj[2], pyobj[3], pyobj[4], pyobj[5])
 	if kw.get('typed', self.typed):
 	    tstr = ' xsi:type="xsd:duration"'
 	else:
@@ -110,8 +105,15 @@ class Gregorian(TypeCode):
     def serialize(self, sw, pyobj, **kw):
 	if type(pyobj) in _floattypes or type(pyobj) in _inttypes:
 	    pyobj = time.gmtime(pyobj)
-	val = _time_str(pyobj)
 	n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
+	d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
+	    'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
+	if 1 in map(lambda x: x < 0, pyobj[0:6]):
+	    pyobj = map(abs, pyobj)
+	    d['neg'] = '-'
+	else:
+	    d['neg'] = ''
+	val = self.format % d
 	if kw.get('typed', self.typed):
 	    tstr = ' xsi:type="xsd:%s"' % self.tag
 	else:
@@ -127,7 +129,7 @@ class gDateTime(Gregorian):
 			'(?P<Y>\d{4,})-' r'(?P<M>\d\d)-' r'(?P<D>\d\d)' 'T' \
 			r'(?P<h>\d\d):' r'(?P<m>\d\d):' r'(?P<s>\d*(\.\d+)?)' \
 			r'(?P<tz>(Z|([-+]\d\d:\d\d))?)' '$')
-    tag, format = 'dateTime', '%Y-%m-%dT%H:%M:%SZ'
+    tag, format = 'dateTime', '%(Y)d-%(M)d-%(D)dT%(h)d:%(m)d:%(s)dZ'
 
 class gDate(Gregorian):
     '''A date.
@@ -136,7 +138,7 @@ class gDate(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			'(?P<Y>\d{4,})-' r'(?P<M>\d\d)-' r'(?P<D>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'date', '%Y-%m-%d'
+    tag, format = 'date', '%(Y)d-%(M)d-%(D)dZ'
 
 class gYearMonth(Gregorian):
     '''A date.
@@ -145,7 +147,7 @@ class gYearMonth(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			'(?P<Y>\d{4,})-' r'(?P<M>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gYearMonth', '%Y-%m'
+    tag, format = 'gYearMonth', '%(Y)d-%(M)dZ'
 
 class gYear(Gregorian):
     '''A date.
@@ -154,7 +156,7 @@ class gYear(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			'(?P<Y>\d{4,})' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gYear', '%Y'
+    tag, format = 'gYear', '%(Y)dZ'
 
 class gMonthDay(Gregorian):
     '''A gMonthDay.
@@ -163,7 +165,7 @@ class gMonthDay(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			r'--(?P<M>\d\d)-' r'(?P<D>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gMonthDay', '%m-%d'
+    tag, format = 'gMonthDay', '%(M)d-%(D)dZ'
 
 class gDay(Gregorian):
     '''A gDay.
@@ -172,7 +174,7 @@ class gDay(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			r'---(?P<D>\d\d)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gDay', '%d'
+    tag, format = 'gDay', '%(D)dZ'
 
 class gTime(Gregorian):
     '''A time.
@@ -181,6 +183,6 @@ class gTime(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
 			r'(?P<h>\d\d):' r'(?P<m>\d\d):' r'(?P<s>\d*(\.\d+)?)' \
 			r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'time', '%H:%M:%S'
+    tag, format = 'time', '%(h)d:%(m)d:%(s)dZ'
 
 if __name__ == '__main__': print _copyright
