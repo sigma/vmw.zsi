@@ -3,9 +3,10 @@
 # Joshua R. Boverhof, LBNL
 # See Copyright for copyright notice!
 ###########################################################################
-import  unittest
+import  unittest, optparse
 from ConfigParser import ConfigParser, NoOptionError
 from ServiceTest import CONFIG_PARSER, DOCUMENT, LITERAL, BROKE, TESTS
+
 
 def makeTestSuite(document=None, literal=None, broke=None):
     """Return a test suite containing all test cases that satisfy 
@@ -47,7 +48,10 @@ def workingTestSuite():
     return makeTestSuite(broke=False)
 
 def docLitTestSuite():
-    return makeTestSuite(document=True, literal=True)
+    return makeTestSuite(broke=False, document=True, literal=True)
+
+def rpcEncTestSuite():
+    return makeTestSuite(broke=False, document=False, literal=False)
 
 def collectTests():
     suite = unittest.TestSuite()

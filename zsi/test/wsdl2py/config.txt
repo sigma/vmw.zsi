@@ -39,14 +39,14 @@ tracefile = True
 document = False
 literal = False
 broke = False
-tests = test_GlobalWeather_si test_ThreatService test_XMethodsQuery  test_TemperatureService
+tests = test_GlobalWeather_si  test_XMethodsQuery
 
 #test_AmazonWebService: service expects locally declared elements to be in no namespace.
 [rpc_encoded_broke]
 document = False
 literal = False
 broke = True
-tests = test_AmazonWebService test_GlobalWeather_gw  
+tests = test_AmazonWebService test_GlobalWeather_gw  test_ThreatService
 
 ##########################################################################
 ########################## DOCUMENT/ENCODED
