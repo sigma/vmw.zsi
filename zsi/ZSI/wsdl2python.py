@@ -457,6 +457,16 @@ class ServiceDescription:
                                                         '\n%sif not type(request) == %s:' %( ID2, self.isSimpleElementDeclaration(op) )
                     else:
                         kwstring = '\n%skw = {}' % ID2
+                        myBinding['defs'][op.getName()] += '\n%s"""\n' % ID2
+                        myBinding['defs'][op.getName()] +=\
+                            '%sinput message: %s\n' % (ID2, op.getInput().\
+                                                       getMessage().getName())
+                        if op.getOutput() and op.getOutput().getMessage():
+                            myBinding['defs'][op.getName()] += '%s' % ID2
+                            myBinding['defs'][op.getName()] +=\
+                            'output message: %s\n' % (op.getOutput().\
+                                                      getMessage().getName())
+                        myBinding['defs'][op.getName()] += '%s"""\n' % ID2
                         myBinding['defs'][op.getName()] +=\
                                                         '\n%sif not isinstance(request, %s) and\\\n%snot issubclass(%s, request.__class__):'\
                                                         %(ID2, op.getInput().\
@@ -568,7 +578,7 @@ class ServiceDescription:
                 raise WsdlGeneratorError, 'unsupported use=%s' %(use)
 
 
-	def fromMessageEncoded(self, message, name, namespace, style):
+        def fromMessageEncoded(self, message, name, namespace, style):
 	    l = []
 
 	    self.typecode = '\n\nclass %s (ZSI.TCcompound.Struct): '\
@@ -622,10 +632,11 @@ class ServiceDescription:
             else:
                 raise WsdlGeneratorError, 'incorrect document type -> ?'
 
-            self.typecode += '\n\n# wrapper for %s:encoded message\n'\
-                             % style
+            self.typecode += '\n\n'
             self.typecode += 'class %sWrapper(%s):\n' \
                              % (message.getName(), message.getName())
+            self.typecode += '%s"""wrapper for %s:encoded message"""\n\n' \
+                             % ( ID1, style )
 
             self.typecode +=\
                           "%stypecode = %s(name=%s, ns='%s')"\
@@ -636,7 +647,7 @@ class ServiceDescription:
                              % (ID2, message.getName(), name, namespace)
             
 
-	def fromMessageLiteral(self, message, name, namespace, style):
+        def fromMessageLiteral(self, message, name, namespace, style):
 
 	    l = []
 
@@ -692,10 +703,11 @@ class ServiceDescription:
             else:
                 raise WsdlGeneratorError, 'incorrect document type -> ?'
 
-            self.typecode += '\n\n# wrapper for %s:literal message\n'\
-                             % style
+            self.typecode += '\n\n'
             self.typecode += 'class %sWrapper(%s):\n' \
                              % (message.getName(), message.getName())
+            self.typecode += '%s"""wrapper for %s:literal message"""\n\n' \
+                             % (ID1, style )
 
             self.typecode += '%stypecode = %s( name=%s, ns=None ).typecode'\
                              % (ID1, message.getName(), name )
