@@ -8,13 +8,13 @@ all:	rpm
 ins:
 	soup $(PYTHON) setup.py install
 
-kit:	ver doc rpm	# make a kit
+kit:	doc rpm	# make a kit
 
-rpm:
+rpm:	ZSI/version.py
 	rm -f dist/*
 	$(PYTHON) setup.py bdist_rpm --python=$(PYTHON)
 
-doc:			# build the docs
+doc:	doc/version.tex		# build the docs
 	$(MAKE) -C doc
 
 ver:			# update the build number
