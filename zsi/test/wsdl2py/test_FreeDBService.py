@@ -35,7 +35,7 @@ class FreeDBServiceTest(unittest.TestCase):
             print ResultsToStr(response)
 
 
-    def test_search(self):
+    def notest_search(self):
         try:
             response = portType.search('Ted Nugent and the Amboy Dukes')
         except FaultException, msg:
@@ -45,7 +45,7 @@ class FreeDBServiceTest(unittest.TestCase):
             print ResultsToStr(response)
 
 
-    def test_searchByTitle(self):
+    def notest_searchByTitle(self):
         try:
             response = portType.searchByTitle('Ummagumma')
         except FaultException, msg:
@@ -65,7 +65,7 @@ class FreeDBServiceTest(unittest.TestCase):
             print ResultsToStr(response)
 
 
-    def test_searchByArtist(self):
+    def notest_searchByArtist(self):
         try:
             response = portType.searchByArtist('Steppenwolf')
         except FaultException, msg:
@@ -81,7 +81,7 @@ def makeTestSuite():
     kw = {}
     setUp = TestSetUp('config.txt')
     serviceLoc = setUp.get('complex_types',
-                           'com.systinet.demo.freedb.FreeDBService')
+                           'com_systinet_demo_freedb_FreeDBService')
     useTracefile = setUp.get('configuration', 'tracefile') 
     if useTracefile == '1':
         kw['tracefile'] = sys.stdout

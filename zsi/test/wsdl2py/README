@@ -1,52 +1,276 @@
-There are two sets of tests in this directory.
-One set of tests is contained in test_wsdl2py.py,
-and tests the generation and compilation of code
-(the services and types files).
+There are two sets of tests in this directory.  One set of
+tests is contained in test_wsdl2py.py, and tests the generation
+and compilation of code (the services and types files).
 
-By default, tests are done against WSDL's in all
-relevant sections in config.txt (no_schemas,
-simple_types, and complex_types).  To run
-against just a specific section, run for
-example:  test_wsdl2py.py complex_types
+By default, tests are done against WSDL's in all relevant
+sections in config.txt (no_schemas, simple_types, and 
+complex_types).  To run against just a specific section, 
+run for example:  test_wsdl2py.py complex_types
 
-Note that since all services are not always
-available, connection timeouts and HTTP errors
-are not treated as test failures.
+Note that since all services are not always available, connection
+timeouts and HTTP errors are not treated as test failures.
 
-Generated code is located in the sub-directory
-generatedCode.  Subsequent runs will do
-diff's against the currently generated code to
-see if there are any differences (this is
-primarily of interest to developers).
+Generated code is located in the sub-directory generatedCode.
+Subsequent runs will do diff's against the currently generated
+code to see if there are any differences (this is primarily of
+interest to developers).
 
 ------------------
 
-The other set tests remote method calls on
-individual services.  To add individual
-service tests, add an entry to the
-individual_tests section in config.txt, and
-use one of the existing individual tests as
-a template.  To test all individual services,
-run testall.py
+The other set tests remote method calls on individual services.
+To add individual service tests, add an entry to the 
+individual_tests section in config.txt, and use one of the
+existing individual tests as a template.  To test all individual
+services, run testall.py
 
-Test result files are generated in the diffs
-sub-directory.  Subsequent runs of the
-test are compared against previous output.
-An AssertionError may result for reasons other
-than test failure, for example, if the previous
-test did not complete properly.  In that case
-run with the -d option to skip the diff's test.
+Test result files are generated in the diffs sub-directory.
+Subsequent runs of the test are compared against previous output.
+An AssertionError may result for reasons other than test failure,
+for example, if a specific test did not complete properly.
+In that case run with the -d option to skip the diff's test.
 
-In the case (often) where results from a
-test method vary, its section is not written
-to the results file.  Instead, the output
-is printed out.  In that case it may be useful
-to redirect the output to a file, since the
-output may be lengthy.
+In the case (often) where results from a test method vary, its
+section is not written to the results file.  Instead, the output
+is printed out.  In that case it may be useful to redirect the
+output to a file, since the output may be lengthy.
 
-Some remote method calls, particularly
-test_SBGGetAirFareQuote in SBGAirFareQuoteTest
-may take awhile to return.
+Some remote method calls, particularly test_SBGGetAirFareQuote
+in SBGAirFareQuoteTest may take awhile to return.
 
 
+-----------------------------------------------
 
+Description of what modules test:
+
+Unless otherwise noted, tests usually pass.  Derived types are
+by restriction.  Some tests would exercise the code in the same way;
+in that case, only one test from that group is actually run.
+
+
+***********************************************
+test module:  test_FreeDBService.py
+binding:      document/literal
+
+Several schema sections, types referencing other types in
+different _types file namespace, annotation and documentation
+sections.
+
+getDetails
+
+  request: sequence used as struct, annotations
+  response:  sequence used as struct, array contained in sequence
+
+search, searchByBitle, searchByTrack, searchByArtist
+
+  request:  primitive reference rather than request, annotations
+  response:  sequence used as array, annotations
+
+
+***********************************************
+test module:  test_GlobalWeather_gw.py
+
+getWeatherReport:   request passes, response fails on parsing.
+                    Test not currently run.
+
+    request:  primitive reference rather than request
+    response: sequence used as struct, with embedded arrays,
+              parsing NaN.
+
+
+***********************************************
+test module:  test_GlobalWeather_si.py
+binding:  rpc/encoded
+
+getStation
+    request:  request containing only primitive type
+    response: sequence used as a struct
+
+isValidCode
+    request:  request containing only primitive type
+    response:  response containing only primitive type
+
+listCountries
+    request:  empty request
+    response:  SOAP-ENC array containing primitive
+
+searchByCode, searchByName, searchByRegion
+    request:  request containing only primitive type
+    response:  SOAP-ENC array containing defined type, which
+              contains primitives, setting of nillable
+
+
+***********************************************
+
+test module:  test_SBGGetAirFareQuote.py
+binding:  rpc/encoded
+
+getAirFareQuote
+  request:  complex type containing primitives
+  response:  SOAP-ENC array containing sequence used as struct,
+             sequence includes dateTime primitive
+
+getAirlines
+  request:  empty request
+  response:  SOAP-ENC array containing primitive
+
+
+***********************************************
+
+test module:  test_TerraService.py
+binding:  document/literal
+
+ConvertPlaceToLonLatPt, ConvertLonLatPtToNearestPlace,
+ConvertLonLatPtToUtmPt, ConvertUtmPtToLonLatPt
+
+  request:  global element containing sequence used as struct
+  response: global element containing sequence used as struct
+
+CountPlacesInRect
+  request:  global element containing sequence used as struct;
+            sequence has nested derived simple type and defined
+            types
+  response: global element containing sequence used as struct
+
+GetAreaFromPt
+  request:  global element containing sequence used as struct,
+            sequence has nested derived simple type and defined
+            types
+  response: global element containing sequence used as struct,
+            within sequence multiply nested defined types, sequence
+            used as array, and derived simple types
+
+GetAreaFromRect
+  request:  global element containing sequence used as struct,
+            sequence contains defined types, including derived simple
+            types 
+  response: global element containing sequence used as struct,
+            within sequence multiply nested defined types, sequence
+            used as array, and derived simple types
+
+GetAreaFromTileId
+  request:  global element containing sequence used as struct,
+            sequence contains derived simple type
+  response: global element containing sequence used as struct,
+            within sequence multiply nested defined types, sequence
+            used as array, and derived simple types
+
+GetLatLonMetrics
+
+  request:  global element containing sequence used as struct,
+            sequence contains defined type
+
+  response: global element containing sequence used as an array,
+            array elements are derived simple types, defined types
+
+
+GetPlaceFacts:  request passes, response fails on parsing message
+                (derived type problem).
+
+  request:  global element containing defined type
+
+  response: global element containing sequence used as struct,
+            with sequence element containing defined types and
+            simple derived type
+
+GetPlaceList:  times out sometimes.  Otherwise there is a
+    derived types problem similar to GetPlaceFacts.
+
+  request:  global element containing sequence used as struct
+  response: global element containing sequence used as array,
+            array elements are derived simple types, and
+            defined types
+
+GetPlaceListInRect:  request currently times out.  When doesn't time
+    out, call is successful.
+
+  request:  global element containing sequence used as struct,
+            sequence contains defined types, derived simple type
+  response: global element containing sequence used as array,
+            array elements are derived simple types, and
+            defined types
+
+GetTheme
+
+  request:  global element containing sequence used as struct,
+            only sequence element is simple derived type
+  response: global element containing sequence used as struct,
+            sequence element is another sequence used as struct
+            with simple derived types and defined types
+
+GetTile        
+
+  request:  global element containing sequence used as struct,
+            sequence element contains simple derived types
+  response: global element containing sequence used as struct,
+            sequence element is primitive type base64Binary
+
+GetTileMetaFromLonLatPt
+
+  request:  global element containing sequence used as struct,
+            sequence contains derived simple types and defined type
+
+  response: global element containing sequence used as struct,
+            sequence element contains defined types and dateTime
+            primitive type
+
+GetTileMetaFromTileId:
+
+  request:  global element containing sequence used as struct,
+            sequence element contains derived simple types
+
+  response: global element containing sequence used as struct,
+            sequence element contains defined types and
+            derived simple types
+
+
+***********************************************
+
+test module:  test_XMethodsQuery.py
+binding:  rpc/encoded
+
+getAllServiceNames
+
+  request:  empty request
+  response:  SOAP-ENC array containing defined type
+
+getAllServiceSummaries, getServiceSummariesByPublisher
+
+  request:  empty request
+  response: SOAP-ENC array containing defined type, which
+            contains a sequence used as a struct
+
+getServiceDetail
+
+  request:  request containing only a primitive
+  response: sequence used as struct
+
+getServiceNamesByPublisher:
+
+  request:  request containing only a primitive  
+  response: SOAP-ENC array containing defined type
+
+
+***********************************************
+
+test module:  test_ZipCodeResolver.py
+binding:  document/literal
+
+CorrectedAddressHtml, CorrectedAddressXml, FullZipCode,
+ShortZipCode
+
+  request:  global element containing sequence used as struct
+  response: global element containing sequence used as struct
+
+VersionInfo:
+
+  request:  request only contains empty complex type
+  response: global element containing sequence used as struct
+
+
+***********************************************
+
+test module:  test_noschemas.py
+binding:  rpc/encoded
+
+Tests services with no associated schemas in their
+WSDL description.

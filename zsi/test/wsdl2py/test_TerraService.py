@@ -48,7 +48,7 @@ class TerraServiceSoapTest(unittest.TestCase):
             if failureException(FaultException, msg):
                 raise
 
-    def test_ConvertLonLatPtToNearestPlace(self):
+    def notest_ConvertLonLatPtToNearestPlace(self):
         request = portType.inputWrapper('ConvertLonLatPtToNearestPlace')
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = -122.643
@@ -62,7 +62,7 @@ class TerraServiceSoapTest(unittest.TestCase):
             TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
-    def test_ConvertLonLatPtToUtmPt(self):
+    def notest_ConvertLonLatPtToUtmPt(self):
         request = portType.inputWrapper('ConvertLonLatPtToUtmPt')
         request._point = service.ns1.LonLatPt_Def()
         request._point._Lon = -122.643
@@ -76,7 +76,7 @@ class TerraServiceSoapTest(unittest.TestCase):
             TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
-    def test_ConvertUtmPtToLonLatPt(self):
+    def notest_ConvertUtmPtToLonLatPt(self):
         request = portType.inputWrapper('ConvertUtmPtToLonLatPt')
         request._utm = service.ns1.UtmPt_Def()
         request._utm._X =  526703.512403

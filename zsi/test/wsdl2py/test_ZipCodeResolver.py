@@ -12,8 +12,6 @@ from paramWrapper import ResultsToStr
 
 """
 Unittest for contacting the ZipCodeResolver Web service.
-Note that unittest calls setUp and tearDown after each
-test method, hence the globals.
 
 WSDL: http://webservices.eraserver.net/zipcoderesolver/zipcoderesolver.asmx?WSDL
 
@@ -24,7 +22,7 @@ class ZipCodeResolverTest(unittest.TestCase):
     """Test case for ZipCodeResolver Web service
     """
 
-    def test_CorrectedAddressHtml(self):
+    def notest_CorrectedAddressHtml(self):
         request = portType.inputWrapper('CorrectedAddressHtml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
@@ -38,7 +36,7 @@ class ZipCodeResolverTest(unittest.TestCase):
             print ResultsToStr(response)
     
 
-    def test_CorrectedAddressXml(self):
+    def notest_CorrectedAddressXml(self):
         request = portType.inputWrapper('CorrectedAddressXml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
@@ -66,7 +64,7 @@ class ZipCodeResolverTest(unittest.TestCase):
             TestDiff(self).failUnlessEqual(ResultsToStr(response))
 
     
-    def test_ShortZipCode(self):
+    def notest_ShortZipCode(self):
         request = portType.inputWrapper('ShortZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'

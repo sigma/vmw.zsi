@@ -67,7 +67,7 @@ class XMethodsQueryTest(unittest.TestCase):
             print ResultsToStr(response)
 
     
-    def test_getServiceSummariesByPublisher(self):
+    def notest_getServiceSummariesByPublisher(self):
         request = portType.inputWrapper('getServiceSummariesByPublisher')
         request._publisherID = 'xmethods.net'
         try:
