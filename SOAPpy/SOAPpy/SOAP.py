@@ -96,7 +96,7 @@ import time
 import SocketServer
 from wstools.XMLname import toXMLname, fromXMLname
 from types import *
-import wstools.ieee754
+from wstools import ieee754
 import BaseHTTPServer
 
 try: from M2Crypto import SSL
@@ -3986,14 +3986,18 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             resp = buildSOAP(e, encoding = self.server.encoding,
                 config = self.server.config)
             status = 500
-        except:
+        except Exception, e:
             # internal error, report as HTTP server error
+
             if self.server.config.dumpFaultInfo:
+                s = 'Internal exception %s' % e
                 import traceback
-                s = 'Internal exception'
                 debugHeader(s)
-                traceback.print_exc ()
+                info = sys.exc_info()
+                traceback.print_exception(info[0], info[1],
+                                          info[2])
                 debugFooter(s)
+
             self.send_response(500)
             self.end_headers()
 
