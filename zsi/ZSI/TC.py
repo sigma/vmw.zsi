@@ -307,7 +307,10 @@ class Any(TypeCode):
             return
         if tc == types.InstanceType:
             tc = pyobj.__class__
-            serializer = Any.serialmap.get(tc)
+            if hasattr(pyobj, 'typecode'):
+                serializer = pyobj.typecode.serialmap.get(tc)
+            else:
+                serializer = Any.serialmap.get(tc)
             if not serializer:
                 tc = (types.ClassType, pyobj.__class__.__name__)
                 serializer = Any.serialmap.get(tc)
