@@ -68,7 +68,21 @@ class Struct(TypeCode):
                         str(type(self.pyclass)))
             _check_typecode_list(self.ofwhat, 'Struct')
 
+    def getDataElement(self, elt):
+        '''in some cases the root element in a SOAP response is the name of
+        the message that encapsulates the actual data.  this method looks
+        in the element provided, and returns the element provided if the name
+        of type we are looking for cannot be found.  otherwise it returns
+        the actual data element'''
+        if elt.localName != self.pname:
+            # this is the case where a message wrapped the data
+            return elt.getElementsByTagName(self.oname)[0]
+        else:
+            # this is the case where the data was directly below SOAP-ENV:Body
+            return elt
+
     def parse(self, elt, ps):
+        elt = self.getDataElement(elt)
         self.checkname(elt, ps)
         if self.type and \
         self.checktype(elt, ps) not in [ self.type, (None,None) ]:
@@ -132,7 +146,7 @@ class Struct(TypeCode):
         if not self.pyclass: return v
 
         try:
-            pyobj = self.pyclass(self.aname)
+            pyobj = self.pyclass()
         except Exception, e:
             raise TypeError("Constructing %s(%s): %s" % (self.pname, self.pyclass.__name__, str(e)))
         for key in v.keys():
@@ -173,7 +187,12 @@ class Struct(TypeCode):
             except Exception, e:
                 raise Exception('Serializing %s.%s, %s %s' %
                         (n, what.aname or '?', e.__class__.__name__, str(e)))
-        print >>sw, '</%s>' % n
+
+        # ignore the xmlns if it was explicitly stated
+        elem = n
+        if n.lower().find('xmlns') > 0:
+            elem = n[:n.find('xmlns') - 1]
+        print >>sw, '</%s>' % elem
 
 
 class Choice(TypeCode):
