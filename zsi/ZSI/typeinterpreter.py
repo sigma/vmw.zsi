@@ -121,8 +121,11 @@ class BaseTypeInterpreter:
             return self.__get_soapenc_typecode(name)
         return None
 
-    def get_pythontype(self, msg_type, targetNamespace):
-        tc = self.get_typeclass(msg_type, targetNamespace)
+    def get_pythontype(self, msg_type, targetNamespace, typeclass=None):
+        if not typeclass:
+            tc = self.get_typeclass(msg_type, targetNamespace)
+        else:
+            tc = typeclass
         if tc in self.__tc_to_int:
             return 'int'
         elif tc in self.__tc_to_float:
