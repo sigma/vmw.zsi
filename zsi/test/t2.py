@@ -51,7 +51,7 @@ if len(mu):
 
 class Player:
     '''Input class.'''
-    def __init__(self, name):
+    def __init__(self, name=None):
         pass
 Player.typecode = TC.Struct(Player, [
                                 TC.String('Name', optional=1),
