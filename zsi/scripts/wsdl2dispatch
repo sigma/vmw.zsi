@@ -114,7 +114,7 @@ class ServerCallbackDescription:
 
         o  = '\n%sdef %s(self, ps):' % (ID1, self.getMethodName(op.getName()))
         o += '\n%s# input vals in request object' % ID2
-        o += '\n%sargs = ps.Parse( %s() )' \
+        o += '\n%sargs = ps.Parse( %s )' \
                   % ( ID2, op.getInput().getMessage().getName() \
                       + 'Wrapper' )
 
