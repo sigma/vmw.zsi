@@ -202,13 +202,24 @@ class HTTPTransport:
         
         content_type = headers.get("content-type","text/xml")
         content_length = headers.get("Content-length")
-        if not content_length: 
-            # No Content-Length provided; just read the whole socket
+
+        # work around OC4J bug which does '<len>, <len>' for some reaason
+        comma=content_length.find(',')
+        if comma>0:
+            content_length = content_length[:comma]
+
+        # attempt to extract integer message size
+        try:
+            message_len = int(content_length)
+        except:
+            message_len = -1
+            
+        if message_len < 0:
+            # Content-Length missing or invalid; just read the whole socket
             # This won't work with HTTP/1.1 chunked encoding
             data = r.getfile().read()
             message_len = len(data)
         else:
-            message_len = int(content_length)
             data = r.getfile().read(message_len)
 
         if(config.debug):
