@@ -3,14 +3,14 @@
 # Copyright (c) 2001 actzero, inc. All rights reserved.
 
 import sys
-sys.path.insert(1, "..")
+#sys.path.insert(1, "..")
 
 from SOAPpy import *
 
 # Uncomment to see outgoing HTTP headers and SOAP and incoming
-#Config.dumpSOAPIn = 1
-#Config.dumpSOAPOut = 1
-#Config.debug = 1
+Config.dumpSOAPIn = 1
+Config.dumpSOAPOut = 1
+Config.debug = 1
 
 # specify name of authorization function
 Config.authMethod = "_authorize"
@@ -29,7 +29,7 @@ def _authorize(*args, **kw):
 
     if Config.debug:
         print "Authorize (function) called! (result = %d)" % allowAll
-        print "Method: %s" % kw['method']
+        print "Arguments: %s" % kw
     
     if allowAll:
         return 1
@@ -124,6 +124,11 @@ def echo_wc(s, _SOAPContext):
 def echo_wkw(**kw):
     return kw['first'] + kw['second'] + kw['third']
 
+# Simple echo
+def echo_simple(*arg):
+    return arg
+
+
 addr = ('localhost', 9900)
 GSI = 0
 SSL = 0
@@ -166,6 +171,8 @@ server.registerFunction(MethodSig(echo_wc, keywords = 0, context = 1))
 # Register a function that takes keywords
 server.registerKWFunction(echo_wkw, path = "/pathtest")
 server.registerKWFunction(echo_wkw)
+
+server.registerFunction(echo_simple)
 
 # Start the server
 try:
