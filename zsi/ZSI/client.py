@@ -6,7 +6,7 @@
 from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
     FaultFromFaultMessage, _child_elements, _attrs
 from ZSI.auth import AUTH
-import base64, httplib, cStringIO as StringIO, types, time
+import base64, httplib, cStringIO as StringIO, types, time, urlparse
 
 _b64_encode = base64.encodestring
 
@@ -65,8 +65,8 @@ class Binding:
             cert_file, key_file -- SSL data (q.v.)
             readerclass -- DOM reader class
         '''
-        self.data, self.ps, self.ns, self.user_headers = \
-            None, None, None, []
+        self.data, self.ps, self.ns, self.user_headers, self.port = \
+            None, None, None, [], None
         self.typesmodule = typesmodule
         self.nsdict, self.ssl, self.url, self.trace, self.host, \
         self.readerclass, self.soapaction = \
@@ -79,10 +79,16 @@ class Binding:
             self.SetNS(nsdict[''])
         elif kw.has_key('ns'):
             self.SetNS(kw['ns'])
+        if port:
+            self.port = port
+        elif url:
+            hp = urlparse.urlsplit(url)
+            if hp and hp.find(':'):
+                self.port = int(hp.split(':', 2)[1])
         if not self.ssl:
-            self.port = port or httplib.HTTP_PORT
+            if self.port is None: self.port = httplib.HTTP_PORT
         else:
-            self.port = port or httplib.HTTPS_PORT
+            if self.port is None: self.port = httplib.HTTPS_PORT
             self.ssl_files = {}
             for k in [ 'cert_file', 'key_file' ]:
                 if kw.has_key(k): self.ssl_files[k] = kw[k]
