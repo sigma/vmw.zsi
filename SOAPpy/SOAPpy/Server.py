@@ -53,7 +53,7 @@ import BaseHTTPServer
 # SOAPpy modules
 from Parser      import parseSOAPRPC
 from Config      import Config
-from Types       import faultType
+from Types       import faultType, voidType
 from NS          import NS
 from SOAPBuilder import buildSOAP
 from Utilities   import debugHeader, debugFooter
@@ -184,6 +184,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 debugFooter(s)
 
             data = self.rfile.read(int(self.headers["content-length"]))
+            #            data = data.encode('ascii','replace')
 
             if self.server.config.dumpSOAPIn:
                 s = 'Incoming SOAP'
@@ -526,6 +527,32 @@ class SOAPServer(SocketServer.TCPServer, SOAPServerBase):
         self.allow_reuse_address= 1
 
         SocketServer.TCPServer.__init__(self, addr, RequestHandler)
+
+class ThreadingSOAPServer(SocketServer.ThreadingTCPServer, SOAPServerBase):
+
+    def __init__(self, addr = ('localhost', 8000),
+        RequestHandler = SOAPRequestHandler, log = 1, encoding = 'UTF-8',
+        config = Config, namespace = None, ssl_context = None):
+
+        # Test the encoding, raising an exception if it's not known
+        if encoding != None:
+            ''.encode(encoding)
+
+        if ssl_context != None and not config.SSLserver:
+            raise AttributeError, \
+                "SSL server not supported by this Python installation"
+
+        self.namespace          = namespace
+        self.objmap             = {}
+        self.funcmap            = {}
+        self.ssl_context        = ssl_context
+        self.encoding           = encoding
+        self.config             = config
+        self.log                = log
+
+        self.allow_reuse_address= 1
+
+        SocketServer.ThreadingTCPServer.__init__(self, addr, RequestHandler)
 
 # only define class if Unix domain sockets are available
 if hasattr(socket, "AF_UNIX"):
