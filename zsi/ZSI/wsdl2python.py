@@ -206,7 +206,7 @@ class WriteServiceModule:
         if schemaOnly:
             return
 
-        fd = open(f_services + ".py", 'w+')
+        fd = open(f_services + ".py", 'w')
         self.write_services(f_types, f_services, fd, hasSchema)
         fd.close()
         
@@ -1572,6 +1572,25 @@ class SchemaDescription:
                                             % (ID3,
                                                self.aname_func(etp.getName())))
 
+                    # Add attribute accessors
+                    if e.getName():
+                        attrName = self.aname_func(e.getName())
+                    elif etp and etp.getName():
+                        attrName = self.aname_func(etp.getName())
+                    else:
+                        raise Exception("Can't retrieve name for element %s" % (e))
+                    AttrName = attrName[0].upper() + attrName[1:]
+                    self.postpend.write('\n%sdef Get%s(self):' \
+                                        % (ID2,AttrName))
+                    self.postpend.write('\n%sreturn self.%s' \
+                                        % (ID3,attrName))
+                    self.postpend.write('\n')
+                    self.postpend.write('\n%sdef Set%s(self,%s):' \
+                                        % (ID2,AttrName,attrName))
+                    self.postpend.write('\n%sself.%s = %s' \
+                                        % (ID3,attrName,attrName))
+                    self.postpend.write('\n')
+                
                     if e.getName():
                         objName = '_' + e.getName()
                     else:
