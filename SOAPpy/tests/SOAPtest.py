@@ -869,7 +869,7 @@ for i in \
     try:
         parseSOAP(build_xml(NS.XSD, i[0], i[1]))
         # Hide this error for now, cause it is a bug in python 2.0 and 2.1
-        if not (sys.version_info[0] == 2 and sys.version_info[1] <= 1
+        if not (sys.version_info[0] == 2 and sys.version_info[1] <= 2
             and i[1]=='1.7976931348623158E+308'):
             raise AssertionError, "parsed %s of %s without error" % i
     except AssertionError:
@@ -1319,7 +1319,7 @@ for i in test:
     try:
         t(i)
         # Hide this error for now, cause it is a bug in python 2.0 and 2.1
-        if not (sys.version_info[0] == 2 and  sys.version_info[1] <= 1
+        if not (sys.version_info[0] == 2 and  sys.version_info[1] <= 2
                 and i==1.7976931348623158E+308):
             raise AssertionError, \
                   "instantiated a double with a bad value (%s)" % repr(i)
