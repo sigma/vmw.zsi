@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 from ZSI import *
-from ZSI import _copyright, resolvers, _child_elements
+from ZSI import _copyright, resolvers, _child_elements, _textprotect
 import sys, time, cStringIO as StringIO
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-from sclasses import Operation, WSDL_DEFINITION
+from sclasses import Operation, WSDL_DEFINITION, TC_SOAPStruct
 
 config = {
     'echons': 'http://soapinterop.org/echoheader/'
@@ -51,20 +51,20 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
 	'''The POST command.'''
 
-	# SOAPAction header.
-	action = self.headers.get('soapaction', None)
-	if not action:
-	    self.send_fault(Fault(Fault.Client,
-				'SOAPAction HTTP header missing.'))
-	    return
-	if action != Operation.SOAPAction:
-	    self.send_fault(Fault(Fault.Client,
-		'SOAPAction is "%s" not "%s"' % \
-		(action, Operation.SOAPAction)))
-	    return
-
-	# Parse the message.
 	try:
+	    # SOAPAction header.
+	    action = self.headers.get('soapaction', None)
+	    if not action:
+		self.send_fault(Fault(Fault.Client,
+				    'SOAPAction HTTP header missing.'))
+		return
+	    if action != Operation.SOAPAction:
+		self.send_fault(Fault(Fault.Client,
+		    'SOAPAction is "%s" not "%s"' % \
+		    (action, Operation.SOAPAction)))
+		return
+
+	    # Parse the message.
 	    ct = self.headers['content-type']
 	    if ct.startswith('multipart/'):
 		cid = resolvers.MIMEResolver(ct, self.rfile)
@@ -83,53 +83,81 @@ class InteropRequestHandler(BaseHTTPRequestHandler):
 	    self.send_fault(FaultFromException(e, 1, sys.exc_info()[2]))
 	    return
 
-	# Actors?
-	a = ps.WhatActorsArePresent()
-	if len(a):
-	    self.send_fault(FaultFromActor(a[0]))
-	    return
-
-	# Is the operation defined?
-	elt = ps.body_root
-	if elt.namespaceURI != Operation.ns:
-	    self.send_fault(Fault(Fault.Client,
-		'Incorrect namespace "%s"' % elt.namespaceURI))
-	    return
-	n = elt.localName
-	op = Operation.dispatch.get(n, None)
-	if not op:
-	    self.send_fault(Fault(Fault.Client,
-		'Undefined operation "%s"' % n))
-	    return
-
-	# Any headers that must be understood that we don't understand?
-	for mu in ps.WhatMustIUnderstand():
-	    if mu not in op.headers:
-		uri, localname = mu[0]
-		self.send_fault(FaultFromNotUnderstood(uri, localname))
+	try:
+	    # Actors?
+	    a = ps.WhatActorsArePresent()
+	    if len(a):
+		self.send_fault(FaultFromActor(a[0]))
 		return
 
-	# Get all headers intended for us, ignore ones we don't
-	# understand since we don't have to understand them.
-	# Understand? :)
-	headers = [ e for e in ps.GetMyHeaderElements()
-		    if (e.namespaceURI, e.localName) in op.headers ]
-	if headers: self.process_headers(headers)
+	    # Is the operation defined?
+	    root = ps.body_root
+	    if root.namespaceURI != Operation.ns:
+		self.send_fault(Fault(Fault.Client,
+		    'Incorrect namespace "%s"' % root.namespaceURI))
+		return
+	    n = root.localName
+	    op = Operation.dispatch.get(n, None)
+	    if not op:
+		self.send_fault(Fault(Fault.Client,
+		    'Undefined operation "%s"' % n))
+		return
 
-	try:
+	    # Scan headers.  First, see if we understand all headers with
+	    # mustUnderstand set. Then, get the ones intended for us (ignoring
+	    # others since step 1 insured they're not mustUnderstand).
+	    for mu in ps.WhatMustIUnderstand():
+		if mu not in op.headers:
+		    uri, localname = mu
+		    self.send_fault(FaultFromNotUnderstood(uri, localname))
+		    return
+	    headers = [ e for e in ps.GetMyHeaderElements()
+			if (e.namespaceURI, e.localName) in op.headers ]
+	    nsdict={ 'Z': Operation.ns }
+	    if headers:
+		nsdict['E'] = Operation.hdr_ns
+		self.process_headers(headers, ps)
+	    else:
+		self.headertext = None
+
 	    try:
 		results = op.TCin.parse(ps.body_root, ps)
 	    except ParseException, e:
 		self.send_fault(FaultFromZSIException(e))
 	    self.trace(str(results), 'PARSED')
 	    reply = StringIO.StringIO()
-	    sw = SoapWriter(reply, nsdict={ 'Z': Operation.ns })
+	    sw = SoapWriter(reply, nsdict=nsdict, header=self.headertext)
 	    sw.serialize(results, op.TCout,
 		    name = 'Z:' + n + 'Response', inline=1)
 	    sw.close()
 	    self.send_xml(reply.getvalue())
 	except Exception, e:
+	    # Fault while processing; now it's in the body.
 	    self.send_fault(FaultFromException(e, 0, sys.exc_info()[2]))
+	    return
+
+    def process_headers(self, headers, ps):
+	'''Process headers, set self.headertext to be what to output.
+	'''
+	self.headertext = ''
+	for h in headers:
+	    if h.localName == 'echoMeStringRequest':
+		print h
+		s = TC.String().parse(h, ps)
+		self.headertext += \
+    '<E:echoMeStringResponse>%s</E:echoMeStringResponse>\n' % _textprotect(s)
+	    elif h.localName == 'echoMeStructRequest':
+		# Using mutable/inline to avoid a callback is a hack.
+		tc = TC_SOAPStruct('echoMeStructRequest', mutable=1, inline=1)
+		data = tc.parse(h, ps)
+		s = StringIO.StringIO()
+		sw = SoapWriter(s, envelope=0)
+		tc.serialize(sw, data, name='E:echoMeStructResponse')
+		sw.close()
+		self.headertext += s.getvalue()
+	    else:
+		raise TypeError('Unhandled header ' + h.nodeName)
+	pass
 
 
 class InteropHTTPServer(HTTPServer):
@@ -145,8 +173,8 @@ class InteropHTTPServer(HTTPServer):
 
 import getopt
 try:
-    (opts, args) = getopt.getopt(sys.argv[1:],
-		    'l:p:t:u:', ( 'log=', 'port=', 'tracefile=', 'url='))
+    (opts, args) = getopt.getopt(sys.argv[1:], 'l:p:t:u:',
+			('log=', 'port=', 'tracefile=', 'url=') )
 except getopt.GetoptError, e:
     print >>sys.stderr, sys.argv[0] + ': ' + str(e)
     sys.exit(1)
@@ -175,7 +203,7 @@ if not url:
     import socket
     url = 'http://' + socket.getfqdn()
     if portnum != 80: url += ':%d' % portnum
-    url += '/interop'
+    url += '/interop.wsdl'
 
 try:
     InteropHTTPServer(ME, url, tracefile=tracefile).serve_forever()

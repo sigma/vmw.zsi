@@ -89,8 +89,13 @@ xmlns:ps42='http://soapinterop.org/xsd'
 xmlns:xsd='http://www.w3.org/1999/XMLSchema'
 xmlns:xsi='http://www.w3.org/1999/XMLSchema-instance'>
 <SOAP-ENV:Header>
-<ww:echoMeStringRequest xmlns:ww="http://soapinterop.org/echoheader/">
+<ww:echoMeStringRequest SOAP-ENV:mustUnderstand="1" xmlns:ww="http://soapinterop.org/echoheader/">
 Please release me</ww:echoMeStringRequest>
+<ww:echoMeStructRequest xmlns:ww="http://soapinterop.org/echoheader/">
+        <varInt>111</varInt>
+        <varFloat>-42.24</varFloat>
+        <varString>Header text string.</varString>
+      </ww:echoMeStructRequest>
 </SOAP-ENV:Header>
 <SOAP-ENV:Body>
     <m:echoVoid xmlns:m='http://soapinterop.org/'/>

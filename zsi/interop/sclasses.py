@@ -57,7 +57,7 @@ def SimpleTypetoStruct(*args):
 class TC_SOAPStruct(TC.Struct):
     def __init__(self, pname=None, **kw):
 	TC.Struct.__init__(self, SOAPStruct, [
-	    TC.String('varString', strip=0),
+	    TC.String('varString', strip=0, inline=1),
 	    TC.Integer('varInt'),
 	    TC.FPfloat('varFloat'),
 	], pname, **kw)
@@ -106,14 +106,18 @@ class RPCParameters:
     def __str__(self):
 	t = str(self.__dict__)
 	if hasattr(self, 'inputStruct'):
-	    t += '\n'
+	    t += '\ninputStruct\n'
 	    t += str(self.inputStruct)
+	if hasattr(self, 'inputStructArray'):
+	    t += '\ninputStructArray\n'
+	    t += str(self.inputStructArray)
 	return t
 
 class Operation:
     dispatch = {}
     SOAPAction = '''"http://soapinterop.org/"'''
     ns = "http://soapinterop.org/"
+    hdr_ns = "http://soapinterop.org/echoheader/"
 
     def __init__(self, name, tcin, tcout, **kw):
 	self.name = name
@@ -159,7 +163,9 @@ Operation("echoStructArray",
 )
 Operation("echoVoid",
     [],
-    []
+    [],
+    headers=( ( Operation.hdr_ns, 'echoMeStringRequest' ),
+		( Operation.hdr_ns, 'echoMeStructRequest' ) )
 )
 Operation("echoBase64",
     TC.Base64String('inputBase64'),
