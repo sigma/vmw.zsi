@@ -26,7 +26,7 @@ ID4 = ID1 * 4
 class ServerCallbackDescription:
     method_prefix = 'soap'
 
-    def __init__(self):
+    def __init__(self, do_extended=0):
         self.imports  = ''
         self.service  = ''
         self.classdef = ''
@@ -34,8 +34,9 @@ class ServerCallbackDescription:
         self.location = ''
         self.methods  = []
         self.actions  = []
+        self.do_extended = do_extended
 
-    def fromWsdl(self, ws, do_extended = 0):
+    def fromWsdl(self, ws):
 
         wsm = ZSI.wsdl2python.WriteServiceModule(ws)
 
@@ -58,19 +59,23 @@ class ServerCallbackDescription:
                         self.location = soapAddress.getLocation()
                 # generate methods
                 for op in port.getBinding().getPortType().getOperationList():
-                    self.generateMethods(op, port, do_extended)
-                    if do_extended:
+                    self.generateMethods(op, port, self.do_extended)
+                    if self.do_extended:
                         self.generateMethods2(op, port)
 
         self.classdef = self.getClassdef(ws)
-        self.initdef  = self.getInitdef(do_extended=do_extended)
-        if do_extended:
+        self.initdef  = self.getInitdef(do_extended=self.do_extended)
+        if self.do_extended:
             self.authdef = self.getAuthdef()
         else:
             self.authdef = ""
 
     def getImports(self):
-        i  = 'from %s import *' % self.service
+        if self.do_extended:
+            i  = 'from %s import *' % self.service.replace("services",
+                                                           "messages")
+        else:
+            i  = 'from %s import *' % self.service
         i += '\nfrom ZSI.ServiceContainer import ServiceSOAPBinding'
         return i
 
@@ -325,9 +330,9 @@ def main():
     elif args_d['fromurl']:
         wsdl = reader.loadFromURL(args_d['wsdl'])
 
-    ss = ServerCallbackDescription()
+    ss = ServerCallbackDescription(do_extended = args_d['extended'])
 
-    ss.fromWsdl(wsdl, do_extended = args_d['extended'])
+    ss.fromWsdl(wsdl)
 
     fd = open(os.path.join(args_d['output_directory'],
                            ss.getStubName(args_d['extended'])+'.py'),

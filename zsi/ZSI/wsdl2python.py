@@ -173,7 +173,7 @@ class WriteServiceModule:
        the service.
     """
     def __init__(self, wsdl, importlib=None, typewriter=None,
-                 aname_func=lambda x: "_%s" % x):
+                 aname_func=lambda x: "_%s" % x, do_extended=0):
         """wsdl - wsdl.Wsdl instance
         """
         self.wsdl  = wsdl
@@ -187,16 +187,16 @@ class WriteServiceModule:
         self._typewriter = typewriter
         self.typeDict = {}
         self.aname_func = aname_func
+        self.do_extended = do_extended
 
-    def write(self, schemaOnly=False, output_dir=".", do_extended=0,
-              types=None):
+    def write(self, schemaOnly=False, output_dir=".", types=None):
         """
         Write schema instance contents w/respect to dependency
         requirements, and create client interface.  Not guaranteed to
         work for mutual depenedencies.
         """
 
-        if do_extended:
+        if self.do_extended:
             csuffix = ""
             self.aname_func = lambda x: x
         else:
@@ -230,7 +230,10 @@ class WriteServiceModule:
         else:
             f_types = os.path.join(output_dir, types)
 
-        f_services = os.path.join(output_dir, '%s_services' % name)
+        if self.do_extended:
+            f_services = os.path.join(output_dir, '%s_client' % name)
+        else:
+            f_services = os.path.join(output_dir, '%s_services' % name)
 
         return f_types, f_services
 
@@ -263,19 +266,31 @@ class WriteServiceModule:
 
 	fd.write(header)
         
+        if self.do_extended:
+            msg_filename = f_services.replace("client", "messages")
+            fd2 = open(msg_filename + ".py", 'w')
+            fd2.write(header)
+        else:
+            fd2 = None
+
         for service in self._wa.getServicesList():
             sd = ServiceDescription(self.aname_func, csuffix=csuffix)
+
+            if self.do_extended:
+                sd.imports += ['\nfrom %s import *' % os.path.basename(msg_filename)]
+
             if hasSchema:
                 sd.imports += ['\nfrom %s import *' %
                                os.path.basename(f_types)]
-                for ns in self.nsh.getNSList():
-                    sd.imports += ['\nfrom %s import \\\n    %s as %s' \
-                                  % ( os.path.basename(f_types),
-                                      self.nsh.getModuleName(ns),
-                                      self.nsh.getAlias(ns)) ]
+                if not self.do_extended:
+                    for ns in self.nsh.getNSList():
+                        sd.imports += ['\nfrom %s import \\\n    %s as %s' \
+                                       % ( os.path.basename(f_types),
+                                           self.nsh.getModuleName(ns),
+                                           self.nsh.getAlias(ns)) ]
 
             sd.fromWsdl(service, self.typeDict)
-            
+
             if self._importlib:
                 exec( 'import %s' % self._importlib )
                 exec( 'obj = %s' % self._importlib )
@@ -283,10 +298,12 @@ class WriteServiceModule:
                     sd.imports += obj.clientimports
                     
 
-            sd.write(fd)
+            sd.write(fd, fd2=fd2)
+
+            if fd2:
+                fd2.close()
 
         fd.write('\n')
-
 
     def write_dependent_schema(self, schema, fd, csuffix="_Def"):
         """Write schema instance contents w/respect to dependency requirements.
@@ -356,7 +373,7 @@ class ServiceDescription:
         self.aname_func = aname_func
         self.csuffix = csuffix
 
-    def write(self, fd=sys.stdout):
+    def write(self, fd=sys.stdout, fd2=None):
         """Write service instance contents.  Must call fromWsdl with
            service instance before calling write.
         """
@@ -366,7 +383,12 @@ class ServiceDescription:
         fd.write(self.serviceBindings)
         keys = self.messages.keys()
         keys.sort()
-        [fd.write(str(self.messages[k])) for k in keys]
+
+        if fd2:
+            fd2.writelines(self.imports)
+            [fd2.write(str(self.messages[k])) for k in keys]
+        else:
+            [fd.write(str(self.messages[k])) for k in keys]
             
     def fromWsdl(self, service, typeDict=None):
         """service -- wsdl.Service instance

@@ -155,10 +155,11 @@ def main():
     if schemaOnly:
         wsdl = formatSchemaObject(args_d['wsdl'], wsdl)
 
-    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl, aname_func = aname_func)
+    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl, aname_func = aname_func,
+                                             do_extended=args_d['extended'])
     
     wsm.write(schemaOnly, output_dir=args_d['output_directory'],
-              do_extended=args_d['extended'], types=args_d['types'])
+              types=args_d['types'])
     
     return
 
