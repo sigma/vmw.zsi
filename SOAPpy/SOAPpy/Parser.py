@@ -248,7 +248,10 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                     null = attrs[(NS.XSI3, 'nil')]
                     del attrs[(NS.XSI3, 'nil')]
 
-                null = int(null)
+                if type(null) in (StringType, UnicodeType):
+                    null = (null.lower() == 'true')
+                else:
+                    null = int(null)
 
                 if null:
                     if len(cur) or \
