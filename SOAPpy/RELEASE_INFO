@@ -1,4 +1,52 @@
 
+Release 0.11.2 of SOAPpy
+------------------------
+
+- News: 
+
+   Ivan R. Judson has joined the SOAPpy team. He is focused on
+   Globus support but is also responsible for a lot of other work for
+   this release,
+
+- Bug fixes:
+
+   - Code in Types.py assumes nested scopes, so I added the proper import so
+     this will work under python 2.2.x
+
+   - Fixing namespace collision
+
+   - Fixed handing of named arguments bug introduced in 0.11.1.
+
+   - Fix memory leak when exceptions are raised.
+
+   - Fix bug when content-length is not present in parsed SOAP message.
+
+   - Fix bug #888345: Python 2.3 boolean type serialized as int
+ 
+   - Fix bug #875977: no escaping of bad tagnames for NoneTypes
+
+
+- New features:
+
+   - Improved Globus support and documentation.  Thanks Ivan!
+ 
+   - Added context handling
+
+   - Changed the use of SOAPAction, it used to default to setting it
+     to "", now it defaults to setting it to the method (not the
+     nsmethod). There is a clause in Server.py that catches 'old style'
+     SOAPActions (aka "") and sets them to the method. When this is
+     confirmed to be what everyone wants and we decide it's alright to
+     (possibly) break client/server interop, we can take the clause out
+     of Server.py and just handle SOAPActions of "" as a possible
+     error/warning.
+
+   - Additional test code.
+
+   - Raise a SOAPException instead of returning a SOAPpy.faultType
+     when a SOAP Fault is encountered and simplify_objects is enabled.
+
+
 Release 0.11.1 of SOAPpy
 ------------------------
 
