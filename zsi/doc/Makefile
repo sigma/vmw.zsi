@@ -17,11 +17,11 @@ M=		zsi
 SOURCES=	$M.tex version.tex $(CHAPTERS) zsixsd.tex
 
 
-all:	dvi ps pdf html
+all:	ps pdf html
 pdf:	$M.pdf
 ps:	$M.ps
 html:	$M.html
-.PHONY: all dvi pdf ps html
+.PHONY: all pdf ps html
 
 $M.ps: $(SOURCES)
 	$(MKHOWTO) --dvi $M.tex
