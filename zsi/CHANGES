@@ -1,5 +1,8 @@
 Changes for ??, released ???:
     -   Added nsdict parameter to dispatch.AsCGI and dispatch.AsServer
+    -   Fixed bug where xmlns attribute was included in closing elements
+    -   Added support for "wrapped" complexTypes in response messages
+    -   TypeCode enabled classes now support parameters in the constructor
 
 Changes for 1.3, released xx-May-2002:
     -	Fixed parsing bug evidenced by dW article
