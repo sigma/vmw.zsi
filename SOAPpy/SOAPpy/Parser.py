@@ -248,10 +248,21 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                     null = attrs[(NS.XSI3, 'nil')]
                     del attrs[(NS.XSI3, 'nil')]
 
+
+                ## Check for nil
+
+                # check for nil='true'
                 if type(null) in (StringType, UnicodeType):
-                    null = (null.lower() == 'true')
-                else:
+                    if null.lower() == 'true':
+                        null = 1
+
+                # check for nil=1, but watch out for string values
+                try:                
                     null = int(null)
+                except ValueError, e:
+                    if not e[0].startswith("invalid literal for int()"):
+                        raise e
+                    null = 0
 
                 if null:
                     if len(cur) or \
