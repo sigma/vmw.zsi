@@ -3,11 +3,7 @@
 # put the path to where the Python source was untar'd here (not where it
 # is installed)
 PYSRCDIR=	
-ifeq ($(PYSRCDIR),)
-MKHOWTO=	mkhowto
-else
-MKHOWTO=	$(PYSRCDIR)/Doc/tools/mkhowto
-endif
+MKHOWTO=	PATH=$$PATH:$(PYSRCDIR)/Doc/tools mkhowto
 #PAPER=		a4
 PAPER=		letter
 
