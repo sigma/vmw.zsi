@@ -14,6 +14,7 @@ USAGE = """Usage: ./wsdl2py -f wsdl | -u url [-h] [-s]
     wsdl        -> wsdl file to generate typecodes from.
     -h          -> prints this message and exits.
     -f | -u     -> file or url to load wsdl from
+    -e          -> enable experimental server code generation
     -x          -> process just the schema from an xsd file [no services]
     -z          -> specify a function to use to generate attribute names
     -d          -> output directory for files
@@ -41,11 +42,12 @@ def doCommandLine():
         'fromurl': False,
         'schemaOnly': False,
         'aname' : None,
-        'output_directory' : '.'
+        'output_directory' : '.',
+        'extended' : False
         }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:d:hx')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:z:d:hxe')
     except getopt.GetoptError, e:
         print >>sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -58,6 +60,8 @@ def doCommandLine():
         if opt in [ '-h']:
             print USAGE
             sys.exit(0)
+        elif opt in ['-e']:
+            args_d['extended'] = True
         elif opt in ['-f']:
             args_d['wsdl'] = val
             args_d['fromfile'] = True
@@ -146,7 +150,8 @@ def main():
 
     wsm = ZSI.wsdl2python.WriteServiceModule(wsdl, aname_func = aname_func)
     
-    wsm.write(schemaOnly, output_dir=args_d['output_directory'])
+    wsm.write(schemaOnly, output_dir=args_d['output_directory'],
+              do_extended=args_d['extended'])
     
     return
 

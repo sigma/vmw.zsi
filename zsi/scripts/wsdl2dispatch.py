@@ -10,7 +10,7 @@ USAGE = """Usage: ./serverstub -f wsdlfile | -u url [-h]
   where:
     wsdl        -> wsdl file to generate callbacks from.
     -f          -> location of wsdl file in disc
-    -x          -> enable experimental server code generation
+    -e          -> enable experimental server code generation
     -u          -> location of wsdl via url
     -h          -> prints this message and exits.
 """
@@ -268,10 +268,14 @@ def IsSimpleElementDeclaration(op, input=True):
 
 def doCommandLine():
 
-    args_d = { 'fromfile': False, 'fromurl': False, 'extended' : False }
+    args_d = {
+        'fromfile': False,
+        'fromurl': False,
+        'extended' : False
+        }
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:u:hx')
+        opts, args = getopt.getopt(sys.argv[1:], 'f:u:he')
     except getopt.GetoptError, e:
         print >> sys.stderr, sys.argv[0] + ': ' + str(e)
         sys.exit(-1)
@@ -290,7 +294,7 @@ def doCommandLine():
         elif opt in ['-u']:
             args_d['wsdl'] = val
             args_d['fromurl'] = True
-        elif opt in ['-x']:
+        elif opt in ['-e']:
             args_d['extended'] = True
         else:
             print USAGE
