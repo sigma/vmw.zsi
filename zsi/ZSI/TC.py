@@ -42,13 +42,14 @@ class TypeCode:
     typechecks = 1
 
     def __init__(self, pname=None, oname=None, aname=None, optional=0,
-    typed=1, repeatable=0, unique=0, **kw):
+    typed=1, repeatable=0, unique=0, ons=None, **kw):
         '''Baseclass initialization.
         Instance data (and usually keyword arg)
             pname -- the parameter name (localname).
             nspname -- the namespace for the parameter;
                 None to ignore the namespace
-            oname -- output name (could have NS prefix)
+            oname -- output name
+            ons -- the namespace prefix of the oname
             typed -- output xsi:type attribute
             repeatable -- element can appear more than once
             optional -- the item is optional
@@ -56,13 +57,14 @@ class TypeCode:
             unique -- data item is not aliased (no href/id needed)
         '''
         if type(pname) in _seqtypes:
-            self.nspname, self.pname = pname
+            self.nspname, self.pname = None, pname
         else:
             self.nspname, self.pname = None, pname
         # Set oname before splitting pname, and aname after.
         self.oname = oname or self.pname
+        self.ons = ons
         if self.pname:
-            i = self.pname.find(':')
+            i = str(self.pname).find(':')
             if i > -1: self.pname = self.pname[i + 1:]
         self.aname = aname or self.pname
 
@@ -268,6 +270,8 @@ class Any(TypeCode):
             return
 
         n = name or self.oname or rpc or 'E%x' % id(pyobj)
+        if self.ons:
+            n = '%s:%s' % (self.ons, n)
         kw['name'] = n
         tc = type(pyobj)
         if tc == types.DictType or self.aslist:
