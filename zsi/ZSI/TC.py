@@ -41,7 +41,8 @@ class TypeCode:
 
     typechecks = 1
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, oname=None, aname=None, optional=0,
+    typed=1, repeatable=0, unique=0, **kw):
         '''Baseclass initialization.
         Instance data (and usually keyword arg)
             pname -- the parameter name (localname).
@@ -59,16 +60,16 @@ class TypeCode:
         else:
             self.nspname, self.pname = None, pname
         # Set oname before splitting pname, and aname after.
-        self.oname = kw.get('oname', self.pname)
+        self.oname = oname or self.pname
         if self.pname:
             i = self.pname.find(':')
             if i > -1: self.pname = self.pname[i + 1:]
-        self.aname = kw.get('aname', self.pname)
+        self.aname = aname or self.pname
 
-        self.optional = kw.get('optional', 0)
-        self.typed = kw.get('typed', 1)
-        self.repeatable = kw.get('repeatable', 0)
-        self.unique = kw.get('unique', 0)
+        self.optional = optional
+        self.typed = typed
+        self.repeatable = repeatable
+        self.unique = unique
         if kw.has_key('default'): self.default = kw['default']
 
     def parse(self, elt, ps):
@@ -201,15 +202,19 @@ class Any(TypeCode):
     '''
     parsemap, serialmap = {}, {}
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, aslist=0, **kw):
         TypeCode.__init__(self, pname, **kw)
-        self.aslist = kw.get('aslist', 0)
+        self.aslist = aslist
         # If not derived, and optional isn't set, make us optional
         # so that None can be parsed.
         if self.__class__ == Any and not kw.has_key('optional'):
             self.optional = 1
 
-    def parse_into_dict(self, elt, ps):
+    def listify(self, v):
+        if self.aslist: return [ v[k] for k in v.keys() ]
+        return v
+
+    def parse_into_dict_or_list(self, elt, ps):
         c = _child_elements(elt)
         count = len(c)
         v = {}
@@ -220,11 +225,11 @@ class Any(TypeCode):
             self.checktype(elt, ps)
             c = _child_elements(elt)
             count = len(c)
-            if count == 0: return v
+            if count == 0: return self.listify(v)
         if self.nilled(elt, ps): return None
         for c_elt in c:
             v[str(c_elt.nodeName)] = self.parse(c_elt, ps)
-        return v
+        return self.listify(v)
 
     def parse(self, elt, ps):
         (ns,type) = self.checkname(elt, ps)
@@ -246,7 +251,7 @@ class Any(TypeCode):
             if len(_child_elements(elt)) == 0:
                 raise EvaluateException("Any cannot parse untyped element",
                         ps.Backtrace(elt))
-            return self.parse_into_dict(elt, ps)
+            return self.parse_into_dict_or_list(elt, ps)
         parser = Any.parsemap.get((ns,type))
         if not parser and _is_xsd_or_soap_ns(ns):
             parser = Any.parsemap.get((None,type))
@@ -255,12 +260,12 @@ class Any(TypeCode):
                     ps.Backtrace(elt))
         return parser.parse(elt, ps)
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         if hasattr(pyobj, 'typecode'):
             pyobj.typecode.serialize(sw, pyobj, **kw)
             return
-        kw['name'] = self.oname
-        n = kw.get('name', 'E%x' % id(pyobj))
+        n = name or self.oname or 'E%x' % id(pyobj)
+        kw['name'] = n
         tc = type(pyobj)
         if tc == types.DictType or self.aslist:
             print >>sw, '<%s>' % n
@@ -301,7 +306,7 @@ class Any(TypeCode):
             # Try to make the element name self-describing
             tag = getattr(serializer, 'tag', None)
             if tag:
-                if tag.find(':') == -1: tag = 'xsd:' + tag
+                if tag.find(':') == -1: tag = 'SOAP-ENC:' + tag
                 kw['name'] = kw['oname'] = tag
                 kw['typed'] = 0
             serializer.serialize(sw, pyobj, **kw)
@@ -346,10 +351,9 @@ class Void(TypeCode):
             raise EvaluateException('Void got a value', ps.Backtrace(elt))
         return None
 
-    def serialize(self, sw, pyobj, **kw):
-        n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
-        print >>sw, '''<%s%s xsi:nil="1"/>''' % \
-            (n, kw.get('attrtext', ''))
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+        n = name or self.oname or ('E%x' % id(pyobj))
+        print >>sw, '''<%s%s xsi:nil="1"/>''' % (n, attrtext)
 
 class String(TypeCode):
     '''A string type.
@@ -358,11 +362,11 @@ class String(TypeCode):
     seriallist = [ types.StringType, types.UnicodeType ]
     tag = 'string'
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, strip=1, textprotect=1, **kw):
         TypeCode.__init__(self, pname, **kw)
         if kw.has_key('resolver'): self.resolver = kw['resolver']
-        self.strip = kw.get('strip', 1)
-        self.textprotect = kw.get('textprotect', 1)
+        self.strip = strip
+        self.textprotect = textprotect
 
     def parse(self, elt, ps):
         self.checkname(elt, ps)
@@ -387,16 +391,14 @@ class String(TypeCode):
         if self.textprotect: v = _textunprotect(v)
         return v
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         objid = '%x' % id(pyobj)
-        n = kw.get('name', self.oname) or ('E' + objid)
+        n = name or self.oname or ('E' + objid)
         if type(pyobj) in _seqtypes:
-            print >>sw, '<%s%s href="%s"/>' % \
-                    (n, kw.get('attrtext', ''), pyobj[0])
+            print >>sw, '<%s%s href="%s"/>' % (n, attrtext, pyobj[0])
             return
         if not self.unique and sw.Known(pyobj):
-            print >>sw, '<%s%s href="#%s"/>' % \
-                    (n, kw.get('attrtext', ''), objid)
+            print >>sw, '<%s%s href="#%s"/>' % (n, attrtext, objid)
             return
         if type(pyobj) == types.UnicodeType: pyobj = pyobj.encode('utf-8')
         if kw.get('typed', self.typed):
@@ -412,8 +414,7 @@ class String(TypeCode):
             idstr = ' id="%s"' % objid
         if self.textprotect: pyobj = _textprotect(pyobj)
         print >>sw, \
-            '<%s%s%s%s>%s</%s>' % \
-                (n, kw.get('attrtext', ''), idstr, tstr, pyobj, n)
+            '<%s%s%s%s>%s</%s>' % (n, attrtext, idstr, tstr, pyobj, n)
 
 class URI(String):
     '''A URI.
@@ -512,15 +513,15 @@ class Integer(TypeCode):
     seriallist = [ types.IntType, types.LongType ]
     tag = None
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, format='%d', **kw):
         TypeCode.__init__(self, pname, **kw)
-        self.format = kw.get('format', '%d')
+        self.format = format
 
     def parse(self, elt, ps):
         (ns,type) = self.checkname(elt, ps)
         elt = self.SimpleHREF(elt, ps, 'integer')
         if not elt: return None
-        tag = self.__class__.__dict__.get('tag')
+        tag = getattr(self.__class__, 'tag')
         if tag:
             if type == None:
                 type = tag
@@ -547,14 +548,14 @@ class Integer(TypeCode):
                     ps.Backtrace(elt))
         return v
 
-    def serialize(self, sw, pyobj, **kw):
-        n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+        n = name or self.oname or ('E%x' % id(pyobj))
         if kw.get('typed', self.typed):
             tstr = ' xsi:type="xsd:%s"' % (self.tag or 'integer')
         else:
             tstr = ''
         print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
-                (n, kw.get('attrtext', ''), tstr, pyobj, n)
+                (n, attrtext, tstr, pyobj, n)
 
 # This is outside the Decimal class purely for code esthetics.
 _magicnums = { }
@@ -635,15 +636,15 @@ class Decimal(TypeCode):
     }
     zeropat = re.compile('[1-9]')
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, format='%f', **kw):
         TypeCode.__init__(self, pname, **kw)
-        self.format = kw.get('format', '%f')
+        self.format = format
 
     def parse(self, elt, ps):
         (ns,type) = self.checkname(elt, ps)
         elt = self.SimpleHREF(elt, ps, 'floating-point')
         if not elt: return None
-        tag = self.__class__.__dict__.get('tag')
+        tag = getattr(self.__class__, 'tag')
         if tag:
             if type == None:
                 type = tag
@@ -676,24 +677,21 @@ class Decimal(TypeCode):
             raise EvaluateException('Overflow', ps.Backtrace(elt))
         return fp
 
-    def serialize(self, sw, pyobj, **kw):
-        n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+        n = name or self.oname or ('E%x' % id(pyobj))
         if kw.get('typed', self.typed):
             tstr = ' xsi:type="xsd:%s"' % (self.tag or 'decimal')
         else:
             tstr = ''
         if pyobj == _magicnums['INF']:
-            print >>sw, ('<%s%s%s>INF</%s>') % \
-                    (n, kw.get('attrtext', ''), tstr, n)
+            print >>sw, ('<%s%s%s>INF</%s>') % (n, attrtext, tstr, n)
         elif pyobj == _magicnums['-INF']:
-            print >>sw, ('<%s%s%s>-INF</%s>') % \
-                    (n, kw.get('attrtext', ''), tstr, n)
+            print >>sw, ('<%s%s%s>-INF</%s>') % (n, attrtext, tstr, n)
         elif isnan(pyobj):
-            print >>sw, ('<%s%s%s>NaN</%s>') % \
-                    (n, kw.get('attrtext', ''), tstr, n)
+            print >>sw, ('<%s%s%s>NaN</%s>') % (n, attrtext, tstr, n)
         else:
             print >>sw, ('<%s%s%s>' + self.format + '</%s>') % \
-                (n, kw.get('attrtext', ''), tstr, pyobj, n)
+                (n, attrtext, tstr, pyobj, n)
 
 class Boolean(TypeCode):
     '''A boolean.
@@ -720,15 +718,14 @@ class Boolean(TypeCode):
         if v: return 1
         return 0
 
-    def serialize(self, sw, pyobj, **kw):
-        n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+        n = name or self.oname or ('E%x' % id(pyobj))
         if kw.get('typed', self.typed):
             tstr = ' xsi:type="xsd:boolean"'
         else:
             tstr = ''
         pyobj = (pyobj and 1) or 0
-        print >>sw, '<%s%s%s>%d</%s>' % \
-            (n, kw.get('attrtext', ''), tstr, pyobj, n)
+        print >>sw, '<%s%s%s>%d</%s>' % (n, attrtext, tstr, pyobj, n)
 
 
 class XML(TypeCode):
@@ -742,12 +739,12 @@ class XML(TypeCode):
     # Clone returned data?
     copyit = 0
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, comments=0, inline=0, wrapped=1, **kw):
         TypeCode.__init__(self, pname, **kw)
-        self.comments = kw.get('comments', 0)
-        self.inline = kw.get('inline', 0)
+        self.comments = comments
+        self.inline = inline
         if kw.has_key('resolver'): self.resolver = kw['resolver']
-        self.wrapped = kw.get('wrapped', 1)
+        self.wrapped = wrapped
         self.copyit = kw.get('copyit', XML.copyit)
 
     def parse(self, elt, ps):
@@ -774,20 +771,18 @@ class XML(TypeCode):
         if self.copyit: return c[0].cloneNode(1)
         return c[0]
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         if not self.wrapped:
             Canonicalize(pyobj, sw, comments=self.comments)
             return
         objid = '%x' % id(pyobj)
-        n = kw.get('name', self.oname) or ('E' + objid)
+        n = name or self.oname or ('E' + objid)
         if type(pyobj) in _stringtypes:
-            print >>sw, '<%s%s href="%s"/>' % \
-                    (n, kw.get('attrtext', ''), pyobj)
+            print >>sw, '<%s%s href="%s"/>' % (n, attrtext, pyobj)
         elif kw.get('inline', self.inline):
             self.cb(sw, pyobj)
         else:
-            print >>sw, '<%s%s href="#%s"/>' % \
-                        (n, kw.get('attrtext', ''), objid)
+            print >>sw, '<%s%s href="#%s"/>' % (n, attrtext, objid)
             sw.AddCallback(self.cb, pyobj)
 
     def cb(self, sw, pyobj):

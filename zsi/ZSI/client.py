@@ -24,8 +24,8 @@ class _Caller:
         self.binding, self.name = binding, name
 
     def __call__(self, *args):
-        return self.binding.RPC(None, self.name, args, TC.Any(),
-                requesttypecode=TC.Any(self.name))
+        return self.binding.RPC(None, self.name, args, TC.Any(aslist=1),
+                requesttypecode=TC.Any(self.name, aslist=1))
 
 
 class _NamedParamCaller:
@@ -49,7 +49,9 @@ class Binding:
     style.
     '''
 
-    def __init__(self, **kw):
+    def __init__(self, nsdict=None, ssl=0, url=None, tracefile=None,
+    host='localhost', readerclass=None, port=None,
+    soapaction='"http://www.zolera.com"', **kw):
         '''Initialize.
         Keyword arguments include:
             host, port -- where server is; default is localhost
@@ -66,11 +68,8 @@ class Binding:
         self.data, self.ps, self.ns, self.user_headers = \
             None, None, None, []
         self.nsdict, self.ssl, self.url, self.trace, self.host, \
-        self.readerclass = \
-            kw.get('nsdict', {}), kw.get('ssl', 0), kw.get('url'), \
-            kw.get('tracefile'), kw.get('host', 'localhost'), \
-            kw.get('readerclass')
-        self.soapaction = kw.get('soapaction', '"http://www.zolera.com"')
+        self.readerclass, self.soapaction = \
+            nsdict or {}, ssl, url, tracefile, host, readerclass, soapaction
         if kw.has_key('auth'):
             self.SetAuth(*kw['auth'])
         else:
@@ -80,9 +79,9 @@ class Binding:
         elif kw.has_key('ns'):
             self.SetNS(kw['ns'])
         if not self.ssl:
-            self.port = kw.get('port', httplib.HTTP_PORT)
+            self.port = port or httplib.HTTP_PORT
         else:
-            self.port = kw.get('port', httplib.HTTPS_PORT)
+            self.port = port or httplib.HTTPS_PORT
             self.ssl_files = {}
             for k in [ 'cert_file', 'key_file' ]:
                 if kw.has_key(k): self.ssl_files[k] = kw[k]
@@ -125,7 +124,7 @@ class Binding:
         self.Send(url, opname, obj, **kw)
         return self.Receive(replytype, **kw)
 
-    def Send(self, url, opname, obj, **kw):
+    def Send(self, url, opname, obj, nsdict=None, soapaction=None, **kw):
         '''Send a message.  If url is None, use the value from the
         constructor (else error). obj is the object (data) to send.
         Data may be described with a requesttypecode keyword, or a
@@ -138,7 +137,7 @@ class Binding:
         elif kw.has_key('requestclass'):
             tc = kw['requestclass'].typecode
         elif type(obj) == types.InstanceType:
-            tc = obj.__class__.__dict__.get('typecode')
+            tc = getattr(obj.__class__, 'typecode')
             if tc == None: tc = TC.Any(opname, aslist=1)
         else:
             tc = TC.Any(opname, aslist=1)
@@ -153,7 +152,7 @@ class Binding:
         s = StringIO.StringIO()
         d = {}
         if self.ns: d[''] = self.ns
-        d.update(kw.get('nsdict', self.nsdict) or {})
+        d.update(nsdict or self.nsdict or {})
         sw = SoapWriter(s, nsdict=d, header=auth_header)
         if kw.has_key('_args'):
             sw.serialize(kw['_args'], tc)
@@ -177,9 +176,10 @@ class Binding:
         self.h.putrequest("POST", url or self.url)
         self.h.putheader("Content-length", "%d" % len(soapdata))
         self.h.putheader("Content-type", 'text/xml; charset=utf-8')
-        self.h.putheader("SOAPAction", kw.get('soapaction', self.soapaction))
+        self.h.putheader("SOAPAction", soapaction or self.soapaction)
         if self.auth_style & AUTH.httpbasic:
-            val = _b64_encode(self.auth_user + ':' + self.auth_pass).strip()
+            val = _b64_encode(self.auth_user + ':' + self.auth_pass) \
+                        .replace("\012", "")
             self.h.putheader('Authorization', 'Basic ' + val)
         for header,value in self.user_headers:
             self.h.putheader(header, value)
@@ -193,19 +193,19 @@ class Binding:
         '''Read a server reply, unconverted to any format and return it.
         '''
         if self.data: return self.data
-	trace = self.trace
-	while 1:
-	    response = self.h.getresponse()
-	    self.reply_code, self.reply_msg, self.reply_headers, self.data = \
-		response.status, response.reason, response.msg, response.read()
-	    if trace:
-		print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
-		print >>trace, str(self.reply_headers)
-		print >>trace, self.data
-	    if response.status != 100: break
-	    self.h._HTTPConnection__state = httplib._CS_REQ_SENT
-	    self.h._HTTPConnection__response = None
-	return self.data
+        trace = self.trace
+        while 1:
+            response = self.h.getresponse()
+            self.reply_code, self.reply_msg, self.reply_headers, self.data = \
+                response.status, response.reason, response.msg, response.read()
+            if trace:
+                print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
+                print >>trace, str(self.reply_headers)
+                print >>trace, self.data
+            if response.status != 100: break
+            self.h._HTTPConnection__state = httplib._CS_REQ_SENT
+            self.h._HTTPConnection__response = None
+        return self.data
 
     def IsSOAP(self):
         if self.ps: return 1
@@ -213,7 +213,7 @@ class Binding:
         mimetype = self.reply_headers.type
         return mimetype == 'text/xml'
 
-    def ReceiveSOAP(self, **kw):
+    def ReceiveSOAP(self, readerclass=None, **kw):
         '''Get back a SOAP message.
         '''
         if self.ps: return self.ps
@@ -223,7 +223,7 @@ class Binding:
         if len(self.data) == 0:
             raise TypeError('Received empty response')
         self.ps = ParsedSoap(self.data, 
-                        readerclass=kw.get('readerclass', self.readerclass))
+                        readerclass=readerclass or self.readerclass)
         return self.ps
 
     def IsAFault(self):
@@ -251,7 +251,7 @@ class Binding:
             msg = FaultFromFaultMessage(self.ps)
             raise TypeError("Unexpected SOAP fault: " + msg.string)
         if replytype == None:
-            tc = TC.Any()
+            tc = TC.Any(aslist=1)
             data = _child_elements(self.ps.body_root)
             if len(data) == 0: return None
             return tc.parse(data[0], self.ps)
@@ -269,8 +269,8 @@ class Binding:
         named by the attribute.
         '''
         if name[:2] == '__' and len(name) > 5 and name[-2:] == '__':
-            if self.__dict__.has_key(name): return self._dict__[name]
-            return self.__class__.__dict__[name]
+            if hasattr(self, name): return getattr(self, name)
+            return getattr(self.__class__, name)
         return _Caller(self, name)
 
 
@@ -284,8 +284,8 @@ class NamedParamBinding(Binding):
         named by the attribute.
         '''
         if name[:2] == '__' and len(name) > 5 and name[-2:] == '__':
-            if self.__dict__.has_key(name): return self._dict__[name]
-            return self.__class__.__dict__[name]
+            if hasattr(self, name): return getattr(self, name)
+            return getattr(self.__class__, name)
         return _NamedParamCaller(self, name)
 
 

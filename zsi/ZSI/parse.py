@@ -33,7 +33,8 @@ class ParsedSoap:
             trailer_elements -- list of elements following the SOAP body
     '''
 
-    def __init__(self, input, **kw):
+    def __init__(self, input, readerclass=None, keepdom=0,
+    trailers=0, resolver=None,  **kw):
         '''Initialize.
         Keyword arguments:
             trailers -- allow trailer elments (default is zero)
@@ -42,7 +43,7 @@ class ParsedSoap:
             keepdom -- do not release the DOM
         '''
 
-        self.readerclass = kw.get('readerclass')
+        self.readerclass = readerclass
         if not self.readerclass:
             from xml.dom.ext.reader import PyExpat
             self.readerclass = PyExpat.Reader
@@ -52,8 +53,8 @@ class ParsedSoap:
                 self.dom = self.reader.fromString(input)
             else:
                 self.dom = self.reader.fromStream(input)
-            if kw.get('keepdom', 0) == 0:
-		self.dom.ZSI_reader = self.reader
+            if keepdom == 0:
+                self.dom.ZSI_reader = self.reader
         except Exception, e:
             # Is this in the header?  Your guess is as good as mine.
             raise ParseException("Can't parse document (" + \
@@ -66,8 +67,7 @@ class ParsedSoap:
                 '': ''
             }
         }
-        self.trailers, self.resolver, self.id_cache = \
-            kw.get('trailers', 0), kw.get('resolver'), {}
+        self.trailers, self.resolver, self.id_cache = trailers, resolver, {}
 
         # Exactly one child element
         c = [ E for E in _children(self.dom)
@@ -182,9 +182,9 @@ class ParsedSoap:
 
     def __del__(self):
         try:
-	    if hasattr(self.dom, 'ZSI_reader'):
-		self.dom.ZSI_reader.releaseNode(self.dom)
-		del self.dom.ZSI_reader
+            if hasattr(self.dom, 'ZSI_reader'):
+                self.dom.ZSI_reader.releaseNode(self.dom)
+                del self.dom.ZSI_reader
         except:
             pass
 
@@ -302,7 +302,7 @@ class ParsedSoap:
     def Parse(self, how):
         '''Parse the message.
         '''
-        if type(how) == types.ClassType: how = how.__dict__['typecode']
+        if type(how) == types.ClassType: how = how.typecode
         return how.parse(self.body_root, self)
 
     def WhatMustIUnderstand(self):

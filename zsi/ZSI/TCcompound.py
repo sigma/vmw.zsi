@@ -36,7 +36,8 @@ class Struct(TypeCode):
     '''A structure.
     '''
 
-    def __init__(self, pyclass, ofwhat, pname=None, **kw):
+    def __init__(self, pyclass, ofwhat, pname=None, inorder=0, inline=0,
+    mutable=1, hasextras=0, **kw):
         '''pyclass -- the Python class to hold the fields
         ofwhat -- a list of fields to be in the struct
         hasextras -- ignore extra input fields
@@ -47,11 +48,11 @@ class Struct(TypeCode):
         '''
         TypeCode.__init__(self, pname, **kw)
         self.pyclass = pyclass
-        self.inorder = kw.get('inorder', 0)
-        self.inline = kw.get('inline', 0)
-        self.mutable = kw.get('mutable', 0)
+        self.inorder = inorder
+        self.inline = inline
+        self.mutable = mutable
         if self.mutable: self.inline = 1
-        self.hasextras = kw.get('hasextras', 0)
+        self.hasextras = hasextras
         self.type = kw.get('type')
         t = type(ofwhat)
         if t not in _seqtypes:
@@ -138,20 +139,19 @@ class Struct(TypeCode):
             setattr(pyobj, key, v[key])
         return pyobj
 
-    def serialize(self, sw, pyobj, **kw):
-        if kw.get('inline', self.inline):
+    def serialize(self, sw, pyobj, inline=None, name=None, attrtext='', **kw):
+        if inline or self.inline:
             self.cb(sw, pyobj, **kw)
         else:
             objid = '%x' % id(pyobj)
-            n = kw.get('name', self.oname) or ('E' + objid)
-            print >>sw, '<%s%s href="#%s"/>' % \
-                (n, kw.get('attrtext', ''), objid)
+            n = name or self.oname or ('E' + objid)
+            print >>sw, '<%s%s href="#%s"/>' % (n, attrtext, objid)
             sw.AddCallback(self.cb, pyobj)
 
-    def cb(self, sw, pyobj, **kw):
+    def cb(self, sw, pyobj, name=None, **kw):
         if not self.mutable and sw.Known(pyobj): return
         objid = '%x' % id(pyobj)
-        n = kw.get('name', self.oname) or ('E' + objid)
+        n = name or self.oname or ('E' + objid)
         if self.inline:
             print >>sw, '<%s>' % n
         else:
@@ -216,22 +216,24 @@ class Array(TypeCode):
         mutable -- object could change between multiple serializations
     '''
 
-    def __init__(self, atype, ofwhat, pname=None, **kw):
+    def __init__(self, atype, ofwhat, pname=None, dimensions=1, fill=None,
+    sparse=0, mutable=0, size=None, nooffset=0, undeclared=0,
+    childnames=None, **kw):
         TypeCode.__init__(self, pname, **kw)
-        self.dimensions = kw.get('dimensions', 1)
+        self.dimensions = dimensions
         self.atype = atype
         if self.atype[-1] != ']': self.atype = self.atype + '[]'
         # Support multiple dimensions
         if self.dimensions != 1:
             raise TypeError("Only single-dimensioned arrays supported")
-        self.fill = kw.get('fill')
-        self.sparse = kw.get('sparse', 0)
+        self.fill = fill
+        self.sparse = sparse
         if self.sparse: ofwhat.optional = 1
-        self.mutable = kw.get('mutable', 0)
-        self.size = kw.get('size')
-        self.nooffset = kw.get('nooffset', 0)
-        self.undeclared = kw.get('undeclared', 0)
-        self.childnames = kw.get('childnames')
+        self.mutable = mutable
+        self.size = size
+        self.nooffset = nooffset
+        self.undeclared = undeclared
+        self.childnames = childnames
         if self.size:
             t = type(self.size)
             if t in _inttypes:
@@ -305,10 +307,11 @@ class Array(TypeCode):
             offset += 1
         return v
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', childnames=None,
+    **kw):
         if not self.mutable and sw.Known(pyobj): return
         objid = '%x' % id(pyobj)
-        n = kw.get('name', self.oname) or ('E' + objid)
+        n = name or self.oname or ('E' + objid)
         offsettext = ''
         if not self.sparse and not self.nooffset:
             offset, end = 0, len(pyobj)
@@ -320,9 +323,9 @@ class Array(TypeCode):
         else:
             idtext = ' id="%s"' % objid
         print >>sw, '<%s%s%s%s SOAP-ENC:arrayType="%s">' % \
-                (n, kw.get('attrtext', ''), offsettext, idtext, self.atype)
+                (n, attrtext, offsettext, idtext, self.atype)
         d = {}
-        kn = kw.get('childnames', self.childnames)
+        kn = childnames or self.childnames
         if kn:
             d['name'] = kn
         elif not self.ofwhat.aname:

@@ -14,9 +14,9 @@ class _Map(TypeCode):
     '''
     parselist = [ (Apache.NS, 'Map') ]
 
-    def __init__(self, pname=None, **kw):
+    def __init__(self, pname=None, aslist=0, **kw):
         TypeCode.__init__(self, pname, **kw)
-        self.aslist = kw.get('aslist', 0)
+        self.aslist = aslist
         self.tc = _Struct(None, [ _Any('key'), _Any('value') ], inline=1)
 
     def parse(self, elt, ps):
@@ -35,13 +35,13 @@ class _Map(TypeCode):
                 v[d['key']] = d['value']
         return v
 
-    def serialize(self, sw, pyobj, **kw):
-        n = kw.get('name', self.oname) or 'E%x' % id(pyobj)
+    def serialize(self, sw, pyobj, name=None, attrtext=None, **kw):
+        n = name or self.oname or 'E%x' % id(pyobj)
         if self.typed:
             tstr = ' xsi:type="A:Map" xmlns:A="%s"' % Apache.NS
         else:
             tstr = ''
-        print >>sw, "<%s%s%s>" % (n, kw.get('attrtext', ''), tstr)
+        print >>sw, "<%s%s%s>" % n, attrtext or '', tstr
         if self.aslist:
             for k,v in pyobj:
                 self.tc.serialize(sw, {'key': k, 'value': v}, name='item')

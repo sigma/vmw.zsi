@@ -67,8 +67,8 @@ class Duration(TypeCode):
             raise EvaluateException(str(e), ps.Backtrace(elt))
         return retval
 
-    def serialize(self, sw, pyobj, **kw):
-        n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
+        n = name or self.oname or ('E%x' % id(pyobj))
         if 1 in map(lambda x: x < 0, pyobj[0:6]):
             pyobj = map(abs, pyobj)
             neg = '-'
@@ -80,8 +80,7 @@ class Duration(TypeCode):
             tstr = ' xsi:type="xsd:duration"'
         else:
             tstr = ''
-        print >>sw, '<%s%s%s>%s</%s>' % \
-                (n, kw.get('attrtext', ''), tstr, val, n)
+        print >>sw, '<%s%s%s>%s</%s>' % (n, attrtext, tstr, val, n)
 
 class Gregorian(TypeCode):
     '''Gregorian times.
@@ -102,10 +101,10 @@ class Gregorian(TypeCode):
             raise EvaluateException(str(e), ps.Backtrace(elt))
         return retval
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         if type(pyobj) in _floattypes or type(pyobj) in _inttypes:
             pyobj = time.gmtime(pyobj)
-        n = kw.get('name', self.oname) or ('E%x' % id(pyobj))
+        n = name or self.oname or ('E%x' % id(pyobj))
         d = {}
         if 1 in map(lambda x: x < 0, pyobj[0:6]):
             pyobj = map(abs, pyobj)
@@ -119,8 +118,7 @@ class Gregorian(TypeCode):
             tstr = ' xsi:type="xsd:%s"' % self.tag
         else:
             tstr = ''
-        print >>sw, '<%s%s%s>%s</%s>' % \
-                    (n, kw.get('attrtext', ''), tstr, val, n)
+        print >>sw, '<%s%s%s>%s</%s>' % (n, attrtext, tstr, val, n)
 
 class gDateTime(Gregorian):
     '''A date and time.

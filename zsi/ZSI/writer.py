@@ -26,12 +26,13 @@ _reserved_ns = {
 class SoapWriter:
     '''SOAP output formatter.'''
 
-    def __init__(self, out, **kw):
+    def __init__(self, out,
+    envelope=1, encoding=SOAP.ENC, header=None, nsdict=None, **kw):
         self.out, self.callbacks, self.memo, self.closed = \
             out, [], [], 0
-        nsdict = kw.get('nsdict', {})
-        self.envelope = kw.get('envelope', 1)
-        self.encoding = kw.get('encoding', SOAP.ENC)
+        nsdict = nsdict or {}
+        self.envelope = envelope
+        self.encoding = encoding
 
         if not self.envelope: return
         print >>self, '<SOAP-ENV:Envelope\n' \
@@ -44,7 +45,6 @@ class SoapWriter:
             print >>self, '\n  SOAP-ENV:encodingStyle="%s"' % self.encoding,
         if nsdict: self.writeNSdict(nsdict)
         print >>self, '>'
-        header = kw.get('header')
         if header:
             print >>self, '<SOAP-ENV:Header>'
             if type(header) in _stringtypes:
@@ -60,9 +60,9 @@ class SoapWriter:
     def serialize(self, pyobj, typecode=None, root=None, **kw):
         '''Serialize a Python object to the output stream.
         '''
-        if typecode == None: typecode = pyobj.__class__.__dict__['typecode']
+        if typecode == None: typecode = pyobj.__class__.typecode
         if TypeCode.typechecks and type(pyobj) == types.InstanceType and \
-        not typecode.__dict__.has_key('pyclass'):
+        not hasattr(typecode, 'pyclass'):
             pass
             # XXX XML ...
 #           raise TypeError('Serializing Python object with other than Struct.')

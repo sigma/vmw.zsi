@@ -66,7 +66,8 @@ class MIMEResolver:
     '''Multi-part MIME resolver -- SOAP With Attachments, mostly.
     '''
 
-    def __init__(self, ct, f, **kw):
+    def __init__(self, ct, f, next=None, uribase='thismessage:/',
+    seekable=0, **kw):
         # Get the boundary.  It's too bad I have to write this myself,
         # but no way am I going to import cgi for 10 lines of code!
         for param in ct.split(';'):
@@ -81,10 +82,10 @@ class MIMEResolver:
             raise ValueError('boundary parameter not found')
 
         self.id_dict, self.loc_dict, self.parts = {}, {}, []
-        self.next = kw.get('next')
-        self.base = kw.get('uribase', 'thismessage:/')
+        self.next = next
+        self.base = uribase
 
-        mf = multifile.MultiFile(f, kw.get('seekable', 0))
+        mf = multifile.MultiFile(f, seekable)
         mf.push(boundary)
         while mf.next():
             head = mimetools.Message(mf)

@@ -24,7 +24,7 @@ def GetClientBinding():
     '''
     return _client_binding
 
-def _Dispatch(ps, modules, SendResponse, SendFault, **kw):
+def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0, **kw):
     '''Find a handler for the SOAP request in ps; search modules.
     Call SendResponse or SendFault to send the reply back, appropriately.
     '''
@@ -48,8 +48,8 @@ def _Dispatch(ps, modules, SendResponse, SendFault, **kw):
         handler = handlers[0]
 
         _client_binding = ClientBinding(ps)
-        if kw.get('docstyle', 0):
-            result = handle(ps.body_root)
+        if docstyle:
+            result = handler(ps.body_root)
         else:
             data = _child_elements(ps.body_root)
             if len(data) == 0:
@@ -147,11 +147,11 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         _Dispatch(ps, self.server.modules, self.send_xml, self.send_fault,
             docstyle=self.server.docstyle)
 
-def AsServer(**kw):
-    address = ('', kw.get('port', 80))
+def AsServer(port=80, modules=None, docstyle=0, **kw):
+    address = ('', port)
     httpd = HTTPServer(address, SOAPRequestHandler)
-    httpd.modules = kw.get('modules')
-    httpd.docstyle = kw.get('docstyle', 0)
+    httpd.modules = modules
+    httpd.docstyle = docstyle
     httpd.serve_forever()
 
 if __name__ == '__main__': print _copyright
