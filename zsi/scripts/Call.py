@@ -48,9 +48,9 @@ class Results:
         result = obj.__dict__[resultName]
             # one top-level result is returned, with sub-structures
         setattr(self, '_result', result)
-        resultList = getattr(result, 'ofwhat', None)
-        if resultList:
-            for item in resultList:
+        ofwhat = getattr(result, 'ofwhat', None)
+        if ofwhat:
+            for item in ofwhat:
                 self.resultDict[item.aname] = result.__dict__[item.aname]
                 setattr(self._result, item.aname, result.__dict__[item.aname])
         else:
@@ -73,20 +73,25 @@ class Results:
             resultList.append('_result = %s\n' % self._result)
         else:
             for name, obj in self.resultDict.items():
-                self.recurse_fields('self._result.', name, None, obj, resultList, 0)
+                self.recurse_fields('self._result.', name, obj, resultList, 0)
         return ''.join(resultList)
+        #return ''
 
 
-    def recurse_fields(self, fieldStr, name, parent, obj, resultList, level):
+    def recurse_fields(self, fieldStr, aname, obj, resultList, level):
         """Recursively generates list of parameter names and
            their values.
         """
-        aname = getattr(obj, 'aname', None)
-        if aname:
-            if aname.find('__') == 0:
-                objName = obj.aname[1:]
-            else:
-                objName = obj.aname
+        if (type(obj) is list):
+            print 'list ', obj
+            ctr = 0
+            for item in obj:
+                    # include list subscript
+                appendStr = '%s[%d].' % (aname, ctr)
+                self.recurse_fields(fieldStr + appendStr, aname, item,
+                                    resultList, level+1)
+                ctr += 1
+            return
         pyclass = getattr(obj, 'pyclass', None)
         arrayType = False
             # check to see whether element is an array
@@ -94,73 +99,73 @@ class Results:
             className = pyclass.__name__
             if className.find('ArrayOf') == 0:
                 arrayType = True
-        if (type(obj) is list):
-            ctr = 0
-            for item in obj:
-                    # include list subscript
-                appendStr = '%s[%d].' % (name, ctr)
-                self.recurse_fields(fieldStr + appendStr, name, obj, item,
-                                    resultList, level+1)
-                ctr += 1
-            return
         if arrayType:
+            print 'array ', obj
             ctr = 0
             for item in obj.ofwhat:
                     # include list subscript
-                appendStr = '%s[%d].%s' % (objName, ctr, item.aname)
-                testStr = '%s.%s' % (objName, item.aname)
-                    # don't go any further is field is None
+                appendStr = '%s[%d].%s' % (aname, ctr, item.aname)
+                testStr = '%s.%s' % (aname, item.aname)
+                    # don't go any further if field is None
                 result = eval(fieldStr + testStr)
                 if result:
-                    self.recurse_fields(fieldStr + appendStr + '.', name, obj,
+                    self.recurse_fields(fieldStr + appendStr + '.', aname,
                                         item, resultList, level+1)
                 ctr += 1
             return
-                # Get name of previous field, stripping off any list
-                # subscripts or trailing periods.
-        indx = fieldStr[:-1].rfind('.')
-        testName = fieldStr[indx+1:]
-        indx = testName.find('[')
-        if indx != -1:
-            testName = testName[:indx]
-        if testName[-1] == '.':
-            testName = testName[:-1]
+
                 # if compound element, recurse
         if isinstance(obj, ZSI.TC.Struct):
             if type(obj.ofwhat) is tuple:
                 for tc in obj.ofwhat:
                     if isinstance(tc, ZSI.TC.Struct):
-                            # make sure previous field is printed, if not
-                            # already
-                        if testName == name:
+                        appendStr = tc.aname + '.'
+                        if self.checkName(fieldStr, aname):
+                            appendStr = aname + '.' + tc.aname + '.'
+                        else:
                             appendStr = tc.aname + '.'
-                        else:
-                            appendStr = name + '.' + tc.aname + '.'
                         self.recurse_fields(fieldStr + appendStr, tc.aname,
-                                        obj, tc, resultList, level+1)
+                                        tc, resultList, level+1)
                     else:
-                            # at leaf, get final value
-                        if testName == name:
-                            fname = fieldStr + tc.aname
+                        # simple type:  at leaf, get final value
+                        if self.checkName(fieldStr, aname):
+                            fname = fieldStr + aname + '.' + tc.aname
                         else:
-                            fname = fieldStr + name + '.' + tc.aname
+                            fname = fieldStr + tc.aname
                         resultList.append('%s = %s\n' % (fname, eval(fname)))
-            else:   # this happens in some cases, ofwhat not always a tuple
-                if testName == name:
-                    appendStr = obj.ofwhat.aname + '.'
-                else:       # make sure previous field printed
-                    appendStr = name + '.' + obj.ofwhat.aname + '.'
+
+            else:   # case of a bug in this code or because really happens?
+                print "****************"
+                appendStr = obj.ofwhat.aname + '.'
                 self.recurse_fields(fieldStr + appendStr, obj.ofwhat.aname,
-                                    obj, obj.ofwhat, resultList, level+1)
+                                    obj.ofwhat, resultList, level+1)
             return
 
             # at leaf, may be typecode or Python type
         if isinstance(obj, ZSI.TC.TypeCode):
-            fname = fieldStr + objName
+            fname = fieldStr + aname
                 # print name and its value
             resultList.append('%s = %s\n' % (fname, eval(fname)))
 
         else:
-            fname = fieldStr + name
+            fname = fieldStr + aname
             resultList.append('%s =  %s\n' % (fname, obj))
+
+
+        
+    def checkName(self, fieldStr, aname):
+
+        # Get name of previous field, stripping off any list
+        # subscripts or trailing periods.
+        indx = fieldStr[:-1].rfind('.')
+        testname = fieldStr[indx+1:]
+        indx = testname.find('[')
+        if indx != -1:
+            testname = testname[:indx]
+        if testname[-1] == '.':
+            testname = testname[:-1]
+        if testname == aname:
+            return False
+        else:
+            return True
 
