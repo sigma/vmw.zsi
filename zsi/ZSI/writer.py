@@ -6,11 +6,11 @@
 from ZSI import _copyright, ZSI_SCHEMA_URI
 from ZSI import _stringtypes, _seqtypes
 from ZSI.TC import TypeCode
+from ZSI.wstools.Namespaces import XMLNS, SOAP, SCHEMA
 try:
     from xml.dom.ext import Canonicalize
-    from xml.ns import XMLNS, SOAP, SCHEMA
 except:
-    from ZSI.compat import Canonicalize, XMLNS, SOAP, SCHEMA
+    from ZSI.compat import Canonicalize
 import types
 
 _standard_ns = [ ('xml', XMLNS.XML), ('xmlns', XMLNS.BASE) ]

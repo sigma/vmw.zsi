@@ -5,21 +5,7 @@ No copyright violations -- we're only using parts of PyXML that we
 wrote.
 """
 
-from ZSI import _copyright
-
-class SOAP:
-    ENV         = "http://schemas.xmlsoap.org/soap/envelope/"
-    ENC         = "http://schemas.xmlsoap.org/soap/encoding/"
-    ACTOR_NEXT  = "http://schemas.xmlsoap.org/soap/actor/next"
-
-class SCHEMA:
-    XSD1        = "http://www.w3.org/1999/XMLSchema"
-    XSD2        = "http://www.w3.org/2000/10/XMLSchema"
-    XSD3        = "http://www.w3.org/2001/XMLSchema"
-    XSI1        = "http://www.w3.org/1999/XMLSchema-instance"
-    XSI2        = "http://www.w3.org/2000/10/XMLSchema-instance"
-    XSI3        = "http://www.w3.org/2001/XMLSchema-instance"
-    BASE        = XSD3
+from ZSI import _attrs, _children, _copyright
 
 _copyright += "\n\nPortions are also: "
 _copyright += '''Copyright 2001, Zolera Systems Inc.  All Rights Reserved.
@@ -34,16 +20,9 @@ or
 '''
 
 from xml.dom import Node
-try:
-    from xml.ns import XMLNS
-except:
-    class XMLNS:
-        BASE = "http://www.w3.org/2000/xmlns/"
-        XML = "http://www.w3.org/XML/1998/namespace"
+from ZSI.wstools.Namespaces import XMLNS
 import cStringIO as StringIO
 
-_attrs = lambda E: (E.attributes and E.attributes.values()) or []
-_children = lambda E: E.childNodes or []
 _IN_XML_NS = lambda n: n.namespaceURI == XMLNS.XML
 
 # Does a document/PI has lesser/greater document order than the
@@ -340,5 +319,6 @@ def Canonicalize(node, output=None, **kw):
         s = StringIO.StringIO()
         _implementation(node, s.write, **kw)
         return s.getvalue()
+
 
 if __name__ == '__main__': print _copyright

@@ -5,11 +5,12 @@
 
 from ZSI import _copyright, _children, _child_elements, \
         _textprotect, _stringtypes, _seqtypes, _Node, SoapWriter
+
+from ZSI.wstools.Namespaces import SOAP
 try:
-    from xml.ns import SOAP
     from xml.dom.ext import Canonicalize
 except:
-    from ZSI.compat import SOAP, Canonicalize
+    from ZSI.compat import Canonicalize
 import traceback, cStringIO as StringIO
 
 class Fault:

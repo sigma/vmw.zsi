@@ -8,10 +8,9 @@
 import re, sys
 import ZSI
 from ZSI.typeinterpreter import BaseTypeInterpreter
-from ZSI.wstools.Utility import Collection
+from ZSI.wstools.Utility import Collection, SplitQName
+from ZSI.wstools.Namespaces import SCHEMA
 import xml
-from xml.dom.ext import SplitQName
-from xml.ns import SCHEMA
 
 ###########################################################################
 # "Virtual" superclasses for the wsdl adapters

@@ -5,9 +5,9 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, re, weakref, string, warnings
-from xml.dom.ext import SplitQName
-from xml.ns import SOAP, SCHEMA
 import ZSI
+from ZSI.wstools.Utility import SplitQName
+from ZSI.wstools.Namespaces import SOAP, SCHEMA
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.wsdlInterface import ZSIWsdlAdapter, ZSISchemaAdapter
 

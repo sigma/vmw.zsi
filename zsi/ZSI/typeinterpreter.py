@@ -13,8 +13,8 @@ from ZSI import _copyright, _children, _child_elements, \
 from ZSI.TCcompound import _check_typecode_list,_find_arrayoffset , \
      _find_arrayposition,_offset_pat,_position_pat
 
-from xml.dom.ext import SplitQName
-from xml.ns import SOAP, SCHEMA
+from ZSI.wstools.Utility import SplitQName
+from ZSI.wstools.Namespaces import SOAP, SCHEMA
 
 DEBUG  = 0
 def print_debug(msg, level=1, *l, **kw):

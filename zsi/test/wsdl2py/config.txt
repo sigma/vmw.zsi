@@ -27,9 +27,9 @@ test_FreeDBService = complex_tests com.systinet.demo.freedb.FreeDBService
 test_TerraService = complex_tests TerraService
 test_GlobalWeather_gw = complex_tests GlobalWeather
 test_GlobalWeather_si = complex_tests GlobalWeather
-test_threatService = complex_tests threatService
+#test_threatService = complex_tests threatService
 test_XMethodsQuery = complex_tests XMethodsQuery
-#test_ZipCodeResolver = complex_tests ZipCodeResolver
+test_ZipCodeResolver = complex_tests ZipCodeResolver
 test_noschemas = no_schemas Unused
 
 

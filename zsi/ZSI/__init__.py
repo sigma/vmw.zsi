@@ -39,10 +39,6 @@ of the copyright holder.
 ##
 ##  Stuff imported from elsewhere.
 from xml.dom import Node as _Node
-try:
-    from xml.ns import SOAP as _SOAP, SCHEMA as _SCHEMA
-except:
-    from ZSI.compat import SOAP as _SOAP, SCHEMA as _SCHEMA
 import types as _types
 
 ##
@@ -64,6 +60,12 @@ _children = lambda E: E.childNodes or []
 _child_elements = lambda E: [ n for n in (E.childNodes or [])
                         if n.nodeType == _Node.ELEMENT_NODE ]
 
+##
+##  Stuff imported from elsewhere.
+from ZSI.wstools.Namespaces import SOAP as _SOAP, SCHEMA as _SCHEMA
+
+##
+##  Low-level DOM oriented utilities; useful for typecode implementors.
 _find_arraytype = lambda E: E.getAttributeNS(_SOAP.ENC, "arrayType")
 _find_encstyle = lambda E: E.getAttributeNS(_SOAP.ENV, "encodingStyle")
 try:
@@ -89,6 +91,7 @@ _find_type = lambda E: _find_xsi_attr(E, "type")
 
 _textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
 _textunprotect = lambda s: s.replace('&lt;', '<').replace('&amp;', '&')
+
 
 def _valid_encoding(elt):
     '''Does this node have a valid encoding?

@@ -8,11 +8,12 @@ from ZSI import _copyright, _children, _child_elements, \
         _find_encstyle, _textprotect, _textunprotect, \
         _find_xsi_attr, _find_type, _Node, \
         EvaluateException, _valid_encoding
+
+from ZSI.wstools.Namespaces import SCHEMA, SOAP
 try:
     from xml.dom.ext import Canonicalize
-    from xml.ns import SCHEMA, SOAP
 except:
-    from ZSI.compat import Canonicalize, SCHEMA, SOAP
+    from ZSI.compat import Canonicalize
 
 import re, types, time
 

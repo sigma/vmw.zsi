@@ -7,10 +7,8 @@ from ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
         _backtrace, EvaluateException, ParseException, _valid_encoding, \
         _Node, _find_attr
 import types
-try:
-    from xml.ns import SOAP, XMLNS
-except:
-    from ZSI.compat import SOAP, XMLNS
+
+from ZSI.wstools.Namespaces import SOAP, XMLNS
 
 _find_actor = lambda E: E.getAttributeNS(SOAP.ENV, "actor") or None
 _find_mu = lambda E: E.getAttributeNS(SOAP.ENV, "mustUnderstand")

@@ -8,10 +8,7 @@ from ZSI import _copyright, _children, _child_elements, \
         _find_type, \
         EvaluateException
 from ZSI.TC import TypeCode, Any
-try:
-    from xml.ns import SCHEMA, SOAP
-except:
-    from ZSI.compat import SCHEMA, SOAP
+from ZSI.wstools.Namespaces import SCHEMA, SOAP
 import re, types
 
 _find_arrayoffset = lambda E: E.getAttributeNS(SOAP.ENC, "offset")

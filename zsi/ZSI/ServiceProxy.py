@@ -7,8 +7,8 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 
-from xml.dom.ext import SplitQName
-from xml.ns import WSDL
+from ZSI.wstools.Utility import SplitQName
+from ZSI.wstools.Namespaces import WSDL
 from ZSI import *
 from ZSI.client import *
 from ZSI.TC import Any
@@ -206,25 +206,16 @@ class ServiceProxy:
         elementName = element.getAttribute('name')
         tp = element.getTypeDefinition('type')
 
-        typeObj = None
         if not (tp or element.content):
             nsuriType,localName = element.getAttribute('type')
+            minOccurs = int(element.getAttribute('minOccurs'))
+            maxOccurs = int(element.getAttribute('maxOccurs'))
             typeClass = self._getTypeClass(nsuriType,localName)
             
-            typeObj = typeClass(elementName)
+            return typeClass(elementName, repeatable=maxOccurs>1, optional=not minOccurs)
         elif not tp:
             tp = element.content
-
-        if not typeObj:
-            typeObj = self._getType(tp, elementName, literal, local, namespaceURI)
-
-        minOccurs = int(element.getAttribute('minOccurs'))
-        typeObj.optional = not minOccurs
-
-        maxOccurs = element.getAttribute('maxOccurs')
-        typeObj.repeatable = (maxOccurs == 'unbounded') or (int(maxOccurs) > 1)
-
-        return typeObj
+        return self._getType(tp, elementName, literal, local, namespaceURI)
 
     def _getType(self, tp, name, literal, local, namespaceURI):
         """Returns a typecode instance representing the passed in type and name.
