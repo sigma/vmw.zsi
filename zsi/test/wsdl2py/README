@@ -2,6 +2,15 @@ There are two sets of tests in this directory.  One set of
 tests is contained in test_wsdl2py.py, and tests the generation
 and compilation of code (the services and types files).
 
+These tests expect to find a configuration file (config.txt) in the
+current directory.  This is most easily achieved by switching to the
+directory containing this README file and setting PYTHONPATH to point
+to the directory containing the version of the ZSI package you want to
+test.  For example, if your want to test the ZSI constructed by
+"python setup.py build" run in the top-level of the ZSI distribution
+or checkout, you would switch to this directory and run
+"PYTHONPATH=../../build/lib python runTests.py".
+
 By default, tests are done against WSDL's in all relevant
 sections in config.txt (no_schemas, simple_types, and 
 complex_types).  To run against just a specific section, 
