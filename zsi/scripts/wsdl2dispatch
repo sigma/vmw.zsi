@@ -94,7 +94,7 @@ class ServerCallbackDescription:
 
         uri = urlparse.urlparse( self.location )[2]
         
-        d  = "\n%sdef __init__(self, post='%s'):" % (ID1, uri)
+        d  = "\n%sdef __init__(self, post='%s', **kw):" % (ID1, uri)
         d += '\n%sServiceSOAPBinding.__init__(self, post)' % ID2
 
         return d
