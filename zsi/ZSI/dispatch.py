@@ -54,8 +54,8 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                 try:
                     try:
                         import ComplexTypes
-                        type = data[0]._get_localName()
-                        tc = eval('ComplexTypes.%s.typecode' % type)
+                        type = data[0].localName
+                        tc = getattr(ComplexTypes, type).typecode
                     except:
                         tc = TC.Any()
                     arg = [ tc.parse(e, ps) for e in data ]

@@ -260,31 +260,31 @@ class Binding:
 
             # check for array type, loop and process if found
             for attr in _attrs(data[0]):
-                if attr._get_localName().find('arrayType') >= 0:
+                if attr.localName.find('arrayType') >= 0:
                     data = _child_elements(data[0])
 
                     toReturn = []
                     for node in data:
-                        type = node._get_localName()
+                        type = node.localName
 
                         # handle case where multiple elements are returned
                         if type.find('element') >= 0:
                             node = _child_elements(node)[0]
-                            type = node._get_localName()
+                            type = node.localName
                         try:
                             # yes this is duplicated code and needs clean-up
                             import ComplexTypes
-                            clazz = eval('ComplexTypes.%s' % type)
+                            clazz = getattr(ComplexTypes, type)
                             instance = clazz.typecode.parse(node, self.ps)
                             toReturn.append(instance)
                         except Exception, e:
                             toReturn.append(tc.parse(node, self.ps))
                     return toReturn
             
-            type = data[0]._get_localName()
+            type = data[0].localName
             try:
                 import ComplexTypes
-                instance = eval('ComplexTypes.%s' % type)
+                instance = getattr(ComplexTypes, type)
                 return instance.typecode.parse(data[0], self.ps)
             except Exception, e:
                 return tc.parse(data[0], self.ps)
