@@ -6,10 +6,10 @@
 ###########################################################################
 import sys, unittest
 import time
-from ZSI import EvaluateException
 
-import utils
+from ZSI import FaultException
 from paramWrapper import ResultsToStr
+import utils
 
 """
 Unittest for contacting the SBGGetAirFareQuoteService Web service.
@@ -42,12 +42,21 @@ class SBGAirFareQuoteTest(unittest.TestCase):
         request._in0._returnDate = dateTime
         request._in0._originAirport = 'SFO'
         request._in0._destinationAirport = 'CMH'
-        response = portType.getAirFareQuote(request)
+        try:
+            response = portType.getAirFareQuote(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
+
 
     def test_getAirlines(self):
         request = portType.inputWrapper('getAirlines')
-        response = portType.getAirlines(request)
+        try:
+            response = portType.getAirlines(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
     
 

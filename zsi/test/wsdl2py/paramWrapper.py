@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ############################################################################
 # David W. Robertson, LBNL
 # See LBNLCopyright for copyright notice!

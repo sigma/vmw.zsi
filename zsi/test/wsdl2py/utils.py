@@ -18,9 +18,10 @@ from clientGenerator import ClientGenerator
 utils:
     This module contains utility functions for use by test case modules, a
     class facilitating the use of ConfigParser with multiple test cases, a
-    class encapsulating comparisons against a test file, and a test loader
-    class with a different loading strategy than the default
-    unittest.TestLoader.
+    class facilitating test setup, a class encapsulating comparisons against
+    a test file, a test program class allowing additional command-line
+    arguments, and a test loader class with a different loading strategy than
+    the default unittest.TestLoader.
 """
 
 class ConfigHandler(ConfigParser.ConfigParser):
@@ -90,6 +91,15 @@ def setUpWsdl(path):
         wsdl = WSDLReader().loadFromFile(path)
     return wsdl
 
+
+def failureException(exc, msg):
+    if msg.str.startswith('Connection timed out'):
+        print msg
+        sys.stdout.flush()
+        return False
+    else:
+        raise
+        
 
 class TestSetUp(ConfigParser.ConfigParser):
 

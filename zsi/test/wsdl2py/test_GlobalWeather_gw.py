@@ -5,7 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import EvaluateException
+from ZSI import FaultException
 
 import utils
 from paramWrapper import ResultsToStr
@@ -38,7 +38,11 @@ class GlobalWeatherTest(unittest.TestCase):
         request = portType.inputWrapper('getWeatherReport')
             # airport code
         request._code = 'SFO'
-        response = portType.getWeatherReport(request)
+        try:
+            response = portType.getWeatherReport(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
 
 def makeTestSuite():

@@ -1,10 +1,10 @@
-#!/usr/local/bin/python
 ############################################################################
 # Joshua Boverhof<JRBoverhof@lbl.gov>, LBNL
 # Monte Goode <MMGoode@lbl.gov>, LBNL
 # David Robertson <DWRobertson@lbl.gov>, LBNL
-# See Copyright for copyright notice!
+# See LBNLCopyright for copyright notice!
 ###########################################################################
+
 import sys
 import ZSI
 from ZSI.wsdl2python import WriteServiceModule

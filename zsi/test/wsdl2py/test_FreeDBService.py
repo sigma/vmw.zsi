@@ -26,23 +26,47 @@ class FreeDBServiceTest(unittest.TestCase):
         request._discId = '8509ff0a'
         request._artist = 'Jayhawks'
         request._category = 'rock'
-        response = portType.getDetails(request)
+        try:
+            response = portType.getDetails(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
+
 
     def test_search(self):
-        response = portType.search('Ted Nugent and the Amboy Dukes')
+        try:
+            response = portType.search('Ted Nugent and the Amboy Dukes')
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
+
 
     def test_searchByTitle(self):
-        response = portType.searchByTitle('Ummagumma')
+        try:
+            response = portType.searchByTitle('Ummagumma')
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
+
 
     def test_searchByTrack(self):
-        response = portType.searchByTrack('Species of Animals')
+        try:
+            response = portType.searchByTrack('Species of Animals')
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
 
+
     def test_searchByArtist(self):
-        response = portType.searchByArtist('Steppenwolf')
+        try:
+            response = portType.searchByArtist('Steppenwolf')
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
     
 

@@ -40,36 +40,60 @@ class ZipCodeResolverTest(unittest.TestCase):
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = portType.CorrectedAddressHtml(request)
+        try:
+            response = portType.CorrectedAddressHtml(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         print ResultsToStr(response)
     
+
     def test_CorrectedAddressXml(self):
         request = portType.inputWrapper('CorrectedAddressXml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = portType.CorrectedAddressXml(request)
+        try:
+            response = portType.CorrectedAddressXml(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
     def test_FullZipCode(self):
         request = portType.inputWrapper('FullZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = portType.FullZipCode(request)
+        try:
+            response = portType.FullZipCode(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
     def test_ShortZipCode(self):
         request = portType.inputWrapper('ShortZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        response = portType.ShortZipCode(request)
+        try:
+            response = portType.ShortZipCode(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
     def test_VersionInfo(self):
         request = portType.inputWrapper('VersionInfo')
-        response = portType.VersionInfo(request)   
+        try:
+            response = portType.VersionInfo(request)   
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
 
 

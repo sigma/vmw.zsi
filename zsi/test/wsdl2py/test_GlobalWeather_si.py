@@ -5,7 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import EvaluateException
+from ZSI import FaultException
 
 import utils
 from paramWrapper import ResultsToStr
@@ -36,44 +36,77 @@ class StationInfoTest(unittest.TestCase):
     def test_getStation(self):
         request = portType.inputWrapper('getStation')
         request._code = 'SFO'
-        response = portType.getStation(request)
+        try:
+            response = portType.getStation(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
     def test_isValidCode(self):
         request = portType.inputWrapper('isValidCode')
         request._code = 'SFO'
-        response = portType.isValidCode(request)
+        try:
+            response = portType.isValidCode(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
     def test_listCountries(self):
         request = portType.inputWrapper('listCountries')
-        response = portType.listCountries(request)
+        try:
+            response = portType.listCountries(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
     
+
     def test_searchByCode(self):
         request = portType.inputWrapper('searchByCode')
         request._code = 'SFO'
-        response = portType.searchByCode(request)
+        try:
+            response = portType.searchByCode(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
     def test_searchByCountry(self):
         request = portType.inputWrapper('searchByCountry')
         request._country = 'Australia'
-        response = portType.searchByCountry(request)
+        try:
+            response = portType.searchByCountry(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
     
         # can't find what valid name is, returns empty result
     def test_searchByName(self):
         request = portType.inputWrapper('searchByName')
         request._name = 'San Francisco Airport'
-        response = portType.searchByName(request)
+        try:
+            response = portType.searchByName(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
+
     
         # can't find what valid region is, returns empty result
     def test_searchByRegion(self):
         request = portType.inputWrapper('searchByRegion')
         request._region = 'Europe'
-        response = portType.searchByRegion(request)
+        try:
+            response = portType.searchByRegion(request)
+        except FaultException, msg:
+            if not utils.failureException(FaultException, msg):
+                return
         testdiff.failUnlessEqual(ResultsToStr(response))
     
 
