@@ -135,10 +135,10 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(text)
         self.wfile.flush()
 
-    def send_fault(self, f):
+    def send_fault(self, f, code=500):
         '''Send a fault.
         '''
-        self.send_xml(f.AsSOAP(), 500)
+        self.send_xml(f.AsSOAP(), code)
 
     def do_POST(self):
         '''The POST command.
