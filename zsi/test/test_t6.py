@@ -34,7 +34,8 @@ class t6TestCase(unittest.TestCase):
             FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
             self.fail()
 
-        print '**', dict['stringtest'], '**'
+        self.failUnlessEqual(dict['stringtest'], strExtTest, 
+                            "Failed to extract stringtest correctly")
         print base64.encodestring(cid['partii@zolera.com'].read()) 
         v = dict['b64']
         print type(v), 'is type(v)' 
@@ -142,7 +143,14 @@ Content-ID: <12@zolera.com>
 --------------68E4BAC5B266315E42428C64--
 '''
 
+strExtTest = '''
+Digitial Signatures in a Web Services World
 
+An influential Forrestor report created the term inverted security: it's
+not about who you keep out, it's about who you let in.  Customer portals,
+without a costly PKI deployment or application integration issues.
+
+'''
 
 if __name__ == "__main__" : main()
 
