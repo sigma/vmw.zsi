@@ -1476,7 +1476,7 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
         if isinstance( tp, ZSI.wstools.XMLSchema.ComplexType ) or \
                isinstance( tp, ZSI.wstools.XMLSchema.SimpleType ):
             return ZSISchemaDefinitionAdapter(tp)
-        elif isinstance( tp, ZSI.wstools.XMLSchema.ElementDeclaration ) or \
+        if isinstance( tp, ZSI.wstools.XMLSchema.ElementDeclaration ) or \
              isinstance( tp, ZSI.wstools.XMLSchema.ElementWildCard ) or \
              isinstance( tp, ZSI.wstools.XMLSchema.\
                          LocalElementDeclaration )or \
@@ -1491,8 +1491,7 @@ class ZSISchemaDefinitionAdapter(AdapterBase, SchemaDefinitionInterface):
         if isinstance( tp, ZSI.wstools.XMLSchema.AttributeGroupReference ):
             # we are currently not handling attributes...more soon...
             return None
-        else:
-            raise TypeError, 'unknown adapter type: %s' % tp
+        raise WsdlInterfaceLimitation, 'Limitation, can\'t handle XML Schema Item: %s' % tp.getItemTrace()
 
     def isDefinition(self):
         return True

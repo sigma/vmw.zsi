@@ -41,7 +41,8 @@ literal = False
 broke = False
 tests = test_GlobalWeather_si  test_XMethodsQuery
 
-#test_AmazonWebService: service expects locally declared elements to be in no namespace.
+# test_AmazonWebService: service expects locally declared elements to be in no namespace.
+# test_ThreatService: Bad WSDL, WSDLError: Invalid soap:fault binding element
 [rpc_encoded_broke]
 document = False
 literal = False

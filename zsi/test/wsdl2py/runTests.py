@@ -63,7 +63,7 @@ def collectTests():
 def main():
     """Gets tests to run from configuration file.
     """
-    unittest.TestProgram(defaultTest="collectTests")
+    unittest.TestProgram(defaultTest="workingTestSuite")
     
 if __name__ == "__main__" : main()
     

@@ -332,7 +332,6 @@ class ServiceDescription:
     """
     def __init__(self):
 	self.imports = []
-        return
 
     def write(self, fd=sys.stdout):
         """Write service instance contents.  Must call fromWsdl with
@@ -587,7 +586,6 @@ class ServiceDescription:
 
         if not hasSoapBinding:
            raise WsdlGeneratorError, 'no soap bindings available for service %s' % service.getName()
-        return
 
     def isSimpleElementDeclaration(self, op):
         
@@ -930,7 +928,6 @@ class ServiceDescription:
 
 		else:
                     raise WsdlGeneratorError, 'shouldnt happen'
-		return
 
 
 class SchemaDescription:
@@ -940,7 +937,6 @@ class SchemaDescription:
     def __init__(self):
         self.nsh = NamespaceHash()
         self.typeDict = {}
-        return
 
     def fromWsdl(self, schema, alternateWriter):
         """schema -- schema.Schema instance
@@ -1062,7 +1058,6 @@ class SchemaDescription:
             self.typeList  = []
             self.typeDict  = {}
             self.localDefs = []
-	    return
 
         def extractCode(self):
             formattedType = ''
@@ -1120,8 +1115,7 @@ class SchemaDescription:
                 self._fromAttribute(tp)
 
 	    else:
-		raise WsdlGeneratorError, 'WARNING: NOT HANDLED %s' \
-                      % (tp.__class__)
+		raise WsdlGeneratorError, 'Not supporting  %s' %(tp.getItemTrace())
 
             alias = self.nsh.getAlias(tp.getTargetNamespace())
             key = "%s.%s_Def" % (alias, tp.getName())
@@ -1130,7 +1124,6 @@ class SchemaDescription:
                     # add entry to type dictionary for later use in
                     # docstring generation
                 self.typeDict[key] = self.typeList
-	    return
 
         def _fromSimpleType(self, tp):
             
@@ -1167,8 +1160,10 @@ class SchemaDescription:
                     self.basector.set('\n%sZSI.TC.Any.__init__(self,pname=name,aname="_%%s" %% name , optional=1,repeatable=1, **kw)' % ID3)
 
                 self.typeDoc('optional=1', objName, typeName)
+            elif hasattr(tp, '_def'):
+                raise WsdlGeneratorError, 'Unable to process schema item:\n%s' %tp._def.getItemTrace()
             else:
-                raise WsdlGeneratorError, 'shouldnt happen'
+                raise WsdlGeneratorError, 'Confused, bailing out..'
 
         def _fromWildCard(self, tp):
             # XXX: not particularly trustworthy either.  pending further work.
@@ -1203,8 +1198,8 @@ class SchemaDescription:
                 self.initdef.set('\n%sdef __init__(self, name=None, ns=None, **kw):' % (ID2))
                 self.basector.set('\n%sStruct.__init__(self, self.__class__, [], pname="%s", aname="_%s", inline=1)' % (ID3,tp.getName(),tp.getName()))
             else:
-                raise WsdlGeneratorError, 'Unknown type(%s) not handled ' \
-                      % (etp.__class__)
+                raise WsdlGeneratorError, 'Expecting a type definition: ' \
+                      % (etp.getItemTrace())
 
         def _elementSimpleType(self, tp, etp):
 
@@ -1285,9 +1280,6 @@ class SchemaDescription:
                                           self.classvar.getvalue()))
                 self.initcode.set('\n%sname = name or self.__class__.literal\n%sns = ns or self.__class__.schema\n%s' % ( ID3, ID3, self.initcode.getvalue()))
                 
-                return
-
-
         def _fromComplexType(self, tp):
 
             if isinstance(tp, ZSI.wsdlInterface.ZSISchemaTypeAdapter ):
@@ -1349,8 +1341,6 @@ class SchemaDescription:
             typecodelist += ']'
 
             self._complexTypecodeLogic( typecodelist, tp.getTargetNamespace() )
-
-            return
 
         def _complexTypeComplexContent(self, tp):
 
@@ -1436,8 +1426,10 @@ class SchemaDescription:
                                          atype, tp.getTargetNamespace()))
                         
                     self.typeDoc('', '_element', typeName)
+                elif hasattr(tp, '_def'):
+                    raise WsdlGeneratorError, 'Failed to handle array: %s' %tp._def.getItemTrace()
                 else:
-                    raise WsdlGeneratorError, 'failed to handle array!'
+                    raise WsdlGeneratorError, 'Failed to handle array'
             elif '%s' % tc == 'ZSI.TC.Any':
                 # this is a 'special case' - it's possible in schema to
                 # extend an xsd:anyType - anyType is not currently
@@ -1455,10 +1447,10 @@ class SchemaDescription:
                 self._complexTypecodeLogic(typecodelist,
                                            tp.getTargetNamespace())
                 
+            elif hasattr(tp, '_def'):
+                raise WsdlGeneratorError, 'Failed to handle: %s' %tp._def.getItemTrace()
             else:
                 raise WsdlGeneratorError, 'failed to handle complex content'
-            
-            return
 
         def _complexTypeSimpleContent(self, tp):
             dt = tp.getDerivedTypes()
@@ -1502,9 +1494,13 @@ class SchemaDescription:
                                     % ID3)
                 self.basector.set('\n\n%s%s.__init__(self, name=name, ns=ns, **kw)' \
                                   %( ID3, dt.getDerivation() + '_Def'))
+            elif hasattr(tp, '_def'):
+                raise WsdlGeneratorError, \
+                      'Can\'t resolve complex derivation of simple content: ' \
+                      %tp._def.getItemTrace()
             else:
                 raise WsdlGeneratorError, \
-                      'could not determine simple content base'
+                      'confused in complex derivation of simple content'
 
 
         def _complexTypeAllOrSequence(self, tp, mg):
@@ -1603,11 +1599,11 @@ class SchemaDescription:
                                 
                         typecodelist  += '%s(name="%s",ns=ns%s), '\
                                          % (typeName, etp.getName(), occurs)
-                    elif e:
-                        raise WsdlGeneratorError, 'instance %s not handled '\
-                              % (e.getName())
+                    elif hasattr(e, '_dec'):
+                        raise WsdlGeneratorError, 'Confused by element: %s'\
+                              % (e._dec.getItemTrace())
                     else:
-                        raise WsdlGeneratorError, 'instance %s not handled '\
+                        raise WsdlGeneratorError, 'Confused by element: %s'\
                               % (e)
 
                     self.typeDoc(occurs, objName, typeName)
@@ -1618,6 +1614,9 @@ class SchemaDescription:
                     typeName = '%s.%s' % (nsp, e.getName()) + '_Dec'
                     typecodelist +='%s(ns=ns%s), '\
                                     %(typeName, occurs)
+                elif hasattr(e, '_dec'):
+                    raise WsdlGeneratorError, 'Confused by element: %s'\
+                          % (e._dec.getItemTrace())
                 else:
                     raise WsdlGeneratorError, 'instance %s not handled '\
                           % (e.__class__)
@@ -1632,65 +1631,9 @@ class SchemaDescription:
 
             self.allOptional = True
 
+            # Approximating use case, Using the All/Sequence gives 
+            # us immediate functionality.
             return self._complexTypeAllOrSequence( tp, mg )
-
-            # the rest of this is pending further work, using
-            # the All/Sequence gives us immediate functionality.
-
-            # we shall get back to this....
-
-            typecodelist = 'ZSI.TCcompound.Choice(['
-
-            self.initcode.set('\n%s# internal vars' % ID3)
-		    
-            for e in mg.getContent():
-                        
-                if e.isDeclaration() and e.isElement():
-                            
-                    etp = None
-                    if e.getType():
-                        etp = e.getType()
-				
-                    self.initcode.write('\n%sself._%s = None' \
-                                        % (ID2, e.getName()))
-                            
-                    if e.isAnyType():
-                        typecodelist += 'ZSI.TC.Any(pname="%s",aname="%s"), '\
-                                        %(e.getName(),e.getName())
-
-                    elif etp.isDefinition() and etp.isSimpleType():
-                        occurs = self._calculateOccurance(e)
-
-                        tpc = None
-                        tpc = etp.getTypeclass()
-
-                        typecodelist  += '%s(pname="%s",aname="_%s"%s), '\
-                                         %(tpc,e.getName(),e.getName(),
-                                           occurs)
-
-                    elif etp.isDefinition() and etp.isComplexType():
-                        typecodelist  += 'Struct(%s,%s().typecode,pname="%s",aname="_%s"), '\
-                                         %(etp.getName(),etp.getName(),
-                                           e.getName(),e.getName())
-			    
-                    elif etp:
-                        self.initcode.write('\n%sself._%s = None' % \
-                                            (ID2, e.getName()))
-                        typecodelist  += '%s("%s"), '\
-                                         %(etp.getName(), e.getName())
-                    elif e:
-                        raise WsdlGeneratorError, 'instance %s not handled '\
-                              %(e.getName())
-                    else:
-                        raise WsdlGeneratorError, \
-                              'instance %s not handled ' % (e)
-                else:
-                    raise WsdlGeneratorError, 'instance %s not handled '\
-                          %(e.__class__)
-            else:
-                    pass
-
-            return typecodelist
 
         def _complexTypecodeLogic( self, typecodelist, tns ):
 
