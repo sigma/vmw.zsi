@@ -10,9 +10,110 @@
 from string import join, strip, split
 from UserDict import UserDict
 from StringIO import StringIO
-from Transports import urlopen
 import xml.dom.minidom, weakref
 
+import string, httplib, smtplib, urllib, socket
+from TimeoutSocket import TimeoutSocket, TimeoutError
+from StringIO import StringIO
+from urlparse import urlparse
+from httplib import HTTPConnection, HTTPSConnection
+
+class HTTPResponse:
+    """Captures the information in an HTTP response message."""
+
+    def __init__(self, response):
+        self.status = response.status
+        self.reason = response.reason
+        self.headers = response.msg
+        self.body = response.read() or None
+        response.close()
+
+class TimeoutHTTP(HTTPConnection):
+    """A custom http connection object that supports socket timeout."""
+    def __init__(self, host, port=None, timeout=20):
+        HTTPConnection.__init__(self, host, port)
+        self.timeout = timeout
+
+    def connect(self):
+        self.sock = TimeoutSocket(self.timeout)
+        self.sock.connect((self.host, self.port))
+
+
+class TimeoutHTTPS(HTTPSConnection):
+    """A custom https object that supports socket timeout. Note that this
+       is not really complete. The builtin SSL support in the Python socket
+       module requires a real socket (type) to be passed in to be hooked to
+       SSL. That means our fake socket won't work and our timeout hacks are
+       bypassed for send and recv calls. Since our hack _is_ in place at
+       connect() time, it should at least provide some timeout protection."""
+    def __init__(self, host, port=None, timeout=20, **kwargs):
+        if not hasattr(socket, 'ssl'):
+            raise ValueError(
+                'This Python installation does not have SSL support.'
+                )
+        HTTPSConnection.__init__(self, str(host), port, **kwargs)
+        self.timeout = timeout
+
+    def connect(self):
+        sock = TimeoutSocket(self.timeout)
+        sock.connect((self.host, self.port))
+        realsock = getattr(sock.sock, '_sock', sock.sock)
+        ssl = socket.ssl(realsock, self.key_file, self.cert_file)
+        self.sock = httplib.FakeSocket(sock, ssl)
+
+def urlopen(url, timeout=20, redirects=None):
+    """A minimal urlopen replacement hack that supports timeouts for http.
+       Note that this supports GET only."""
+    scheme, host, path, params, query, frag = urlparse(url)
+    if not scheme in ('http', 'https'):
+        return urllib.urlopen(url)
+    if params: path = '%s;%s' % (path, params)
+    if query:  path = '%s?%s' % (path, query)
+    if frag:   path = '%s#%s' % (path, frag)
+
+    if scheme == 'https':
+        if not hasattr(socket, 'ssl'):
+            raise ValueError(
+                'This Python installation does not have SSL support.'
+                )
+        conn = TimeoutHTTPS(host, None, timeout)
+    else:
+        conn = TimeoutHTTP(host, None, timeout)
+
+    conn.putrequest('GET', path)
+    conn.putheader('Connection', 'close')
+    conn.endheaders()
+    response = None
+    while 1:
+        response = conn.getresponse()
+        if response.status != 100:
+            break
+        conn._HTTPConnection__state = httplib._CS_REQ_SENT
+        conn._HTTPConnection__response = None
+
+    status = response.status
+
+    # If we get an HTTP redirect, we will follow it automatically.
+    if status >= 300 and status < 400:
+        location = response.msg.getheader('location')
+        if location is not None:
+            response.close()
+            if redirects is not None and redirects.has_key(location):
+                raise RecursionError(
+                    'Circular HTTP redirection detected.'
+                    )
+            if redirects is None:
+                redirects = {}
+            redirects[location] = 1
+            return urlopen(location, timeout, redirects)
+        raise HTTPResponse(response)
+
+    if not (status >= 200 and status < 300):
+        raise HTTPResponse(response)
+
+    body = StringIO(response.read())
+    response.close()
+    return body
 
 class DOM:
     """The DOM singleton defines a number of XML related constants and
@@ -325,17 +426,6 @@ class DOM:
         if preserve_ws is None:
             value = strip(value)
         return value
-
-    def elementToStream(self, element, stream, format=0):
-        """Write the xml representation of an element to a stream."""
-        if format: element.writexml(stream, '', '  ', '\n')
-        else:      element.writexml(stream)
-        return stream
-
-    def elementToString(self, element, format=0):
-        """Return an xml string representation of an element."""
-        method = format and element.toprettyxml or element.toxml
-        return method()
 
     def findNamespaceURI(self, prefix, node):
         """Find a namespace uri given a prefix and a context node."""

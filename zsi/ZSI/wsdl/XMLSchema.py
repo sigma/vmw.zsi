@@ -48,11 +48,6 @@ class XMLSchema:
         self.targetNamespace = DOM.getAttr(element, 'targetNamespace')
         self.element = element
 
-    def toXML(self, writer):
-        strval = DOM.elementToString(self.element)
-        writer.writeXML(strval)
-
-
 class realXMLSchema:
     """A schema is a collection of schema components derived from one
        or more schema documents, that is, one or more <schema> element

@@ -9,9 +9,8 @@
 
 from Utility import DOM, Collection
 from XMLSchema import XMLSchema
-from XMLWriter import XMLWriter
 from StringIO import StringIO
-import md5, urllib
+import urllib
 
 
 class WSDLReader:
@@ -21,21 +20,19 @@ class WSDLReader:
     # strategy or other optimizations. Because application needs vary 
     # so widely, we don't try to provide any caching by default.
 
-    def loadFromStream(self, file, checksum=None):
+    def loadFromStream(self, file):
         """Return a WSDL instance loaded from a file object."""
         document = DOM.loadDocument(file)
         wsdl = WSDL()
         wsdl.load(document)
-        self.checkMd5Hash(wsdl, checksum)
         return wsdl
 
-    def loadFromURL(self, url, checksum=None):
+    def loadFromURL(self, url):
         """Return a WSDL instance loaded from the given url."""
         document = DOM.loadFromURL(url)
         wsdl = WSDL()
         wsdl.location = url
         wsdl.load(document)
-        self.checkMd5Hash(wsdl, checksum)
         return wsdl
 
     def loadFromString(self, data, checksum=None):
@@ -48,85 +45,6 @@ class WSDLReader:
         try: wsdl = self.loadFromStream(file, checksum)
         finally: file.close()
         return wsdl
-
-    def checkMd5Hash(self, wsdl, value):
-        if value is not None and wsdl.getMd5Hash() != value:
-            raise WSDLError(
-                'WSDL checksum does not match required value.'
-                )
-
-
-class WSDLWriter:
-    """A simplified interface for building basic SOAP web service
-       descriptions without having to worry about many details."""
-
-    def __init__(self, targetNamespace=None):
-        self.wsdl = WSDL(targetNamespace)
-        self.service = None
-
-    def startService(self, name, address, documentation='', style='rpc'):
-        """Start a new service description in the WSDL document."""
-        self.service = self.wsdl.addService(name, documentation)
-        self.style = style
-        port = self.service.addPort('%sPort' % name, '%sBinding' % name)
-        addr = SoapAddressBinding(address)
-        port.addExtension(addr)
-        portType = self.wsdl.addPortType('%sPortType' % name)
-        binding = self.wsdl.addBinding('%sBinding' % name, '%sPortType' % name)
-        NS_SOAP_HTTP = DOM.GetWSDLHttpTransportUri(self.wsdl.version)
-        sbinding = SoapBinding(NS_SOAP_HTTP, style=style)
-        binding.addExtension(sbinding)
-
-    def endService(self):
-        """End a service description in the WSDL document."""
-        self.service = None
-
-    def writeMethod(self, callinfo, documentation=''):
-        """Add a method definition to the service description."""
-        if self.service is None:
-            raise ValueError(
-                'startService must be called before writing a method.'
-                )
-        port = self.service.ports[0]
-        binding = port.getBinding()
-        portType = binding.getPortType()
-        name = callinfo.methodName
-
-        # Add the abstract operation definition.
-        operation = portType.addOperation(name, callinfo.documentation)
-        iname = '%sRequest' % name
-        oname = '%sResponse' % name
-        operation.setInput(iname)
-        operation.setOutput(oname)
-
-        # Generate defaults for some things if not specified.
-        namespace = callinfo.namespace or 'urn:%s' % self.service.name
-        soapAction = callinfo.soapAction or '%s#%s' % (namespace, name)
-        encodingStyle = callinfo.encodingStyle or DOM.NS_SOAP_ENC
-        style = callinfo.style or 'rpc'
-        use = callinfo.use or 'encoded'
-
-        # Add the concrete operation definition.
-        opbinding = binding.addOperationBinding(name)
-        s_binding = SoapOperationBinding(soapAction, style=style)
-        opbinding.addExtension(s_binding)
-
-        body_binding = SoapBodyBinding(use, namespace, encodingStyle)
-        opbinding.addInputBinding(body_binding)
-        opbinding.addOutputBinding(body_binding)
-        imessage = self.wsdl.addMessage(iname)
-        omessage = self.wsdl.addMessage(oname)
-
-        for param in callinfo.getInParameters():
-            imessage.addPart(param.name, type=param.type)
-        param = callinfo.getReturnParameter()
-        omessage.addPart(param.name, type=param.type)
-        for param in callinfo.getOutParameters():
-            omessage.addPart(param.name, type=param.type)
-
-    def toXML(self):
-        return self.wsdl.toXML()
-
 
 class WSDL:
     """A WSDL object models a WSDL service description. WSDL objects
@@ -153,16 +71,6 @@ class WSDL:
             self.document = None
 
     version = '1.1'
-
-    def getMd5Hash(self):
-        """Return an md5 hash based on the text of the wsdl document."""
-        digest = getattr(self, '_md5hash', None)
-        if digest is not None:
-            return digest
-        dig = md5.new()
-        dig.update(self.toXML())
-        self._md5hash = dig.hexdigest()
-        return self._md5hash
 
     def addService(self, name, documentation=''):
         if self.services.has_key(name):
@@ -349,45 +257,6 @@ class WSDL:
         finally:
             importdoc.unlink()
 
-    def toXML(self):
-        writer = XMLWriter()
-
-        # Abuse the writer to carry around some namespace info for us.
-        writer.wsdl_version = version = self.version
-        writer.NS_WSDL = DOM.GetWSDLUri(version)
-        writer.NS_SOAP_BINDING = DOM.GetWSDLSoapBindingUri(version)
-        writer.NS_HTTP_BINDING = DOM.GetWSDLHttpBindingUri(version)
-        writer.NS_MIME_BINDING = DOM.GetWSDLMimeBindingUri(version)
-        writer.NS_SOAP_HTTP = DOM.GetWSDLHttpTransportUri(version)
-
-        writer.declareNSDefault(writer.NS_WSDL)
-        writer.declareNSPrefix('tns', self.targetNamespace)
-        writer.targetNS = self.targetNamespace
-        
-        writer.startElement('definitions', writer.NS_WSDL)
-        writer.writeAttr('targetNamespace', self.targetNamespace)
-        if self.name is not None:
-            writer.writeAttr('name', self.name)
-
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-
-        self.types.toXML(writer)
-        for item in self.messages.values():
-            item.toXML(writer)
-        for item in self.portTypes.values():
-            item.toXML(writer)
-        for item in self.bindings.values():
-            item.toXML(writer)
-        for item in self.services.values():
-            item.toXML(writer)
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        writer.endElement()
-        return writer.toString(1)
-
 
 class Element:
     """A class that provides common functions for WSDL element classes."""
@@ -406,16 +275,6 @@ class ImportElement(Element):
         self.location = location
 
     _loaded = None
-
-    def toXML(self, writer):
-        # Note that we do not write imports if they were created as a
-        # result of parsing an existing document (because the content
-        # that they reference has already been logically incorporated).
-        if self._loaded is None:
-            writer.startElement('import', writer.NS_WSDL)
-            writer.writeAttr('namespace', self.namespace)
-            writer.writeAttr('location', self.location)
-            writer.endElement()
 
 
 class Types(Collection):
@@ -437,20 +296,6 @@ class Types(Collection):
 
     def addExtension(self, item):
         self.extensions.append(item)
-
-    def toXML(self, writer):
-        if len(self.list) == 0 and len(self.extensions) == 0:
-            return
-        writer.startElement('types', writer.NS_WSDL)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.list:
-            item.toXML(writer)
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        writer.endElement()
 
 
 class Message(Element):
@@ -489,36 +334,12 @@ class Message(Element):
             if elemref is not None:
                 part.element = ParseTypeRef(elemref, element)
 
-    def toXML(self, writer):
-        writer.startElement('message', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        if self.documentation:
-            writer.startElement( 'documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.parts.values():
-            item.toXML(writer)
-        writer.endElement()
-
 
 class MessagePart(Element):
     def __init__(self, name):
         Element.__init__(self, name, '')
         self.element = None
         self.type = None
-
-    def toXML(self, writer):
-        writer.startElement('part', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        if self.element is not None:
-            nsuri, name = self.element
-            value = writer.makeQName(nsuri, name)
-            writer.writeAttr('element', value)
-        if self.type is not None:
-            nsuri, name = self.type
-            value = writer.makeQName(nsuri, name)
-            writer.writeAttr('type', value)
-        writer.endElement()
 
 
 class PortType(Element):
@@ -566,17 +387,6 @@ class PortType(Element):
                 message = msgref.split(':', 1)[-1]
                 operation.addFault(message, name, docs)
 
-    def toXML(self, writer):
-        writer.startElement('portType', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.operations.values():
-            item.toXML(writer)
-        writer.endElement()
-
 
 class Operation(Element):
     def __init__(self, name, documentation='', parameterOrder=None):
@@ -622,41 +432,12 @@ class Operation(Element):
         self.output = MessageRole('output', message, name, documentation)
         return self.output
 
-    def toXML(self, writer):
-        writer.startElement('operation', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        if self.parameterOrder is not None:
-            strval = ''.join(self.parameterOrder, ' ')
-            writer.writeAttr('parameterOrder', strval)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        if self.input is not None:
-            self.input.toXML(writer)
-        if self.output is not None:
-            self.output.toXML(writer)
-        for item in self.faults.values():
-            item.toXML(writer)
-        writer.endElement()
-
 
 class MessageRole(Element):
     def __init__(self, type, message, name='', documentation=''):
         Element.__init__(self, name, documentation)
         self.message = message
         self.type = type
-
-    def toXML(self, writer):
-        writer.startElement(self.type, writer.NS_WSDL)
-        if self.name:
-            writer.writeAttr('name', self.name)
-        writer.writeAttr('message', 'tns:%s' % self.message)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        writer.endElement()
 
 
 class Binding(Element):
@@ -736,21 +517,6 @@ class Binding(Element):
             else:
                 self.addExtension(e)
 
-    def toXML(self, writer):
-        writer.startElement('binding', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        writer.writeAttr('type', 'tns:%s' % self.type)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        for item in self.operations.values():
-            item.toXML(writer)
-
-        writer.endElement()
-
 
 class OperationBinding(Element):
     def __init__(self, name, documentation=''):
@@ -815,23 +581,6 @@ class OperationBinding(Element):
                 continue
             else:
                 self.addExtension(e)
-
-    def toXML(self, writer):
-        writer.startElement('operation', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        if self.input is not None:
-            self.input.toXML(writer)
-        if self.output is not None:
-            self.output.toXML(writer)
-        for item in self.faults.values():
-            item.toXML(writer)
-        writer.endElement()
 
 
 class MessageRoleBinding(Element):
@@ -929,18 +678,6 @@ class MessageRoleBinding(Element):
             else:
                 self.addExtension(e)
 
-    def toXML(self, writer):
-        writer.startElement(self.type, writer.NS_WSDL)
-        if self.name:
-            writer.writeAttr('name', self.name)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        writer.endElement()
-
 
 class Service(Element):
     def __init__(self, name, documentation=''):
@@ -971,19 +708,6 @@ class Service(Element):
     def load_ex(self, elements):
         for e in elements:
             self.addExtension(e)
-
-    def toXML(self, writer):
-        writer.startElement('service', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.ports:
-            item.toXML(writer)
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        writer.endElement()
 
 
 class Port(Element):
@@ -1033,58 +757,22 @@ class Port(Element):
             else:
                 self.addExtension(e)
 
-    def toXML(self, writer):
-        writer.startElement('port', writer.NS_WSDL)
-        writer.writeAttr('name', self.name)
-        writer.writeAttr('binding', 'tns:%s' % self.binding)
-        if self.documentation:
-            writer.startElement('documentation', writer.NS_WSDL)
-            writer.writeText(self.documentation)
-            writer.endElement()
-        for item in self.extensions:
-            ExtensionToXML(writer, item)
-        writer.endElement()
-
-
-
 
 class SoapBinding:
     def __init__(self, transport, style='rpc'):
         self.transport = transport
         self.style = style
 
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'soap', writer.NS_SOAP_BINDING)
-        writer.startElement('binding', writer.NS_SOAP_BINDING)
-        writer.writeAttr('transport', self.transport)
-        writer.writeAttr('style', self.style)
-        writer.endElement()
-
 
 class SoapAddressBinding:
     def __init__(self, location):
         self.location = location
-
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'soap', writer.NS_SOAP_BINDING)
-        writer.startElement('address', writer.NS_SOAP_BINDING)
-        writer.writeAttr('location', self.location)
-        writer.endElement()
 
 
 class SoapOperationBinding:
     def __init__(self, soapAction=None, style=None):
         self.soapAction = soapAction
         self.style = style
-
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'soap', writer.NS_SOAP_BINDING)
-        writer.startElement('operation', writer.NS_SOAP_BINDING)
-        if self.soapAction is not None:
-            writer.writeAttr('soapAction', self.soapAction)
-        if self.style is not None:
-            writer.writeAttr('style', self.style)
-        writer.endElement()
 
 
 class SoapBodyBinding:
@@ -1102,19 +790,6 @@ class SoapBodyBinding:
         self.parts = parts
         self.use = use
 
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'soap', writer.NS_SOAP_BINDING)
-        writer.startElement('body', writer.NS_SOAP_BINDING)
-        writer.writeAttr('use', self.use)
-        if self.parts is not None:
-            writer.writeAttr('parts', ''.join(self.parts, ' '))
-        if self.encodingStyle is not None:
-            writer.writeAttr('encodingStyle', self.encodingStyle)
-        if self.namespace is not None:
-            writer.writeAttr('namespace', self.namespace)
-        writer.endElement()
-
-
 class SoapFaultBinding:
     def __init__(self, name, use, namespace=None, encodingStyle=None):
         if not use in ('literal', 'encoded'):
@@ -1125,17 +800,6 @@ class SoapFaultBinding:
         self.namespace = namespace
         self.name = name
         self.use = use
-
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'soap', writer.NS_SOAP_BINDING)
-        writer.startElement('fault', writer.NS_SOAP_BINDING)
-        writer.writeAttr('name', self.name)
-        writer.writeAttr('use', self.use)
-        if self.encodingStyle is not None:
-            writer.writeAttr('encodingStyle', self.encodingStyle)
-        if self.namespace is not None:
-            writer.writeAttr('namespace', self.namespace)
-        writer.endElement()
 
 
 class SoapHeaderBinding:
@@ -1152,19 +816,6 @@ class SoapHeaderBinding:
 
     tagname = 'header'
 
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'soap', writer.NS_SOAP_BINDING)
-        writer.startElement(self.tagname, writer.NS_SOAP_BINDING)
-        writer.writeAttr('message', self.message)
-        writer.writeAttr('part', self.part)
-        writer.writeAttr('use', self.use)
-        if self.encodingStyle is not None:
-            writer.writeAttr('encodingStyle', self.encodingStyle)
-        if self.namespace is not None:
-            writer.writeAttr('namespace', self.namespace)
-        writer.endElement()
-
-
 class SoapHeaderFaultBinding(SoapHeaderBinding):
     tagname = 'headerfault'
 
@@ -1173,47 +824,21 @@ class HttpBinding:
     def __init__(self, verb):
         self.verb = verb
 
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'http', writer.NS_HTTP_BINDING)
-        writer.startElement('binding', writer.NS_HTTP_BINDING)
-        writer.writeAttr('verb', self.verb)
-        writer.endElement()
-
-
 class HttpAddressBinding:
     def __init__(self, location):
         self.location = location
-
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'http', writer.NS_HTTP_BINDING)
-        writer.startElement('address', writer.NS_HTTP_BINDING)
-        writer.writeAttr('location', self.location)
-        writer.endElement()
 
 
 class HttpOperationBinding:
     def __init__(self, location):
         self.location = location
 
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'http', writer.NS_HTTP_BINDING)
-        writer.startElement('operation', writer.NS_HTTP_BINDING)
-        writer.writeAttr('location', self.location)
-        writer.endElement()
-
-
 class HttpUrlReplacementBinding:
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'http', writer.NS_HTTP_BINDING)
-        writer.startElement('urlReplacement', writer.NS_HTTP_BINDING)
-        writer.endElement()
+    pass
 
 
 class HttpUrlEncodedBinding:
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'http', writer.NS_HTTP_BINDING)
-        writer.startElement('urlEncoded', writer.NS_HTTP_BINDING)
-        writer.endElement()
+    pass
 
 
 class MimeContentBinding:
@@ -1221,26 +846,10 @@ class MimeContentBinding:
         self.part = part
         self.type = type
 
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'mime', writer.NS_MIME_BINDING)
-        writer.startElement('content', writer.NS_MIME_BINDING)
-        if self.part is not None:
-            writer.writeAttr('part', self.part)
-        if self.type is not None:
-            writer.writeAttr('type', self.type)
-        writer.endElement()
-
 
 class MimeXmlBinding:
     def __init__(self, part=None):
         self.part = part
-
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'mime', writer.NS_MIME_BINDING)
-        writer.startElement('mimeXml', writer.NS_MIME_BINDING)
-        if self.part is not None:
-            writer.writeAttr('part', self.part)
-        writer.endElement()
 
 
 class MimeMultipartRelatedBinding:
@@ -1253,13 +862,6 @@ class MimeMultipartRelatedBinding:
             if ns in DOM.NS_MIME_BINDING_ALL and name == 'part':
                 self.parts.append(MimePartBinding())
                 continue
-
-    def toXML(self, writer):
-        DeclareNSPrefix(writer, 'mime', writer.NS_MIME_BINDING)
-        writer.startElement('multipartRelated', writer.NS_MIME_BINDING)
-        for part in self.parts:
-            part.toXML(writer)
-        writer.endElement()
 
 
 class MimePartBinding:
@@ -1335,13 +937,6 @@ def GetExtensions(element):
         if item.namespaceURI != DOM.NS_WSDL:
             result.append(item)
     return result
-
-def ExtensionToXML(writer, object):
-    if hasattr(object, 'toXML'):
-        object.toXML(writer)
-    else:
-        strval = DOM.elementToString(object)
-        writer.writeXML(strval)
 
 def FindExtensions(object, kind, t_type=type(())):
     result = []
