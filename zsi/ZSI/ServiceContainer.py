@@ -154,8 +154,9 @@ class ServiceContainer(HTTPServer):
             node = self.__dict
             scheme,netloc,path,query,fragment = urlparse.urlsplit(url)
             try:
-                for i in path.split('/'):
-                    if i: node = node[i]
+                dir = path.split('/')[1:]
+                for i in dir:
+                    node = node[i]
             except KeyError, ex:
                 raise NoSuchService, 'No service(%s) in ServiceContainer' %path
             return node
@@ -166,9 +167,8 @@ class ServiceContainer(HTTPServer):
             scheme,netloc,path,query,fragment = urlparse.urlsplit(url)
             self.__post_dict[path] = service
             node = self.__dict
-            dir = path.split('/')
+            dir = path.split('/')[1:]
             for i in dir[:-1]:
-                if not i: continue
                 if not node.has_key(i): node[i] = {}
                 node = node[i]
             node[dir[-1]] = service
