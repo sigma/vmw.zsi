@@ -106,11 +106,13 @@ class Gregorian(TypeCode):
             pyobj = time.gmtime(pyobj)
         n = name or self.oname or ('E%x' % id(pyobj))
         d = {}
+        pyobj = pyobj.tuple()
         if 1 in map(lambda x: x < 0, pyobj[0:6]):
             pyobj = map(abs, pyobj)
             d['neg'] = '-'
         else:
             d['neg'] = ''
+
         d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
             'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
         val = self.format % d
