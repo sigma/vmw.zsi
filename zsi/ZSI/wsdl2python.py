@@ -1384,12 +1384,12 @@ class SchemaDescription:
                         self.postpend.set('\n%s# extending....' % ID4)
                         self.postpend.write('\n%sself.ofwhat += tuple(TCList)'\
                                             % ID4)
-                        self.postpend.write('\n%sself.lenofwhat += len(TCList)' % ID4)
+                        #self.postpend.write('\n%sself.lenofwhat += len(TCList)' % ID4)
                     elif dt.isRestriction():
                         self.postpend.set('\n%s# restricting....' % ID4)
                         self.postpend.write('\n%sself.ofwhat = tuple(TCList)' \
                                             % ID4)
-                        self.postpend.write('\n%sself.lenofwhat = len(TCList)'\
+                        #self.postpend.write('\n%sself.lenofwhat = len(TCList)'\
                                             % ID4)
                 else:
                     self.classdef.set('\n\n%sclass %s:' \
