@@ -1,5 +1,12 @@
+Release 0.10.4 of SOAPpy 
+------------------------
 
-Release 0.10.1 of SOAPpy has only minor changes
+Dramatic performance improvements for large data transfers.
+
+Release 0.10.1 of SOAPpy 
+------------------------
+
+only minor changes
 
 1) Code now uses a single file to store version number
 
@@ -8,7 +15,10 @@ Release 0.10.1 of SOAPpy has only minor changes
 3) All test scripts now use the local SOAPpy source instead of the
    globally installed version.
 
-Release 0.10.0 of SOAPpy sports these enhancements:
+Release 0.10.0 of SOAPpy 
+------------------------
+
+Enhancements:
 
 1) The new name handling mechanism has been enabled by default.  
 
