@@ -107,12 +107,22 @@ class SoapWriter:
 	self.callbacks.append((func, arglist))
 
     def Known(self, obj):
-	'''Seen this object (almost always id(...))?  Return 1 if so,
+	'''Seen this object (known by its id()?  Return 1 if so,
 	otherwise add it to our memory and return 0.
 	'''
+	obj = id(obj)
 	if obj in self.memo: return 1
 	self.memo.append(obj)
 	return 0
+
+    def Forget(self, obj):
+	'''Forget we've seen this object.
+	'''
+	obj = id(obj)
+	try:
+	    self.memo.remove(obj)
+	except ValueError:
+	    pass
 
     def close(self, trailer=None, nsdict=None):
 	'''Invoke all the callbacks, and close off the SOAP message.

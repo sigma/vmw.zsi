@@ -545,6 +545,12 @@ If \code{inorder} is true, extras can only appear at the end.}
 in the order specified in the \code{TCseq} sequence.}
 \lineiii{\code{inline}}{\code{0}}{The structure is single-reference,
 so ZSI does not have to use \code{href/id} encodings.}
+\lineiii{\code{mutable}}{\code{0}}{If an object is going to be serialized
+multiple times, and its state may be modified between serializations,
+then this keyword should be used, otherwise a single instance will be
+serialized, with multiple references to it.
+This argument implies the \code{inline} argument.
+\versionadded{1.2}}
 \lineiii{\code{type}}{\code{None}}{A \samp{(uri, localname)} tuple that
 defines the type of the structure.
 If present, and if the input data has a \code{xsi:type} attribute, then the
@@ -619,6 +625,8 @@ elements.}
 the array.}
 \lineiii{\code{fill}}{\code{None}}{The value to use when an array
 element is omitted.}
+\lineiii{\code{mutable}}{\code{0}}{Same as \class{TC.Struct}
+\versionadded{1.2}}
 \lineiii{\code{nooffset}}{\code{0}}{Do not use the SOAP \code{offset}
 attribute so skip leading elements with the same value as \code{fill}.}
 \lineiii{\code{sparse}}{\code{0}}{The array is sparse.}

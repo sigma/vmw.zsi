@@ -381,7 +381,7 @@ class String(TypeCode):
 	    print >>sw, '<%s%s href="%s"/>' % \
 		    (n, kw.get('attrtext', ''), pyobj[0])
 	    return
-	if not self.unique and sw.Known(id(pyobj)):
+	if not self.unique and sw.Known(pyobj):
 	    print >>sw, '<%s%s href="#%s"/>' % \
 		    (n, kw.get('attrtext', ''), objid)
 	    return
@@ -699,7 +699,7 @@ class XML(TypeCode):
 	    sw.AddCallback(self.cb, pyobj)
 
     def cb(self, sw, pyobj):
-	if sw.Known(id(pyobj)): return
+	if sw.Known(pyobj): return
 	objid = '%x' % id(pyobj)
 	n = self.pname or ('E' + objid)
 	print >>sw, '<%s SOAP-ENC:encodingStyle="" id="%s">' % (n, objid)

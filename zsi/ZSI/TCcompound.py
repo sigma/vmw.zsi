@@ -39,15 +39,18 @@ class Struct(TypeCode):
     def __init__(self, pyclass, ofwhat, pname=None, **kw):
 	'''pyclass -- the Python class to hold the fields
 	ofwhat -- a list of fields to be in the struct
+	hasextras -- ignore extra input fields
 	inorder -- fields must be in exact order or not
 	inline -- don't href/id when serializing
-	hasextras -- ignore extra input fields
+	mutable -- object could change between multiple serializations
 	type -- the (URI,localname) of the datatype
 	'''
 	TypeCode.__init__(self, pname, **kw)
 	self.pyclass = pyclass
 	self.inorder = kw.get('inorder', 0)
 	self.inline = kw.get('inline', 0)
+	self.mutable = kw.get('mutable', 0)
+	if self.mutable: self.inline = 1
 	self.hasextras = kw.get('hasextras', 0)
 	self.type = kw.get('type', None)
 	t = type(ofwhat)
@@ -146,7 +149,7 @@ class Struct(TypeCode):
 	    sw.AddCallback(self.cb, pyobj)
 
     def cb(self, sw, pyobj, **kw):
-	if sw.Known(id(pyobj)): return
+	if not self.mutable and sw.Known(pyobj): return
 	objid = '%x' % id(pyobj)
 	n = kw.get('name', self.oname) or ('E' + objid)
 	if self.inline:
@@ -210,6 +213,7 @@ class Choice(TypeCode):
 
 class Array(TypeCode):
     '''An array.
+	mutable -- object could change between multiple serializations
     '''
 
     def __init__(self, atype, ofwhat, pname=None, **kw):
@@ -223,6 +227,7 @@ class Array(TypeCode):
 	self.fill = kw.get('fill', None)
 	self.sparse = kw.get('sparse', 0)
 	if self.sparse: ofwhat.optional = 1
+	self.mutable = kw.get('mutable', 0)
 	self.size = kw.get('size', None)
 	self.nooffset = kw.get('nooffset', 0)
 	self.undeclared = kw.get('undeclared', 0)
@@ -301,7 +306,7 @@ class Array(TypeCode):
 	return v
 
     def serialize(self, sw, pyobj, **kw):
-	if sw.Known(id(pyobj)): return
+	if not self.mutable and sw.Known(pyobj): return
 	objid = '%x' % id(pyobj)
 	n = kw.get('name', self.oname) or ('E' + objid)
 	offsettext = ''

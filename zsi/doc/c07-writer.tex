@@ -63,9 +63,14 @@ will be called with the \class{SoapWriter} object and the specified \code{arg}
 argument, which may be a tuple.
 \end{methoddesc}
 
+\begin{methoddesc}{Forget}{obj}
+Forget that \code{obj} has been seen before.
+This is useful when repeatedly serializing a mutable object.
+\end{methoddesc}
+
 \begin{methoddesc}{Known}{obj}
-If \code{obj} (which is typically the value of the Python function
-\code{id}) has been seen before, return \code{1}.
+If \code{obj} has been seen before (based on its Python \code{id}),
+return \code{1}.
 Otherwise, remember \code{obj} and return \code{0}.
 \end{methoddesc}
 
