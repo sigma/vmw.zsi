@@ -53,6 +53,7 @@ from Config      import Config
 from Parser      import parseSOAPRPC
 from SOAPBuilder import buildSOAP
 from Utilities   import *
+from Types       import faultType
 
 ident = '$Id$'
 
