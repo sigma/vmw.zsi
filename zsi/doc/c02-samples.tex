@@ -1,16 +1,11 @@
 \chapter{Examples}
 
-This section contains two examples.  The first shows how to use \ZSI{}
-to expose conventional CGI scripts through SOAP.
-The input parameters and return value are Python lists and the SOAP
-messages must contain all type information.
-This is appropriate for building simple schema-less applications.
-The second example shows how to to create a
-more comprehensive application that uses \ZSI{} to validate its input
-and output against a schema.
+This section contains examples to help you better understand what \ZSI{}
+offers.  It is broken down into client-side and server-side examples, and
+explores different implementation options a developer has using \ZSI{}.
 
-\section{Simple example}
-
+\section{Server Side Examples}
+\subsection{Simple example}
 Using the \module{ZSI.cgi} module, it is simple to expose Python
 functions as web services.
 Each function is invoked with all the input parameters specified in the
@@ -45,19 +40,7 @@ The \ZSI{} CGI dispatcher catches exceptions and sends back a SOAP fault.
 For example, a fault will be sent if the  \code{hello} function is given any
 arguments, or if the \code{average} function is given a non-integer.
 
-If the above script is installed on the webserver running on the local
-host, and if the URL is \code{/cgi-bin/simple-test}, then the following
-code shows simple binding and access to the server:
-
-\begin{verbatim}
-from ZSI.client import Binding
-b = Binding(url='/cgi-bin/simple-test')
-a = apply(b.average, range(1,11))
-assert a == 5
-print b.hello()
-\end{verbatim}
-
-\section{More complex example}
+\subsection{More complex example}
 
 We will now show a more complete example of a robust web service.
 It takes as input a player name and array of integers, and returns
@@ -148,7 +131,7 @@ SoapWriter(OUT).serialize(result)
 \end{verbatim}
 
 
-\section{A \code{mod_python} example}
+\subsection{A mod_python example}
 
 The Apache module \code{mod_python} (see
 \url{http://www.modpython.org}) embeds Python within the Apache server.
@@ -199,3 +182,62 @@ def handler(req):
     req.write(out_str)
     return apache.OK
 \end{verbatim}
+
+
+\section{Client Side Examples}
+\subsection{Simple Example}
+If the simple server side example shown above is installed on the webserver 
+running on the local host, and if the URL is \code{/cgi-bin/simple-test}, then
+the following code shows simple binding and access to the server:
+
+\begin{verbatim}
+from ZSI.client import Binding
+b = Binding(url='/cgi-bin/simple-test')
+a = apply(b.average, range(1,11))
+assert a == 5
+print b.hello()
+\end{verbatim}
+
+\subsection{Complex Example}
+If the operation invoked returns a ComplexType, typecode information must
+be provided in order to tell \ZSI{} how to deserialize the response.  Let's
+assume the following server side implementation:
+
+\begin{verbatim}
+# Complex type definition
+class Person:
+  def __init__(self, name=None, age=0):
+    self.name = name
+    self.age = age
+
+Person.typecode = TC.Struct(Person,
+			    [TC.String('name'),
+			     TC.InonNegativeInteger('age')],
+			    'myApp:Person')
+
+# my web service
+def getPerson():
+  return Person('Christopher', 26)
+\end{verbatim}
+
+In order for \ZSI{} to properly deserialize the returned complex type into
+a Person instance, you must do one of two things: define the Person class (and
+typecode) in a module named \module{ComplexTypes}, or pass the expected return
+type to the \code{Binding.Receive} method.  The former is recommended, as it
+makes your code easier to read.  Below you'll find client side code that
+interacts with the operation described above (this assumes that you have
+defined the Person class and typecode in a module named \module{ComplexTypes}
+which is present in \code{sys.path}:
+
+\begin{verbatim}
+from ZSI.client import Binding
+b = Binding(url='/cgi-bin/complex-test')
+a = apply(b.getPerson, '')
+person = b.Receive()    # you could also write: person = b.Receive(Person)
+\end{verbatim}
+
+The person returned is an instance of Person.  The deserialization in this
+case was possible because \ZSI{} was able to locate the typecode information
+for the returned Person and properly re-assemble the instance.  If you would
+like to explicitly tell \ZSI{} which class to use for deserialization, you
+may do so by providing the class as an argument to the \code{Receive} method.
