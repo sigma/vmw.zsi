@@ -26,6 +26,4 @@ Things to be done -- any volunteers?
 
 Use isinstance() for types.
 
-Use is/is not for singletons (None, [] (,) '' etc)
-
 Update to SOAPv1.2

@@ -879,7 +879,7 @@ class ServiceDescription:
                 # XXX: not very good wsdl - put warning message here
 		tcs = ''
 		for i in l: tcs += (i + ',')
-                if namespace == None:
+                if namespace is None:
                     namespace = ''
                 if style == 'rpc':
                     namespace = ''

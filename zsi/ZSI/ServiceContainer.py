@@ -58,7 +58,7 @@ def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw
         return SendFault(Fault(Fault.Server, "Not authorized"), code=401)
     except Exception, e:
         return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
-    if result == None:
+    if result is None:
         return
     reply = StringIO.StringIO()
     try:

@@ -55,10 +55,10 @@ class Duration(TypeCode):
         if self.nilled(elt, ps): return None
         v = self.simple_value(elt, ps).strip()
         m = Duration.lex_pattern.match(v)
-        if m == None:
+        if m is None:
             raise EvaluateException('Illegal duration', ps.Backtrace(elt))
         d = m.groupdict()
-        if d['T'] and (d['h'] == None and d['m'] == None and d['s'] == None):
+        if d['T'] and (d['h'] is None and d['m'] is None and d['s'] is None):
             raise EvaluateException('Duration has T without time',
                 ps.Backtrace(elt))
         try:

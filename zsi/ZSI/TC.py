@@ -292,7 +292,7 @@ class Any(TypeCode):
         kw['name'] = n
         tc = type(pyobj)
         if tc == types.DictType or self.aslist:
-            if rpc != None:
+            if rpc is not None:
                 print >>sw, '<%s>' % rpc
             else:
                 if type(pyobj) != types.InstanceType:
@@ -305,7 +305,7 @@ class Any(TypeCode):
                 for key,val in pyobj.items():
                     Any(pname=key).serialize(sw, val)
 
-            if rpc != None:
+            if rpc is not None:
                 print >>sw, '</%s>' % rpc
             else:
                 if type(pyobj) != types.InstanceType:

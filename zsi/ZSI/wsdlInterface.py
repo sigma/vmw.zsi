@@ -1752,7 +1752,7 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
         return False
 
     def containsLocalDefinition(self):
-        if self._dec.getTypeDefinition('type') == None:
+        if self._dec.getTypeDefinition('type') is None:
             if hasattr( self._dec, 'content' ):
                 if isinstance( self._dec.content,
                                ZSI.wstools.XMLSchema.LocalComplexType):
@@ -1799,7 +1799,7 @@ class ZSISchemaDeclarationAdapter(AdapterBase, SchemaDeclarationInterface):
         
         typ = self._dec.getTypeDefinition('type')
 
-        if typ == None:
+        if typ is None:
             d = ZSISchemaDeclarationAdapter.DefinitionContainer()
             d.attributes = self._dec.attributes
             d.tns = self._dec.getTargetNamespace()
