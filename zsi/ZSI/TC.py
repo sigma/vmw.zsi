@@ -14,7 +14,7 @@ try:
 except:
     from ZSI.compat import Canonicalize, SCHEMA, SOAP
 
-import re, string, types
+import re, types
 
 from base64 import decodestring as b64decode, encodestring as b64encode
 from urllib import unquote as urldecode, quote as urlencode
@@ -91,9 +91,9 @@ class TypeCode:
         return ps.FindLocalHREF(href, elt, 0)
 
     def get_parse_and_errorlist(self):
-        '''Get the parselist and human-readable version (errorlist, because
-        it's used in error messages).
-        '''
+        """Get the parselist and human-readable version, errorlist is returned,
+        because it is used in error messages.
+        """
         d = self.__class__.__dict__
         parselist = d.get('parselist')
         errorlist = d.get('errorlist')
@@ -262,6 +262,7 @@ class Any(TypeCode):
         return parser.parse(elt, ps)
 
     def serialize(self, sw, pyobj, name=None, attrtext='', rpc=None, **kw):
+        # What is attrtext for? It isn't used in the function.
         if hasattr(pyobj, 'typecode'):
             pyobj.typecode.serialize(sw, pyobj, **kw)
             return
@@ -438,7 +439,7 @@ class URI(String):
         val = String.parse(self, elt, ps)
         return urldecode(val)
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         String.serialize(self, sw, urlencode(pyobj), **kw)
 
 
@@ -452,7 +453,7 @@ class Base64String(String):
         val = String.parse(self, elt, ps)
         return b64decode(val.replace(' ', '').replace('\n','').replace('\r',''))
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         String.serialize(self, sw, '\n' + b64encode(pyobj), **kw)
 
 class HexBinaryString(String):
@@ -465,7 +466,7 @@ class HexBinaryString(String):
         val = String.parse(self, elt, ps)
         return hexdecode(val)
 
-    def serialize(self, sw, pyobj, **kw):
+    def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         String.serialize(self, sw, hexencode(pyobj).upper(), **kw)
 
 class XMLString(String):
@@ -647,7 +648,7 @@ def isnan(x):
     # If it's non-NaN, then x == 1.0 and x == 2.0 can't both be true,
     # so we return false.  If it is NaN, then assuming a good 754 C
     # implementation Python maps both unordered outcomes to true.
-    return 1.0 == x == 2.0
+    return 1.0 == x and x == 2.0
 
 class Decimal(TypeCode):
     '''Parent class for floating-point numbers.
