@@ -166,6 +166,8 @@ class Struct(TypeCode):
                 raise TypeError("Classless struct didn't get dictionary")
         for what in self.ofwhat:
             v = d.get(what.aname)
+            if v is None:
+                v = d.get(what.aname.lower())
             if what.optional and v is None: continue
             try:
                 if what.repeatable and type(v) in _seqtypes:
