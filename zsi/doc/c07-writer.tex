@@ -27,8 +27,11 @@ attribute.
 \versionadded{1.2}}
 \lineiii{\code{envelope}}{\code{1}}{Write the SOAP envelope elements.
 \versionadded{1.2}}
-\lineiii{\code{nsdict}}{\code{\{\}}}{Dictionary of namespaces to write
-in the SOAP \code{Header}.}
+\lineiii{\code{nsdict}}{\code{\{\}}}{Dictionary of namespaces to declare
+in the SOAP \code{Body}.
+Note that earlier versions of ZSI put the declarations on the SOAP
+\code{Envelope}; they have been moved to the \code{Body} for greater
+interoperability.}
 \lineiii{\code{header}}{\code{None}}{A sequence of elements to output in
 the SOAP \code{Header}.
 It may also be a text string, in which case it is output as-is, and should
