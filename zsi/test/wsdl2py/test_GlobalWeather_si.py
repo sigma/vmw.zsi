@@ -5,10 +5,8 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import FaultException
 
-from utils import TestSetUp, TestProgram, TestDiff, failureException
-from paramWrapper import ResultsToStr
+from utils import ServiceTestCase, TestProgram
 
 """
 Unittest for contacting the StationInfo portType of the GlobalWeather
@@ -17,111 +15,70 @@ Web service.
 WSDL:  http://live.capescience.com/wsdl/GlobalWeather.wsdl
 """
 
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'complex_types'
+SERVICE_NAME = 'GlobalWeather'
+PORT_NAME = 'StationInfo'
 
-class StationInfoTest(unittest.TestCase):
+
+class StationInfoTest(ServiceTestCase):
     """Test case for GlobalWeather Web service, port type StationInfo
     """
 
-    def test_getStation(self):
-        request = portType.inputWrapper('getStation')
-        request._code = 'SFO'
-        try:
-            response = portType.getStation(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
+    service = None
+    portType = None
 
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not StationInfoTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION, SERVICE_NAME)
+            StationInfoTest.service, StationInfoTest.portType = \
+                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
+        self.portType = StationInfoTest.portType
+
+    def test_getStation(self):
+        request = self.portType.inputWrapper('getStation')
+        request._code = 'SFO'
+        self.handleResponse(self.portType.getStation,request,diff=True)
     
     def test_isValidCode(self):
-        request = portType.inputWrapper('isValidCode')
+        request = self.portType.inputWrapper('isValidCode')
         request._code = 'SFO'
-        try:
-            response = portType.isValidCode(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-
+        self.handleResponse(self.portType.isValidCode,request,diff=True)
     
     def test_listCountries(self):
-        request = portType.inputWrapper('listCountries')
-        try:
-            response = portType.listCountries(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-    
+        request = self.portType.inputWrapper('listCountries')
+        self.handleResponse(self.portType.listCountries,request,diff=True)
 
     def test_searchByCode(self):
-        request = portType.inputWrapper('searchByCode')
+        request = self.portType.inputWrapper('searchByCode')
         request._code = 'SFO'
-        try:
-            response = portType.searchByCode(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-
+        self.handleResponse(self.portType.searchByCode,request,diff=True)
     
     def test_searchByCountry(self):
-        request = portType.inputWrapper('searchByCountry')
+        request = self.portType.inputWrapper('searchByCountry')
         request._country = 'Australia'
-        try:
-            response = portType.searchByCountry(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+        self.handleResponse(self.portType.searchByCountry,request,diff=True)
     
         # can't find what valid name is, returns empty result
     def notest_searchByName(self):
-        request = portType.inputWrapper('searchByName')
+        request = self.portType.inputWrapper('searchByName')
         request._name = 'San Francisco Airport'
-        try:
-            response = portType.searchByName(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-
+        self.handleResponse(self.portType.searchByName,request,diff=True)
     
         # can't find what valid region is, returns empty result
     def notest_searchByRegion(self):
-        request = portType.inputWrapper('searchByRegion')
+        request = self.portType.inputWrapper('searchByRegion')
         request._region = 'Europe'
-        try:
-            response = portType.searchByRegion(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-    
+        self.handleResponse(self.portType.searchByRegion,request,diff=True)
+
 
 def makeTestSuite():
-    global service, portType
-
-    kw = {}
-    setUp = TestSetUp('config.txt')
-    serviceLoc = setUp.get('complex_types', 'GlobalWeather')
-    useTracefile = setUp.get('configuration', 'tracefile') 
-    if useTracefile == '1':
-        kw['tracefile'] = sys.stdout
-    service, portType = \
-        setUp.setService(StationInfoTest, serviceLoc,
-                         'GlobalWeather', 'StationInfo', **kw)
-
     suite = unittest.TestSuite()
-    if service:
-        suite.addTest(unittest.makeSuite(StationInfoTest, 'test_'))
+    suite.addTest(unittest.makeSuite(StationInfoTest, 'test_'))
     return suite
 
 

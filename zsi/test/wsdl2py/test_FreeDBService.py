@@ -5,10 +5,8 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import FaultException
 
-from utils import TestSetUp, TestProgram, failureException
-from paramWrapper import ResultsToStr
+from utils import ServiceTestCase, TestProgram
 
 """
 Unittest for contacting the FreeDB Web service.
@@ -16,81 +14,54 @@ Unittest for contacting the FreeDB Web service.
 WSDL:  http://soap.systinet.net:6080/FreeDB/
 """
 
-class FreeDBServiceTest(unittest.TestCase):
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'complex_types'
+SERVICE_NAME = 'com_systinet_demo_freedb_FreeDBService'
+PORT_NAME = 'FreeDBService'
+
+
+class FreeDBServiceTest(ServiceTestCase):
     """Test case for FreeDBService Web service
     """
 
+    service = None
+    portType = None
+
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not FreeDBServiceTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION, SERVICE_NAME)
+            FreeDBServiceTest.service, FreeDBServiceTest.portType = \
+                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
+        self.portType = FreeDBServiceTest.portType
+
     def test_getDetails(self):
-        request = portType.inputWrapper('getDetails')
+        request = self.portType.inputWrapper('getDetails')
         request._title = 'Hollywood Town Hall'
         request._discId = '8509ff0a'
         request._artist = 'Jayhawks'
         request._category = 'rock'
-        try:
-            response = portType.getDetails(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        self.handleResponse(self.portType.getDetails, request)
 
     def notest_search(self):
-        try:
-            response = portType.search('Ted Nugent and the Amboy Dukes')
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        self.handleResponse(self.portType.search, 'Ted Nugent and the Amboy Dukes')
 
     def notest_searchByTitle(self):
-        try:
-            response = portType.searchByTitle('Ummagumma')
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        self.handleResponse(self.portType.searchByTitle, 'Ummagumma')
 
     def test_searchByTrack(self):
-        try:
-            response = portType.searchByTrack('Species of Animals')
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        self.handleResponse(self.portType.searchByTrack, 'Species of Animals')
 
     def notest_searchByArtist(self):
-        try:
-            response = portType.searchByArtist('Steppenwolf')
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+        self.handleResponse(self.portType.searchByArtist, 'Steppenwolf')
     
 
 def makeTestSuite():
-    global service, portType
-
-    kw = {}
-    setUp = TestSetUp('config.txt')
-    serviceLoc = setUp.get('complex_types',
-                           'com_systinet_demo_freedb_FreeDBService')
-    useTracefile = setUp.get('configuration', 'tracefile') 
-    if useTracefile == '1':
-        kw['tracefile'] = sys.stdout
-    service, portType =  setUp.setService(FreeDBServiceTest, serviceLoc,
-                    'com.systinet.demo.freedb.FreeDBService', 'FreeDBService',
-                    **kw)
     suite = unittest.TestSuite()
-    if service:
-        suite.addTest(unittest.makeSuite(FreeDBServiceTest, 'test_'))
+    suite.addTest(unittest.makeSuite(FreeDBServiceTest, 'test_'))
     return suite
 
 

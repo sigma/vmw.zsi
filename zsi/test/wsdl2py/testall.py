@@ -14,6 +14,9 @@ import utils
 """Runs all files beginning with test_ in this directory.
 """
 
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'individual_tests'
+
 def makeTestSuite():
     """Return a test suite containing all test cases in all test modules."""
 
@@ -29,8 +32,9 @@ def main():
 
     moduleList = []
     sys.path.append('.')
-    cp = utils.TestSetUp('config.txt')
-    for name, value in cp.items('individual_tests'):
+    cp = utils.CaseSensitiveConfigParser()
+    cp.read(CONFIG_FILE)
+    for name, value in cp.items(CONFIG_SECTION):
         module = __import__(name)  # value unused for now
         moduleList.append(module)
     utils.TestProgram(defaultTest="makeTestSuite")

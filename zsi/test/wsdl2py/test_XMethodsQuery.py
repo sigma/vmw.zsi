@@ -5,10 +5,8 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import EvaluateException, FaultException
 
-from utils import TestSetUp, TestProgram, failureException
-from paramWrapper import ResultsToStr
+from utils import ServiceTestCase, TestProgram
 
 """
 Unittest for contacting the XMethodsQuery Web service.
@@ -16,85 +14,58 @@ Unittest for contacting the XMethodsQuery Web service.
 WSDL:  http://www.xmethods.net/wsdl/query.wsdl
 """
 
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'complex_types'
+SERVICE_NAME = 'XMethodsQuery'
+PORT_NAME = 'XMethodsQuerySoapPortType'
 
-class XMethodsQueryTest(unittest.TestCase):
+
+class XMethodsQueryTest(ServiceTestCase):
     """Test case for XMethodsQuery Web service
     """
 
-    def test_getAllServiceNames(self):
-        request = portType.inputWrapper('getAllServiceNames')
-        try:
-            response = portType.getAllServiceNames(request)   
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+    service = None
+    portType = None
 
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not XMethodsQueryTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION, SERVICE_NAME)
+            XMethodsQueryTest.service, XMethodsQueryTest.portType = \
+                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
+        self.portType = XMethodsQueryTest.portType
+
+
+    def test_getAllServiceNames(self):
+        request = self.portType.inputWrapper('getAllServiceNames')
+        self.handleResponse(self.portType.getAllServiceNames,request)   
 
     def test_getAllServiceSummaries(self):
-        request = portType.inputWrapper('getAllServiceSummaries')
-        try:
-            response = portType.getAllServiceSummaries(request)   
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        request = self.portType.inputWrapper('getAllServiceSummaries')
+        self.handleResponse(self.portType.getAllServiceSummaries,request)   
 
     def test_getServiceDetail(self):
-        request = portType.inputWrapper('getServiceDetail')
+        request = self.portType.inputWrapper('getServiceDetail')
         request._id = 'uuid:A29C0D6C-5529-0D27-A91A-8E02D343532B'
-        try:
-            response = portType.getServiceDetail(request)   
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        self.handleResponse(self.portType.getServiceDetail,request)   
     
     def test_getServiceNamesByPublisher(self):
-        request = portType.inputWrapper('getServiceNamesByPublisher')
+        request = self.portType.inputWrapper('getServiceNamesByPublisher')
         request._publisherID = 'xmethods.net'
-        try:
-            response = portType.getServiceNamesByPublisher(request)   
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-
+        self.handleResponse(self.portType.getServiceNamesByPublisher,request)   
     
     def notest_getServiceSummariesByPublisher(self):
-        request = portType.inputWrapper('getServiceSummariesByPublisher')
+        request = self.portType.inputWrapper('getServiceSummariesByPublisher')
         request._publisherID = 'xmethods.net'
-        try:
-            response = portType.getServiceSummariesByPublisher(request)   
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+        self.handleResponse(self.portType.getServiceSummariesByPublisher,request)   
 
 
 def makeTestSuite():
-    global service, portType
-
-    kw = {}
-    setUp = TestSetUp('config.txt')
-    serviceLoc = setUp.get('complex_types', 'XMethodsQuery')
-    useTracefile = setUp.get('configuration', 'tracefile') 
-    if useTracefile == '1':
-        kw['tracefile'] = sys.stdout
-    service, portType = setUp.setService(XMethodsQueryTest, serviceLoc,
-                                'XMethodsQuery', 'XMethodsQuerySoapPortType',
-                                **kw)
-
     suite = unittest.TestSuite()
-    if service:
-        suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_'))
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_'))
     return suite
 
 

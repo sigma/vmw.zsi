@@ -10,6 +10,7 @@ import StringIO, os
 import py_compile
 from ZSI import wsdl2python
 from ZSI.wstools.TimeoutSocket import TimeoutError
+from ZSI.wstools.WSDLTools import WSDLReader
 from ZSI.wstools.Utility import HTTPResponse
 
 import utils
@@ -45,7 +46,10 @@ class Wsdl2pythonTest(unittest.TestCase):
         global servicesFileName, typesFileName
 
         try:
-            wsdl = utils.setUpWsdl(self.path)
+            if self.path[:7] == 'http://':
+                wsdl = WSDLReader().loadFromURL(self.path)
+            else:
+                wsdl = WSDLReader().loadFromFile(self.path)
         except TimeoutError:
             print "connection timed out"
             sys.stdout.flush()

@@ -8,7 +8,6 @@ import sys, unittest
 from ZSI import FaultException
 import utils
 from paramWrapper import ResultsToStr
-from clientGenerator import ClientGenerator
 
 """
 Unittest for contacting the threatService Web service.
@@ -16,34 +15,39 @@ Unittest for contacting the threatService Web service.
 WSDL:  http://www.boyzoid.com/threat.cfc?wsdl
 """
 
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'complex_types'
+SERVICE_NAME = 'threatService'
+PORT_NAME = 'threat'
 
-class threatServiceTest(unittest.TestCase):
+
+class threatServiceTest(utils.ServiceTestCase):
     """Test case for threatService Web service
     """
-
     
+    service = None
+    portType = None
+
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not threatServiceTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION, SERVICE_NAME)
+            threatServiceTest.service, threatServiceTest.portType = \
+                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
+        self.portType = threatServiceTest.portType
+
     def test_threatLevel(self):
-        request = portType.inputWrapper('threatLevel')
-        response = portType.threatLevel(request)
+        request = self.portType.inputWrapper('threatLevel')
+        response = self.portType.threatLevel(request)
         print ResultsToStr(response)
 
 
 def makeTestSuite():
-    global service, portType
-
-    kw = {}
-    setUp = utils.TestSetUp('config.txt')
-    serviceLoc = setUp.get('complex_types', 'threatService')
-    useTracefile = setUp.get('configuration', 'tracefile') 
-    if useTracefile == '1':
-        kw['tracefile'] = sys.stdout
-    service, portType = setUp.setService(threatServiceTest, serviceLoc,
-                                'threatService', 'threat',
-                                **kw)
-
     suite = unittest.TestSuite()
-    if service:
-        suite.addTest(unittest.makeSuite(threatServiceTest, 'test_'))
+    suite.addTest(unittest.makeSuite(threatServiceTest, 'test_'))
     return suite
 
 

@@ -5,6 +5,7 @@
 
 from __future__ import generators
 
+import unittest
 import sys, os, os.path, pickle
 import shutil, getopt
 import StringIO, copy, re
@@ -13,8 +14,10 @@ import inspect
 
 from ZSI import wsdl2python
 from ZSI.wstools.WSDLTools import WSDLReader
+from ZSI import FaultException
 
 from clientGenerator import ClientGenerator
+from paramWrapper import ResultsToStr
 
 """
 utils:
@@ -75,67 +78,38 @@ class ConfigHandler(ConfigParser.ConfigParser):
         return total 
 
 
-def handleExtraArgs(argv):
-    deleteFile = False
-    options, args = getopt.getopt(argv, 'hHdv')
-    for opt, value in options:
-        if opt == '-d':
-            deleteFile = True
-    return deleteFile
+class ServiceTestCase(unittest.TestCase):
 
+    def getConfigOptions(self, configFile, configSection, serviceName):
+        kw = {}
+        cp = CaseSensitiveConfigParser()
+        cp.read(configFile)
+        serviceLoc = cp.get(configSection, serviceName)
+        useTracefile = cp.get('configuration', 'tracefile') 
+        if useTracefile == '1':
+            kw['tracefile'] = sys.stdout
+        try:
+            snifferHost = setUp.get('configuration', 'host')
+        except NameError:
+            pass
+        else:
+            snifferPort = setUp.get('configuration', 'port')
+            if not snifferPort:
+                snifferPort = 80
+            kw['host'] = snifferHost
+            kw['port'] = snifferPort
 
-def setUpWsdl(path):
-    """Load a WSDL given a file path or a URL.
-    """
-    if path[:7] == 'http://':
-        wsdl = WSDLReader().loadFromURL(path)
-    else:
-        wsdl = WSDLReader().loadFromFile(path)
-    return wsdl
+        return kw, serviceLoc
 
-
-def failureException(exc, msg):
-    """Determines whether an exception occurred due to a
-       timeout, in which case the result of a test is not
-       treated as a failure.
-    """
-
-    if (msg.str.startswith('Connection timed out') or
-       msg.str.find('timeout')):
-        print '\n', msg
-        print '\n'
-        sys.stdout.flush()
-        return False
-    else:
-        return True
-        
-
-class TestSetUp(ConfigParser.ConfigParser):
-    """Facilitates test set up."""
-
-    def __init__(self, fname):
-        ConfigParser.ConfigParser.__init__(self)
-        self.read(fname)
-
-    def optionxform(self, optionstr):
-        """Overriding ConfigParser method allows configuration option
-           to contain both lower and upper case."""
-        return optionstr
-
-
-    def setService(self, testcase, serviceLoc, serviceName, portTypeName, **kw):
+    def setService(self, serviceLoc, serviceName, portTypeName, **kw):
         """Returns reference to higher-level interface module, generating
            the _services, _types, and _services_interface code if
            necessary, and a reference to a class containing proxy
            methods for the operations listed in the WSDL portType.
         """
            
-        if not hasattr(testcase, 'service'):
-            serviceModule = ClientGenerator().getModule(serviceName, serviceLoc,
+        serviceModule = ClientGenerator().getModule(serviceName, serviceLoc,
                                                         'stubs')
-        else:
-            serviceModule = testcase.service
-
         if not serviceModule:
             return None, None
 
@@ -147,6 +121,67 @@ class TestSetUp(ConfigParser.ConfigParser):
 
         portType = locator().getPortType(portTypeName, **kw)
         return serviceModule, portType
+
+    def setUpWsdl(path):
+        """Load a WSDL given a file path or a URL.
+        """
+        if path[:7] == 'http://':
+            wsdl = WSDLReader().loadFromURL(path)
+        else:
+            wsdl = WSDLReader().loadFromFile(path)
+        return wsdl
+
+
+    def handleResponse(self, fun, request, diff=None):
+        try:
+            response = fun(request)
+        except FaultException, msg:
+            if self.checkException(FaultException, msg):
+                raise
+        else:
+            if not diff:
+                print ResultsToStr(response)
+            else:
+                TestDiff(self).failUnlessEqual(ResultsToStr(response))
+
+
+
+    def checkException(self, exc, msg):
+        """Determines whether an exception occurred due to a
+           timeout, in which case the result of a test is not
+           treated as a failure.
+        """
+ 
+        if (msg.str.startswith('Connection timed out') or
+            msg.str.find('timeout')):
+            print '\n', msg
+            print '\n'
+            sys.stdout.flush()
+            return False
+        else:
+            return True
+        
+
+
+def handleExtraArgs(argv):
+    deleteFile = False
+    options, args = getopt.getopt(argv, 'hHdv')
+    for opt, value in options:
+        if opt == '-d':
+            deleteFile = True
+    return deleteFile
+
+
+class CaseSensitiveConfigParser(ConfigParser.ConfigParser):
+
+    def __init__(self):
+        ConfigParser.ConfigParser.__init__(self)
+
+    def optionxform(self, optionstr):
+        """Overriding ConfigParser method allows configuration option
+           to contain both lower and upper case."""
+        return optionstr
+
 
 
 
@@ -195,7 +230,7 @@ class TestDiff:
                 # it
             f = inspect.currentframe()
             fullName = testFilePath + os.sep + \
-                       inspect.getouterframes(f)[1][3] + '.diffs'
+                       inspect.getouterframes(f)[2][3] + '.diffs'
         else:
             fullName = testFilePath + os.sep + singleFileName
 

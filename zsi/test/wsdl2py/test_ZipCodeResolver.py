@@ -5,10 +5,8 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import FaultException
 
-from utils import TestSetUp, TestProgram, TestDiff, failureException
-from paramWrapper import ResultsToStr
+from utils import ServiceTestCase, TestProgram
 
 """
 Unittest for contacting the ZipCodeResolver Web service.
@@ -17,93 +15,66 @@ WSDL: http://webservices.eraserver.net/zipcoderesolver/zipcoderesolver.asmx?WSDL
 
 """
 
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'complex_types'
+SERVICE_NAME = 'ZipCodeResolver'
+PORT_NAME = 'ZipCodeResolverSoap'
 
-class ZipCodeResolverTest(unittest.TestCase):
+
+class ZipCodeResolverTest(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
 
+    service = None
+    portType = None
+
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not ZipCodeResolverTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION, SERVICE_NAME)
+            ZipCodeResolverTest.service, ZipCodeResolverTest.portType = \
+                     self.setService(serviceLoc, SERVICE_NAME, PORT_NAME, **kw)
+        self.portType = ZipCodeResolverTest.portType
+
     def notest_CorrectedAddressHtml(self):
-        request = portType.inputWrapper('CorrectedAddressHtml')
+        request = self.portType.inputWrapper('CorrectedAddressHtml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        try:
-            response = portType.CorrectedAddressHtml(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
-    
+        self.handleResponse(self.portType.CorrectedAddressHtml,request)
 
     def notest_CorrectedAddressXml(self):
-        request = portType.inputWrapper('CorrectedAddressXml')
+        request = self.portType.inputWrapper('CorrectedAddressXml')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        try:
-            response = portType.CorrectedAddressXml(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-
+        self.handleResponse(self.portType.CorrectedAddressXml,request,diff=True)
     
     def test_FullZipCode(self):
-        request = portType.inputWrapper('FullZipCode')
+        request = self.portType.inputWrapper('FullZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        try:
-            response = portType.FullZipCode(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-
+        self.handleResponse(self.portType.FullZipCode,request,diff=True)
     
     def notest_ShortZipCode(self):
-        request = portType.inputWrapper('ShortZipCode')
+        request = self.portType.inputWrapper('ShortZipCode')
         request._address = '636 Colusa Avenue'
         request._city = 'Berkeley'
         request._state = 'California'
-        try:
-            response = portType.ShortZipCode(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
-
+        self.handleResponse(self.portType.ShortZipCode,request,diff=True)
     
     def test_VersionInfo(self):
-        request = portType.inputWrapper('VersionInfo')
-        try:
-            response = portType.VersionInfo(request)   
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            TestDiff(self).failUnlessEqual(ResultsToStr(response))
+        request = self.portType.inputWrapper('VersionInfo')
+        self.handleResponse(self.portType.VersionInfo,request,diff=True)   
 
 
 def makeTestSuite():
-    global service, portType
-
-    kw = {}
-    setUp = TestSetUp('config.txt')
-    serviceLoc = setUp.get('complex_types', 'ZipCodeResolver')
-    useTracefile = setUp.get('configuration', 'tracefile') 
-    if useTracefile == '1':
-        kw['tracefile'] = sys.stdout
-    service, portType = setUp.setService(ZipCodeResolverTest, serviceLoc,
-                                  'ZipCodeResolver', 'ZipCodeResolverSoap',
-                                  **kw)
     suite = unittest.TestSuite()
-    if service:
-        suite.addTest(unittest.makeSuite(ZipCodeResolverTest, 'test_'))
+    suite.addTest(unittest.makeSuite(ZipCodeResolverTest, 'test_'))
     return suite
 
 

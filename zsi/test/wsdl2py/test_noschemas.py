@@ -5,10 +5,8 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ZSI import FaultException
 
-from utils import TestSetUp, TestProgram, TestDiff, failureException
-from paramWrapper import ResultsToStr
+from utils import ServiceTestCase, TestProgram
 
 """
 Unittest for contacting services where WSDL specification
@@ -25,74 +23,76 @@ WorldTimeService
 """
 
 
-class TemperatureServiceTest(unittest.TestCase):
+CONFIG_FILE = 'config.txt'
+CONFIG_SECTION = 'no_schemas'
+
+TEMP_SERVICE_NAME = 'TemperatureService'
+TEMP_PORT_NAME = 'TemperaturePortType'
+
+WORLD_SERVICE_NAME = 'WorldTimeService'
+WORLD_PORT_NAME = 'WorldTime'
+
+
+class TemperatureServiceTest(ServiceTestCase):
     """Test case for TemperatureService Web service
     """
 
+    service = None
+    portType = None
+
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not TemperatureServiceTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION,
+                                                TEMP_SERVICE_NAME)
+            TemperatureServiceTest.service, TemperatureServiceTest.portType = \
+                     self.setService(serviceLoc, TEMP_SERVICE_NAME,
+                                     TEMP_PORT_NAME, **kw)
+        self.portType = TemperatureServiceTest.portType
+
     def test_getTemp(self):
-        request = tempPortType.inputWrapper('getTemp')
+        request = self.portType.inputWrapper('getTemp')
         request._zipcode = '94720'
-        try:
-            response = tempPortType.getTemp(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+        self.handleResponse(self.portType.getTemp,request)
     
 
-class WorldTimeServiceTest(unittest.TestCase):
+class WorldTimeServiceTest(ServiceTestCase):
     """Test case for WorldTimeService Web service
     """
 
+    service = None
+    portType = None
+
+    def __init__(self, methodName):
+        unittest.TestCase.__init__(self, methodName)
+
+    def setUp(self):
+        if not WorldTimeServiceTest.service:
+            kw, serviceLoc = self.getConfigOptions(CONFIG_FILE,
+                                                CONFIG_SECTION,
+                                                WORLD_SERVICE_NAME)
+            WorldTimeServiceTest.service, WorldTimeServiceTest.portType = \
+                     self.setService(serviceLoc, WORLD_SERVICE_NAME,
+                                                WORLD_PORT_NAME, **kw)
+        self.portType = WorldTimeServiceTest.portType
+
     def test_tzStampNow(self):
-        request = worldTimePortType.inputWrapper('tzStampNow')
+        request = self.portType.inputWrapper('tzStampNow')
         request._tZone = 'Pacific'
-        try:
-            response = worldTimePortType.tzStampNow(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+        self.handleResponse(self.portType.tzStampNow,request)
     
     def test_utcStampNow(self):
-        request = worldTimePortType.inputWrapper('utcStampNow')
-        try:
-            response = worldTimePortType.utcStampNow(request)
-        except FaultException, msg:
-            if failureException(FaultException, msg):
-                raise
-        else:
-            print ResultsToStr(response)
+        request = self.portType.inputWrapper('utcStampNow')
+        self.handleResponse(self.portType.utcStampNow,request)
     
 
 def makeTestSuite():
-    global tempPortType
-    global worldTimePortType
-
-    kw = {}
-
-    setUp = TestSetUp('config.txt')
-    useTracefile = setUp.get('configuration', 'tracefile') 
-    if useTracefile == '1':
-        kw['tracefile'] = sys.stdout
-
-    serviceLoc = setUp.get('no_schemas', 'TemperatureService')
-    service, tempPortType = setUp.setService(TemperatureServiceTest, serviceLoc,
-                                  'TemperatureService', 'TemperaturePortType',
-                                  **kw)
-    
-    serviceLoc = setUp.get('no_schemas', 'WorldTimeService')
-    service, worldTimePortType = \
-        setUp.setService(WorldTimeServiceTest, serviceLoc,
-                                  'WorldTimeService', 'WorldTime',
-                                  **kw)
-
     suite = unittest.TestSuite()
-    if service:
-        suite.addTest(unittest.makeSuite(TemperatureServiceTest, 'test_'))
-        suite.addTest(unittest.makeSuite(WorldTimeServiceTest, 'test_'))
+    suite.addTest(unittest.makeSuite(TemperatureServiceTest, 'test_'))
+    suite.addTest(unittest.makeSuite(WorldTimeServiceTest, 'test_'))
     return suite
 
 
