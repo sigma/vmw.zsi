@@ -19,7 +19,8 @@ def GetClientBinding():
     '''
     return _client_binding
 
-def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0, **kw):
+def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
+              nsdict={}, **kw):
     '''Find a handler for the SOAP request in ps; search modules.
     Call SendResponse or SendFault to send the reply back, appropriately.
     '''
@@ -58,7 +59,7 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0, **kw):
                     return
             result = [ handler(*arg) ]
         reply = StringIO.StringIO()
-        SoapWriter(reply).serialize(result,
+        SoapWriter(reply, nsdict=nsdict).serialize(result,
             TC.Any(aslist=1, pname=what + 'Response')
         )
         SendResponse(reply.getvalue())
@@ -78,7 +79,7 @@ def _CGISendXML(text, code=200):
 def _CGISendFault(f):
     _CGISendXML(f.AsSOAP(), 500)
 
-def AsCGI(modules=None):
+def AsCGI(nsdict={}, modules=None):
     '''Dispatch within a CGI script.
     '''
     if os.environ.get('REQUEST_METHOD') != 'POST':
@@ -96,7 +97,7 @@ def AsCGI(modules=None):
     except ParseException, e:
         _CGISendFault(FaultFromZSIException(e))
         return
-    _Dispatch(ps, modules, _CGISendXML, _CGISendFault)
+    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict)
 
 
 class SOAPRequestHandler(BaseHTTPRequestHandler):
@@ -140,11 +141,12 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
             return
 
         _Dispatch(ps, self.server.modules, self.send_xml, self.send_fault,
-            docstyle=self.server.docstyle)
+            docstyle=self.server.docstyle, nsdict=self.server.nsdict)
 
-def AsServer(port=80, modules=None, docstyle=0, **kw):
+def AsServer(port=80, modules=None, docstyle=0, nsdict={}, **kw):
     address = ('', port)
     httpd = HTTPServer(address, SOAPRequestHandler)
+    httpd.nsdict = nsdict
     httpd.modules = modules
     httpd.docstyle = docstyle
     httpd.serve_forever()
