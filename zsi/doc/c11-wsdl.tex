@@ -47,6 +47,15 @@ or an existing \class{WSDL} instance. The optional \var{service} and
 should be used. If not specified, the first defined service and port 
 will be used.
 
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
+    SOAP \code{Envelope}}
+\lineiii{\code{tracefile}}{\code{None}}{An object with a \code{write}
+    method, where packet traces will be recorded.}
+\end{tableiii}
+
 A \class{ServiceProxy} instance, once instantiated, exposes callable 
 methods that reflect the methods of the remote web service it 
 represents. These methods may be called like normal methods, using 
