@@ -44,6 +44,7 @@ class ParsedSoap:
         '''
 
         self.readerclass = readerclass
+        self.keepdom = keepdom
         if not self.readerclass:
             from xml.dom.ext.reader import PyExpat
             self.readerclass = PyExpat.Reader
@@ -53,8 +54,6 @@ class ParsedSoap:
                 self.dom = self.reader.fromString(input)
             else:
                 self.dom = self.reader.fromStream(input)
-            if keepdom == 0:
-                self.dom.ZSI_reader = self.reader
         except Exception, e:
             # Is this in the header?  Your guess is as good as mine.
             raise ParseException("Can't parse document (" + \
@@ -182,9 +181,8 @@ class ParsedSoap:
 
     def __del__(self):
         try:
-            if hasattr(self.dom, 'ZSI_reader'):
-                self.dom.ZSI_reader.releaseNode(self.dom)
-                del self.dom.ZSI_reader
+            if not self.keepdom:
+                self.reader.releaseNode(self.dom)
         except:
             pass
 
@@ -291,6 +289,15 @@ class ParsedSoap:
                         d[a.localName] = a.nodeValue
             self.ns_cache[id(elt)] = d
         return d.copy()
+
+    def GetDomAndReader(self):
+        '''Returns a tuple containing the dom and reader objects. (dom, reader)
+        Unless keepdom is true, the dom and reader objects will go out of scope
+        when the ParsedSoap instance is deleted. If keepdom is true, the reader
+        object is needed to properly clean up the dom tree with
+        reader.releaseNode(dom).
+        '''
+        return (self.dom, self.reader)
 
     def IsAFault(self):
         '''Is this a fault message?
