@@ -1,4 +1,6 @@
 Changes for 1.2, released xx-xxx-2001:
+    -	Replace with X copyright; GNU compatible now
+    -	newver writes date into version.tex
     -	Use "raise x(a)" always, never "raise x, a" (that's oldschool:)
     -	Don't delete tb in FaultFromException; add try/except for robustness
     -	Ignore -1 values for DST, etc., in Python time tuples
@@ -32,6 +34,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Address issues with client/dispatch and None <grahamd@dscpl.com.au>
     -	Use formatted output, not strftime
     -	TC.Any defaults to optional if not set, for None <grahamd@dscpl.com.au>
+    -	Allow keyword args in Fault.AsSOAP, passed to SoapWriter ctor
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!

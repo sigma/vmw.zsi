@@ -56,13 +56,15 @@ class Fault:
 	if self.detail: self._do_details(sw, 0)
 	print >>sw, '</SOAP-ENV:Fault>'
 
-    def AsSOAP(self, output=None):
+    def AsSOAP(self, output=None, **kw):
 	if output == None:
 	    s = StringIO.StringIO()
 	    output = s
 	else:
 	    s = None
-	sw = SoapWriter(output, header=self.DataForSOAPHeader())
+	mykw = { 'header': self.DataForSOAPHeader() }
+	if kw: mykw.update(kw)
+	sw = SoapWriter(output, **mykw)
 	self.serialize(sw)
 	sw.close()
 	if s: return s.getvalue()

@@ -62,10 +62,11 @@ A text string or sequence of elements containing holding the value of the
 A text string holding the value of the SOAP \code{faultstring} element.
 \end{memberdesc}
 
-\begin{methoddesc}{AsSOAP}{\optional{output=None}}
+\begin{methoddesc}{AsSOAP}{\optional{output=None\optional{, **kw}}}
 This method serializes the \class{Fault} object into a SOAP message.
 If the \code{output} parameter is not specified, the message is returned
 as a string.
+Any other keyword arguments are passed to the \class{SoapWriter} constructor.
 Otherwise \method{AsSOAP()} will call \method{output.write()} as needed
 to output the message.
 \versionadded{1.1; the old \code{AsSoap} method is still available}

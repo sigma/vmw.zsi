@@ -3,7 +3,7 @@
 # This script does not use 2.x features so that you can build an RPM
 # on a system that doesn't have 2.x installed (e.g., basic RedHat).
 
-import ConfigParser, sys
+import ConfigParser, sys, time
 
 cf = ConfigParser.ConfigParser()
 cf.read('setup.cfg')
@@ -28,6 +28,7 @@ if '--pyver' in sys.argv:
 if '--texver' in sys.argv:
     f = open('doc/version.tex', 'w')
     f.write('% Auto-generated file; do not edit\n')
+    f.write(time.strftime('\\date{%B %d, %Y}\n', time.localtime()))
     f.write('\\release{%d.%d.%d}\n' % (major, minor, release))
     f.write('\\setshortversion{%d.%d}\n' % (major, minor))
     f.close()
