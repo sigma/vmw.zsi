@@ -70,7 +70,7 @@ def nonColonizedName_to_moduleName(name):
 def textProtect(s):
     """process any strings we cant have illegal chracters in"""
     # Seems like maketrans/translate would be worthwhile here.
-    return re.sub('[-./:]', '_', tmp)
+    return re.sub('[-./:]', '_', s)
 
 class WsdlGeneratorError(Exception):
     pass
@@ -880,7 +880,7 @@ class SchemaDescription:
             self.name = tp.getName()
 
             if tp.isSimpleType():
-
+                self.name = tp.getName() + '_Def'
                 self._fromSimpleType(tp)
 
 	    elif tp.isWildCard():
@@ -888,11 +888,11 @@ class SchemaDescription:
                 self._fromWildCard(tp)
 
             elif tp.isElement():
-
+                self.name = tp.getName() + '_Dec'
                 self._fromElement(tp)
 
 	    elif tp.isComplexType():
-
+                self.name = tp.getName() + '_Def'
                 self._fromComplexType(tp)
 
             elif tp.isAttribute():
@@ -966,7 +966,7 @@ class SchemaDescription:
                       % (etp.__class__)
 
         def _elementSimpleType(self, tp, etp):
-            
+
             tpc = etp.getTypeclass()
             self.precede   = '%s' % (tpc)
 
@@ -987,8 +987,8 @@ class SchemaDescription:
         def _elementComplexType(self, tp, etp):
 
             if etp.getName():
-                
-                self.precede  = '%s' %(etp.getName())
+
+                self.precede  = '%s' %(etp.getName() + '_Def' )
                 
                 if etp.getTargetNamespace() != tp.getTargetNamespace():
 
@@ -1130,10 +1130,13 @@ class SchemaDescription:
                 # ie: not in a default namespace
                 if dt.getDerivation():
                     # XXX: this will need more work
+                    self.precede  = '%s%s' % ( dt.getDerivation(), '_Def' )
+                    nsp = self.nsh.getAlias(tp.getTargetNamespace())
                     self.classdef = '\n\n%sclass %s(%s):' %(ID1,
                                                             tp.getName() \
                                                             + '_Def',
-                                                            dt.getDerivation())
+                                                            dt.getDerivation()\
+                                                            + '_Def')
                     self.initdef  = '\n%s# rudimentary - more soon' % ID2
                     self.initdef += "\n%sschema = '%s'" % (ID2,
                                                            tp.getTargetNamespace())
@@ -1141,8 +1144,9 @@ class SchemaDescription:
                     self.initdef += '\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2
                     self.initdef += '\n%sif name:' % ID3
                     self.initdef += '\n%sTCList = []' % ID4
-                    self.initdef += '\n%s%s.__init__(self, name=name, ns=ns, **kw)' % (ID4, dt.getDerivation())
-                    self.initdef += '\n%sself.ofwhat += TCList' % ID4
+                    self.initdef += '\n%s%s.%s.__init__(self, name=name, ns=ns, **kw)' % (ID4, nsp, dt.getDerivation() + '_Def' )
+                    self.initdef += '\n%sself.ofwhat += self.ofwhat + tuple(TCList)' % ID4
+                    self.initdef += '\n%sself.lenofwhat += self.lenofwhat + len(TCList)' % ID4
                 else:
                     self.classdef   = '\n\n%sclass %s:' % (ID1,
                                                            tp.getName() \
@@ -1250,6 +1254,7 @@ class SchemaDescription:
                         typecodelist  += '%s.%s(name="%s", ns=ns%s), ' \
                                          %(nsp,etp.getName() + '_Def',
                                            e.getName(), occurs)
+                        self.precede = '%s%s' % ( etp.getName(), '_Def' )
 
                     elif etp:
                         # here we have a hold of a LocalElementDef
