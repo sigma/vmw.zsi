@@ -63,8 +63,12 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
                 except EvaluateException, e:
                     SendFault(FaultFromZSIException(e), **kw)
                     return
-            result = [ handler(*arg) ]
-            tc = TC.Any(aslist=1, pname=what + 'Response')
+            result = handler(*arg)
+            if hasattr(result, 'typecode'):
+                tc = result.typecode
+            else:
+                tc = TC.Any(aslist=1, pname=what + 'Response')
+                result = [ result ]
         reply = StringIO.StringIO()
         SoapWriter(reply, nsdict=nsdict).serialize(result, tc, rpc=rpc)
         return SendResponse(reply.getvalue(), **kw)
