@@ -716,7 +716,6 @@ class ZSIWsdlAdapter(WsdlInterface):
     def getSchemaDict(self):
         """return dictionary of schema adapter objects
         """
-
         schemas = {}
         
         for k in self._wsdl.types.keys():
@@ -1699,17 +1698,25 @@ class ZSIDerivedTypesAdapter(DerivedTypesInterface):
         arrayinfo = None
         isDefined = None
 
+
         if hasattr(self._content, 'derivation'):
             if self._content.derivation.attr_content and \
                    self._content.derivation.attr_content[0].attributes.\
                    has_key('arrayType'):
                 t = self._content.derivation.attr_content[0].\
                     attributes['arrayType']
-            elif hasattr(self._content.derivation, 'content') and \
-                 hasattr(self._content.derivation.content, 'content') and \
-                 self._content.derivation.content.content:
-                t = self._content.derivation.content.content[0].\
-                    attributes['type'][1]
+            elif self._content.derivation.attr_content and \
+                 self._content.derivation.attr_content[0].attributes.\
+                 has_key('http://schemas.xmlsoap.org/wsdl/') \
+                 and self._content.derivation.attr_content[0].\
+                 attributes['http://schemas.xmlsoap.org/wsdl/']\
+                 .has_key('arrayType'):
+                t = self._content.derivation.attr_content[0].\
+                    attributes['http://schemas.xmlsoap.org/wsdl/']['arrayType']
+##             elif hasattr(self._content.derivation, 'content') and \
+##                      self._content.derivation.content:
+##                 t = self._content.derivation.content.content[0].\
+##                     attributes['type'][1]
             else:
                 raise WsdlInterfaceError, 'could not determine array type'
 
