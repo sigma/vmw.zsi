@@ -1246,13 +1246,26 @@ class SchemaDescription:
         def _complexTypeSimpleContent(self, tp):
             # XXX: this needs work (in progress)
             dt = tp.getDerivedTypes()
-            self.classdef   = '\n\n%sclass %s:' % (ID1,
-                                                   tp.getName() \
-                                                   + '_Def')
-            self.initdef    = '\n%s# not yet implemented' % ID2
-            self.initdef   += '\n%s# simpleContent' % ID2
-            self.initdef   += '\n%spass\n' % ID2
-            return
+
+            if dt.isSimpleContent() and dt.getTypeclass():
+                self.classdef   = '\n\n%sclass %s(%s):' % (ID1,
+                                                           tp.getName() \
+                                                           + '_Def',
+                                                           dt.getTypeclass())
+                self.classdef  += '\n%s# rudimentary support' % ID2
+                self.classdef  += '\n%stag = "%s"' % (ID2, tp.getName())
+                self.classdef  += '\n%sliteral = "%s"' %(ID2, tp.getName())
+                self.classdef  += '\n%sschema = "%s"' % (ID2, tp.getTargetNamespace())
+                
+                self.initdef    = '\n\n%sdef __init__(self, name=None, ns=None, **kw):' % ID2
+                self.initdef   += '\n%sname = name or self.__class__.literal' % ID3
+                self.initdef   += '\n%sns = ns or self.__class__.schema' % ID3
+                self.initdef   += '\n\n%s%s.__init__(self, pname=name, **kw)' \
+                                  %( ID3, dt.getTypeclass())
+                return
+            else:
+                raise WsdlGeneratorError, \
+                      'could not determine simple content base'
 
 
         def _complexTypeAllOrSequence(self, tp, mg):
