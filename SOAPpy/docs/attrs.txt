@@ -1,59 +1,15 @@
-Copyright (c) 2001, actzero, inc.
 
-SOAP.py 0.9.5 - Cayce Ullman   (cayce@actzero.com)
-                Brian Matthews (blm@actzero.com)
+Using SOAPpy Attributes
+=======================
 
-MANIFEST:
-attrs.txt
-quickstart.txt
-simpleTypes.txt
-complexTypes.txt
-../SOAP.py       the library
-../SOAPtest.py   tests the builder and parser
-../echoClient.py an example client
-../echoServer.py an example server
-../speedTest.py  benchmarks the various parsers, compares speed to DOM
-../TCtest.py     experimental type coercion system tests
-../tests/*       examples
-../validate/*    interop client and servers
-../bid/*	      N+I interop client and server
+All SOAPpy data classes implement methods to access and mutate
+individual attributes.
 
-To start using SOAP.py, first read quickstart.txt.  For greater access to 
-instances of the classes defined in SOAP.py, all classes implement methods to
-access and mutate individual attributes.  
 The _setAttr method has as parameters a 'tag', the attribute name, and the 
 value to which the attribute should be set.
+
 The _getAttrs method simply has the 'tag' parameter.
 
 
 
-Copyright (c) 2001, actzero, inc.
-Copyright (c) 2001, Cayce Ullman.
-
-All rights reserved.
-
-LICENSE:
---------------------------------------------------------------------------------
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-Neither the name of actzero, inc. nor the names of its contributors may
-be used to endorse or promote products derived from this software without
-specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+$Id$
