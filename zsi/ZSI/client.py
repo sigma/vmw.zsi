@@ -193,11 +193,19 @@ class Binding:
             print >>self.trace, soapdata
 
         # Send the request.
+        # host and port may be parsed from a WSDL file.  if they are, they
+        # are most likely unicode format, which httplib does not care for
+        if isinstance(self.host, unicode):
+            self.host = str(self.host)
+        if isinstance(self.port, unicode):
+            self.port = int(self.port)
+            
         if not self.ssl:
             self.h = httplib.HTTPConnection(self.host, self.port)
         else:
             self.h = httplib.HTTPSConnection(self.host, self.port,
                         **self.ssl_files)
+
         self.h.connect()
         self.h.putrequest("POST", url or self.url)
         self.h.putheader("Content-length", "%d" % len(soapdata))
