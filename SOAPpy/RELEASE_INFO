@@ -1,7 +1,36 @@
+
+Release 0.12.0 of SOAPpy
+------------------------
+
+This release primarily foces on bug fixes.  Primary changes:
+
+- Fixes for bug reports that have accumulated over the last year
+
+    [ 916265] "Arrays of unicode do not serialize correctly (patch included)"
+    [ 918216] "Parsing faults in SOAPpy 0.11.3"
+    [ 925077] "SOAPpy prints out SOAP fault" (even when Config.debug is off).
+    [1001646] "SOAPpy stomps headers when sending multirefs"
+    [1001646] "SOAPpy stomps headers when sending multirefs.
+    [1064233] "Bug fixes for complex types" 
+    [1064248] "Bugs in _asdict() and _asarray() in Types.py"
+    [1078051] "Arrays of complex types (doc/lit)"
+    [1096971] "Parse error: missing HTTP header 'Content-length'"
+    [1106450] "Floats are truncated to 10 digits, causing precision loss"
+    [1122991] "error from SOAPpy/Client.py for content_length evaluation?"
+
+- Fixes for 'rules' which allow control of the data types of *incoming* messages.
+  As a consequence TCtest.py now passes all tests.
+
+- WSDL support has been improving, due to work on the 'wstools'
+  module which is shared between ZSI and SOAPpy.
+
+- Some work has been done to improve documentation.
+
+
 Release 0.11.6 of SOAPpy
 ------------------------
 
-Changes to URLs and email addresses in documentaiton.
+Changes to URLs and email addresses in documentation.
 
 
 Release 0.11.5 of SOAPpy

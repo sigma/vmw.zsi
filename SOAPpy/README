@@ -2,10 +2,9 @@
 SOAPpy - Simple to use SOAP library for Python 
 ==============================================
 
-Current Maintainers: 	
+Current Maintainer: 	
 
 	Gregory R. Warnes <Gregory.R.Warnes@Pfizer.com>
-	Christopher Blunck <blunck2@gst.com>
 
 Original Authors: 
 
@@ -14,6 +13,7 @@ Original Authors:
 
 Contributions by:
 
+	Christopher Blunck <blunck2@gst.com>
 	Brad Knotwell <b.knotwell@f5.com>
 	Mark Bucciarelli <mark@hubcapconsulting.com> (ported WSDL
              client from ZSI)
@@ -197,10 +197,10 @@ DOCUMENTATION
     BASIC TUTORIAL
     --------------
 
-    Mark Pilgrims' online book _Dive Into Python_ at
-	http://diveintopython.org
-    includes a nice tutorial for SOAPpy in Chapter 12. "SOAP Web Services" at
-	http://diveintopython.org/soap_web_services.
+    Mark Pilgrims' _Dive Into Python_, published in printed form by
+    Apress and online at at http://diveintopython.org provides a
+    nice tutorial for SOAPpy in Chapter 12, "SOAP Web Services".
+    See http://diveintopython.org/soap_web_services .
 
     OTHER DOCUMENTATION
     -------------------
@@ -231,9 +231,7 @@ GETTING HELP
     List archives are available at
     http://sourceforge.net/mailarchive/forum.php?forum=pywebsvcs-talk
 
-
     Please remember that the authors do have day jobs, so please try
     the mailing list before contacting them directy.  
-
         
 $Id$
