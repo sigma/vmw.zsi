@@ -1,52 +1,77 @@
 \chapter{WSDL Support}
 
-The \ZSI and its \module{ZSI.wstools} module provides client tools for
+The \ZSI~and \module{ZSI.wstools} modules provide client tools for
 using WSDL 1.1
-(see \citetitle[http://www.w3.org/TR/wsdl]{WSDL 1.1 specification})
-files to access services.
+(see \citetitle[http://www.w3.org/TR/wsdl]{WSDL 1.1 specification}).
 
-The \class{WSDLReader} class in \module{ZSI.wstools} provides
-methods for loading WSDL service descriptions from URLs or XML data
-and creating a \class{WSDL} object.
-\class{WSDL} instances represent WSDL service descriptions and provide 
-an object model for building and working with those descriptions.
-
-The \class{ServiceProxy} in \ZSI{} uses a \class{WSDL} instance to send
+The \class{ServiceProxy} class in \ZSI{} uses a \class{WSDL} instance to send
 and receive messages.
 Once the proxy has been created, each remote operation is exposed
 as a method on the object.
 The methods can be called with either positional or keyword arguments;
 the argument types must be compatible with the types specified in the
 WSDL description.
+The user must handle the generation of type codes.
 Note that while \class{ServiceProxy} is part of \ZSI{}, it must be
 explicitly imported.
 
-The following example shows a simple language translation service that makes
-use of the complex type structures defined in the module BabelTypes:
+Handling XML Schema
+(see \citetitle[http://www.w3.org/XML/Schema]{XML Schema specification}) 
+is one of the more difficult aspects
+of using WSDL.  The class \class{WriteServiceModule} helps to hides these
+details.  It generates a module with stub code for the client interface,
+and a module that encapsulates the handling of XML Schema, automatically
+generating type codes.
 
-\begin{verbatim}
-from ZSI import ServiceProxy
-import BabelTypes
+\section{WSDLReader}
 
-service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
-		       typesmodule=BabelTypes)
-value = service.BabelFish('en_de', 'This is a test!')
-\end{verbatim}
+The \class{WSDLReader} class in \module{ZSI.wstools.WSDLTools} provides
+methods for loading WSDL service descriptions from URLs, XML files
+or XML string data, and creating a \class{WSDL} object.
+It is used by \class{ServiceProxy} and \class{WriteServiceModule}.
 
-The return value from a proxy method depends on the SOAP signature. If the 
-remote service returns a single value, that value will be returned. If the 
-remote service returns multiple ``out'' parameters, the return value of the 
-proxy method will be a dictionary containing the out parameters indexed by 
-name.  Because \class{ServiceProxy} makes use of the ZSI serialization / 
-deserialization engine, complex return types are supported.  This means 
-that an aggregation of primitives can be returned from or passed to a service
-invocation according to any predefined hierarchical structure.
+\class{WSDL} instances represent WSDL service descriptions and provide 
+a low-level object model for building and working with those descriptions.
+
+The WSDL reader is implemented as a 
+separate class to make it easy to create custom readers that implement 
+caching policies or other optimizations.
 
 
-\begin{classdesc}{ServiceProxy}{wsdl,\optional{, service\optional{, port}}}
+\begin{classdesc}{WSDLReader}{}
+
+The following methods are available:
+
+\begin{methoddesc}{loadFromStream}{file}
+Return a \class{WSDL} instance representing the service description 
+contained in \var{file}. The \var{file} argument must be a file-like 
+object.
+\end{methoddesc}
+
+\begin{methoddesc}{loadFromString}{data}
+Returns a \class{WSDL} instance loaded from the XML string \var{data}.
+\end{methoddesc}
+
+\begin{methoddesc}{loadFromFile}{filename}
+Returns a \class{WSDL} instance loaded from the file named by \var{filename}.
+\end{methoddesc}
+
+\begin{methoddesc}{loadFromURL}{url}
+Returns a \class{WSDL} instance loaded from the given \var{url}.
+\end{methoddesc}
+
+\end{classdesc}
+
+\section{ServiceProxy}
+
 The \class{ServiceProxy} class provides calls to
 web services. A WSDL description must be available for the 
-service.
+service.  \class{ServiceProxy} uses \class{WSDLReader} internally to load 
+a \class{WSDL} instance.
+
+The user may build up a type codes module for use by \class{ServiceProxy}.
+
+\begin{classdesc}{ServiceProxy}{wsdl,\optional{, service\optional{, port}}}
 
 The \var{wsdl} argument may be either the URL of the service description 
 or an existing \class{WSDL} instance. The optional \var{service} and 
@@ -76,41 +101,184 @@ names.
 
 \end{classdesc}
 
-\begin{classdesc}{WSDLReader}{}
+\subsection{Example}
 
-\class{WSDLReader} instances are used to load WSDL service descriptions
-from URLs, XML files or XML string data. The reader is implemented as a 
-separate class to make it easy to create custom readers that implement 
-caching policies or other optimizations.
+The following example, using ServiceProxy,  shows a simple language
+translation service that makes
+use of the complex type structures defined in the module BabelTypes:
 
-The following methods are available:
+\begin{verbatim}
+from ZSI import ServiceProxy
+import BabelTypes
 
-\begin{methoddesc}{loadFromStream}{file}
-Return a \class{WSDL} instance representing the service description 
-contained in \var{file}. The \var{file} argument must be a file-like 
-object.
-\end{methoddesc}
+service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
+		       typesmodule=BabelTypes)
+value = service.BabelFish('en_de', 'This is a test!')
+\end{verbatim}
 
-\begin{methoddesc}{loadFromString}{data}
-Returns a \class{WSDL} instance loaded from the XML string \var{data}.
-\end{methoddesc}
+The return value from a proxy method depends on the SOAP signature. If the 
+remote service returns a single value, that value will be returned. If the 
+remote service returns multiple ``out'' parameters, the return value of the 
+proxy method will be a dictionary containing the out parameters indexed by 
+name.  Because \class{ServiceProxy} makes use of the ZSI serialization / 
+deserialization engine, complex return types are supported.  This means 
+that an aggregation of primitives can be returned from or passed to a service
+invocation according to any predefined hierarchical structure.
 
-\begin{methoddesc}{loadFromFile}{filename}
-Returns a \class{WSDL} instance loaded from the file named by \var{filename}.
-\end{methoddesc}
 
-\begin{methoddesc}{loadFromURL}{url}
-Returns a \class{WSDL} instance loaded from the given \var{url}.
+\section{WriteServiceModule}
+
+The \class{WriteServiceModule} class in \module{ZSI.wsdl2python}
+transforms WSDL definitions
+to remote proxy interfaces, and XML Schema instances to type codes that describe
+the data.  The \class{WSDL} (see section 11.4) class and
+\module{ZSI.wstools.XMLSchema}
+module provide API's into the
+definitions, which \class{ModuleWriter} and its underlying generator classes
+use to interpret WSDL and XML Schema into class definitions.
+
+Two files are generated by \class{WriteServiceModule}.  The first is a
+'service' file containing locator, portType, and message classes.  
+A locator instance is used to
+get an instance of a portType class, which is a remote proxy object.
+Message instances are sent and received through the methods of the
+portType instance.
+
+The 'types' file contains class representations of the definitions and
+declarations defined by all schema instances imported by the WSDL definition.
+XML Schema attributes, wildcards, and derived types are not fully
+handled.
+
+\begin{classdesc}{WriteServiceModule}{wsdl, \optional{importlib,
+\optional{typewriter}}}
+
+This class generates a module containing client stub code, and a module
+encapsulating the use of XML Schema instances, given a \class{WSDL}
+instance generated by \class{WSDLReader}.
+It handles import, namespace, and schema complexities, and class definition
+order.
+
+\class{WriteServiceModule} delegates to \class{ServiceDescription} the
+interpretation
+of the service definition, and to \class{SchemaDescription} the interpretation
+of the schema definition.  (These two classes are only intended to be called
+by \class{WriteServiceModule}, but are described here to indicate what
+is going on behind the scenes.)
+
+The following method is available:
+
+\begin{methoddesc}{write}{}
+Generates the client code.
 \end{methoddesc}
 
 \end{classdesc}
 
-\section{Upper-Level WSDL objects}
+\begin{classdesc}{ServiceDescription}{}
+Interprets the service definition, and creates the client interface and
+port descriptions code.  It delegates to \class{MessageWriter}, which
+generates a message's class definition, and to \class{PartWriter}, which
+generates a message part's description.
+\end{classdesc}
 
-The following classes describe encapsulate the upper-level objects
-in a WSDL file.
+\begin{classdesc}{SchemaDescription}{}
+Interprets the schema definition, generating typecode module code
+for all global definitions and declarations in a schema instance.
+It delegates to \class{TypeWriter}, which generates a type's
+description/typecode.
+\end{classdesc}
 
-Note that there are quite many classes defined here to
+\subsection{Examples}
+
+wsdl2py, in the scripts directory, generates code given a 
+path name of a WSDL file or URL.  The following code is excerpted from it to
+show how \class{WriteServiceModule} is used.
+
+\begin{verbatim}
+    ...
+    reader = WSDLTools.WSDLReader()
+    if args_d['fromfile']:
+        wsdl = reader.loadFromFile(args_d['wsdl'])
+    elif args_d['fromurl']:
+        wsdl = reader.loadFromURL(args_d['wsdl'])
+    wsm = ZSI.wsdl2python.WriteServiceModule(wsdl)
+    wsm.write()
+    ...
+\end{verbatim}
+
+The following excerpt shows how one would call a method that mirrors
+the remote service method ConvertPlaceToLonLatPt, for a service named
+TerraService. It assumes that wsdl2py has already been called.
+In this case, the 'services' and 'types' files generated would
+be named TerraService_services.py and TerraService_services_types.py,
+respectively.
+
+\begin{verbatim}
+from TerraService_services import *
+
+import sys
+
+def main():
+    loc = TerraServiceLocator()
+
+       # prints messages sent and received if tracefile is set
+    kw = { 'tracefile' : sys.stdout }
+    portType = loc.getTerraServiceSoap(**kw)
+
+       # ns1 is an alias for a namespace
+       # Place_Def is defined in TerraService_services_types,
+       # which TerraService_services imports
+    place = ns1.Place_Def()
+    place._City = 'Oak Harbor'
+    place._State = 'Washington'
+    place._Country = 'United States'
+
+    request = ConvertPlaceToLonLatPtSoapInWrapper()
+    request._place = place
+
+    response = portType.ConvertPlaceToLonLatPt(request)
+    print "Latitude = %s" % response._ConvertPlaceToLonLatPtResult._Lat
+    print "Longitude = %s" % response._ConvertPlaceToLonLatPtResult._Lon
+...
+
+\end{verbatim}
+
+One needs to look at the associated WSDL file to see how
+to use the classes and methods in the generated code.
+In this example, \class{TerraServiceLocator}
+is a class with the name of the WSDL service, plus 'Locator'.  It contains the
+information necessary to contact the service, using
+\method{getTerraServiceSoap(**kw)}.
+
+That method's name is generated by 'get' plus the name of the WSDL portType
+for the service.  It returns a class which
+encapsulates the information in the portType, and contains the proxies
+for the methods associated with it.
+
+\method{ConvertPlaceToLonLatPtSoapInWrapper()}'s
+name is generated using
+the name of the WSDL input message for the ConvertPlaceToLonLatPt
+WSDL operation, plus 'Wrapper'.  The actual call to the service is a method of
+the class encapsulating the portType, with the same name as the WSDL operation.
+
+The name of the response field is '_' plus the name of the
+WSDL element (or one contained by the element) returned by the call.
+Parameters that are input and output are subfields of
+the request object and the response field, respectively. 
+Their names can be determined by looking at the part sub-element of a
+message.
+
+A convenience class, which is easier to use than the above interface,
+is in progress.  It does not require the ability to read WSDL, but
+is not as flexible.
+
+\section{WSDL objects}
+
+The following classes described encapsulate the upper-level objects
+in a WSDL file.  Note that most users will not need to use these,
+given the availability of \class{WriteServiceModule} and
+\class{ServiceProxy}, which are built on top of these objects.
+
+There are quite many classes defined here to
 implement the WSDL object model. Instances of those classes are generally 
 accessed and created through container objects rather than instantiated 
 directly. Most of them simply implement a straightforward representation of 
@@ -641,7 +809,7 @@ The location attribute of the import element.
 \end{classdesc}
 
 
-\section{Binding Classes}
+\subsection{Binding Classes}
 
 The \module{WSDLTools} module contains a number of classes that represent 
 the binding extensions defined in the WSDL specification. These classes 
@@ -711,3 +879,4 @@ Represents a \code{<mime:content>} element.
 \begin{classdesc}{MimeXmlBinding}{}
 Represents a \code{<mime:mimeXml>} element.
 \end{classdesc}
+
