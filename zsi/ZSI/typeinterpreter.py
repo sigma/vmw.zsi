@@ -2,49 +2,27 @@
 # Joshua R. Boverhof, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import types, copy
+
 import ZSI
 from ZSI import TC, TCtimes, TCcompound
 from ZSI.TC import TypeCode
-from ZSI import _copyright, _children, _child_elements, \
-        _inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
-        _find_type, \
-        EvaluateException 
-from ZSI.TCcompound import _check_typecode_list,_find_arrayoffset , \
-     _find_arrayposition,_offset_pat,_position_pat
-
+from ZSI import _copyright, EvaluateException 
 from ZSI.wstools.Utility import SplitQName
 from ZSI.wstools.Namespaces import SOAP, SCHEMA
-
-DEBUG  = 0
-def print_debug(msg, level=1, *l, **kw):
-    if DEBUG >= level:
-        for i in l:
-            msg += '\n*\t' + str(i)
-        for k,v in kw.items():
-            msg += '\n**\t%s: %s' %(k,v)
-        print 'TYPECODES(%d): %s' %(level,msg)
 
 ###########################################################################
 # Module Classes: BaseTypeInterpreter
 ###########################################################################
 
-TC.Boolean.tag = 'boolean'
-TCcompound.Array.tag = 'array'
-TC.Decimal.tag = 'decimal'
-TC.Base64String.tag = 'base64Binary'
-
 class NamespaceException(Exception): pass
 class BaseTypeInterpreter:
-    """
-    Example mapping of xsd/soapenc types to zsi python types.
-    Checks against all available classes in ZSI.TC
-    Used in TypeCodeSequenceGenerator, and TC_Template.
+    """Example mapping of xsd/soapenc types to zsi python types.
+    Checks against all available classes in ZSI.TC.  Used in 
+    wsdl2python, wsdlInterpreter, and ServiceProxy.
     """
 
     def __init__(self):
-        self._type_list = [TC.Boolean, TC.Iinteger, TC.IunsignedShort, \
-                           TC.gYearMonth, TC.Base64String, \
+        self._type_list = [TC.Iinteger, TC.IunsignedShort, TC.gYearMonth, \
                            TC.InonNegativeInteger, TC.Iint, TC.String, \
                            TC.gDateTime, TC.IunsignedInt, \
                            TC.IpositiveInteger, TC.FPfloat, TC.gDay, \
@@ -53,7 +31,7 @@ class BaseTypeInterpreter:
                            TC.gMonthDay, TC.InonPositiveInteger, \
                            TC.Ibyte, TC.FPdouble, TC.gTime, TC.gYear, \
                            TC.Ilong, TC.IunsignedLong, TC.Ishort, \
-                           TC.Decimal, TC.Token, TC.QName]
+                           TC.Token, TC.QName]
 
         self._tc_to_int = [
             ZSI.TCnumbers.IEnumeration,
@@ -100,6 +78,11 @@ class BaseTypeInterpreter:
         return
     
     def _get_xsd_typecode(self, msg_type):
+        untaged_xsd_types = {'boolean':TC.Boolean, 
+            'decimal':TC.Decimal, 
+            'base64Binary':TC.Base64String}
+        if untaged_xsd_types.has_key(msg_type):
+            return untaged_xsd_types[msg_type]
         for tc in self._type_list:
             if tc.tag == msg_type:
                 break
