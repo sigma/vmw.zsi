@@ -1,4 +1,4 @@
-"""Utilities for handling IEEE 754 special values
+"""Utilities for handling IEEE 754 floating point special values
 
 This class implements constants and functions for working with IEEE754
 double-precision special values.  It provides constants for NaN (Not a
@@ -7,7 +7,7 @@ Inf (also Positive Infinity), as well as functions to test for these
 values.
 
 The code is implemented in pure python by taking advantage of the
-'struck' standard module.  Some efficiency could be gained by
+'struct' standard module.  Some efficiency could be gained by
 translating the core routines into C.
 
 See <http://babbage.cs.qc.edu/courses/cs341/IEEE-754references.html>
