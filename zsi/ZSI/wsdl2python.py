@@ -274,7 +274,8 @@ class WriteServiceModule:
             fd2 = None
 
         for service in self._wa.getServicesList():
-            sd = ServiceDescription(self.aname_func, csuffix=csuffix)
+            sd = ServiceDescription(self.aname_func, csuffix=csuffix,
+                                    do_extended=self.do_extended)
 
             if self.do_extended:
                 sd.imports += ['\nfrom %s import *' % os.path.basename(msg_filename)]
@@ -368,10 +369,12 @@ class ServiceDescription:
     """Generates client interface.  Writes out an abstract interface, 
        a locator class, and port classes.
     """
-    def __init__(self, aname_func=lambda x: "_%s" % x, csuffix="_Def"):
+    def __init__(self, aname_func=lambda x: "_%s" % x, csuffix="_Def",
+                 do_extended=0):
 	self.imports = []
         self.aname_func = aname_func
         self.csuffix = csuffix
+        self.do_extended = do_extended
 
     def write(self, fd=sys.stdout, fd2=None):
         """Write service instance contents.  Must call fromWsdl with
@@ -560,9 +563,13 @@ class ServiceDescription:
                                                   style,
                                                   use, op)
 
-		    myBinding['defs'][op.getName()] = \
-                                                    '\n%sdef %s(self, request):' % \
-                                                    (ID1, textProtect(op.getName()))
+                    if self.do_extended:
+                        args = [pa.getName() for pa in op.getInput().getMessage().getPartList()]
+                        args = ",".join(args)
+                        myBinding['defs'][op.getName()] = '\n%sdef %s(self, %s):' % (ID1, textProtect(op.getName()), args)
+                    else:
+                        myBinding['defs'][op.getName()] = '\n%sdef %s(self, request):' % (ID1, textProtect(op.getName()))                        
+
                     myBinding['defs'][op.getName()] += '\n%s"""\n' % ID2
                     myBinding['defs'][op.getName()] += self.messages[inputName].\
                                          docString(typeDict, inputName, True)
@@ -578,33 +585,51 @@ class ServiceDescription:
                     kwstring = None
                     simpleType = self.isSimpleElementDeclaration(op)
 
-                    if simpleType:
-                        kwstring = "\n%skw = {'requestclass': %sWrapper}" \
-                                   % (ID2, inputName )
-                        myBinding['defs'][op.getName()] +=\
-                                                        '\n%sif not isinstance(request, %s):' %( ID2, simpleType)
+                    if self.do_extended:
+                        if simpleType:
+                            pass
+                        else:
+                            kwstring = '\n%skw = {}' % ID2
+                            myBinding['defs'][op.getName()] +=\
+                               "\n%srequest = %s()" % (ID2, inputName)
+                            
+                            wrap_str = ""
+                            for pa in op.getInput().getMessage().getPartList():
+                                paname = pa.getName()
+                                wrap_str += "\n%srequest.%s = %s" % (ID2,
+                                                                     paname,
+                                                                     paname)
+                            myBinding['defs'][op.getName()] += wrap_str
+                            myBinding['defs'][op.getName()] += '\n'
                     else:
-                        kwstring = '\n%skw = {}' % ID2
+                        if simpleType:
+                            kwstring = "\n%skw = {'requestclass': %sWrapper}" \
+                                       % (ID2, inputName )
+                            myBinding['defs'][op.getName()] +=\
+                                                            '\n%sif not isinstance(request, %s):' %( ID2, simpleType)
+                        else:
+                            kwstring = '\n%skw = {}' % ID2
+
+                            myBinding['defs'][op.getName()] +=\
+                                                            '\n%sif not isinstance(request, %s) and\\\n%snot issubclass(%s, request.__class__):'\
+                                                            %(ID2, inputName,
+                                                              ID3, inputName)
 
                         myBinding['defs'][op.getName()] +=\
-                                                        '\n%sif not isinstance(request, %s) and\\\n%snot issubclass(%s, request.__class__):'\
-                                                        %(ID2, inputName,
-                                                          ID3, inputName)
-		    myBinding['defs'][op.getName()] +=\
-                                                    '\n%sraise TypeError, %s' % \
-                                                    (ID3, r'"%s incorrect request type" %(request.__class__)')
+                                    '\n%sraise TypeError, %s' % \
+                     (ID3, r'"%s incorrect request type" %(request.__class__)')
 
                     myBinding['defs'][op.getName()] += kwstring
 
 
                     if outputName:
-
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Send(None, None, request, soapaction="%s", **kw)' %(ID2, soapAction)
 			myBinding['defs'][op.getName()] +=\
                             '\n%sresponse = self.binding.Receive(%sWrapper())' % \
                             (ID2, outputName)
-
+                        myBinding['defs'][op.getName()] += '\n'
+                        
 			# JRB
                         simpleType = self.isSimpleElementDeclaration(op, input=False)
                         if simpleType:
@@ -617,7 +642,23 @@ class ServiceDescription:
 			# JRB
 			myBinding['defs'][op.getName()] +=\
 			    '\n%sraise TypeError, %s' %(ID3, r'"%s incorrect response type" %(response.__class__)')
-		        myBinding['defs'][op.getName()] += '\n%sreturn response' %(ID2)
+
+                        if self.do_extended:
+                            myBinding['defs'][op.getName()] += '\n'
+                            pl = op.getOutput().getMessage().getPartList()
+                            wrap_args = []
+                            for pa in pl:
+                                paname = pa.getName()
+                                myBinding['defs'][op.getName()] += '\n%s%s = response.%s' % (ID2, paname, paname)
+                                wrap_args.append(paname)
+                            margs = ",".join(wrap_args)
+                            if len(pl) > 1:
+                                print "Return message has more than one part, returning a list of return values."
+                                margs = '[' + margs + ']'
+                                
+                            myBinding['defs'][op.getName()] += '\n%sreturn %s' % (ID2, margs)
+                        else:
+                            myBinding['defs'][op.getName()] += '\n%sreturn response' %(ID2)
                         
 		    else:
 			myBinding['defs'][op.getName()] += '\n%sself.binding.Send(None, None, request, soapaction="%s", **kw )' %(ID2, soapAction)
