@@ -38,7 +38,7 @@ ident = '$Id$'
 import cgi
 import copy
 from wstools.XMLname import toXMLname, fromXMLname
-from wstools import fpconst
+import fpconst
 
 # SOAPpy modules
 from Config import Config

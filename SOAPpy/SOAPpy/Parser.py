@@ -4,6 +4,7 @@ from Types     import *
 from NS        import NS
 from Utilities import *
 
+import fpconst
 import xml.sax
 from wstools.XMLname import fromXMLname
 
