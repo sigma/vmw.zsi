@@ -1,0 +1,83 @@
+\chapter{WSDL Services}
+
+
+\section{Using Web Services}
+
+The \module{ZSI.wsdl} package provides a high-level client-side tool
+for working with remote web services. The \class{ServiceProxy} class acts 
+as a proxy for a service that has a WSDL description, and exposes methods 
+that reflect the methods of the remote service. \class{ServiceProxy} objects 
+are very straightforward - you initialize a proxy from a WSDL URL, then call 
+methods on the proxy corresponding to the methods of the remote service.
+
+\begin{verbatim}
+from ZSI.wsdl import ServiceProxy
+
+service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl')
+value = service.BabelFish('en_de', 'This is a test!')
+\end{verbatim}
+
+The methods of \class{ServiceProxy} instances can be called with positional 
+arguments (where the argument positions match the message descriptions in the 
+associated WSDL) or keyword arguments (where the arguments match the message 
+descriptions by name). Arguments to \class{ServiceProxy} methods must be  
+compatible with the types required by the WSDL description.
+
+The return value from a proxy method depends on the SOAP signature. If the 
+remote service returns a single value, that value will be returned. If the 
+remote service returns multiple ``out'' parameters, the return value of the 
+proxy method will be a dictionary containing the out parameters indexed by 
+name.  Complex return types are also supported, meaning an aggregation of
+primitives can be returned from a service invocation.
+
+\section{\module{ZSI.wsdl.ServiceProxy}}
+\declaremodule{}{ZSI.wsdl.ServiceProxy}
+
+The \module{ServiceProxy} module provides a convenient way to call 
+remote web services that are described with WSDL. Service proxies 
+expose methods that reflect the methods of the remote web service. 
+
+
+\begin{classdesc}{ServiceProxy}{wsdl,\optional{, service\optional{, port}}}
+The \class{ServiceProxy} class provides a high-level Pythonic way to 
+call remote web services. A WSDL description must be available for the 
+remote service.
+
+The \var{wsdl} argument may be either the URL of the service description 
+or an existing \class{WSDL} instance. The optional \var{service} and 
+\var{port} name the service and port within the WSDL description that 
+should be used. If not specified, the first defined service and port 
+will be used.
+\end{classdesc}
+
+
+\subsection{ServiceProxy Objects}
+
+A \class{ServiceProxy} instance, once instantiated, exposes callable 
+methods that reflect the methods of the remote web service it 
+represents. These methods may be called like normal methods, using 
+*either* positional or keyword arguments (but not both).
+
+When a method of a \class{ServiceProxy} is called with positional 
+arguments, the arguments are mapped to the SOAP request based on 
+the parameter order defined in the WSDL description. If keyword 
+arguments are passed, the arguments will be mapped based on their 
+names.
+
+
+\subsection{ServiceProxy Example}
+
+This example demonstrates instantiating a \class{ServiceProxy} object 
+from a WSDL description to call a remote web service method.  It should be
+noted that \class{ServiceProxy} supports the passing and receiving of complex
+types.
+
+\begin{verbatim}
+from WebService.ServiceProxy import ServiceProxy
+
+service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl')
+value = service.BabelFish('en_de', 'This is a test!')
+\end{verbatim}
+
+
+\end{document}
