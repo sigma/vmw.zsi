@@ -59,7 +59,7 @@ class TypeCode:
 	    self.nspname, self.pname = pname
 	else:
 	    self.nspname, self.pname = None, pname
-	self.oname = self.pname
+	self.oname = kw.get('oname', self.pname)
 	if self.pname:
 	    i = self.pname.find(':')
 	    if i > -1: self.pname = self.pname[i + 1:]
@@ -256,7 +256,7 @@ class Any(TypeCode):
 	return parser.parse(elt, ps)
 
     def serialize(self, sw, pyobj, **kw):
-	if hasattr(self, 'oname'): kw['name'] = self.oname
+	kw['name'] = self.oname
 	n = kw.get('name', 'E%x' % id(pyobj))
 	tc = type(pyobj)
 	if tc == types.DictType or self.aslist:

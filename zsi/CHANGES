@@ -39,6 +39,7 @@ Changes for 1.2, released xx-xxx-2001:
     -	Add SoapWriter.Forget()
     -	Add 'envelope' keyword to SoapWriter
     -	Added 'mutable' paramter to TC.Struct
+    -	TC.oname now properly defaults to TC.pname
 
 Changes for 1.1, released 14-Sep-2001:
     -	Works with PyXML0.6 now!
