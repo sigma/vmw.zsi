@@ -42,10 +42,7 @@ class t6TestCase(unittest.TestCase):
         self.failUnlessEqual(cid['partii@zolera.com'].getvalue(), v,
                                     "mismatch")
         print base64.encodestring(v)             
-        try: 
-            from xml.dom.ext import Canonicalize 
-        except: 
-            from ZSI.compat import Canonicalize 
+        from ZSI.wstools.c14n import Canonicalize 
         z = dict['xmltest'] 
         print type(z), z 
         print Canonicalize(z)
