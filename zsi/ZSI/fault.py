@@ -93,8 +93,8 @@ def FaultFromActor(uri, actor=None):
 def FaultFromZSIException(ex, actor=None):
     '''Return a Fault object created from a ZSI exception object.
     '''
-    mystr = getattr(ex, 'str') or str(ex)
-    mytrace = getattr(ex, 'trace', '') or ''
+    mystr = getattr(ex, 'str', None) or str(ex)
+    mytrace = getattr(ex, 'trace', '')
     elt = '''<ZSI:ParseFaultDetail>
 <ZSI:string>%s</ZSI:string>
 <ZSI:trace>%s</ZSI:trace>
