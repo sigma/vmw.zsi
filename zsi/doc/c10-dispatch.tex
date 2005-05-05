@@ -144,7 +144,8 @@ This is most useful when \method{AsCGI()} is used.
 
 \ZSI{} includes a module to connect to a SOAP server over HTTP, send requests,
 and parse the response.
-It is built on the standard Python \module{httplib} module.
+It is built on the standard Python \module{httplib} and \module{Cookie}
+modules.
 It must be explicitly imported, as in
 \samp{from ZSI.client import AUTH,Binding}.
 
@@ -153,6 +154,9 @@ This class encapsulates a connection to a server, known as a \emph{binding}.
 A single binding may be used for multiple RPC calls.
 Between calls, modifiers may be used to change the URL being posted to,
 etc.
+
+Cookies are also supported; if a response comes back with a \code{Set-Cookie}
+header, it will be parsed and used in subsequent interactions.
 
 The following keyword arguments may be used:
 

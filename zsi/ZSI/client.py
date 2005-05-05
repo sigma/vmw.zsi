@@ -6,7 +6,7 @@
 from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
     FaultFromFaultMessage, _child_elements, _attrs, FaultException
 from ZSI.auth import AUTH
-import base64, httplib, cStringIO as StringIO, types, time, urlparse
+import base64, httplib, Cookie, cStringIO as StringIO, types, time, urlparse
 
 _b64_encode = base64.encodestring
 
@@ -80,6 +80,7 @@ class Binding:
         self.host = host
         self.readerclass = readerclass
         self.soapaction = soapaction
+        self.cookies = Cookie.SimpleCookie()
         self.op_ns = op_ns
 
         if kw.has_key('auth'):
@@ -129,11 +130,33 @@ class Binding:
         self.user_headers = []
         return self
 
+    def ResetCookies(self):
+        '''Empty the list of cookies.
+        '''
+        self.cookies = Cookie.SimpleCookie()
+
     def AddHeader(self, header, value):
         '''Add a header to send.
         '''
         self.user_headers.append((header, value))
         return self
+
+    def __addcookies(self):
+        '''Add cookies from self.cookies to request in self.h
+        '''
+       for cname, morsel in self.cookies.items():
+           attrs = []
+           value = morsel.get('version', '')
+           if value != '' and value != '0':
+               attrs.append('$Version=%s' % value)
+           attrs.append('%s=%s' % (cname, morsel.coded_value))
+           value = morsel.get('path')
+           if value:
+               attrs.append('$Path=%s' % value)
+           value = morsel.get('domain')
+           if value:
+               attrs.append('$Domain=%s' % value)
+           self.h.putheader('Cookie', "; ".join(attrs))
 
     def RPC(self, url, opname, obj, replytype=None, **kw):
         '''Send a request, return the reply.  See Send() and Recieve()
@@ -160,7 +183,6 @@ class Binding:
             if tc is None: tc = TC.Any(opname, aslist=1)
         else:
             tc = TC.Any(opname, aslist=1)
-
 
         if self.op_ns:
             opname = '%s:%s' % (self.op_ns, opname)
@@ -210,6 +232,7 @@ class Binding:
         self.h.putrequest("POST", url or self.url)
         self.h.putheader("Content-length", "%d" % len(soapdata))
         self.h.putheader("Content-type", 'text/xml; charset=utf-8')
+        self.__addcookies()
         SOAPActionValue = '"%s"' % (soapaction or self.soapaction)
         self.h.putheader("SOAPAction", SOAPActionValue)
         if self.auth_style & AUTH.httpbasic:
@@ -220,7 +243,6 @@ class Binding:
             self.h.putheader(header, value)
         self.h.endheaders()
         self.h.send(soapdata)
-
         # Clear prior receive state.
         self.data, self.ps = None, None
 
@@ -237,7 +259,12 @@ class Binding:
                 print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
                 print >>trace, str(self.reply_headers)
                 print >>trace, self.data
+            for k,v in response.getheaders():
+                if k.lower() == 'set-cookie':
+                    self.cookies.load(v)
             if response.status != 100: break
+            # The httplib doesn't understand the HTTP continuation header.
+            # Horrible internals hack to patch things up.
             self.h._HTTPConnection__state = httplib._CS_REQ_SENT
             self.h._HTTPConnection__response = None
         return self.data
