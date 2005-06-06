@@ -144,19 +144,19 @@ class Binding:
     def __addcookies(self):
         '''Add cookies from self.cookies to request in self.h
         '''
-       for cname, morsel in self.cookies.items():
-           attrs = []
-           value = morsel.get('version', '')
-           if value != '' and value != '0':
-               attrs.append('$Version=%s' % value)
-           attrs.append('%s=%s' % (cname, morsel.coded_value))
-           value = morsel.get('path')
-           if value:
-               attrs.append('$Path=%s' % value)
-           value = morsel.get('domain')
-           if value:
-               attrs.append('$Domain=%s' % value)
-           self.h.putheader('Cookie', "; ".join(attrs))
+        for cname, morsel in self.cookies.items():
+            attrs = []
+            value = morsel.get('version', '')
+            if value != '' and value != '0':
+                attrs.append('$Version=%s' % value)
+            attrs.append('%s=%s' % (cname, morsel.coded_value))
+            value = morsel.get('path')
+            if value:
+                attrs.append('$Path=%s' % value)
+            value = morsel.get('domain')
+            if value:
+                attrs.append('$Domain=%s' % value)
+            self.h.putheader('Cookie', "; ".join(attrs))
 
     def RPC(self, url, opname, obj, replytype=None, **kw):
         '''Send a request, return the reply.  See Send() and Recieve()
