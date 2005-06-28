@@ -797,7 +797,7 @@ class ServiceDescription:
 		for i in l:
                     tcs += (i + ',')
 
-                self.typecode += '\n%sZSI.TC.Struct.__init__(self, %s, [%s], pname=name, aname="%%s" %% name, oname=oname )' %( ID3, message.getName(), tcs )
+                self.typecode += '\n%sZSI.TC.Struct.__init__(self, %s, [%s], pname=name, aname="%s" %% name, oname=oname )' %( ID3, message.getName(), tcs, self.aname_func("%s") )
 
             # do the wrapper do go with the message
 
@@ -883,9 +883,9 @@ class ServiceDescription:
                     namespace = ''
                 if style == 'rpc':
                     namespace = ''
-		self.typecode += '\n%s%s.typecode = Struct(%s,[%s], pname=name, aname="%%s" %% name, oname="%%s  xmlns=\\"%s\\"" %% name )'\
+		self.typecode += '\n%s%s.typecode = Struct(%s,[%s], pname=name, aname="%s" %% name, oname="%%s  xmlns=\\"%s\\"" %% name )'\
 			     %(ID2,message.getName(),message.getName(),
-                               tcs,namespace)
+                               tcs, self.aname_func("%s"), namespace)
 
             # do the wrapper to go w/the message
 
@@ -1288,7 +1288,7 @@ class SchemaDescription:
                     self.classdef.set('\n\n%sclass %s(ZSI.TC.Any):' \
                                       % (ID1, tp.getName() + self.psuffix))
                     self.initcode.write('\n%s# probably a union - dont trust it' % ID3)
-                    self.basector.set('\n%sZSI.TC.Any.__init__(self,pname=name,aname="%%s" %% name , optional=1,repeatable=1, **kw)' % ID3)
+                    self.basector.set('\n%sZSI.TC.Any.__init__(self,pname=name,aname="%s" %% name , optional=1,repeatable=1, **kw)' % (ID3, self.aname_func("%s")) )
 
                 self.typeDoc('optional=1', objName, typeName)
             elif hasattr(tp, '_def'):
@@ -1352,7 +1352,7 @@ class SchemaDescription:
             self.initcode.write('\n%sns = ns or self.__class__.schema' % ID3)
             self.initcode.write('\n%skw["oname"] = \'%%s xmlns=\"%%s\"\' %%(name, ns)' % ID3)
 
-            self.basector.set('\n\n%s%s.__init__(self,pname=name, aname="%%s" %% name,  **kw)' % (ID3,tpc))
+            self.basector.set('\n\n%s%s.__init__(self,pname=name, aname="%s" %% name,  **kw)' % (ID3,tpc,self.aname_func("%s")))
             typeName = self.bti.get_pythontype(None, None, tpc)
             self.typeDoc('', '__param', typeName)
                   
@@ -1574,7 +1574,7 @@ class SchemaDescription:
                     except:
                         raise WsdlGeneratorError, 'arrayType must be specified.'
                     self.basector.set(\
-                        "\n%s%s.__init__(self, '%s', %s%s(name=None,typed=0), pname=name, aname='%%s' %% name, oname='%%s xmlns:%s=\"%s\"' %% name, **kw)" %(ID3, tc, arrayType, nsp, atype, atypePrefix, atypeNS)
+                        "\n%s%s.__init__(self, '%s', %s%s(name=None,typed=0), pname=name, aname='%s' %% name, oname='%%s xmlns:%s=\"%s\"' %% name, **kw)" %(ID3, tc, arrayType, nsp, atype, self.aname_func("%s"), atypePrefix, atypeNS)
                     )
                         
                     self.typeDoc('', '_element', typeName)
