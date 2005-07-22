@@ -259,18 +259,9 @@ class Binding:
                 print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
                 print >>trace, str(self.reply_headers)
                 print >>trace, self.data
-            saved = None
-            for d in response.getallmatchingheaders('set-cookie'):
-                if d[0] in [ ' ', '\t' ]:
-                    saved.append(d)
-                else:
+            for k,v in response.getheaders():
+                if k.lower() == 'set-cookie':
                     self.cookies.load(v)
-                    saved = d
-            if saved:
-                self.cookies.load(v)
-#           for k,v in response.getheaders():
-#               if k.lower() == 'set-cookie':
-#                   self.cookies.load(v)
             if response.status != 100: break
             # The httplib doesn't understand the HTTP continuation header.
             # Horrible internals hack to patch things up.
