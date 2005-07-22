@@ -1,0 +1,9299 @@
+#LyX 1.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 221
+\textclass article
+\begin_preamble
+\usepackage{ae,aecompl}
+\end_preamble
+\language english
+\inputencoding auto
+\fontscheme default
+\graphics default
+\paperfontsize default
+\spacing single 
+\papersize Default
+\paperpackage a4
+\use_geometry 1
+\use_amsmath 0
+\use_natbib 0
+\use_numerical_citations 0
+\paperorientation portrait
+\leftmargin 2.5cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\quotes_times 2
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+
+\layout Title
+
+Interoperable WSDL/SOAP web services introduction: Python ZSI, Excel XP,
+ gSOAP C/C++ & Applix SS
+\layout Author
+
+Holger Joukl
+\newline 
+LBBW Financial Markets Technologies
+\layout Abstract
+
+Despite the hype & buzzword-storm, building web services servers and clients
+ is still not as easy as promised.
+ This is partly due to the relative newness of technology.
+ For the most part, though, this stems from the actual complexness of the
+ protocols/specs, the toolkit magic behind which this complexness is hidden,
+ and the documentation gaps that exist for the toolkits.
+ This document is intended to be a step-by-step tutorial/practice report,
+ to ease the use for web services newcomers (like me).
+ 
+\newline 
+It features 
+\begin_deeper 
+\layout Itemize
+
+the Python ZSI module that is used to build the server side machinery and
+\layout Itemize
+
+several clients that access the exposed services from 
+\begin_deeper 
+\layout Itemize
+
+Python (ZSI)
+\layout Itemize
+
+MS Excel XP (XP Web Services Toolkit 2.0, VB)
+\layout Itemize
+
+C/C++ (gSOAP)
+\layout Itemize
+
+Applix spreadsheets (gSOAP+ELF)
+\end_deeper 
+\end_deeper 
+\layout Standard
+
+Copyright © 2005 Holger Joukl.
+ All rights reserved.
+\layout Standard
+
+Redistribution and use in source (LyX, LaTeX) and 'compiled' forms (SGML,
+ HTML, PDF, PostScript, RTF and so forth) with or without modification,
+ are permitted provided that the following conditions are met:
+\layout Enumerate
+
+Redistributions of source code (LyX, LaTeX) must retain the above copyright
+ notice, this list of conditions and the following disclaimer as the first
+ lines of this file unmodified.
+\layout Enumerate
+
+Redistributions in compiled form (transformed to other DTDs, converted to
+ PDF, PostScript, RTF and other formats) must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the documentati
+on and/or other materials provided with the distribution.
+\layout Standard
+
+THIS DOCUMENTATION IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS DOCUMENTATIO
+N, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\layout Standard
+
+
+\begin_inset ERT
+status Open
+
+\layout Standard
+
+\backslash 
+pagebreak
+\end_inset 
+
+
+\layout Standard
+
+
+\begin_inset LatexCommand \tableofcontents{}
+
+\end_inset 
+
+
+\layout Section
+
+Introduction
+\layout Standard
+
+We assume the reader is familiar with Python, C/C++ and/or MS Excel/VisualBasic
+ and/or Applix to a certain degree.
+ The web service server components are implemented in Python, but any of
+ the client side technologies can be skipped if not of interest.
+\layout Standard
+
+While some basic concepts regarding WSDL, SOAP, HTTP servers are presented
+ here implicitly, this document is not a tutorial on these.
+ If you want to know more there´s plenty of stuff on the web.
+\layout Standard
+
+The code examples have been developed with the primary goal to 
+\begin_inset Quotes eld
+\end_inset 
+
+make it work at all
+\begin_inset Quotes erd
+\end_inset 
+
+, in a learning-by-doing manner.
+ Thus there is lots of room for enhancements, e.g.
+ getting rid of hardcoded path names etc.
+ 
+\layout Standard
+
+Throughout this document, certain host names (
+\begin_inset Quotes eld
+\end_inset 
+
+dev-b.handel-dev.local
+\begin_inset Quotes erd
+\end_inset 
+
+) or ports (
+\begin_inset Quotes eld
+\end_inset 
+
+8080
+\begin_inset Quotes erd
+\end_inset 
+
+) are used in the examples- you will have to substitute those with the appropria
+te setup for your site, of course.
+ Naturally, this also affects all URLs defined in the example WSDLs and
+ used to retrieve these WSDLs.
+\layout Standard
+
+These are the toolkit versions discussed here:
+\layout Itemize
+
+Python 2.3.4
+\layout Itemize
+
+PyXML 0.8.3
+\layout Itemize
+
+ZSI 1.6.1
+\layout Itemize
+
+gcc 2.95.2, gcc 3.4.3
+\layout Itemize
+
+gSOAP 2.7.1
+\layout Itemize
+
+MS Office XP Web Services Toolkit 2.0
+\layout Standard
+
+Conceptually, we use a WSDL-centric approach: The starting point for all
+ example service and client implementations will be the WSDL description.
+ Note that this might differ from certain toolkits that start out with the
+ service implementation in the host language and generate the WSDL for you
+ to expose the implemented service.
+ We regard the latter to have a tendency to not promote interoperability
+ and to tie in implementation language details, which is certainly not what
+ we want.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+This came up partly due to the fact that the chosen server implementation
+ (Python ZSI) offers no such tool and partly as a gut feeling.
+ Since then, this opinion has grown stronger and has also been backed up
+ by several practitioners´ readings at a recent conference (Stuttgarter
+ Softwaretechnik Forum 2005, Stuttgart-Vaihingen, Germany).
+\end_inset 
+
+
+\layout Standard
+
+Striving for interoperability, only the WS-I-compliant rpc/literal and document/
+literal WSDL styles are presented here.
+\layout Standard
+
+The DateService WSDL (sect.
+ 
+\begin_inset LatexCommand \ref{sub:The-DateService-WSDL}
+
+\end_inset 
+
+) and worker code (sect.
+ 
+\begin_inset LatexCommand \ref{sub:The-DateService-implementation}
+
+\end_inset 
+
+) and the Applix/ELF macro code (sect.
+ 
+\begin_inset LatexCommand \ref{sub:Applix-client-implementation}
+
+\end_inset 
+
+) are courtesy of Rainer Kluger (LBBW Financial Markets Technologies).
+\layout Section
+
+Interlude: ZSI 1.6.1 code modifications
+\layout Standard
+
+The Python server and client side implementations are based on the ZSI 1.6.1
+ module.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+The attempt has been made to move everything on to ZSI 1.7, but unfortunately
+ the first try on the FinancialService resulted in a 
+\family typewriter 
+wsdl2py
+\family default 
+ error (SF Tracker # 1241503), so this has been put off for the moment.
+\end_inset 
+
+ Some modifications had to be made in order to get everything to work.
+ This might not be necessary for newer versions of ZSI, so it´s well worth
+ trying to create or access your services 
+\emph on 
+without
+\emph default 
+ modifying the ZSI code base.
+\layout Standard
+
+If needed, the necessary patches to ZSI 1.6.1 for the following example services
+ can be found in addendum 
+\begin_inset LatexCommand \ref{sec:ZSI-1.6.1-patches}
+
+\end_inset 
+
+.
+\layout Section
+
+Simple datatypes: The rpc/literal SquareService
+\layout Standard
+
+This first example will implement an overly simple service that exposes
+ a function which takes a 
+\family typewriter 
+double
+\family default 
+ argument and returns the square of it (
+\begin_inset Formula $x{}^{\textrm{2}}$
+\end_inset 
+
+) as a 
+\family typewriter 
+double
+\family default 
+.
+ I.e.
+ this examples uses simple scalar datatypes, one single argument and one
+ single return value.
+\layout Subsection
+
+The SquareService WSDL
+\layout Standard
+
+This is the WSDL file that determines the contract for the SquareService,
+ called 
+\family typewriter 
+SquareService.wsdl
+\family default 
+:
+\layout LyX-Code
+
+<?xml version="1.0"?>
+\layout LyX-Code
+
+\layout LyX-Code
+
+<definitions name="SquareService" 
+\layout LyX-Code
+
+ targetNamespace="http://dev-b.handel-dev.local:8080/SquareService"  
+\layout LyX-Code
+
+ xmlns:tns="http://dev-b.handel-dev.local:8080/SquareService"   
+\layout LyX-Code
+
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+\layout LyX-Code
+
+ xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+\layout LyX-Code
+
+ xmlns="http://schemas.xmlsoap.org/wsdl/">
+\layout LyX-Code
+
+\layout LyX-Code
+
+    <message name="getSquareRequest">
+\layout LyX-Code
+
+        <part name="x" type="xsd:double"/>
+\layout LyX-Code
+
+    </message>
+\layout LyX-Code
+
+    <message name="getSquareResponse">
+\layout LyX-Code
+
+        <part name="return" type="xsd:double"/>
+\layout LyX-Code
+
+    </message>
+\layout LyX-Code
+
+\layout LyX-Code
+
+    <portType name="SquarePortType">
+\layout LyX-Code
+
+        <operation name="getSquare">
+\layout LyX-Code
+
+            <documentation> the square method </documentation>
+\layout LyX-Code
+
+            <input message="tns:getSquareRequest"/>
+\layout LyX-Code
+
+            <output message="tns:getSquareResponse"/>
+\layout LyX-Code
+
+        </operation>
+\layout LyX-Code
+
+    </portType>
+\layout LyX-Code
+
+\layout LyX-Code
+
+    <binding name="SquareBinding" type="tns:SquarePortType">
+\layout LyX-Code
+
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"
+/>
+\layout LyX-Code
+
+        <operation name="getSquare">
+\layout LyX-Code
+
+            <soap:operation
+\layout LyX-Code
+
+             soapAction="http://dev-b.handel-dev.local:8080/SquareService/getSquar
+e"/>
+\layout LyX-Code
+
+            <input>
+\layout LyX-Code
+
+                <soap:body use="literal" 
+\layout LyX-Code
+
+                 namespace="http://dev-b.handel-dev.local:8080/SquareService"/>
+\layout LyX-Code
+
+            </input>
+\layout LyX-Code
+
+            <output>
+\layout LyX-Code
+
+                <soap:body use="literal" 
+\layout LyX-Code
+
+                 namespace="http://dev-b.handel-dev.local:8080/SquareService"/>
+\layout LyX-Code
+
+            </output>
+\layout LyX-Code
+
+        </operation>
+\layout LyX-Code
+
+    </binding>
+\layout LyX-Code
+
+\layout LyX-Code
+
+    <service name="SquareService">
+\layout LyX-Code
+
+        <documentation>Returns x^2 (x**2, square(x)) for a given float x</docume
+ntation>
+\layout LyX-Code
+
+        <port name="SquarePort" binding="tns:SquareBinding">
+\layout LyX-Code
+
+            <soap:address location="http://dev-b.handel-dev.local:8080/SquareServi
+ce"/>
+\layout LyX-Code
+
+        </port>
+\layout LyX-Code
+
+    </service>
+\layout LyX-Code
+
+\layout LyX-Code
+
+</definitions>
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout Standard
+
+Comments:
+\layout Itemize
+
+The 
+\family typewriter 
+style
+\family default 
+ 
+\begin_inset Quotes eld
+\end_inset 
+
+rpc
+\begin_inset Quotes erd
+\end_inset 
+
+ and the 
+\family typewriter 
+use
+\family default 
+ 
+\begin_inset Quotes eld
+\end_inset 
+
+literal
+\begin_inset Quotes erd
+\end_inset 
+
+ are used, to be WS-I-compliant.
+ WS-I only supports rpc/literal and document/literal.
+\layout Subsection
+
+A Python ZSI server for the SquareService
+\layout Standard
+
+The Python ZSI package 
+\begin_inset LatexCommand \cite{ZSIrefdoc}
+
+\end_inset 
+
+ is one of two pywebsvcs packages implementing web services for Python,
+ namely SOAP messaging and WSDL capabilities.
+ It is powerful and very easy to get started with, but lacks some documentation
+ enhancements when it comes to WSDL-driven service generation.
+ While the tools to do that are already there, documentation is sparse and
+ examples are hard to find.
+ We hope to close the gap a bit in the next section.
+\layout Standard
+
+All examples here are based on ZSI 1.6.1.
+\layout Subsubsection
+
+Generating stubs from WSDL
+\layout Standard
+
+ZSI comes with two python scripts to generate code from a WSDL file:
+\layout Itemize
+
+
+\family typewriter 
+wsdl2py
+\family default 
+ is used to generate python bindings for the service.
+\layout Itemize
+
+
+\family typewriter 
+wsdl2dispatch
+\family default 
+ generates a server frame for service dispatch where the actual worker functions
+ will be hooked into.
+\layout Standard
+
+If you have installed ZSI on top of your python installation you can invoke
+ the scripts like this (change your installation base path according to
+ your setup):
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+The installation base path for all examples here is /apps/pydev/.
+\end_inset 
+
+
+\layout Enumerate
+
+
+\family typewriter 
+wsdl2py
+\family default 
+:
+\begin_deeper 
+\layout LyX-Code
+
+/apps/pydev/bin/wsdl2py -f SquareService.wsdl
+\layout Standard
+
+This will generate the file 
+\family typewriter 
+SquareService_services.py
+\family default 
+.
+\end_deeper 
+\layout Enumerate
+
+
+\family typewriter 
+wsdl2dispatch:
+\begin_deeper 
+\layout LyX-Code
+
+/apps/pydev/bin/wsdl2dispatch -f SquareService.wsdl
+\layout Standard
+
+This will generate the file 
+\family typewriter 
+SquareService_services_server.py
+\family default 
+.
+\end_deeper 
+\layout Standard
+
+What do we have now? We have bindings to work with the services in python
+ and a skeleton for dispatching to the actual worker methods.
+ What we
+\layout Standard
+
+still need is 
+\layout Itemize
+
+the main program that runs a (HTTP-) server with a request handler for the
+ services and
+\layout Itemize
+
+the hooks to invoke the worker methods.
+\layout Standard
+
+Luckily, ZSI includes the ZSI.ServiceContainer module which implements the
+ server for us.
+ 
+\layout Subsubsection
+
+Writing the SquareService web server
+\begin_inset LatexCommand \label{sub:SquareService-web-server}
+
+\end_inset 
+
+
+\layout Standard
+
+This is our main program 
+\family typewriter 
+mySquareServer.py
+\family default 
+.
+ It basically provides a request handler addition, puts our service into
+ the ServiceContainer and starts the HTTP server on a given port:
+\layout LyX-Code
+
+#! /apps/pydev/bin/python2.3
+\layout LyX-Code
+
+\layout LyX-Code
+
+from ZSI.ServiceContainer import ServiceContainer, SOAPRequestHandler
+\layout LyX-Code
+
+from SquareService_services_server import SquareService
+\layout LyX-Code
+
+\layout LyX-Code
+
+import os
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+class MySOAPRequestHandler(SOAPRequestHandler):
+\layout LyX-Code
+
+    """Add a do_GET method to return the WSDL on HTTP GET requests.
+\layout LyX-Code
+
+    Please note that the path to the wsdl file is derived from what
+\layout LyX-Code
+
+    the HTTP invocation delivers (which is put into the self.path
+\layout LyX-Code
+
+    attribute), so you might want to change this addressing scheme.
+\layout LyX-Code
+
+    """
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    def do_GET(self):
+\layout LyX-Code
+
+        """Return the WSDL file.
+ We expect to get the location from the
+\layout LyX-Code
+
+        invocation URL ("path").
+\layout LyX-Code
+
+        """
+\layout LyX-Code
+
+        wsdlfile = os.path.join('.', self.path.replace('/', "", 1) + ".wsdl")
+\layout LyX-Code
+
+        print ">>>>> using wsdlfile", wsdlfile
+\layout LyX-Code
+
+        wsdl = open(wsdlfile).read()
+\layout LyX-Code
+
+        self.send_xml(wsdl)
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+# Copied from ZSI.ServiceContainer, extended to instantiate with a custom
+\layout LyX-Code
+
+# request handler
+\layout LyX-Code
+
+def AsServer(port=80, services=(), RequestHandlerClass=SOAPRequestHandler):
+\layout LyX-Code
+
+    '''port --
+\layout LyX-Code
+
+       services -- list of service instances
+\layout LyX-Code
+
+    '''
+\layout LyX-Code
+
+    address = ('', port)
+\layout LyX-Code
+
+    sc = ServiceContainer(address, RequestHandlerClass=RequestHandlerClass)
+\layout LyX-Code
+
+    for service in services:
+\layout LyX-Code
+
+        path = service.getPost()
+\layout LyX-Code
+
+        sc.setNode(service, path)
+\layout LyX-Code
+
+    sc.serve_forever()
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+AsServer(port=8080, services=[SquareService()], RequestHandlerClass=MySOAPReques
+tHandler)
+\layout Standard
+
+We wouldn´t have needed to write the custom request handler 
+\family typewriter 
+MySOAPRequestHandler
+\family default 
+ if not for the do_GET method.
+ But both Python ZSI clients using the 
+\family typewriter 
+ServiceProxy
+\family default 
+ class and MS VisualBasic SOAP clients expect to receive the WSDL when issueing
+ HTTP GET, which is actually common behaviour to get the service description
+ (apart from UDDI).
+\layout Standard
+
+Similarly, the 
+\family typewriter 
+AsServer(...)
+\family default 
+ function had to be extended to make use of our custom request handler.
+\layout Subsubsection
+
+Hooking-in the service implementation
+\begin_inset LatexCommand \label{sub:Hooking-in-the-service}
+
+\end_inset 
+
+
+\layout Standard
+
+The only thing left now is to hook the implementation of the service into
+ the generated server skeleton.
+ We need to 
+\layout Itemize
+
+dispatch to the correct service method,
+\layout Itemize
+
+feed it the arguments received via a SOAP request and 
+\layout Itemize
+
+set the return values for the SOAP response.
+\layout Standard
+
+This is the implementation for the SquareService getSquare method (or operation,
+ in WSDL terms):
+\layout LyX-Code
+
+from SquareService_services import *
+\layout LyX-Code
+
+from ZSI.ServiceContainer import ServiceSOAPBinding
+\layout LyX-Code
+
+\layout LyX-Code
+
+class SquareService(ServiceSOAPBinding):
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    # This dictionary is used to dispatch to the appropriate method.
+\layout LyX-Code
+
+    # Not that the dict key(s) are identical to the soapAction attributes
+ of the
+\layout LyX-Code
+
+    # <soap:operation ...> field(s) in the WSDL:
+\layout LyX-Code
+
+    # ...
+\layout LyX-Code
+
+    # <soap:operation 
+\layout LyX-Code
+
+    # soapAction="http://dev-b.handel-dev.local:8080/SquareService/getSquare"/>
+\layout LyX-Code
+
+    # ...
+\layout LyX-Code
+
+    # The value(s) for the key(s) are the generated soap_<...> method names.
+\layout LyX-Code
+
+    soapAction = {
+\layout LyX-Code
+
+        'http://dev-b.handel-dev.local:8080/SquareService/getSquare': 'soap_getSqu
+are',
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    def __init__(self, post='/SquareService', **kw):
+\layout LyX-Code
+
+        ServiceSOAPBinding.__init__(self, post)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    def soap_getSquare(self, ps):
+\layout LyX-Code
+
+        # input vals in request object
+\layout LyX-Code
+
+        # MANUALLY CORRECTED:
+\layout LyX-Code
+
+        # args = ps.Parse( getSquareRequestWrapper() )
+\layout LyX-Code
+
+        # Use the class instead of an instance of the class.
+\layout LyX-Code
+
+        # Note: The erroneous code generation happens for rpc/literal, but
+ not
+\layout LyX-Code
+
+        # for rpc/encoded, where using an instance works (?).
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        args = ps.Parse( getSquareRequestWrapper )
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        # assign return values to response object
+\layout LyX-Code
+
+        response = getSquareResponseWrapper()
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        # >>> ADDED MANUALLY
+\layout LyX-Code
+
+        # Here we hook in the actual worker method
+\layout LyX-Code
+
+        response._return = self.getSquare(args._x)
+\layout LyX-Code
+
+        # <<<
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        return response
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    # the (handwritten) worker code
+\layout LyX-Code
+
+    def getSquare(self, x):
+\layout LyX-Code
+
+        """Return square(x).
+\layout LyX-Code
+
+        """
+\layout LyX-Code
+
+        return x**2
+\layout Standard
+
+Note that ZSI does almost all the work for us, again.
+ The only additions we had to make are:
+\layout Itemize
+
+Implementing the 
+\family typewriter 
+getSquare(...)
+\family default 
+ worker method.
+ We could also have invoked a function, used a lambda, put the worker code
+ into 
+\family typewriter 
+soap_getSquare
+\family default 
+, etc.
+\layout Itemize
+
+Hooking 
+\family typewriter 
+getSquare
+\family default 
+ in.
+ This is done in the
+\begin_deeper 
+\layout LyX-Code
+
+...
+\layout LyX-Code
+
+# >>> ADDED MANUALLY
+\layout LyX-Code
+
+# Here we hook in the actual worker method
+\layout LyX-Code
+
+response._return = self.getSquare(args._x)
+\layout LyX-Code
+
+# <<<
+\layout LyX-Code
+
+...
+\layout Standard
+
+bits where
+\layout Itemize
+
+the 
+\family typewriter 
+x
+\family default 
+ input argument is taken from the incoming SOAP request and handed to the
+ 
+\family typewriter 
+getSquare
+\family default 
+ method
+\layout Itemize
+
+the 
+\family typewriter 
+return
+\family default 
+ field of the SOAP response message to be sent out is set with the 
+\family typewriter 
+getSquare
+\family default 
+ result
+\layout Standard
+
+As you can see in the WSDL above the 
+\begin_inset Quotes eld
+\end_inset 
+
+getSquareRequest
+\begin_inset Quotes erd
+\end_inset 
+
+ message has a 
+\begin_inset Quotes eld
+\end_inset 
+
+part
+\begin_inset Quotes erd
+\end_inset 
+
+ with the name 
+\begin_inset Quotes eld
+\end_inset 
+
+x
+\begin_inset Quotes erd
+\end_inset 
+
+; ZSI exposes this as attribute 
+\begin_inset Quotes eld
+\end_inset 
+
+_x
+\begin_inset Quotes erd
+\end_inset 
+
+ of the incoming parsed SOAP request message 
+\begin_inset Quotes eld
+\end_inset 
+
+args
+\begin_inset Quotes erd
+\end_inset 
+
+ instance.
+ The same applies to the 
+\begin_inset Quotes eld
+\end_inset 
+
+return
+\begin_inset Quotes erd
+\end_inset 
+
+ part of the response message.
+ ZSI exposes this to python as attribute 
+\begin_inset Quotes eld
+\end_inset 
+
+_return
+\begin_inset Quotes erd
+\end_inset 
+
+ of the 
+\family typewriter 
+getSquareResponseWrapper
+\family default 
+ instance.
+\end_deeper 
+\layout Itemize
+
+Correcting the line
+\begin_deeper 
+\layout LyX-Code
+
+# args = ps.Parse( getSquareRequestWrapper() )
+\layout Standard
+
+to
+\layout LyX-Code
+
+args = ps.Parse( getSquareRequestWrapper )
+\layout Standard
+
+This seems to be a bug in the code generation.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+When experimenting with rpc/encoded-style first, the generated code line
+ worked 
+\begin_inset Quotes eld
+\end_inset 
+
+as is
+\begin_inset Quotes erd
+\end_inset 
+
+.
+\end_inset 
+
+
+\end_deeper 
+\layout Standard
+
+Comments:
+\layout Itemize
+
+The dispatch to the appropriate service operation is handled in the 
+\family typewriter 
+soapAction
+\family default 
+ dictionary.
+ This dictionary maps the action that is requested to the method that is
+ invoked.
+ The ZSI standard request handler (that we inherit from) takes the HTTP
+ header field soapAction and propagates its value to this dispatch mechanism.
+ Thus, everything works out-of-the-box if you use the 
+\begin_inset Quotes eld
+\end_inset 
+
+soapAction
+\begin_inset Quotes erd
+\end_inset 
+
+ operation-attribute in your WSDL file (and if your service client actually
+ provides this header field with its request).
+ If you want to use different ways to dispatch (e.g.
+ by using the toplevel node of the incoming SOAP body) you will have to
+ make further modifications to the ZSI standard request handler.
+\layout Subsection
+
+A Python ZSI client for the SquareService
+\begin_inset LatexCommand \label{sub:ZSI-SquareService-client}
+
+\end_inset 
+
+
+\layout Standard
+
+We implement a client that calls getSquare from the SquareService in 
+\family typewriter 
+myServiceProxyClient.py
+\family default 
+ as follows:
+\layout LyX-Code
+
+#!/apps/pydev/bin/python2.3
+\layout LyX-Code
+
+import sys
+\layout LyX-Code
+
+import getopt
+\layout LyX-Code
+
+from ZSI import ServiceProxy
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# default configuration
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+port = 8080
+\layout LyX-Code
+
+host = 'dev-b'
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# command line parsing
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+def usage(rcode=1):
+\layout LyX-Code
+
+    print "usage: myServiceProxyClient.py [--host=<hostname> --port=,-c<port>
+ --help, -h]"
+\layout LyX-Code
+
+    sys.exit(rcode)
+\layout LyX-Code
+
+try:
+\layout LyX-Code
+
+    optlist, args = getopt.getopt(sys.argv[1:], "hp:", ['help', 'port='])
+\layout LyX-Code
+
+except getopt.GetoptError:
+\layout LyX-Code
+
+    usage()
+\layout LyX-Code
+
+for opt, arg in optlist:
+\layout LyX-Code
+
+    print opt, arg
+\layout LyX-Code
+
+    if opt in ["-h", "--help"]:
+\layout LyX-Code
+
+        usage(0)
+\layout LyX-Code
+
+    elif opt in ["--host"]:
+\layout LyX-Code
+
+        host = arg
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+    elif opt in ["-p", "--port"]:
+\layout LyX-Code
+
+        port = int(arg)
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# Service client code
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+url = 'http://' + host + ':' + str(port) + '/SquareService'
+\layout LyX-Code
+
+\layout LyX-Code
+
+# Hmm, if we want to send to the correct service location we
+\layout LyX-Code
+
+# must set use_wsdl.
+\layout LyX-Code
+
+service = ServiceProxy(url, use_wsdl=True, tracefile=sys.stdout)
+\layout LyX-Code
+
+\layout LyX-Code
+
+print 'service is', service
+\layout LyX-Code
+
+print service.__dict__
+\layout LyX-Code
+
+print '
+\backslash 
+nAccessing service getSquare...'
+\layout LyX-Code
+
+while 1:
+\layout LyX-Code
+
+    # Must use keyword arguments if use_wsdl was set
+\layout LyX-Code
+
+    x = float(raw_input("Enter number: "))
+\layout LyX-Code
+
+    result = service.getSquare(x=x)
+\layout LyX-Code
+
+    print 'result:', result
+\layout Standard
+
+This is pretty straightforward.
+ Most of the code handles the command line stuff which has nothing to do
+ with web services in the first place.
+ The only thing we actually have to do is to create a 
+\family typewriter 
+ServiceProxy
+\family default 
+ instance with the service URL and tell it to use the WSDL (which it gets
+ from a HTTP GET request).
+ We can then simply access the getSquare method; only make sure you give
+ its argument as a keyword argument.
+\layout Standard
+
+Note that this client does not even use the generated stub code: Everything
+ is accessed through the 
+\family typewriter 
+ServiceProxy
+\family default 
+ object that gets all necessary information from the WSDL.
+ 
+\layout Standard
+
+This is the output of an example client run:
+\layout LyX-Code
+
+$ ./myServiceProxyClient.py
+\layout LyX-Code
+
+service is <ZSI.ServiceProxy.ServiceProxy instance at 0x18dbe8>
+\layout LyX-Code
+
+{'_wsdl': <ZSI.wstools.WSDLTools.WSDL instance at 0x192350>, 
+\layout LyX-Code
+
+'getSquare': <ZSI.ServiceProxy.MethodProxy instance at 0x48d698>, 
+\layout LyX-Code
+
+'_typesmodule': None, '_soapAction': None, '_use_wsdl': True, 
+\layout LyX-Code
+
+'_ns': None, 
+\layout LyX-Code
+
+'_tracefile': <open file '<stdout>', mode 'w' at 0x128060>, 
+\layout LyX-Code
+
+'_op_ns': None, '_name': u'SquareService', '_nsdict': {}, 
+\layout LyX-Code
+
+'_port': <ZSI.wstools.WSDLTools.Port instance at 0x48d5d0>, 
+\layout LyX-Code
+
+'_service': <ZSI.wstools.WSDLTools.Service instance at 0x48d580>, 
+\layout LyX-Code
+
+'__doc__': u'Returns x^2 (x**2, square(x)) for a given float x'}
+\layout LyX-Code
+
+Accessing service getSquare...
+\layout LyX-Code
+
+Enter number: 4
+\layout LyX-Code
+
+_________________________________ Tue Jul  5 13:30:42 2005 REQUEST:
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getSquare>
+\layout LyX-Code
+
+<x xsi:type="xsd:double">4.000000</x>
+\layout LyX-Code
+
+</getSquare>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+_________________________________ Tue Jul  5 13:30:42 2005 RESPONSE:
+\layout LyX-Code
+
+Server: ZSI/1.1 BaseHTTP/0.3 Python/2.3.4
+\layout LyX-Code
+
+Date: Tue, 05 Jul 2005 11:30:42 GMT
+\layout LyX-Code
+
+Content-type: text/xml; charset="utf-8"
+\layout LyX-Code
+
+Content-Length: 560
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getSquareResponse  xmlns="">
+\layout LyX-Code
+
+<return xsi:type="xsd:double">16.000000
+\layout LyX-Code
+
+</return>
+\layout LyX-Code
+
+</getSquareResponse >
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+result: {u'return': 16.0}
+\layout LyX-Code
+
+Enter number:
+\layout Subsection
+
+An Excel XP Visual Basic client for the SquareService
+\layout Subsubsection
+
+VB stub generation
+\begin_inset LatexCommand \label{sub:VB-stub-generation-square}
+
+\end_inset 
+
+
+\layout Standard
+
+To generate the stub code you use the Web Service References Tool:
+\layout Enumerate
+
+Open the VB Editor (Alt-F11).
+\layout Enumerate
+
+Read the WSDL:
+\begin_deeper 
+\layout Enumerate
+
+Tools-->Web Services References...
+\layout Enumerate
+
+Click 
+\begin_inset Quotes eld
+\end_inset 
+
+Web Service URL
+\begin_inset Quotes erd
+\end_inset 
+
+ and enter the web service´s URL.
+ In our example this is 
+\begin_inset Quotes eld
+\end_inset 
+
+http://dev-b.handel-dev.local:8080/SquareService
+\begin_inset Quotes erd
+\end_inset 
+
+ (same as the <soap:address location=
+\begin_inset Quotes erd
+\end_inset 
+
+...
+\begin_inset Quotes erd
+\end_inset 
+
+/> in the WSDL).
+ 
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+Note that the server name and port is not sufficient for our server implementati
+on as we use the RequestHandler path attribute to find the appropriate WSDL
+ file to serve.
+\end_inset 
+
+Click 
+\begin_inset Quotes eld
+\end_inset 
+
+Search
+\begin_inset Quotes erd
+\end_inset 
+
+ (the server must be running, of course).
+ You should see the SquareService with its single exposed method in the
+ Search Results field now.
+\layout Enumerate
+
+Activate the SquareService´s checkbox and press 
+\begin_inset Quotes eld
+\end_inset 
+
+Add
+\begin_inset Quotes erd
+\end_inset 
+
+.
+ The stub code is being generated.
+\end_deeper 
+\layout Subsubsection
+
+VB client code & spreadsheet access
+\layout Standard
+
+To access the web service, we need to manually write VB functions/sub procedures.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+Not quite sure about the terminology here - this has been the first exposure
+ to VB.
+ Consult your local VB guru for all VB-related questions; all code presented
+ here has been developed by trial-and-error.
+\end_inset 
+
+ For the SquareService with its trivial datatypes this is quite simple:
+\layout Enumerate
+
+Insert-->Module
+\layout Enumerate
+
+Add the module code.
+ We implement a VB function for this purpose:
+\begin_deeper 
+\layout LyX-Code
+
+Public Function getSquare(ByRef x As Double) As Double
+\layout LyX-Code
+
+    Dim service As New clsws_SquareService
+\layout LyX-Code
+
+    getSquare = service.wsm_getSquare(x)
+\layout LyX-Code
+
+End Function
+\end_deeper 
+\layout Paragraph
+
+Excel spreadsheet invocation of the SquareService 
+\layout Standard
+
+You can now use the 
+\family typewriter 
+getSquare
+\family default 
+ function wherever a builtin function could be used, without further ado.
+\layout Subsection
+
+A gSOAP C++ client for the SquareService
+\layout Standard
+
+gSOAP is an open source web services development toolkit for C/C++.
+ It seems to be very mature and complete and has an impressive record of
+ being used in real-world applications by major companies.
+ It also features good documentation.
+\layout Subsubsection
+
+Generation from WSDL
+\layout Standard
+
+With our SquareService server running, we can generate the client stubs:
+\layout Enumerate
+
+First, gSOAP needs a header file for the service that is create with the
+ 
+\family typewriter 
+wsdl2h
+\family default 
+ generator:
+\begin_deeper 
+\layout LyX-Code
+
+/apps/pydev/bin/wsdl2h -o squareService.h 
+\layout LyX-Code
+
+http://dev-b.handel-dev.local:8080/SquareService
+\layout Standard
+
+Just specify the name for the header file and the URL where the WSDL can
+ be received with a HTTP GET request.
+ The 
+\family typewriter 
+squareService.h
+\family default 
+ header will be created:
+\layout LyX-Code
+
+** The gSOAP WSDL parser for C and C++ 1.2.0
+\layout LyX-Code
+
+** Copyright (C) 2000-2005 Robert van Engelen, Genivia Inc.
+\layout LyX-Code
+
+** All Rights Reserved.
+ This product is provided "as is", without any warranty.
+\layout LyX-Code
+
+** The gSOAP WSDL parser is released under one of the following two licenses:
+\layout LyX-Code
+
+** GPL or the commercial license by Genivia Inc.
+ Use option -l for more info.
+\layout LyX-Code
+
+Saving squareService.h
+\layout LyX-Code
+
+Connecting to 'http://dev-b.handel-dev.local:8080/SquareService' to retrieve
+ WSDL...
+ done
+\layout LyX-Code
+
+Cannot open file 'typemap.dat'
+\layout LyX-Code
+
+Problem reading type map file typemap.dat.
+\layout LyX-Code
+
+Using internal type definitions for C++ instead.
+\layout LyX-Code
+
+Warning: part 'x' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'x' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+To complete the process, compile with:
+\layout LyX-Code
+
+soapcpp2 squareService.h 
+\layout LyX-Code
+
+$ ls -l
+\layout LyX-Code
+
+total 6
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       5411 Jul  5 10:54 squareService.h
+\layout Standard
+
+Note that gSOAP tells us about what it thinks might cause problems in our
+ WSDL; we ignore that for this example.
+\end_deeper 
+\layout Enumerate
+
+Next we let gSOAP create the stub code for us, using the newly-created header:
+\begin_deeper 
+\layout LyX-Code
+
+$ /apps/pydev/bin/soapcpp2 -I /data/pydev/DOWNLOADS/gsoap-2.7/soapcpp2  squareSer
+vice.h
+\layout LyX-Code
+
+**  The gSOAP Stub and Skeleton Compiler for C and C++ 2.7.1
+\layout LyX-Code
+
+**  Copyright (C) 2000-2005, Robert van Engelen, Genivia Inc.
+\layout LyX-Code
+
+**  All Rights Reserved.
+ This product is provided "as is", without any warranty.
+\layout LyX-Code
+
+**  The gSOAP compiler is released under one of the following three licenses:
+\layout LyX-Code
+
+**  GPL, the gSOAP public license, or the commercial license by Genivia
+ Inc.
+\layout LyX-Code
+
+Saving soapStub.h
+\layout LyX-Code
+
+Saving soapH.h
+\layout LyX-Code
+
+Saving soapC.cpp
+\layout LyX-Code
+
+Saving soapClient.cpp
+\layout LyX-Code
+
+Saving soapServer.cpp
+\layout LyX-Code
+
+Saving soapClientLib.cpp
+\layout LyX-Code
+
+Saving soapServerLib.cpp
+\layout LyX-Code
+
+Using ns1 service name: SquareBinding
+\layout LyX-Code
+
+Using ns1 service style: document
+\layout LyX-Code
+
+Using ns1 service encoding: literal
+\layout LyX-Code
+
+Using ns1 service location: http://dev-b.handel-dev.local:8080/SquareService
+\layout LyX-Code
+
+Using ns1 schema namespace: http://dev-b.handel-dev.local:8080/SquareService
+\layout LyX-Code
+
+Saving soapSquareBindingProxy.h client proxy
+\layout LyX-Code
+
+Saving soapSquareBindingObject.h server object
+\layout LyX-Code
+
+Saving SquareBinding.getSquare.req.xml sample SOAP/XML request
+\layout LyX-Code
+
+Saving SquareBinding.getSquare.res.xml sample SOAP/XML response
+\layout LyX-Code
+
+Saving SquareBinding.nsmap namespace mapping table
+\layout LyX-Code
+
+Compilation successful
+\layout Standard
+
+We must explicitly give the 
+\family typewriter 
+gSOAP/soapcpp2
+\family default 
+ directory as include directory.
+ This is not being installed with the gSOAP installation (in the 
+\begin_inset Quotes eld
+\end_inset 
+
+make install
+\begin_inset Quotes erd
+\end_inset 
+
+ step) but resides in the path where you extracted the gSOAP tarball.
+ It contains some special header files gSOAP does not install on your system.
+ 
+\layout Standard
+
+You might have noticed that 
+\family typewriter 
+soapcpp2
+\family default 
+ says it is using service style 
+\begin_inset Quotes eld
+\end_inset 
+
+document
+\begin_inset Quotes erd
+\end_inset 
+
+ as opposed to what´s defined in the WSDL (
+\begin_inset Quotes eld
+\end_inset 
+
+rpc
+\begin_inset Quotes erd
+\end_inset 
+
+); this seems to be a cosmetic issue only and does not affect the usability
+ of the generated code.
+\layout Standard
+
+The above command produces the following client stubs (server skeleton code
+ also by the way, but we will not use it here):
+\end_deeper 
+\layout LyX-Code
+
+$ ls -l
+\begin_deeper 
+\layout LyX-Code
+
+total 407
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern        449 Jul  5 13:01 SquareBinding.getSquare.req.
+xml
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern        475 Jul  5 13:01 SquareBinding.getSquare.res.
+xml
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern        561 Jul  5 13:01 SquareBinding.nsmap
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern      40483 Jul  5 13:01 soapC.cpp
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       2450 Jul  5 13:01 soapClient.cpp
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern        464 Jul  5 13:01 soapClientLib.cpp
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern      10935 Jul  5 13:01 soapH.h
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       2846 Jul  5 13:01 soapServer.cpp
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern        464 Jul  5 13:01 soapServerLib.cpp
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       1258 Jul  5 13:01 soapSquareBindingObject.h
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       1507 Jul  5 13:01 soapSquareBindingProxy.h
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       5206 Jul  5 13:01 soapStub.h
+\layout LyX-Code
+
+-rw-r--r--   1 hjoukl   intern       5411 Jul  5 10:54 squareService.h
+\end_deeper 
+\layout Standard
+
+What´s left now is to implement the client program and make use of the generated
+ code.
+ 
+\layout Subsubsection
+
+Client implementation
+\begin_inset LatexCommand \label{sub:gsoap-square-client}
+
+\end_inset 
+
+
+\layout Standard
+
+This is a sample client to access the SquareService:
+\layout LyX-Code
+
+$ cat myCSquareClient.cpp
+\layout LyX-Code
+
+#include "soapH.h"
+\layout LyX-Code
+
+#include "SquareBinding.nsmap"
+\layout LyX-Code
+
+#include <iostream>
+\layout LyX-Code
+
+int main(void)
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    struct soap soap;
+\layout LyX-Code
+
+    double x = 0;
+\layout LyX-Code
+
+    double square = 0;
+\layout LyX-Code
+
+    soap_init(&soap);
+\layout LyX-Code
+
+    while (1) {
+\layout LyX-Code
+
+        std::cout << "Enter x value: ";
+\layout LyX-Code
+
+        std::cin >> x;
+\layout LyX-Code
+
+        if (soap_call_ns1__getSquare(&soap, NULL, NULL, x, square) == SOAP_OK)
+ {
+\layout LyX-Code
+
+            std::cout << "Result: " << square << std::endl;
+\layout LyX-Code
+
+        } else {
+\layout LyX-Code
+
+            soap_print_fault(&soap, stderr);
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    }
+\layout LyX-Code
+
+    soap_destroy(&soap);
+\layout LyX-Code
+
+    soap_end(&soap);
+\layout LyX-Code
+
+    soap_done(&soap);
+\layout LyX-Code
+
+    return 0;
+\layout LyX-Code
+
+}
+\layout Standard
+
+There are also other ways to invoke this service with the gSOAP mechanisms,
+ namely the 
+\family typewriter 
+SquareBinding
+\family default 
+ class defined in 
+\family typewriter 
+SquareServiceBindingProxy.h
+\family default 
+, which would take care of the initialization & destruction activities needed
+ in the above client code.
+ We will use this (better) approach in the next examples.
+\layout Subsubsection
+
+gSOAP client compilation 
+\layout Paragraph
+
+gcc 2.95.2
+\layout LyX-Code
+
+$ g++ -o myCSquareClient -R/apps/prod/lib -I/apps/pydev/include 
+\layout LyX-Code
+
+-L/apps/pydev/lib soapC.cpp soapClient.cpp myCSquareClient.cpp -lgsoap++ -lsocket
+\layout Paragraph
+
+gcc 3.4.3
+\layout Standard
+
+Note: Compiling with gcc 3.4.3, the nsl library had to be added to the linked
+ libraries: 
+\layout LyX-Code
+
+/apps/local/gcc/3.4.3/bin/g++ -o myCSquareClient -R/apps/pydev/gcc/3.4.3/lib
+\layout LyX-Code
+
+-I/apps/pydev/gcc/3.4.3/include -L/apps/pydev/gcc/3.4.3/lib soapC.cpp 
+\layout LyX-Code
+
+soapClient.cpp myCSquareClient.cpp -lgsoap++ -lsocket -lnsl
+\layout Section
+
+Strucured datatypes: The rpc/literal DateService
+\layout Standard
+
+Let´s move on to a more elaborate service, elaborate in the sense of using
+ structured datatypes now (not that the service example itself was particularly
+ ingenious).
+ Anyway, we will now implement the DateService service that exposes two
+ methods:
+\layout Itemize
+
+<date structure> getCurrentDate(<string>) takes a string argument and returns
+ the current date as a datetime structure
+\layout Itemize
+
+<date structure> getDate(<int>, <date structure>) takes an integer offset
+ and a date structure as arguments and returns the given date plus the offset
+ (in days) as a date structure
+\layout Subsection
+
+The DateService WSDL
+\begin_inset LatexCommand \label{sub:The-DateService-WSDL}
+
+\end_inset 
+
+
+\layout Standard
+
+The DateService is described in 
+\family typewriter 
+DateService.wsdl
+\family default 
+:
+\layout LyX-Code
+
+<?xml version="1.0"?>
+\layout LyX-Code
+
+<definitions name="DateService"
+\layout LyX-Code
+
+  targetNamespace="http://dev-b.handel-dev.local:8080/DateService.wsdl"
+\layout LyX-Code
+
+  xmlns:tns="http://dev-b.handel-dev.local:8080/DateService.wsdl"
+\layout LyX-Code
+
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+\layout LyX-Code
+
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+\layout LyX-Code
+
+  xmlns:myType="DateType_NS"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+\layout LyX-Code
+
+  <types>
+\layout LyX-Code
+
+    <schema xmlns="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+      targetNamespace="DateType_NS" >
+\layout LyX-Code
+
+      <complexType name="Date">
+\layout LyX-Code
+
+            <sequence>
+\layout LyX-Code
+
+              <element name="year" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="month" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="day" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="hour" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="minute" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="second" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="weekday" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="dayOfYear" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+              <element name="dst" nillable="true" type="xsd:integer"/>
+\layout LyX-Code
+
+            </sequence>
+\layout LyX-Code
+
+      </complexType>  
+\layout LyX-Code
+
+    </schema>
+\layout LyX-Code
+
+  </types>
+\layout LyX-Code
+
+  <message name="getCurrentDateRequest">
+\layout LyX-Code
+
+    <part name="input" type="xsd:string"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+  <message name="getCurrentDateResponse">
+\layout LyX-Code
+
+    <part name="today" type="myType:Date"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+  <message name="getDateRequest">
+\layout LyX-Code
+
+    <part name="offset" type="xsd:integer"/>
+\layout LyX-Code
+
+    <part name="someday" type="myType:Date"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+  <message name="getDateResponse">
+\layout LyX-Code
+
+    <part name="day" type="myType:Date"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+  <portType name="DateService_PortType">
+\layout LyX-Code
+
+    <operation name="getCurrentDate">
+\layout LyX-Code
+
+      <input message="tns:getCurrentDateRequest"/>
+\layout LyX-Code
+
+      <output message="tns:getCurrentDateResponse"/>
+\layout LyX-Code
+
+    </operation>
+\layout LyX-Code
+
+    <operation name="getDate">
+\layout LyX-Code
+
+      <input message="tns:getDateRequest"/>
+\layout LyX-Code
+
+      <output message="tns:getDateResponse"/>
+\layout LyX-Code
+
+    </operation>
+\layout LyX-Code
+
+  </portType>
+\layout LyX-Code
+
+  <binding name="DateService_Binding" type="tns:DateService_PortType">
+\layout LyX-Code
+
+    <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+\layout LyX-Code
+
+    <operation name="getCurrentDate">
+\layout LyX-Code
+
+      <soap:operation soapAction="urn:DateService.wsdl#getCurrentDate"/>
+\layout LyX-Code
+
+      <input>
+\layout LyX-Code
+
+        <soap:body use="literal" namespace="urn:DateService.wsdl"/>
+\layout LyX-Code
+
+      </input>
+\layout LyX-Code
+
+      <output>
+\layout LyX-Code
+
+        <soap:body use="literal" namespace="urn:DateService.wsdl"/>
+\layout LyX-Code
+
+      </output>
+\layout LyX-Code
+
+    </operation>
+\layout LyX-Code
+
+    <operation name="getDate">
+\layout LyX-Code
+
+      <soap:operation soapAction="urn:DateService.wsdl#getDate"/>
+\layout LyX-Code
+
+      <input>
+\layout LyX-Code
+
+        <soap:body parts="offset someday" use="literal" namespace="urn:DateServi
+ce.wsdl"/>
+\layout LyX-Code
+
+      </input>
+\layout LyX-Code
+
+      <output>
+\layout LyX-Code
+
+        <soap:body use="literal" namespace="urn:DateService.wsdl"/>
+\layout LyX-Code
+
+      </output>
+\layout LyX-Code
+
+    </operation>
+\layout LyX-Code
+
+  </binding>
+\layout LyX-Code
+
+  <service name="simple Date Service">
+\layout LyX-Code
+
+    <documentation>Date Web Service</documentation>
+\layout LyX-Code
+
+    <port name="DateService_Port" binding="tns:DateService_Binding">
+\layout LyX-Code
+
+      <soap:address location="http://dev-b.handel-dev.local:8080/DateService"/>
+\layout LyX-Code
+
+    </port>
+\layout LyX-Code
+
+  </service>
+\layout LyX-Code
+
+</definitions>
+\layout Standard
+
+Comments:
+\layout Itemize
+
+Again, rpc/literal has been chosen.
+\layout Itemize
+
+A ComplexType 
+\begin_inset Quotes eld
+\end_inset 
+
+Date
+\begin_inset Quotes erd
+\end_inset 
+
+ is defined in the <types> section.
+ This type is being used as a return type (getCurrentDate, getDate) and
+ as a method argument type (getDate).
+\layout Subsection
+
+A Python ZSI DateService server
+\layout Standard
+
+The tasks at hand are the same as for the SquareService example.
+\layout Subsubsection
+
+Code generation from WSDL
+\layout Enumerate
+
+
+\family typewriter 
+wsdl2py
+\family default 
+:
+\begin_deeper 
+\layout LyX-Code
+
+$ /apps/pydev/bin/wsdl2py -f DateService.wsdl
+\layout LyX-Code
+
+==> DateService_services.py
+\layout LyX-Code
+
+==> DateService_services_types.py
+\end_deeper 
+\layout Enumerate
+
+
+\family typewriter 
+wsdl2dispatch:
+\begin_deeper 
+\layout LyX-Code
+
+/apps/pydev/bin/wsdl2dispatch -f DateService.wsdl
+\layout LyX-Code
+
+==> DateService_services_server.py
+\end_deeper 
+\layout Subsubsection
+
+The DateService web server
+\layout Standard
+
+The server implementation is exactly the same as in section 
+\begin_inset LatexCommand \ref{sub:SquareService-web-server}
+
+\end_inset 
+
+, with the only difference of putting a DateService instance into the ServiceCon
+tainer now:
+\layout LyX-Code
+
+#! /apps/pydev/bin/python2.3
+\layout LyX-Code
+
+\layout LyX-Code
+
+from ZSI.ServiceContainer import ServiceContainer, SOAPRequestHandler
+\layout LyX-Code
+
+from DateService_services_server import DateService
+\layout LyX-Code
+
+import os
+\layout LyX-Code
+
+\layout LyX-Code
+
+class MySOAPRequestHandler(SOAPRequestHandler):
+\layout LyX-Code
+
+    """Add a do_GET method to return the WSDL on HTTP GET requests.
+\layout LyX-Code
+
+    Please note that the path to the wsdl file is derived from what
+\layout LyX-Code
+
+    the HTTP invocation delivers (which is put into the self.path
+\layout LyX-Code
+
+    attribute), so you might want to change this addressing scheme.
+\layout LyX-Code
+
+    """
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    def do_GET(self):
+\layout LyX-Code
+
+        """Return the WSDL file.
+ We expect to get the location from the
+\layout LyX-Code
+
+        invocation URL ("path").
+\layout LyX-Code
+
+        """
+\layout LyX-Code
+
+        wsdlfile = os.path.join('.', self.path.replace('/', "", 1) + ".wsdl")
+\layout LyX-Code
+
+        print ">>>>> using wsdlfile", wsdlfile
+\layout LyX-Code
+
+        wsdl = open(wsdlfile).read()
+\layout LyX-Code
+
+        self.send_xml(wsdl)
+\layout LyX-Code
+
+\layout LyX-Code
+
+# Copied from ZSI.ServiceContainer, extended to instantiate with a custom
+\layout LyX-Code
+
+# request handler
+\layout LyX-Code
+
+def AsServer(port=80, services=(), RequestHandlerClass=SOAPRequestHandler):
+\layout LyX-Code
+
+    '''port --
+\layout LyX-Code
+
+       services -- list of service instances
+\layout LyX-Code
+
+    '''
+\layout LyX-Code
+
+    address = ('', port)
+\layout LyX-Code
+
+    sc = ServiceContainer(address, RequestHandlerClass=RequestHandlerClass)
+\layout LyX-Code
+
+    for service in services:
+\layout LyX-Code
+
+        path = service.getPost()
+\layout LyX-Code
+
+        sc.setNode(service, path)
+\layout LyX-Code
+
+    sc.serve_forever()
+\layout LyX-Code
+
+\layout LyX-Code
+
+AsServer(port=8080, services=[DateService()], RequestHandlerClass=MySOAPRequestH
+andler)
+\layout Subsubsection
+
+The DateService implementation
+\begin_inset LatexCommand \label{sub:The-DateService-implementation}
+
+\end_inset 
+
+
+\layout Standard
+
+As in the previous example, the actual implementation must be hooked into
+ the server skeleton.
+ This is done in the 
+\family typewriter 
+DateService_services_server.py
+\family default 
+ file:
+\layout LyX-Code
+
+from DateService_services import *
+\layout LyX-Code
+
+from ZSI.ServiceContainer import ServiceSOAPBinding
+\layout LyX-Code
+
+\layout LyX-Code
+
+# needed for worker code
+\layout LyX-Code
+
+import time
+\layout LyX-Code
+
+\layout LyX-Code
+
+class DateService(ServiceSOAPBinding):
+\layout LyX-Code
+
+    soapAction = {
+\layout LyX-Code
+
+        'urn:DateService.wsdl#getCurrentDate': 'soap_getCurrentDate',
+\layout LyX-Code
+
+        'urn:DateService.wsdl#getDate': 'soap_getDate',
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+\layout LyX-Code
+
+    def __init__(self, post='/DateService', **kw):
+\layout LyX-Code
+
+        ServiceSOAPBinding.__init__(self, post)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    def soap_getCurrentDate(self, ps):
+\layout LyX-Code
+
+        # input vals in request object
+\layout LyX-Code
+
+        # MANUALLY CORRECTED:
+\layout LyX-Code
+
+        # args = ps.Parse( getCurrentDateRequestWrapper() )
+\layout LyX-Code
+
+        # Use the class instead of an instance of the class.
+\layout LyX-Code
+
+        # Note: The erroneous code generation happens for rpc/literal, but
+ not
+\layout LyX-Code
+
+        # for rpc/encoded, where using an instance works (?).
+\layout LyX-Code
+
+        args = ps.Parse( getCurrentDateRequestWrapper )
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+        # assign return values to response object
+\layout LyX-Code
+
+        response = getCurrentDateResponseWrapper()
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        ## ADDED
+\layout LyX-Code
+
+        response._today = self.getCurrentDate(args._input)
+\layout LyX-Code
+
+        ## END ADDED
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        return response
+\layout LyX-Code
+
+\layout LyX-Code
+
+    def soap_getDate(self, ps):
+\layout LyX-Code
+
+        # input vals in request object
+\layout LyX-Code
+
+        # MANUALLY CORRECTED:
+\layout LyX-Code
+
+        # args = ps.Parse( getDateRequestWrapper() )
+\layout LyX-Code
+
+        # Use the class instead of an instance of the class.
+\layout LyX-Code
+
+        # Note: The erroneous code generation happens for rpc/literal, but
+ not
+\layout LyX-Code
+
+        # for rpc/encoded, where using an instance works (?).
+\layout LyX-Code
+
+        args = ps.Parse( getDateRequestWrapper )
+\layout LyX-Code
+
+\layout LyX-Code
+
+        # assign return values to response object
+\layout LyX-Code
+
+        response = getDateResponseWrapper()
+\layout LyX-Code
+
+\layout LyX-Code
+
+        ## ADDED
+\layout LyX-Code
+
+        response._day = self.getDate(offset=args._offset, date=args._someday)
+       
+\layout LyX-Code
+
+        ## END ADDED
+\layout LyX-Code
+
+\layout LyX-Code
+
+        return response
+\layout LyX-Code
+
+\layout LyX-Code
+
+## ADDED WORKER CODE
+\layout LyX-Code
+
+    def getCurrentDate(self, input=None):
+\layout LyX-Code
+
+        dt = time.localtime(time.time())
+\layout LyX-Code
+
+\layout LyX-Code
+
+        class today:
+\layout LyX-Code
+
+            _year = dt[0]
+\layout LyX-Code
+
+            _month = dt[1]
+\layout LyX-Code
+
+            _day = dt[2]
+\layout LyX-Code
+
+            _hour = dt[3]
+\layout LyX-Code
+
+            _minute = dt[4]
+\layout LyX-Code
+
+            _second = dt[5]
+\layout LyX-Code
+
+            _weekday = dt[6]
+\layout LyX-Code
+
+            _dayOfYear = dt[7]
+\layout LyX-Code
+
+            _dst = dt[8]
+\layout LyX-Code
+
+            
+\layout LyX-Code
+
+        return today
+\layout LyX-Code
+
+\layout LyX-Code
+
+   def getDate(self, offset=None, date=None):
+\layout LyX-Code
+
+        sec = 3600 * 24  ## seconds/hour * 24h
+\layout LyX-Code
+
+        providedDate_tuple = (date._year, date._month, date._day,
+\layout LyX-Code
+
+                              date._hour, date._minute, date._second,
+\layout LyX-Code
+
+                              date._weekday, date._dayOfYear, date._dst)
+\layout LyX-Code
+
+        providedDate_sec = time.mktime(providedDate_tuple)
+\layout LyX-Code
+
+        offset_sec = sec * offset
+\layout LyX-Code
+
+        newDate_sec = providedDate_sec + offset_sec
+\layout LyX-Code
+
+        newDate_tuple = time.localtime(newDate_sec)
+\layout LyX-Code
+
+        if not offset:
+\layout LyX-Code
+
+            offset = 0
+\layout LyX-Code
+
+        if not date:
+\layout LyX-Code
+
+            sys.exit()
+\layout LyX-Code
+
+        someDay = getDateResponse()
+\layout LyX-Code
+
+        someDay._year = newDate_tuple[0]
+\layout LyX-Code
+
+        someDay._month = newDate_tuple[1]
+\layout LyX-Code
+
+        someDay._day = newDate_tuple[2] 
+\layout LyX-Code
+
+        someDay._hour = newDate_tuple[3]
+\layout LyX-Code
+
+        someDay._minute = newDate_tuple[4]
+\layout LyX-Code
+
+        someDay._second = newDate_tuple[5]
+\layout LyX-Code
+
+        someDay._weekday = newDate_tuple[6]
+\layout LyX-Code
+
+        someDay._dayOfYear = newDate_tuple[7]
+\layout LyX-Code
+
+        someDay._dst = newDate_tuple[8]      
+\layout LyX-Code
+
+        return someDay
+\layout LyX-Code
+
+\layout LyX-Code
+
+## END ADDED
+\layout Standard
+
+If you take a closer look at the two method implementations, you will notice
+ that in 
+\family typewriter 
+getCurrentDate(...)
+\family default 
+ the returned date is just a (nested) python class.
+ ZSI handles the serialization of that class into the actual SOAP message
+ for us.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+The python object must be structurally equivalent to the XML datatype that
+ is defined in the WSDL and that constitutes ZSI´s typecodes.
+\end_inset 
+
+In 
+\family typewriter 
+getDate(...)
+\family default 
+, though, we directly use the 
+\family typewriter 
+getDateResponse
+\family default 
+ instance imported from the generated 
+\family typewriter 
+DateService_services.py
+\family default 
+.
+ which already is a fully fledged ZSI-typecoded representation of the getDate
+ response.
+\layout Subsection
+
+A Python ZSI client for the DateService
+\begin_inset LatexCommand \label{sub:A-Python-ZSI-client-DateService}
+
+\end_inset 
+
+
+\layout Paragraph
+
+Using generated type mapping
+\layout Standard
+
+Instead of using the ServiceProxy class which dynamically fetches the WSDL
+ description and gets the necessary type-serialization information from
+ it, we can use the generated code to write a client:
+\layout LyX-Code
+
+#! /apps/pydev/bin/python2.3
+\layout LyX-Code
+
+\layout LyX-Code
+
+import sys, time
+\layout LyX-Code
+
+\layout LyX-Code
+
+from DateService_services import *
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+def main():
+\layout LyX-Code
+
+    loc = simple_Date_ServiceLocator()
+\layout LyX-Code
+
+    portType = loc.getDateService_PortType(tracefile=sys.stdout)
+\layout LyX-Code
+
+    while 1:
+\layout LyX-Code
+
+        offset = raw_input("Enter offset as int [0]: ")
+\layout LyX-Code
+
+        try:
+\layout LyX-Code
+
+            offset = int(offset)
+\layout LyX-Code
+
+        except ValueError:
+\layout LyX-Code
+
+            offset = 0
+\layout LyX-Code
+
+\layout LyX-Code
+
+        x = getCurrentDateRequestWrapper()
+\layout LyX-Code
+
+        x._input = 'Test'
+\layout LyX-Code
+
+        myToday = portType.getCurrentDate(x)
+\layout LyX-Code
+
+\layout LyX-Code
+
+        dateRequest = getDateRequestWrapper()
+\layout LyX-Code
+
+        
+\layout LyX-Code
+
+        # We use the current date as input to getDate
+\layout LyX-Code
+
+        dateRequest._someday = myToday._today
+\layout LyX-Code
+
+        dateRequest._offset = offset
+\layout LyX-Code
+
+        date = portType.getDate(dateRequest)
+\layout LyX-Code
+
+ 
+\layout LyX-Code
+
+        print '
+\backslash 
+n
+\backslash 
+nRESULT'
+\layout LyX-Code
+
+        print '%10s = %s' % ('today', make_asctime(myToday._today))
+\layout LyX-Code
+
+        print '%6s + %d = %s' % ('today', dateRequest._offset, make_asctime(date._
+day))
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+# just a helper
+\layout LyX-Code
+
+def make_asctime(date_object):
+\layout LyX-Code
+
+    timeTuple = (date_object._year, date_object._month, date_object._day,
+\layout LyX-Code
+
+                 date_object._hour, date_object._minute, date_object._second,
+\layout LyX-Code
+
+                 date_object._weekday, date_object._dayOfYear, date_object._dst
+\layout LyX-Code
+
+                 )
+\layout LyX-Code
+
+    return time.asctime(timeTuple)
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+if __name__ == '__main__':
+\layout LyX-Code
+
+    main()
+\layout Standard
+
+As you can see, ZSI provides us with the getCurrentDateRequestWrapper and
+ getDateRequestWrapper classes.
+ These handle the serialization transparently and we use them to set the
+ argument values.
+ Then, we hand them into the corresponding methods of the portType objects
+ the <service name>_ServiceLocator returned.
+\layout Standard
+
+Alternatively, we could use a ServiceProxy again:
+\layout LyX-Code
+
+#!/apps/pydev/bin/python2.3
+\layout LyX-Code
+
+\layout LyX-Code
+
+import sys
+\layout LyX-Code
+
+import getopt
+\layout LyX-Code
+
+\layout LyX-Code
+
+from ZSI import ServiceProxy
+\layout LyX-Code
+
+import ZSI.wstools.WSDLTools
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# default configuration
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+port = 8080
+\layout LyX-Code
+
+host = 'dev-b'
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# command line parsing
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+def usage(rcode=1):
+\layout LyX-Code
+
+    print "usage: myServiceProxyClient.py [--host=<hostname> --port=,-c<port>
+ --help, -h]"
+\layout LyX-Code
+
+    sys.exit(rcode)
+\layout LyX-Code
+
+try:
+\layout LyX-Code
+
+    optlist, args = getopt.getopt(sys.argv[1:], "hp:", ['help', 'port='])
+\layout LyX-Code
+
+except getopt.GetoptError:
+\layout LyX-Code
+
+    usage()
+\layout LyX-Code
+
+for opt, arg in optlist:
+\layout LyX-Code
+
+    print opt, arg
+\layout LyX-Code
+
+    if opt in ["-h", "--help"]:
+\layout LyX-Code
+
+        usage(0)
+\layout LyX-Code
+
+    elif opt in ["--host"]:
+\layout LyX-Code
+
+        host = arg
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+    elif opt in ["-p", "--port"]:
+\layout LyX-Code
+
+        port = int(arg)
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+url = 'http://' + host + ':' + str(port) + '/DateService'
+\layout LyX-Code
+
+service = ServiceProxy(url, use_wsdl=True, tracefile=sys.stdout,
+\layout LyX-Code
+
+                       ns='http://dev-b.handel-dev.local:8080/DateService')
+\layout LyX-Code
+
+\layout LyX-Code
+
+print '
+\backslash 
+nAccessing service DateService, method getCurrentDate...'
+\layout LyX-Code
+
+while 1:
+\layout LyX-Code
+
+    # Must use keyword arguments if use_wsdl was set
+\layout LyX-Code
+
+    input = raw_input("Enter something: ")
+\layout LyX-Code
+
+    result = service.getCurrentDate(input=input)
+\layout LyX-Code
+
+    print 'getCurrentDate: result =', result
+\layout LyX-Code
+
+\layout LyX-Code
+
+    offset = int(raw_input("Enter offset: "))
+\layout LyX-Code
+
+\layout LyX-Code
+
+## Hmm, this does not work.
+ Why?
+\layout LyX-Code
+
+##    class someday:
+\layout LyX-Code
+
+##        _year = result['today']['year']
+\layout LyX-Code
+
+##        _month = result['today']['month']
+\layout LyX-Code
+
+##        _day = result['today']['day']
+\layout LyX-Code
+
+##        _hour = result['today']['hour']
+\layout LyX-Code
+
+##        _minute = result['today']['minute']
+\layout LyX-Code
+
+##        _second = result['today']['second']
+\layout LyX-Code
+
+##        _weekday =result['today']['weekday']
+\layout LyX-Code
+
+##        _dayOfYear = result['today']['dayOfYear']
+\layout LyX-Code
+
+##        _dst = result['today']['dst']
+\layout LyX-Code
+
+\layout LyX-Code
+
+   someday = {
+\layout LyX-Code
+
+        'year': result['today']['year'],
+\layout LyX-Code
+
+        'month': result['today']['month'],
+\layout LyX-Code
+
+        'day': result['today']['day'],
+\layout LyX-Code
+
+        'hour': result['today']['hour'],
+\layout LyX-Code
+
+        'minute': result['today']['minute'],
+\layout LyX-Code
+
+        'second': result['today']['second'],
+\layout LyX-Code
+
+        'weekday': result['today']['weekday'],
+\layout LyX-Code
+
+        'dayOfYear': result['today']['dayOfYear'],
+\layout LyX-Code
+
+        'dst': result['today']['dst'],
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+\layout LyX-Code
+
+   print 'getDate: result = ', service.getDate(offset=offset, someday=soVmeday)
+\layout Standard
+
+This is the output of a sample client sesssion of the ServiceProxy solution:
+\layout LyX-Code
+
+$ ./myServiceProxyClient.py
+\layout LyX-Code
+
+service is <ZSI.ServiceProxy.ServiceProxy instance at 0x18f418>
+\layout LyX-Code
+
+{'_wsdl': <ZSI.wstools.WSDLTools.WSDL instance at 0x18f648>, 
+\layout LyX-Code
+
+'_typesmodule': None, 
+\layout LyX-Code
+
+'_soapAction': None, '_use_wsdl': True, 
+\layout LyX-Code
+
+'_ns': 'http://dev-b.handel-dev.local:8080/DateService', 
+\layout LyX-Code
+
+'_tracefile': <open file '<stdout>', mode 'w' at 0x128060>, 
+\layout LyX-Code
+
+'_op_ns': None, 
+\layout LyX-Code
+
+'_name': u'simple Date Service', '_nsdict': {}, 
+\layout LyX-Code
+
+'getCurrentDate': <ZSI.ServiceProxy.MethodProxy instance at 0x495f58>, 
+\layout LyX-Code
+
+'_port': <ZSI.wstools.WSDLTools.Port instance at 0x495eb8>, 
+\layout LyX-Code
+
+'_service': <ZSI.wstools.WSDLTools.Service instance at 0x495e40>, 
+\layout LyX-Code
+
+'__doc__': u'Date Web Service', 
+\layout LyX-Code
+
+'getDate': <ZSI.ServiceProxy.MethodProxy instance at 0x49e058>}
+\layout LyX-Code
+
+Accessing service DateService, method getCurrentDate...
+\layout LyX-Code
+
+Enter something:
+\layout LyX-Code
+
+_________________________________ Tue Jul 19 09:08:51 2005 REQUEST:
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  xmlns="http://dev-b.handel-dev.local:8080/DateService"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getCurrentDate>
+\layout LyX-Code
+
+<input id="124038" xsi:type="xsd:string"></input>
+\layout LyX-Code
+
+</getCurrentDate>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+_________________________________ Tue Jul 19 09:08:53 2005 RESPONSE:
+\layout LyX-Code
+
+Server: ZSI/1.1 BaseHTTP/0.3 Python/2.3.4
+\layout LyX-Code
+
+Date: Tue, 19 Jul 2005 07:08:53 GMT
+\layout LyX-Code
+
+Content-type: text/xml; charset="utf-8"
+\layout LyX-Code
+
+Content-Length: 955
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getCurrentDateResponse xmlns="urn:DateService.wsdl">
+\layout LyX-Code
+
+<today xmlns="urn:DateService.wsdl">
+\layout LyX-Code
+
+<year xsi:type="xsd:integer">2005</year>
+\layout LyX-Code
+
+<month xsi:type="xsd:integer">7</month>
+\layout LyX-Code
+
+<day xsi:type="xsd:integer">19</day>
+\layout LyX-Code
+
+<hour xsi:type="xsd:integer">9</hour>
+\layout LyX-Code
+
+<minute xsi:type="xsd:integer">8</minute>
+\layout LyX-Code
+
+<second xsi:type="xsd:integer">53</second>
+\layout LyX-Code
+
+<weekday xsi:type="xsd:integer">1</weekday>
+\layout LyX-Code
+
+<dayOfYear xsi:type="xsd:integer">200</dayOfYear>
+\layout LyX-Code
+
+<dst xsi:type="xsd:integer">1</dst>
+\layout LyX-Code
+
+</today>
+\layout LyX-Code
+
+</getCurrentDateResponse>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+getCurrentDate: result = {u'today': {u'hour': 9, u'dst': 1, u'month': 7,
+ u'second': 53,
+\layout LyX-Code
+
+u'dayOfYear': 200, u'weekday': 1, u'year': 2005, u'day': 19, u'minute':
+ 8}}
+\layout LyX-Code
+
+Enter offset: 9
+\layout LyX-Code
+
+getDate: result =  _________________________________ Tue Jul 19 09:11:51
+ 2005 REQUEST:
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  xmlns="http://dev-b.handel-dev.local:8080/DateService"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getDate>
+\layout LyX-Code
+
+<offset xsi:type="xsd:integer">9</offset>
+\layout LyX-Code
+
+<someday>
+\layout LyX-Code
+
+<year xsi:type="xsd:integer">2005</year>
+\layout LyX-Code
+
+<month xsi:type="xsd:integer">7</month>
+\layout LyX-Code
+
+<day xsi:type="xsd:integer">19</day>
+\layout LyX-Code
+
+<hour xsi:type="xsd:integer">9</hour>
+\layout LyX-Code
+
+<minute xsi:type="xsd:integer">8</minute>
+\layout LyX-Code
+
+<second xsi:type="xsd:integer">53</second>
+\layout LyX-Code
+
+<weekday xsi:type="xsd:integer">1</weekday>
+\layout LyX-Code
+
+<dayOfYear xsi:type="xsd:integer">200</dayOfYear>
+\layout LyX-Code
+
+<dst xsi:type="xsd:integer">1</dst>
+\layout LyX-Code
+
+</someday>
+\layout LyX-Code
+
+</getDate>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+_________________________________ Tue Jul 19 09:11:52 2005 RESPONSE:
+\layout LyX-Code
+
+Server: ZSI/1.1 BaseHTTP/0.3 Python/2.3.4
+\layout LyX-Code
+
+Date: Tue, 19 Jul 2005 07:11:52 GMT
+\layout LyX-Code
+
+Content-type: text/xml; charset="utf-8"
+\layout LyX-Code
+
+Content-Length: 937
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getDateResponse xmlns="urn:DateService.wsdl">
+\layout LyX-Code
+
+<day xmlns="urn:DateService.wsdl">
+\layout LyX-Code
+
+<year xsi:type="xsd:integer">2005</year>
+\layout LyX-Code
+
+<month xsi:type="xsd:integer">7</month>
+\layout LyX-Code
+
+<day xsi:type="xsd:integer">28</day>
+\layout LyX-Code
+
+<hour xsi:type="xsd:integer">9</hour>
+\layout LyX-Code
+
+<minute xsi:type="xsd:integer">8</minute>
+\layout LyX-Code
+
+<second xsi:type="xsd:integer">53</second>
+\layout LyX-Code
+
+<weekday xsi:type="xsd:integer">3</weekday>
+\layout LyX-Code
+
+<dayOfYear xsi:type="xsd:integer">209</dayOfYear>
+\layout LyX-Code
+
+<dst xsi:type="xsd:integer">1</dst>
+\layout LyX-Code
+
+</day>
+\layout LyX-Code
+
+</getDateResponse>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+{u'day': {u'hour': 9, u'dst': 1, u'month': 7, u'second': 53, u'dayOfYear':
+ 209, 
+\layout LyX-Code
+
+u'weekday': 3, u'year': 2005, u'day': 28, u'minute': 8}}
+\layout Subsection
+
+An Excel XP Visual Basic client for the DateService
+\layout Subsubsection
+
+VB stub generation
+\layout Standard
+
+Refer to 
+\begin_inset LatexCommand \ref{sub:VB-stub-generation-square}
+
+\end_inset 
+
+ for details.
+ The URL to receive the WSDL file is 
+\begin_inset Quotes eld
+\end_inset 
+
+http://dev-b.handel-dev.local:8080/DateService
+\begin_inset Quotes erd
+\end_inset 
+
+ in our example.
+\layout Standard
+
+The Web Services References toolkit creates the class 
+\family typewriter 
+clsws_simpleDateService
+\family default 
+ for us, with these methods:
+\layout LyX-Code
+
+Public Function wsm_getCurrentDate(ByVal str_input As String) As struct_Date
+\layout LyX-Code
+
+...
+\layout LyX-Code
+
+\layout LyX-Code
+
+Public Function wsm_getDate(ByVal dcml_offset As Double, 
+\layout LyX-Code
+
+ByVal obj_someday As struct_Date) As struct_Date
+\layout LyX-Code
+
+...
+\layout Standard
+
+Also, the class struct_Date is generated to represent our structured datatype:
+\layout LyX-Code
+
+'*****************************************************************
+\layout LyX-Code
+
+'This class was created by the Web Service References Tool 2.0.
+\layout LyX-Code
+
+'
+\layout LyX-Code
+
+'Created: 6/29/2005 12:54:18 AM
+\layout LyX-Code
+
+'
+\layout LyX-Code
+
+'Description:
+\layout LyX-Code
+
+'This class is a Visual Basic for Applications class representation of the
+ user-defined
+\layout LyX-Code
+
+'type as defined by http://dev-b.handel-dev.local:8080Plus/DateService.
+\layout LyX-Code
+
+'
+\layout LyX-Code
+
+'This class only contains the Date,
+\layout LyX-Code
+
+'as defined in the WSDL.
+\layout LyX-Code
+
+'
+\layout LyX-Code
+
+'Changes to the code in this class may result in incorrect behavior.
+\layout LyX-Code
+
+'
+\layout LyX-Code
+
+'*****************************************************************
+\layout LyX-Code
+
+Public year As Long
+\layout LyX-Code
+
+Public month As Long
+\layout LyX-Code
+
+Public day As Long
+\layout LyX-Code
+
+Public hour As Long
+\layout LyX-Code
+
+Public minute As Long
+\layout LyX-Code
+
+Public second As Long
+\layout LyX-Code
+
+Public weekday As Long
+\layout LyX-Code
+
+Public dayOfYear As Long
+\layout LyX-Code
+
+Public dst As Long
+\layout Subsubsection
+
+VB client implementation & spreadsheet access
+\begin_inset LatexCommand \label{sub:VB-client-implementation-DateService}
+
+\end_inset 
+
+
+\layout Standard
+
+There are 2 ways to make the web service available in a spreadsheet: Using
+ a sub procedure (also called macro) or using a function.
+ Note that
+\layout Itemize
+
+a macro can not be called directly from a worksheet cell, so you need a
+ command button to call it
+\layout Itemize
+
+a function called directly or indirectly from a worksheet cell can not change
+ another cell´s value
+\layout Paragraph
+
+Sub procedures (macros)
+\layout Standard
+
+While macros 
+\emph on 
+can
+\emph default 
+ accept passed arguments, you can´t pass such arguments from within a spreadshee
+t using command buttons.
+ This leaves us with the possibility to hard-wire the cell adresses we want
+ to use to store our result values or to use 
+\begin_inset Quotes eld
+\end_inset 
+
+defined names
+\begin_inset Quotes erd
+\end_inset 
+
+ - we opt for the latter.
+ To add the following client code, insert a command button into the spreadsheet
+ and double-click it while still in design mode.
+ This will add sub procedure stubs to the sheet objects of the VBA project:
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+By default, the stubs are called like the command buttons (e.g.
+ 
+\begin_inset Quotes eld
+\end_inset 
+
+CommandButton_Click()
+\begin_inset Quotes erd
+\end_inset 
+
+).
+ Note that we changed the command button names here to reflect their purpose,
+ which results in this example´s macro names.
+\end_inset 
+
+
+\layout LyX-Code
+
+Private Sub getCurrentDateButton2_Click()
+\layout LyX-Code
+
+    Dim inputRange As Range
+\layout LyX-Code
+
+    Dim outputRange As Range
+\layout LyX-Code
+
+    Set inputRange = Range("input_3")
+\layout LyX-Code
+
+    Set outputRange = Range("today_2")
+\layout LyX-Code
+
+    Dim dateObj As struct_Date
+\layout LyX-Code
+
+    Dim service As New clsws_simpleDateService
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Set dateObj = service.wsm_getCurrentDate(str_input)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    fillRangeFromDateStructure outputRange, dateObj
+\layout LyX-Code
+
+   
+\layout LyX-Code
+
+End Sub
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+Private Sub getDateButton2_Click()
+\layout LyX-Code
+
+    Dim inputDateRange As Range
+\layout LyX-Code
+
+    Dim inputOffsetRange As Range
+\layout LyX-Code
+
+    Dim outputRange As Range
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Set inputOffsetRange = Range("offset_3")
+\layout LyX-Code
+
+    Set inputDateRange = Range("someday_3")
+\layout LyX-Code
+
+    Set outputRange = Range("day_2")
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim dateRes As struct_Date
+\layout LyX-Code
+
+    Dim dateInput As New struct_Date
+\layout LyX-Code
+
+   
+\layout LyX-Code
+
+    fillDateStructureFromRange dateInput, inputDateRange
+\layout LyX-Code
+
+    Dim service As New clsws_simpleDateService
+\layout LyX-Code
+
+    Set dateRes = service.wsm_getDate(inputOffsetRange.Value, dateInput)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    fillRangeFromDateStructure outputRange, dateRes
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+End Sub
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+Private Sub fillDateStructureFromRange(ByRef dateRes As struct_Date, 
+\layout LyX-Code
+
+ByRef inputDateRange As Range)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    dateRes.year = inputDateRange.Item(1, 1)
+\layout LyX-Code
+
+    dateRes.month = inputDateRange.Item(2, 1)
+\layout LyX-Code
+
+    dateRes.day = inputDateRange.Item(3, 1)
+\layout LyX-Code
+
+    dateRes.hour = inputDateRange.Item(4, 1)
+\layout LyX-Code
+
+    dateRes.minute = inputDateRange.Item(5, 1)
+\layout LyX-Code
+
+    dateRes.second = inputDateRange.Item(6, 1)
+\layout LyX-Code
+
+    dateRes.weekday = inputDateRange.Item(7, 1)
+\layout LyX-Code
+
+    dateRes.dayOfYear = inputDateRange.Item(8, 1)
+\layout LyX-Code
+
+    dateRes.dst = inputDateRange.Item(9, 1)
+\layout LyX-Code
+
+End Sub
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+Private Sub fillRangeFromDateStructure(ByRef outputRange As Range, 
+\layout LyX-Code
+
+ByRef inputDate As struct_Date)
+\layout LyX-Code
+
+    outputRange.Item(1, 1) = inputDate.year
+\layout LyX-Code
+
+    outputRange.Item(2, 1) = inputDate.month
+\layout LyX-Code
+
+    outputRange.Item(3, 1) = inputDate.day
+\layout LyX-Code
+
+    outputRange.Item(4, 1) = inputDate.hour
+\layout LyX-Code
+
+    outputRange.Item(5, 1) = inputDate.minute
+\layout LyX-Code
+
+    outputRange.Item(6, 1) = inputDate.second
+\layout LyX-Code
+
+    outputRange.Item(7, 1) = inputDate.weekday
+\layout LyX-Code
+
+    outputRange.Item(8, 1) = inputDate.dayOfYear
+\layout LyX-Code
+
+    outputRange.Item(9, 1) = inputDate.dst
+\layout LyX-Code
+
+End Sub
+\layout Standard
+
+This code defines two macros (and two helpers) to access the DateService
+ methods.
+ They can be invoked from a spreadsheet by the corresponding command buttons.
+ Note that both macros rely on hardcoded defined names.
+ To use the macros, you have to define these names in the spreadsheet.
+ Moreover, the names must refer to appropriate cell ranges: The range 
+\begin_inset Quotes eld
+\end_inset 
+
+input_3
+\begin_inset Quotes erd
+\end_inset 
+
+ used in the 
+\family typewriter 
+getCurrentDateButton2_Click()
+\family default 
+ macro refers to a single-cell range, whereas the 
+\begin_inset Quotes eld
+\end_inset 
+
+someday_3
+\begin_inset Quotes erd
+\end_inset 
+
+ and 
+\begin_inset Quotes eld
+\end_inset 
+
+day_2
+\begin_inset Quotes erd
+\end_inset 
+
+ ranges are expected to contain 8 elements (cells).
+\layout Paragraph
+
+Functions
+\layout Standard
+
+Of course it would be much nicer if no hardcoded names were needed.
+ And indeed, there are solutions to do this.
+ A simple approach is to return a single string value that is a concatenation
+ of a date´s fields (insert those functions with Insert->Module...):
+\layout LyX-Code
+
+Public Function getCurrentDate(ByVal str_input As String) As String
+\layout LyX-Code
+
+    '*****************************************************************
+\layout LyX-Code
+
+    'Excel Sheet entry point to call wsm_getCurrentDate Proxy function,
+\layout LyX-Code
+
+    'manually created.
+\layout LyX-Code
+
+    '*****************************************************************
+\layout LyX-Code
+
+    Dim dateObj As struct_Date
+\layout LyX-Code
+
+    Dim service As New clsws_simpleDateService
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Set dateObj = service.wsm_getCurrentDate(str_input)
+\layout LyX-Code
+
+    getCurrentDate = Str(dateObj.year) + "/" + Str(dateObj.month) + "/" +
+\layout LyX-Code
+
+Str(dateObj.day) + " " + Str(dateObj.hour) + ":" + Str(dateObj.minute) + ":"
+ + 
+\layout LyX-Code
+
+Str(dateObj.second)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+End Function
+\layout LyX-Code
+
+\layout LyX-Code
+
+Public Function getDate(ByVal i_offset As Integer, ByRef inputDateRange
+ As Range)
+\layout LyX-Code
+
+As String
+\layout LyX-Code
+
+    '*****************************************************************
+\layout LyX-Code
+
+    'Excel Sheet entry point to call wsm_getCurrentDate Proxy function,
+\layout LyX-Code
+
+    'manually created.
+\layout LyX-Code
+
+    '*****************************************************************
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim dateRes As struct_Date
+\layout LyX-Code
+
+    Dim dateInput As New struct_Date
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    dateInput.year = inputDateRange.Item(1, 1)
+\layout LyX-Code
+
+    dateInput.month = inputDateRange.Item(2, 1)
+\layout LyX-Code
+
+    dateInput.day = inputDateRange.Item(3, 1)
+\layout LyX-Code
+
+    dateInput.hour = inputDateRange.Item(4, 1)
+\layout LyX-Code
+
+    dateInput.minute = inputDateRange.Item(5, 1)
+\layout LyX-Code
+
+    dateInput.second = inputDateRange.Item(6, 1)
+\layout LyX-Code
+
+    dateInput.weekday = inputDateRange.Item(7, 1)
+\layout LyX-Code
+
+    dateInput.dayOfYear = inputDateRange.Item(8, 1)
+\layout LyX-Code
+
+    dateInput.dst = inputDateRange.Item(9, 1)
+\layout LyX-Code
+
+ 
+\layout LyX-Code
+
+    Dim service As New clsws_simpleDateService
+\layout LyX-Code
+
+    Set dateRes = service.wsm_getDate(i_offset, dateInput)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    getDate = Str(dateRes.year) + "/" + Str(dateRes.month) + "/" +
+\layout LyX-Code
+
+Str(dateRes.day) + " " + Str(dateRes.hour) + ":" + Str(dateRes.minute) + ":"
+ +
+\layout LyX-Code
+
+Str(dateRes.second)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+End Function
+\layout Standard
+
+Unfortunately, the structure of a date is lost with this approach, as well
+ as the actual fields´ datatypes (imagine a struct consisting of different
+ datatypes).
+ There is a better possibility:
+\layout LyX-Code
+
+Public Function getCurrentDateAsArray(ByRef inputR As Range) As Variant
+\layout LyX-Code
+
+    Dim resArr(8, 0) As Variant
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim dateObj As struct_Date
+\layout LyX-Code
+
+    Dim service As New clsws_simpleDateService
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Set dateObj = service.wsm_getCurrentDate(str_input)
+\layout LyX-Code
+
+    resArr(0, 0) = dateObj.year
+\layout LyX-Code
+
+    resArr(1, 0) = dateObj.month
+\layout LyX-Code
+
+    resArr(2, 0) = dateObj.day
+\layout LyX-Code
+
+    resArr(3, 0) = dateObj.hour
+\layout LyX-Code
+
+    resArr(4, 0) = dateObj.minute
+\layout LyX-Code
+
+    resArr(5, 0) = dateObj.second
+\layout LyX-Code
+
+    resArr(6, 0) = dateObj.weekday
+\layout LyX-Code
+
+    resArr(7, 0) = dateObj.dayOfYear
+\layout LyX-Code
+
+    resArr(8, 0) = dateObj.dst
+\layout LyX-Code
+
+    getCurrentDateAsArray = resArr
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+End Function
+\layout LyX-Code
+
+Public Function getDateAsArray(ByVal i_offset As Integer, ByRef inputDateRange
+ As Range)
+\layout LyX-Code
+
+As Variant
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim resArr(8, 0) As Variant
+\layout LyX-Code
+
+    Dim dateRes As struct_Date
+\layout LyX-Code
+
+    Dim dateInput As New struct_Date
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    dateInput.year = inputDateRange.Item(1, 1)
+\layout LyX-Code
+
+    dateInput.month = inputDateRange.Item(2, 1)
+\layout LyX-Code
+
+    dateInput.day = inputDateRange.Item(3, 1)
+\layout LyX-Code
+
+    dateInput.hour = inputDateRange.Item(4, 1)
+\layout LyX-Code
+
+    dateInput.minute = inputDateRange.Item(5, 1)
+\layout LyX-Code
+
+    dateInput.second = inputDateRange.Item(6, 1)
+\layout LyX-Code
+
+    dateInput.weekday = inputDateRange.Item(7, 1)
+\layout LyX-Code
+
+    dateInput.dayOfYear = inputDateRange.Item(8, 1)
+\layout LyX-Code
+
+    dateInput.dst = inputDateRange.Item(9, 1)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim service As New clsws_simpleDateService
+\layout LyX-Code
+
+    Set dateRes = service.wsm_getDate(i_offset, dateInput)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    resArr(0, 0) = dateRes.year
+\layout LyX-Code
+
+    resArr(1, 0) = dateRes.month
+\layout LyX-Code
+
+    resArr(2, 0) = dateRes.day
+\layout LyX-Code
+
+    resArr(3, 0) = dateRes.hour
+\layout LyX-Code
+
+    resArr(4, 0) = dateRes.minute
+\layout LyX-Code
+
+    resArr(5, 0) = dateRes.second
+\layout LyX-Code
+
+    resArr(6, 0) = dateRes.weekday
+\layout LyX-Code
+
+    resArr(7, 0) = dateRes.dayOfYear
+\layout LyX-Code
+
+    resArr(8, 0) = dateRes.dst
+\layout LyX-Code
+
+    getDateAsArray = resArr
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+End Function
+\layout Standard
+
+To make use of these functions, you have to insert them into the spreadsheet
+ as so-called 
+\begin_inset Quotes eld
+\end_inset 
+
+array formulas
+\begin_inset Quotes erd
+\end_inset 
+
+.
+ This means you must enter the formula like this:
+\layout Enumerate
+
+Select the desired result cells (which would normally mean a range of cells
+ in this case).
+\layout Enumerate
+
+Enter the function call, e.g.:
+\begin_deeper 
+\layout LyX-Code
+
+=getCurrentDateAsArray(A1)
+\end_deeper 
+\layout Enumerate
+
+Press CTRL+SHIFT+ENTER.
+\layout Standard
+
+You´ll now see the entered formula in brackets if you select one of the
+ range´s cells, e.g.:
+\layout LyX-Code
+
+{=getCurrentDateAsArray(input_4)}
+\layout Subsubsection
+
+Web Service References Toolkit pitfalls
+\layout Standard
+
+An early version of the DateService WSDL brought up a problem with the WS
+ References Toolkit.
+ This version featured an input parameter with the same name as the return
+ value for one of the service methods:
+\layout LyX-Code
+
+  ...
+\layout LyX-Code
+
+  <message name="getDateRequest">
+\layout LyX-Code
+
+    <part name="offset" type="xsd:integer"/>
+\layout LyX-Code
+
+    <part name="someday" type="myType:Date"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+  <message name="getDateResponse">
+\layout LyX-Code
+
+    <part name="someday" type="myType:Date"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+  ...
+\layout Standard
+
+The generated VB stubs for this WSDL did not work.
+ They seemed to implicate modifying the input object (handed in 
+\family typewriter 
+ByRef
+\family default 
+) instead of returning a new return value:
+\layout LyX-Code
+
+Public Sub wsm_getDate(ByVal dcml_offset As Double, ByRef obj_someday As
+ struct_Date)
+\layout LyX-Code
+
+...
+\layout Standard
+
+While the code looked ok, it just didn´t work, for whatever reason.
+\layout Subsection
+
+A gSOAP C++ client for the DateService
+\layout Subsubsection
+
+Code generation from WSDL
+\begin_inset LatexCommand \label{sub:Code-generation-gsoap_DateService}
+
+\end_inset 
+
+
+\layout Enumerate
+
+Header:
+\begin_deeper 
+\layout LyX-Code
+
+$ /apps/pydev/bin/wsdl2h -o dateService.h http://dev-b.handel-dev.local:8080/DateSe
+rvice
+\layout LyX-Code
+
+** The gSOAP WSDL parser for C and C++ 1.2.0
+\layout LyX-Code
+
+** Copyright (C) 2000-2005 Robert van Engelen, Genivia Inc.
+\layout LyX-Code
+
+** All Rights Reserved.
+ This product is provided "as is", without any warranty.
+\layout LyX-Code
+
+** The gSOAP WSDL parser is released under one of the following two licenses:
+\layout LyX-Code
+
+** GPL or the commercial license by Genivia Inc.
+ Use option -l for more info.
+\layout LyX-Code
+
+Saving dateService.h
+\layout LyX-Code
+
+Connecting to 'http://dev-b.handel-dev.local:8080/DateService' to retrieve
+ WSDL...
+ done
+\layout LyX-Code
+
+Cannot open file 'typemap.dat'
+\layout LyX-Code
+
+Problem reading type map file typemap.dat.
+\layout LyX-Code
+
+Using internal type definitions for C++ instead.
+\layout LyX-Code
+
+Warning: part 'today' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'input' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'input' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'day' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'offset' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'someday' uses literal style and must refer to an element
+ rather than a type
+\layout LyX-Code
+
+Warning: part 'offset' uses literal style and must refer to an element rather
+ than a type
+\layout LyX-Code
+
+Warning: part 'someday' uses literal style and must refer to an element
+ rather than a type
+\layout LyX-Code
+
+To complete the process, compile with:
+\layout LyX-Code
+
+soapcpp2 dateService.h
+\end_deeper 
+\layout Enumerate
+
+Stub code:
+\begin_deeper 
+\layout LyX-Code
+
+0 hjoukl@dev-b .../C++ $ /apps/pydev/bin/soapcpp2 
+\layout LyX-Code
+
+-I /data/pydev/DOWNLOADS/gsoap-2.7/soapcpp2 dateService.h
+\layout LyX-Code
+
+** The gSOAP Stub and Skeleton Compiler for C and C++ 2.7.1
+\layout LyX-Code
+
+** Copyright (C) 2000-2005, Robert van Engelen, Genivia Inc.
+\layout LyX-Code
+
+** All Rights Reserved.
+ This product is provided "as is", without any warranty.
+\layout LyX-Code
+
+** The gSOAP compiler is released under one of the following three licenses:
+\layout LyX-Code
+
+** GPL, the gSOAP public license, or the commercial license by Genivia Inc.
+\layout LyX-Code
+
+Saving soapStub.h
+\layout LyX-Code
+
+Saving soapH.h
+\layout LyX-Code
+
+Saving soapC.cpp
+\layout LyX-Code
+
+Saving soapClient.cpp
+\layout LyX-Code
+
+Saving soapServer.cpp
+\layout LyX-Code
+
+Saving soapClientLib.cpp
+\layout LyX-Code
+
+Saving soapServerLib.cpp
+\layout LyX-Code
+
+Using ns3 service name: DateService_USCOREBinding
+\layout LyX-Code
+
+Using ns3 service style: document
+\layout LyX-Code
+
+Using ns3 service encoding: literal
+\layout LyX-Code
+
+Using ns3 service location: http://dev-b.handel-dev.local:8080/DateService
+\layout LyX-Code
+
+Using ns3 schema namespace: urn:DateService.wsdl
+\layout LyX-Code
+
+Saving soapDateService_USCOREBindingProxy.h client proxy
+\layout LyX-Code
+
+Saving soapDateService_USCOREBindingObject.h server object
+\layout LyX-Code
+
+Saving DateService_USCOREBinding.getCurrentDate.req.xml sample SOAP/XML request
+\layout LyX-Code
+
+Saving DateService_USCOREBinding.getCurrentDate.res.xml sample SOAP/XML response
+\layout LyX-Code
+
+Saving DateService_USCOREBinding.getDate.req.xml sample SOAP/XML request
+\layout LyX-Code
+
+Saving DateService_USCOREBinding.getDate.res.xml sample SOAP/XML response
+\layout LyX-Code
+
+Saving DateService_USCOREBinding.nsmap namespace mapping table
+\layout LyX-Code
+
+Compilation successful
+\layout LyX-Code
+
+0 hjoukl@dev-b .../C++ $
+\end_deeper 
+\layout Subsubsection
+
+Client implementation
+\layout Standard
+
+As already announced in section 
+\begin_inset LatexCommand \ref{sub:gsoap-square-client}
+
+\end_inset 
+
+ we´ll now access the service through the DateService proxy class, which
+ can be found in 
+\family typewriter 
+soapDateService_USCOREBindingProxy.h
+\family default 
+.
+ We use it to call the two WS-methods in our sample client:
+\layout LyX-Code
+
+// Contents of file "myclient_use_proxy.cpp"
+\layout LyX-Code
+
+#include "soapDateService_USCOREBindingProxy.h"
+\layout LyX-Code
+
+#include "DateService_USCOREBinding.nsmap"
+\layout LyX-Code
+
+int main()
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    DateService ds;
+\layout LyX-Code
+
+    ns2__Date *today, *someday;
+\layout LyX-Code
+
+    ns3__getCurrentDateResponse today_response;
+\layout LyX-Code
+
+    ns3__getDateResponse someday_response;
+\layout LyX-Code
+
+    std::string text, input;
+\layout LyX-Code
+
+    text="TEST";
+\layout LyX-Code
+
+    std::cout << "(1) Calling 'getCurrentDate()'- Web Service method:" <<
+ std::endl;
+\layout LyX-Code
+
+    if(ds.ns3__getCurrentDate(text, today_response) == SOAP_OK)
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            today = today_response.today;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+nCurrent date:" << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tyear: "  << *today->year  << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tmonth: " << *today->month << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tday: "   << *today->day   << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+thour: "   << *today->hour   << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tminute: "   << *today->minute   << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tsecond: "   << *today->second   << std::endl;
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    else
+\layout LyX-Code
+
+        soap_print_fault(ds.soap, stderr);
+\layout LyX-Code
+
+    std::cout << "
+\backslash 
+n(2) Calling 'getDate()'- Web Service method:" << std::endl;
+\layout LyX-Code
+
+    std::cout << "
+\backslash 
+n(2)Please enter an integer for the 'offset'"<< std::endl;
+\layout LyX-Code
+
+    std::cout << "
+\backslash 
+toffset = ";
+\layout LyX-Code
+
+    std::cin >> input;
+\layout LyX-Code
+
+    someday = today;
+\layout LyX-Code
+
+    if(ds.ns3__getDate(input, someday, someday_response) == SOAP_OK)
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            someday = someday_response.day;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+nSome Day:" << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tyear: " << *someday->year << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tmonth: "<< *someday->month << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tday: " << *someday->day << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+thour: "   << *today->hour   << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tminute: "   << *today->minute   << std::endl;
+\layout LyX-Code
+
+            std::cout << "
+\backslash 
+tsecond: "   << *today->second   << std::endl;
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    else
+\layout LyX-Code
+
+    return 0;
+\layout LyX-Code
+
+}
+\layout Standard
+
+You can find the classes/structs that represent the WSDL input and output
+ datatypes in the generated file 
+\family typewriter 
+soapStub.h
+\family default 
+.
+ This file is really pretty much self-explaining, so the usage in client
+ implementations should be straightforward.
+\layout Subsubsection
+
+gSOAP Client compilation 
+\layout Paragraph
+
+gcc 2.95.2
+\layout LyX-Code
+
+ $ g++ -o myClient_use_proxy -I/apps/pydev/include -L/apps/pydev/lib 
+\layout LyX-Code
+
+-R /apps/prod/lib myClient_use_proxy.cpp soapC.cpp soapClient.cpp 
+\layout LyX-Code
+
+-lsocket -lgsoap++
+\layout Paragraph
+
+gcc 3.4.3
+\layout LyX-Code
+
+$ /apps/pydev/gcc/3.4.3/bin/g++ -o myClient_use_proxy -I/apps/pydev/include
+\layout LyX-Code
+
+-L/apps/pydev/gcc/3.4.3/lib -R /apps/pydev/gcc/3.4.3/lib 
+\layout LyX-Code
+
+myClient_use_proxy.cpp soapC.cpp soapClient.cpp 
+\layout LyX-Code
+
+-lsocket -lgsoap++ -lnsl
+\layout Subsection
+
+Applix spreadsheets as DateService clients
+\layout Standard
+
+While Applix does not come with built-in web services support it is extensible
+ with C shared libraries.
+ We can use this feature to wrap gSOAP client code, making web services
+ accessible from within Applix spreadsheets.
+\layout Subsubsection
+
+Code generation from WSDL
+\layout Standard
+
+The C/C++ client stubs must be generated as described in section
+\begin_inset LatexCommand \ref{sub:Code-generation-gsoap_DateService}
+
+\end_inset 
+
+.
+\layout Subsubsection
+
+Applix client implementation
+\begin_inset LatexCommand \label{sub:Applix-client-implementation}
+
+\end_inset 
+
+
+\layout Paragraph
+
+ELF C extension
+\layout Standard
+
+To make the DateService callable from Applix we need to write an ELF shared
+ library C extension.
+ The 
+\family typewriter 
+ax_DateService.cpp
+\family default 
+ extension implements the gSOAP web services access:
+\layout LyX-Code
+
+#include "elfapi.h"
+\layout LyX-Code
+
+#include "soapDateService_USCOREBindingProxy.h"
+\layout LyX-Code
+
+#include "DateService_USCOREBinding.nsmap"
+\layout LyX-Code
+
+#define TRUE 1
+\layout LyX-Code
+
+\layout LyX-Code
+
+extern "C" elfData getCurrentDate();
+\layout LyX-Code
+
+extern "C" elfData getCurrentDate_2();
+\layout LyX-Code
+
+extern "C" elfData getDate();
+\layout LyX-Code
+
+extern "C" elfData getDate_2();
+\layout LyX-Code
+
+/*
+\layout LyX-Code
+
+*       Define the function table
+\layout LyX-Code
+
+*/
+\layout LyX-Code
+
+AxCallInfo_t    funcTable[]={
+\layout LyX-Code
+
+        { "Web Services", /* func type ...
+ "financial", "math" ...
+ */
+\layout LyX-Code
+
+          getCurrentDate,  /* The C routine to call  */
+\layout LyX-Code
+
+          "getCurrentDate", /* name to use in Applixware (usually identical
+ to the function 
+\layout LyX-Code
+
+                               name)   */
+\layout LyX-Code
+
+          "string getCurrentDate(string)",  /* shows the function name and
+ its arguments */
+\layout LyX-Code
+
+          TRUE  /* An integer that governs the treatment of ERROR and NA
+ values,
+\layout LyX-Code
+
+                   and whether the function is displayed in the Spreadsheets
+ Functions 
+\layout LyX-Code
+
+                   dialog box.
+ */
+\layout LyX-Code
+
+        },
+\layout LyX-Code
+
+        { "Web Services", /* func type ...
+ "financial", "math" ...
+ */
+\layout LyX-Code
+
+          getCurrentDate_2,    /* The C routine to call  */
+\layout LyX-Code
+
+          "getCurrentDate_2",  /* name to use in Applixware (usually identical
+ to the 
+\layout LyX-Code
+
+                                  function name)   */
+\layout LyX-Code
+
+          "date getCurrentDate_2(string)",  /* shows the function name and
+ its arguments */
+\layout LyX-Code
+
+          TRUE            /* An integer that governs the treatment of ERROR
+ and NA values,
+\layout LyX-Code
+
+                             and whether the function is displayed in the
+ Spreadsheets  
+\layout LyX-Code
+
+                             Functions dialog box.
+ */
+\layout LyX-Code
+
+        },
+\layout LyX-Code
+
+        { "Web Services", /* func type ...
+ "financial", "math" ...
+ */
+\layout LyX-Code
+
+          getDate,        /* The C routine to call  */
+\layout LyX-Code
+
+          "getDate",      /* name to use in Applixware (usually identical
+ to the function 
+\layout LyX-Code
+
+                             name)   */
+\layout LyX-Code
+
+          "date_string getDate(int, date)", /* shows the function name and
+ its arguments */
+\layout LyX-Code
+
+          TRUE   /* An integer that governs the treatment of ERROR and NA
+ values,
+\layout LyX-Code
+
+                    and whether the function is displayed in the Spreadsheets
+ Functions 
+\layout LyX-Code
+
+                    dialog box.
+ */
+\layout LyX-Code
+
+        },
+\layout LyX-Code
+
+        { "Web Services", /* func type ...
+ "financial", "math" ...
+ */
+\layout LyX-Code
+
+          getDate_2,      /* The C routine to call  */
+\layout LyX-Code
+
+          "getDate_2",    /* name to use in Applixware (usually identical
+ to the function 
+\layout LyX-Code
+
+                             name)   */
+\layout LyX-Code
+
+          "date getDate_2(int, date)",   /* shows the function name and
+ its arguments */
+\layout LyX-Code
+
+          TRUE  /* An integer that governs the treatment of ERROR and NA
+ values,
+\layout LyX-Code
+
+                   and whether the function is displayed in the Spreadsheets
+ Functions
+\layout LyX-Code
+
+                   dialog box.
+ */
+\layout LyX-Code
+
+        },
+\layout LyX-Code
+
+        {  NULL,
+\layout LyX-Code
+
+           NULL,
+\layout LyX-Code
+
+           NULL,
+\layout LyX-Code
+
+           NULL,
+\layout LyX-Code
+
+           NULL
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+};
+\layout LyX-Code
+
+/*
+\layout LyX-Code
+
+*       Function AxGetCallInfo returns the function table.
+\layout LyX-Code
+
+*       This function is called by Applixware when you run the macro
+\layout LyX-Code
+
+*       RPC_CONNECT@ or INSTALL_C_LIBRARY@.
+ This function must exist
+\layout LyX-Code
+
+*       in the RPC program or Shared Library.
+\layout LyX-Code
+
+*/
+\layout LyX-Code
+
+DLL_EXPORT AxCallInfo_t *AxGetCallInfo()
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+        return(funcTable);
+\layout LyX-Code
+
+}
+\layout LyX-Code
+
+/*=========================================*/
+\layout LyX-Code
+
+/* func                                    */
+\layout LyX-Code
+
+/*=========================================*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+extern "C" elfData getCurrentDate(elfData args)     
+\layout LyX-Code
+
+/* args is an array of arguments passed from ELF */
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    elfData arrayElem;
+\layout LyX-Code
+
+    elfData retValue;
+\layout LyX-Code
+
+    char *val;
+\layout LyX-Code
+
+    /* Check argument number & types */
+\layout LyX-Code
+
+    if (AxArraySize(args) != 1) {
+\layout LyX-Code
+
+        AxError(1, "function takes one single argument", "getCurrentDate");
+\layout LyX-Code
+
+    }
+\layout LyX-Code
+
+    arrayElem = AxArrayElement(args, 0);
+\layout LyX-Code
+
+    if (!AxIsString(arrayElem)) AxError(1, "argument must be a string",
+ "getCurrentDate");
+\layout LyX-Code
+
+    DateService ds;
+\layout LyX-Code
+
+    ns2__Date *today;
+\layout LyX-Code
+
+    ns3__getCurrentDateResponse today_response;
+\layout LyX-Code
+
+    val = AxStrFromDataPtr(arrayElem);
+\layout LyX-Code
+
+    std::string text(val);
+\layout LyX-Code
+
+    std::string soapError = "SOAP Error";
+\layout LyX-Code
+
+    std::string result = "";
+\layout LyX-Code
+
+    if(ds.ns3__getCurrentDate(text, today_response) == SOAP_OK)
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            today = today_response.today;
+\layout LyX-Code
+
+            result = *today->year
+\layout LyX-Code
+
+                + "/" + *today->month
+\layout LyX-Code
+
+                + "/" + *today->day
+\layout LyX-Code
+
+                + " " + *today->hour
+\layout LyX-Code
+
+                + ":" + *today->minute
+\layout LyX-Code
+
+                + ":" + *today->second;
+\layout LyX-Code
+
+         }
+\layout LyX-Code
+
+    else
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            //soap_print_fault(ds.soap, stderr);  // gSOAP error
+\layout LyX-Code
+
+            soapError = "SOAP error";
+\layout LyX-Code
+
+            AxError(1, soapError.c_str(), "getCurrentDate");
+\layout LyX-Code
+
+            //AxError(1, "SOAP error", "getCurrentDate");
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+     retValue = AxMakeStrData(result.length(), result.c_str());
+\layout LyX-Code
+
+     return retValue;
+\layout LyX-Code
+
+}
+\layout LyX-Code
+
+extern "C" elfData getCurrentDate_2(elfData args)     
+\layout LyX-Code
+
+/* args is an array of arguments passed from ELF */
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    elfData arrayElem;
+\layout LyX-Code
+
+    elfData retArray;
+\layout LyX-Code
+
+    char *val;
+\layout LyX-Code
+
+    /* Check argument number & types */
+\layout LyX-Code
+
+    if (AxArraySize(args) != 1) {
+\layout LyX-Code
+
+        AxError(1, "function takes one single argument", "getCurrentDate");
+\layout LyX-Code
+
+    }
+\layout LyX-Code
+
+    arrayElem = AxArrayElement(args, 0);
+\layout LyX-Code
+
+    if (!AxIsString(arrayElem)) AxError(1, "argument must be a string",
+ "getCurrentDate");
+\layout LyX-Code
+
+    DateService ds;
+\layout LyX-Code
+
+    ns2__Date *today;
+\layout LyX-Code
+
+    ns3__getCurrentDateResponse today_response;
+\layout LyX-Code
+
+    val = AxStrFromDataPtr(arrayElem);
+\layout LyX-Code
+
+    std::string text(val);
+\layout LyX-Code
+
+    std::string soapError = "";
+\layout LyX-Code
+
+    if(ds.ns3__getCurrentDate(text, today_response) == SOAP_OK)
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            today = today_response.today;
+\layout LyX-Code
+
+            retArray = AxMakeArray(0);
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 0, atoi((*today->year).c_str()))
+;
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 1, atoi((*today->month).c_str())
+);
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 2, atoi((*today->day).c_str()));
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 3, atoi((*today->hour).c_str()))
+;
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 4, atoi((*today->minute).c_str()
+));
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 5, atoi((*today->second).c_str()
+));
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 6, atoi((*today->weekday).c_str(
+)));
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 7, atoi((*today->dayOfYear).c_st
+r()));
+\layout LyX-Code
+
+            retArray = AxAddIntToArray(retArray, 8, atoi((*today->dst).c_str()));
+\layout LyX-Code
+
+         }
+\layout LyX-Code
+
+    else
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            //soap_print_fault(ds.soap, stderr);  // gSOAP error
+\layout LyX-Code
+
+            soapError = "SOAP error";
+\layout LyX-Code
+
+            AxError(1, soapError.c_str(), "getCurrentDate");
+\layout LyX-Code
+
+            //AxError(1, "SOAP error", "getCurrentDate");
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    return retArray;
+\layout LyX-Code
+
+}
+\layout LyX-Code
+
+\layout LyX-Code
+
+extern "C" elfData getDate(elfData args)     
+\layout LyX-Code
+
+/* args is an array of arguments passed from ELF */
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    elfData elf_offset, elf_date, retValue;
+\layout LyX-Code
+
+    /* Check argument number & types */
+\layout LyX-Code
+
+    if (AxArraySize(args) != 2) {
+\layout LyX-Code
+
+        AxError(1, "function takes 2 arguments", "getCurrentDate");
+\layout LyX-Code
+
+    }
+\layout LyX-Code
+
+    elf_offset = AxArrayElement(args, 0);
+\layout LyX-Code
+
+    if (!AxIsInt(elf_offset)) AxError(1, "argument must be an integer",
+ "getDate");
+\layout LyX-Code
+
+    elf_date = AxArrayElement(args, 1);
+\layout LyX-Code
+
+    if (!AxIsArray(elf_date)) AxError(1, "argument must be an array", "getDate")
+;
+\layout LyX-Code
+
+    DateService ds;
+\layout LyX-Code
+
+    //ns2__Date someday, date;
+\layout LyX-Code
+
+    ns2__Date *someday, date;
+\layout LyX-Code
+
+    ns3__getDateResponse someday_response;
+\layout LyX-Code
+
+    std::string offset(AxStrFromDataPtr(elf_offset));
+\layout LyX-Code
+
+    std::string year(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 0), 0)));
+\layout LyX-Code
+
+    std::string month(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 1), 0)));
+\layout LyX-Code
+
+    std::string day(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 2), 0)));
+\layout LyX-Code
+
+    std::string hour(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 3), 0)));
+\layout LyX-Code
+
+    std::string minute(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 4), 0)));
+\layout LyX-Code
+
+    std::string second(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 5), 0)));
+\layout LyX-Code
+
+    std::string weekday(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 6), 0)));
+\layout LyX-Code
+
+    std::string dayOfYear(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_dat
+e, 7), 0)));
+\layout LyX-Code
+
+    std::string dst(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 8), 0)));
+\layout LyX-Code
+
+    date.year = &year;
+\layout LyX-Code
+
+    date.month = &month;
+\layout LyX-Code
+
+    date.day = &day;
+\layout LyX-Code
+
+    date.hour = &hour;
+\layout LyX-Code
+
+    date.minute = &minute;
+\layout LyX-Code
+
+    date.second = &second;
+\layout LyX-Code
+
+    date.weekday = &weekday;
+\layout LyX-Code
+
+    date.dayOfYear = &dayOfYear;
+\layout LyX-Code
+
+    date.dst = &dst;
+\layout LyX-Code
+
+    std::string result = "";
+\layout LyX-Code
+
+    //retValue = AxMakeStrData(offset.length(), offset.c_str());
+\layout LyX-Code
+
+    //return retValue;
+\layout LyX-Code
+
+    //std::cout << "(1) Calling 'getCurrentDate()'- Web Service method:"
+ << std::endl;
+\layout LyX-Code
+
+    if(ds.ns3__getDate(offset, &date, someday_response) == SOAP_OK)
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            someday = someday_response.day;
+\layout LyX-Code
+
+            result = *someday->year
+\layout LyX-Code
+
+                + "/" + *someday->month
+\layout LyX-Code
+
+                + "/" + *someday->day
+\layout LyX-Code
+
+                + " " + *someday->hour
+\layout LyX-Code
+
+                + ":" + *someday->minute
+\layout LyX-Code
+
+                + ":" + *someday->second;
+\layout LyX-Code
+
+          }
+\layout LyX-Code
+
+    else
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            //soap_print_fault(ds.soap, stderr);  // gSOAP error
+\layout LyX-Code
+
+            AxError(1, "SOAP error", "getCurrentDate");
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    retValue = AxMakeStrData(result.length(), result.c_str());
+\layout LyX-Code
+
+    return retValue;
+\layout LyX-Code
+
+}
+\layout LyX-Code
+
+\layout LyX-Code
+
+extern "C" elfData getDate_2(elfData args)     
+\layout LyX-Code
+
+/* args is an array of arguments passed from ELF */
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    elfData elf_offset, elf_date, retArray;
+\layout LyX-Code
+
+    /* Check argument number & types */
+\layout LyX-Code
+
+    if (AxArraySize(args) != 2) {
+\layout LyX-Code
+
+        AxError(1, "function takes 2 arguments", "getCurrentDate");
+\layout LyX-Code
+
+    }
+\layout LyX-Code
+
+    elf_offset = AxArrayElement(args, 0);
+\layout LyX-Code
+
+    if (!AxIsInt(elf_offset)) AxError(1, "argument must be an integer",
+ "getDate");
+\layout LyX-Code
+
+    elf_date = AxArrayElement(args, 1);
+\layout LyX-Code
+
+    if (!AxIsArray(elf_date)) AxError(1, "argument must be an array", "getDate")
+;
+\layout LyX-Code
+
+    DateService ds;
+\layout LyX-Code
+
+    //ns2__Date someday, date;
+\layout LyX-Code
+
+    ns2__Date *someday, date;
+\layout LyX-Code
+
+    ns3__getDateResponse someday_response;
+\layout LyX-Code
+
+    std::string offset(AxStrFromDataPtr(elf_offset));
+\layout LyX-Code
+
+    std::string year(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 0), 0)));
+\layout LyX-Code
+
+    std::string month(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 1), 0)));
+\layout LyX-Code
+
+    std::string day(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 2), 0)));
+\layout LyX-Code
+
+    std::string hour(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 3), 0)));
+\layout LyX-Code
+
+    std::string minute(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 4), 0)));
+\layout LyX-Code
+
+    std::string second(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 5), 0)));
+\layout LyX-Code
+
+    std::string weekday(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 6), 0)));
+\layout LyX-Code
+
+    std::string dayOfYear(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_dat
+e, 7), 0)));
+\layout LyX-Code
+
+    std::string dst(AxStrFromDataPtr(AxArrayElement(AxArrayElement(elf_date,
+ 8), 0)));
+\layout LyX-Code
+
+    date.year = &year;
+\layout LyX-Code
+
+    date.month = &month;
+\layout LyX-Code
+
+    date.day = &day;
+\layout LyX-Code
+
+    date.hour = &hour;
+\layout LyX-Code
+
+    date.minute = &minute;
+\layout LyX-Code
+
+    date.second = &second;
+\layout LyX-Code
+
+    date.weekday = &weekday;
+\layout LyX-Code
+
+    date.dayOfYear = &dayOfYear;
+\layout LyX-Code
+
+    date.dst = &dst;
+\layout LyX-Code
+
+    std::string result = "";
+\layout LyX-Code
+
+    int return_integer = TRUE;
+\layout LyX-Code
+
+    //std::cout << "(1) Calling 'getCurrentDate()'- Web Service method:"
+ << std::endl;
+\layout LyX-Code
+
+    if(ds.ns3__getDate(offset, &date, someday_response) == SOAP_OK)
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            someday = someday_response.day;
+\layout LyX-Code
+
+            retArray = AxMakeArray(0);
+\layout LyX-Code
+
+            if (return_integer == TRUE)
+\layout LyX-Code
+
+                {
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 0, atoi((*someday->year
+).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 1, atoi((*someday->mont
+h).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 2, atoi((*someday->day).
+c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 3, atoi((*someday->hour
+).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 4, atoi((*someday->minu
+te).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 5, atoi((*someday->seco
+nd).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 6, atoi((*someday->week
+day).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 7, atoi((*someday->dayO
+fYear).c_str()));
+\layout LyX-Code
+
+                    retArray = AxAddIntToArray(retArray, 8, atoi((*someday->dst).
+c_str()));
+\layout LyX-Code
+
+                }
+\layout LyX-Code
+
+            else
+\layout LyX-Code
+
+                {
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 0, (*someday->year).c_st
+r());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 1, (*someday->month).c_s
+tr());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 2, (*someday->day).c_str
+());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 3, (*someday->hour).c_st
+r());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 4, (*someday->minute).c_
+str());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 5, (*someday->second).c_
+str());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 6, (*someday->weekday).c
+_str());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 7, (*someday->dayOfYear
+).c_str());
+\layout LyX-Code
+
+                    retArray = AxAddStrToArray(retArray, 8, (*someday->dst).c_str
+());
+\layout LyX-Code
+
+                }
+\layout LyX-Code
+
+          }
+\layout LyX-Code
+
+    else
+\layout LyX-Code
+
+        {
+\layout LyX-Code
+
+            AxError(1, "SOAP error", "getCurrentDate");
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+    return retArray;
+\layout LyX-Code
+
+}
+\layout Standard
+
+The code above implements the following functions:
+\layout Itemize
+
+getCurrentDate: Return a string containing the current date.
+ Takes a string argument.
+\layout Itemize
+
+getCurrentDate_2: Return the current date as an array.
+ Takes a string argument.
+\layout Itemize
+
+getDate: Return the input date + offset as a string.
+ Takes an integer offset and a 9-element date array as arguments.
+\layout Itemize
+
+getDate_2: Return input date + offset as an array.
+ Takes an integer offset and a 9-element date array as arguments.
+\layout Standard
+
+To compile the code, you have to add the Applix ELF headers to the include
+ path:
+\layout LyX-Code
+
+g++ -shared -o ax_DateService.so -R/apps/prod/lib 
+\layout LyX-Code
+
+-I/apps/prod/applix/applix/versions/4.43.1021.544.343/axdata/elf 
+\layout LyX-Code
+
+-I/apps/pydev/include -L/apps/pydev/lib soapC.cpp soap ax_DateService.cpp
+\layout LyX-Code
+
+-lgsoap++ -lsocket
+\layout Standard
+
+The resulting shared library 
+\family typewriter 
+ax_DateService.so
+\family default 
+ must be loaded into Applix before it can be used.
+ This is done with the 
+\family typewriter 
+install_c_library@(<extension lib>)
+\family default 
+ macro:
+\layout LyX-Code
+
+#define path "/data/pydev/WebServicesPresentation/DateService_rpc_literal/Applix
+/"
+\layout LyX-Code
+
+macro load()
+\layout LyX-Code
+
+        install_c_library@(path++"ax_DateService.so")
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+macro unload()
+\layout LyX-Code
+
+        unbind_c_library@(path++"ax_DateService.so")
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+macro reload()
+\layout LyX-Code
+
+        unbind_c_library@(path++"ax_DateService.so")
+\layout LyX-Code
+
+      install_c_library@(path++"ax_DateService.so")
+\layout LyX-Code
+
+endmacro
+\layout Standard
+
+After the shared library has been dynamically loaded, the functions can
+ be used like built-in function inside the spreadsheet.
+ To make sensible use of the 
+\family typewriter 
+getDate_2
+\family default 
+ function which returns the date struct as an array, you have to invoke
+ it as an array function:
+\begin_inset Foot
+collapsed true
+
+\layout Standard
+
+Compare to section 
+\begin_inset LatexCommand \ref{sub:VB-client-implementation-DateService}
+
+\end_inset 
+
+.
+\end_inset 
+
+
+\layout Enumerate
+
+Select an array with the appropriate number of cells (9 cells, one-dimensional
+ in our case).
+\layout Enumerate
+
+Enter the function call, e.g.:
+\begin_deeper 
+\layout LyX-Code
+
+=getDate_2(offset_5, someday_5)
+\end_deeper 
+\layout Enumerate
+
+Press CTRL-SHIFT-ENTER to insert the formula as array function.
+\layout Standard
+
+The actual extension function calls might also be wrapped into additional
+ macro code.
+ This makes it possible to invoke the functions from command buttons or
+ to populate predefined, hardcoded result ranges with the results of a service
+ call.
+ Compared to Excel, an additional possibility for Applix is the definition
+ of an extra argument for the output range 
+\emph on 
+name
+\emph default 
+ (as a string).
+ Given the name, this range can then be filled with the result value structure,
+ removing the need to hardcode range names in the macro code.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+In Applix, macros can be called from spreadsheet cells but places restrictions
+ on modifying spreadsheet cells from within a macro.
+\end_inset 
+
+
+\layout Standard
+
+The following macro code show some of the possibilities.
+ Refer to the code comments for explanations:
+\layout LyX-Code
+
+#include "spsheet_.am"
+\layout LyX-Code
+
+/* 
+\layout LyX-Code
+
+* Macros for Web Service getCurrentDate()
+\layout LyX-Code
+
+*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* <<<<  getCurrentDate_Macro >>>>> */
+\layout LyX-Code
+
+'             -->  Returning ASCII string
+\layout LyX-Code
+
+'             -->  called from within a cell
+\layout LyX-Code
+
+'             -->  providing an input parameter
+\layout LyX-Code
+
+\layout LyX-Code
+
+Macro getCurrentDate_Macro(text)
+\layout LyX-Code
+
+var retStr
+\layout LyX-Code
+
+/* Web Service call */
+\layout LyX-Code
+
+retStr = getCurrentDate(text)
+\layout LyX-Code
+
+return(retStr)
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* <<<<  getCurrentDate_2_Macro >>>>> */
+\layout LyX-Code
+
+'              --> no return value: returning ASCII string with population
+\layout LyX-Code
+
+'               -->  called by Buttons 
+\layout LyX-Code
+
+'               -->  no input parameter possible
+\layout LyX-Code
+
+'               -->  hard-coded input-parameter'
+\layout LyX-Code
+
+'               -->  hard coded named range for result population
+\layout LyX-Code
+
+\layout LyX-Code
+
+Macro getCurrentDate_2_Macro()
+\layout LyX-Code
+
+var format ss_cell_ cellInfo
+\layout LyX-Code
+
+var celladdr, cell
+\layout LyX-Code
+
+var retStr, text
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("input_3")
+\layout LyX-Code
+
+cellInfo = ss_get_cell@(cellAddr[0], cellAddr[1], 0)
+\layout LyX-Code
+
+text=cellInfo.display_str
+\layout LyX-Code
+
+/* Web Service call */
+\layout LyX-Code
+
+retStr = getCurrentDate(text)
+\layout LyX-Code
+
+/* Result Population */
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("today_1")
+\layout LyX-Code
+
+ ss_put_cell@(ss_coordinate@(cellAddr[0], cellAddr[1], 0), retStr)
+\layout LyX-Code
+
+'Alternativ
+\layout LyX-Code
+
+'cell=ss_coordinate@(cellAddr[0], cellAddr[1], 0)
+\layout LyX-Code
+
+'new_task@("ss_put_cell@", cell, retStr)
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* <<<<  getCurrentDate_3_Macro >>>>> */
+\layout LyX-Code
+
+'              --> no return value: returning date array  with population
+\layout LyX-Code
+
+'               -->  called by cell
+\layout LyX-Code
+
+'               -->  input parameter for result population
+\layout LyX-Code
+
+\layout LyX-Code
+
+Macro getCurrentDate_3_Macro(text, today)
+\layout LyX-Code
+
+'for parameter today the name (string) of a named range has to be passed,
+ not the named
+\layout LyX-Code
+
+' ranged object by itself --> this would pass an array to the macro, where
+ the
+\layout LyX-Code
+
+'content of the named range is provided.
+ But we need the coordinates of the cells of the
+\layout LyX-Code
+
+'named range
+\layout LyX-Code
+
+var format ss_cell_ cellInfo
+\layout LyX-Code
+
+var celladdr, cell
+\layout LyX-Code
+
+var retStr, date, rowStart, rowEnd, col
+\layout LyX-Code
+
+var k, i
+\layout LyX-Code
+
+/* Web Service call */
+\layout LyX-Code
+
+date = getCurrentDate_2(text)
+\layout LyX-Code
+
+/* Result Population */
+\layout LyX-Code
+
+'cellAddr = ss_extract_range_info@("today")
+\layout LyX-Code
+
+' --> hardcoded if no parameter is allowed
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@(today)
+\layout LyX-Code
+
+' --> not possible to get named range as parameter for result because 
+\layout LyX-Code
+
+' the content of the named range is used by APPLIX NOT THE COORDINATES
+\layout LyX-Code
+
+rowStart=cellAddr[1] 
+\layout LyX-Code
+
+rowEnd=cellAddr[3]
+\layout LyX-Code
+
+col=cellAddr[2]
+\layout LyX-Code
+
+k=0
+\layout LyX-Code
+
+for i=rowStart to rowEnd        
+\layout LyX-Code
+
+        cellInfo= ss_get_cell@(col, i, 0)
+\layout LyX-Code
+
+        'date[k]= { cellInfo.display_str+0 }
+\layout LyX-Code
+
+        'ss_put_cell@(ss_coordinate@(cellAddr[col], cellAddr[i], 0), date[k])
+\layout LyX-Code
+
+        'Alternativ
+\layout LyX-Code
+
+        cell=ss_coordinate@(col, i, 0)
+\layout LyX-Code
+
+        new_task@("ss_put_cell@", cell, date[k])
+\layout LyX-Code
+
+        'ss_put_cell@(col,i,date[k])
+\layout LyX-Code
+
+        k=k+1
+\layout LyX-Code
+
+next i
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* 
+\layout LyX-Code
+
+* Macros for Web Service getDate()
+\layout LyX-Code
+
+*/
+\layout LyX-Code
+
+/* <<<<  getDate_Macro >>>>> */
+\layout LyX-Code
+
+'             -->  Returning ASCII string
+\layout LyX-Code
+
+'             -->  called from within a cell
+\layout LyX-Code
+
+'             -->  providing  input parameter
+\layout LyX-Code
+
+\layout LyX-Code
+
+Macro getDate_macro(offset, someday)
+\layout LyX-Code
+
+var retStr, date
+\layout LyX-Code
+
+date=someday
+\layout LyX-Code
+
+/* Web Service call */
+\layout LyX-Code
+
+retStr = getDate(offset, date)
+\layout LyX-Code
+
+return(retStr)
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* <<<<  getDate_1_Macro >>>>> */
+\layout LyX-Code
+
+'                --> Not used
+\layout LyX-Code
+
+'              --> no return value: returning ASCII string with population
+\layout LyX-Code
+
+'               -->  called by Buttons  or from within a cell
+\layout LyX-Code
+
+'               -->  no input parameter possible
+\layout LyX-Code
+
+'               -->  hard-coded input-parameter'
+\layout LyX-Code
+
+'               -->  hard coded named range for result population
+\layout LyX-Code
+
+\layout LyX-Code
+
+Macro getDate_1_macro()
+\layout LyX-Code
+
+var format ss_cell_ cellInfo
+\layout LyX-Code
+
+var retStr, offset, date, rowStart, rowEnd, col
+\layout LyX-Code
+
+var cellAddr, k, i, cell
+\layout LyX-Code
+
+/* Preparing Web Service input parameter */
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("offset")
+\layout LyX-Code
+
+cellInfo = ss_get_cell@(cellAddr[0], cellAddr[1], 0)
+\layout LyX-Code
+
+offset=cellInfo.display_str+0
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("someday")
+\layout LyX-Code
+
+rowStart=cellAddr[1] 
+\layout LyX-Code
+
+rowEnd=cellAddr[3]
+\layout LyX-Code
+
+col=cellAddr[2]
+\layout LyX-Code
+
+k=0
+\layout LyX-Code
+
+for i=rowStart to rowEnd        
+\layout LyX-Code
+
+        cellInfo= ss_get_cell@(col, i, 0)
+\layout LyX-Code
+
+        date[k]= { cellInfo.display_str+0 }
+\layout LyX-Code
+
+        k=k+1
+\layout LyX-Code
+
+next i
+\layout LyX-Code
+
+/* Web Service call */
+\layout LyX-Code
+
+retStr = getDate(offset, date)
+\layout LyX-Code
+
+/* Result Population */
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("result_macro1")
+\layout LyX-Code
+
+/* Gilt fuer Start des Makros ueber Button  */
+\layout LyX-Code
+
+' ss_put_cell@(ss_coordinate@(cellAddr[0], cellAddr[1], 0), retStr)
+\layout LyX-Code
+
+/* Gilt fuer Start des Makros in einer Zelle  */
+\layout LyX-Code
+
+cell=ss_coordinate@(cellAddr[0], cellAddr[1], 0)
+\layout LyX-Code
+
+'cell="A:E12"
+\layout LyX-Code
+
+new_task@("ss_put_cell@", cell, retStr)
+\layout LyX-Code
+
+return(retStr)
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* <<<<  getDate_2_Macro >>>>> */
+\layout LyX-Code
+
+'              --> no return value: returning date array with population
+\layout LyX-Code
+
+'               -->  called by Buttons
+\layout LyX-Code
+
+'               -->  no input parameter possible
+\layout LyX-Code
+
+'               -->  hard-coded input-parameter'
+\layout LyX-Code
+
+'               -->  hard coded named range for result population
+\layout LyX-Code
+
+\layout LyX-Code
+
+Macro getDate_2_macro()
+\layout LyX-Code
+
+var format ss_cell_ cellInfo
+\layout LyX-Code
+
+var celladdr, cell
+\layout LyX-Code
+
+var date, rowStart, rowEnd, col
+\layout LyX-Code
+
+var k, i
+\layout LyX-Code
+
+var  offset, someday
+\layout LyX-Code
+
+/* Perparing Web Service input parameter */
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("offset_3")
+\layout LyX-Code
+
+cellInfo = ss_get_cell@(cellAddr[0], cellAddr[1], 0)
+\layout LyX-Code
+
+'offset=cellInfo.display_str + 0
+\layout LyX-Code
+
+offset=cellInfo.value
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("someday_3")
+\layout LyX-Code
+
+rowStart=cellAddr[1] 
+\layout LyX-Code
+
+rowEnd=cellAddr[3]
+\layout LyX-Code
+
+col=cellAddr[2]
+\layout LyX-Code
+
+k=0
+\layout LyX-Code
+
+for i=rowStart to rowEnd
+\layout LyX-Code
+
+        cellInfo = ss_get_cell@(col, i, 0)
+\layout LyX-Code
+
+        someday[k] = {cellInfo.value}
+\layout LyX-Code
+
+        'someday[k]=ss_coordinate@(col, i, 0)
+\layout LyX-Code
+
+        'new_task@("ss_put_cell@", cell, date[k])
+\layout LyX-Code
+
+        'ss_put_cell@(col,i,date[k])  --> not working
+\layout LyX-Code
+
+        k=k+1
+\layout LyX-Code
+
+next i
+\layout LyX-Code
+
+'DUMP_ARRAY@(someday)
+\layout LyX-Code
+
+/* Web Serviuce call */
+\layout LyX-Code
+
+date = getDate_2(offset, someday)
+\layout LyX-Code
+
+/* Result Population */
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@("day_1")
+\layout LyX-Code
+
+' --> not possible to get named range as parameter for result because
+\layout LyX-Code
+
+' the content of the named range is used by APPLIX NOT THE COORDINATES
+\layout LyX-Code
+
+rowStart=cellAddr[1] 
+\layout LyX-Code
+
+rowEnd=cellAddr[3]
+\layout LyX-Code
+
+col=cellAddr[2]
+\layout LyX-Code
+
+k=0
+\layout LyX-Code
+
+for i=rowStart to rowEnd        
+\layout LyX-Code
+
+        cell=ss_coordinate@(col, i, 0)
+\layout LyX-Code
+
+        new_task@("ss_put_cell@", cell, date[k])
+\layout LyX-Code
+
+        'ss_put_cell@(col,i,date[k])  --> not working
+\layout LyX-Code
+
+        k=k+1
+\layout LyX-Code
+
+next i
+\layout LyX-Code
+
+/*
+\layout LyX-Code
+
+* DUMP_ARRAY@(retStruct)
+\layout LyX-Code
+
+*/
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout LyX-Code
+
+\layout LyX-Code
+
+/* <<<<  getDate_3_Macro >>>>> */
+\layout LyX-Code
+
+'              --> no return value: returning date array with population
+\layout LyX-Code
+
+'               -->  called by cells
+\layout LyX-Code
+
+'               -->  input parameter for WebService call
+\layout LyX-Code
+
+'               --> named range input-parameter for result population
+\layout LyX-Code
+
+'
+\layout LyX-Code
+
+Macro getDate_3_macro(offset, someday, day)
+\layout LyX-Code
+
+var format ss_cell_ cellInfo
+\layout LyX-Code
+
+var celladdr, cell
+\layout LyX-Code
+
+var date, rowStart, rowEnd, col
+\layout LyX-Code
+
+var k, i
+\layout LyX-Code
+
+/* Preparation Web Service input parameter not necessary --> provided by
+ call */
+\layout LyX-Code
+
+/* Web Service call */
+\layout LyX-Code
+
+date = getDate_2(offset, someday)
+\layout LyX-Code
+
+/* Result Population */
+\layout LyX-Code
+
+'cellAddr = ss_extract_range_info@("day")
+\layout LyX-Code
+
+' --> hardcoded if no parameter is allowed
+\layout LyX-Code
+
+cellAddr = ss_extract_range_info@(day)
+\layout LyX-Code
+
+' --> not possible to get named range as parameter for result because 
+\layout LyX-Code
+
+' the content of the named range is used by APPLIX NOT THE COORDINATES
+\layout LyX-Code
+
+rowStart=cellAddr[1] 
+\layout LyX-Code
+
+rowEnd=cellAddr[3]
+\layout LyX-Code
+
+col=cellAddr[2]
+\layout LyX-Code
+
+k=0
+\layout LyX-Code
+
+for i=rowStart to rowEnd        
+\layout LyX-Code
+
+        cell=ss_coordinate@(col, i, 0)
+\layout LyX-Code
+
+        new_task@("ss_put_cell@", cell, date[k])
+\layout LyX-Code
+
+        'ss_put_cell@(col,i,date[k])  --> not working
+\layout LyX-Code
+
+        k=k+1
+\layout LyX-Code
+
+next i
+\layout LyX-Code
+
+/*
+\layout LyX-Code
+
+* DUMP_ARRAY@(retStruct)
+\layout LyX-Code
+
+*/
+\layout LyX-Code
+
+endmacro
+\layout LyX-Code
+
+/* <<<<<<<<<<<<< END >>>>>>>>>>>>>*/
+\layout Section
+
+A document/literal service: The FinancialService
+\layout Standard
+
+The previous example services had in common that they used rpc/literal binding.
+ While this is WS-I-compliant, there is a tendency to propagate the usage
+ of the document/literal fashion.
+ With rpc/literal, you might define types or elements to be used in the
+ request and response messages, in the 
+\family typewriter 
+<types>
+\family default 
+ section.
+ We did that for the DateService, see section 
+\begin_inset LatexCommand \ref{sub:The-DateService-WSDL}
+
+\end_inset 
+
+.
+ You use these elements or types as arguments or receive them as return
+ value of the service call.
+ They are 
+\begin_inset Quotes eld
+\end_inset 
+
+packed
+\begin_inset Quotes erd
+\end_inset 
+
+ into the request or the response tags in the actual SOAP message, as can
+ be seen in the sample client output in 
+\begin_inset LatexCommand \ref{sub:A-Python-ZSI-client-DateService}
+
+\end_inset 
+
+.
+\layout Standard
+
+The difference with document/literal binding is that the 
+\emph on 
+complete 
+\emph default 
+message inside 
+\family typewriter 
+<SOAP-ENV:Body>
+\family default 
+ is described in the 
+\family typewriter 
+<types>
+\family default 
+ section, as an XML schema - not only the call parameters/return values.
+ The big advantage is obvious: Such a message can be XML Schema-validated.
+ 
+\layout Standard
+
+As it is quite possible with document/literal to leave the service method
+ name out of the request/response message at all, depending on your 
+\family typewriter 
+<types>
+\family default 
+ definitions, there can also be a downside to this.
+ Because if you do so, it might be difficult for the server implementation
+ to dispatch correctly.
+\begin_inset Foot
+collapsed false
+
+\layout Standard
+
+At least if dispatching does not rely on the SOAPAction header field.
+\end_inset 
+
+ To avoid this, we explicitly model the method name into our request, as
+ a toplevel element.
+ This is called 
+\begin_inset Quotes eld
+\end_inset 
+
+document-wrapped
+\begin_inset Quotes erd
+\end_inset 
+
+ style.
+\layout Standard
+
+Most of the steps from WSDL to implementation should be familiar by now;
+ we will thus concentrate on the doc/literal differences and mainly present
+ the (commented) code.
+ 
+\layout Subsection
+
+The FinancialService WSDL
+\layout Standard
+
+The FinancialService is described in 
+\family typewriter 
+FinancialService.wsdl
+\family default 
+:
+\layout LyX-Code
+
+<?xml version="1.0"?>
+\layout LyX-Code
+
+<definitions name="FinancialService"
+\layout LyX-Code
+
+  targetNamespace="http://dev-b.handel-dev.local:8080/FinancialService.wsdl"
+\layout LyX-Code
+
+  xmlns:tns="http://dev-b.handel-dev.local:8080/FinancialService.wsdl"
+\layout LyX-Code
+
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+\layout LyX-Code
+
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+\layout LyX-Code
+
+  xmlns:finType="http://dev-b.handel-dev.local:8080/FinancialService_NS"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+\layout LyX-Code
+
+\layout LyX-Code
+
+  <types>
+\layout LyX-Code
+
+    <schema xmlns="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+      targetNamespace="http://dev-b.handel-dev.local:8080/FinancialService_NS"
+ >
+\layout LyX-Code
+
+      <!-- the getPV operation request message content, in doc-wrapped manner
+\layout LyX-Code
+
+        (with toplevel element that explicitly names the operation) -->
+\layout LyX-Code
+
+      <element name="getPV">
+\layout LyX-Code
+
+        <complexType>
+\layout LyX-Code
+
+          <sequence>
+\layout LyX-Code
+
+            <element name="irate" type="xsd:float"/>
+\layout LyX-Code
+
+            <element name="CFSequence">
+\layout LyX-Code
+
+              <complexType>
+\layout LyX-Code
+
+                <sequence>
+\layout LyX-Code
+
+                  <element name="CF" minOccurs="0" maxOccurs="unbounded"
+ type="xsd:float"/>
+\layout LyX-Code
+
+                </sequence>
+\layout LyX-Code
+
+              </complexType>
+\layout LyX-Code
+
+            </element>
+\layout LyX-Code
+
+          </sequence>
+\layout LyX-Code
+
+        </complexType>
+\layout LyX-Code
+
+      </element>
+\layout LyX-Code
+
+      <!-- the answer to the getPV operation request -->
+\layout LyX-Code
+
+      <element name="PV" type="xsd:float"/>
+\layout LyX-Code
+
+    </schema>
+\layout LyX-Code
+
+  </types>
+\layout LyX-Code
+
+\layout LyX-Code
+
+  <message name="getPVRequest">
+\layout LyX-Code
+
+    <part name="msg" element="finType:getPV"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+\layout LyX-Code
+
+  <message name="getPVResponse">
+\layout LyX-Code
+
+    <part name="msg" element="finType:PV"/>
+\layout LyX-Code
+
+  </message>
+\layout LyX-Code
+
+\layout LyX-Code
+
+  <portType name="FinancialService_PortType">
+\layout LyX-Code
+
+    <operation name="getPV">
+\layout LyX-Code
+
+      <input message="tns:getPVRequest"/>
+\layout LyX-Code
+
+      <output message="tns:getPVResponse"/>
+\layout LyX-Code
+
+    </operation>
+\layout LyX-Code
+
+  </portType>
+\layout LyX-Code
+
+\layout LyX-Code
+
+  <binding name="FinancialService_Binding" type="tns:FinancialService_PortType">
+\layout LyX-Code
+
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http
+"/>
+\layout LyX-Code
+
+    <operation name="getPV">
+\layout LyX-Code
+
+      <soap:operation soapAction=""/>
+\layout LyX-Code
+
+      <input>
+\layout LyX-Code
+
+        <soap:body use="literal"/>
+\layout LyX-Code
+
+      </input>
+\layout LyX-Code
+
+      <output>
+\layout LyX-Code
+
+        <soap:body use="literal"/>
+\layout LyX-Code
+
+      </output>
+\layout LyX-Code
+
+    </operation>
+\layout LyX-Code
+
+  </binding>
+\layout LyX-Code
+
+\layout LyX-Code
+
+  <service name="FinancialService">
+\layout LyX-Code
+
+    <documentation>Financial Web Service.
+ Methods: -getPV(irate, CFSequence):
+\layout LyX-Code
+
+Return present value for given interest rate and Cash Flows.</documentation>
+\layout LyX-Code
+
+    <port name="FinancialService_Port" binding="tns:FinancialService_Binding">
+\layout LyX-Code
+
+      <soap:address location="http://dev-b.handel-dev.local:8080/FinancialService"
+/>
+\layout LyX-Code
+
+    </port>
+\layout LyX-Code
+
+  </service>
+\layout LyX-Code
+
+\layout LyX-Code
+
+</definitions>
+\layout Standard
+
+Notes:
+\layout Itemize
+
+The FinancialService´s getPV operation returns the net present value for
+ a given interest rate 
+\begin_inset Formula $r$
+\end_inset 
+
+ and a series of cash flows.
+ It uses document/literal binding, so the full ingoing and outgoing message
+ structure is defined in the WSDL 
+\family typewriter 
+<types>
+\family default 
+ section.
+\layout Itemize
+
+The 
+\family typewriter 
+soapAction
+\family default 
+ attribute is empty (
+\family typewriter 
+<soap:operation soapAction=""/>
+\family default 
+).
+ This means the server will have to use a different way to dispatch to the
+ method implementation.
+\layout Subsection
+
+A Python ZSI FinancialService server
+\layout Subsubsection
+
+Code generation from WSDL
+\layout Enumerate
+
+
+\family typewriter 
+wsdl2py
+\family default 
+:
+\begin_deeper 
+\layout LyX-Code
+
+$ /apps/pydev/bin/wsdl2py -f FinancialService.wsdl
+\layout LyX-Code
+
+==> FinancialService_services.py
+\layout LyX-Code
+
+==> FinancialService_services_types.py
+\end_deeper 
+\layout Enumerate
+
+
+\family typewriter 
+wsdl2dispatch:
+\begin_deeper 
+\layout LyX-Code
+
+/apps/pydev/bin/wsdl2dispatch -f FinancialService.wsdl
+\layout LyX-Code
+
+==> FinancialService_services_server.py
+\end_deeper 
+\layout Subsubsection
+
+The DateService web server
+\layout Standard
+
+As mentioned above, the server implementation will need to use a different
+ dispatch mechanism due to the lacking 
+\family typewriter 
+soapAction
+\family default 
+ specification.
+ Therefore, the do_POST method of the standard ZSI.ServiceContainer has been
+ modified:
+\layout LyX-Code
+
+#!/apps/pydev/bin/python2.3
+\layout LyX-Code
+
+\layout LyX-Code
+
+__doc__ = """
+\layout LyX-Code
+
+   This module started out from the ZSI.ServiceContainer implementation,
+ but
+\layout LyX-Code
+
+   uses a different approach to address the service methods (which is actually
+\layout LyX-Code
+
+   more like in the ZSI.dispatch module).
+ In the ZSI.ServiceContainer module
+\layout LyX-Code
+
+   service method ('action'), look-up is based on the SOAPAction SOAP header
+\layout LyX-Code
+
+   field.
+ As this field is not set by most clients (not even by standard ZSI
+\layout LyX-Code
+
+   clients used in the ServiceProxy class and of course not by Excel XP
+\layout LyX-Code
+
+   clients), this had to be changed.
+\layout LyX-Code
+
+   Update: If your WSDL file features the <soap:operation soapAction=.../>
+ tags
+\layout LyX-Code
+
+   in its bindings sections, then the ZSI.ServiceContainer approach actually
+\layout LyX-Code
+
+   does work.
+ In this case, a client using ZSI.ServiceProxy will set the
+\layout LyX-Code
+
+   SOAPAction header field.
+ Hmm, do not know yet about Excel...
+\layout LyX-Code
+
+   Workflow is as follows:
+\layout LyX-Code
+
+   - the server (ZSI.ServiceContainer) dispatches the incoming HTTP connections
+\layout LyX-Code
+
+     to the request handler (MySOAPRequestHandler)
+\layout LyX-Code
+
+   - the request handler implements methods for GET (return the service
+ WSDL) and
+\layout LyX-Code
+
+   POST (dispatch the apppropriate service)
+\layout LyX-Code
+
+   - the _Dispatch function delegates service invocation to the ServiceContainer
+\layout LyX-Code
+
+   - ServiceContainer looks up the service and invokes the service method
+ (=action)
+\layout LyX-Code
+
+   - the service which inherits from ServiceSOAPBinding returns the answer
+ message
+\layout LyX-Code
+
+   that is then sent back by the _Dispatch function
+\layout LyX-Code
+
+   Personally I think the workflow is a bit strange (why does the server
+ invoke
+\layout LyX-Code
+
+   the service, not the service request handler, why separate the dispatch
+ into the
+\layout LyX-Code
+
+   _Dispach function), but that is the way it is done in the ZSI example.
+\layout LyX-Code
+
+"""
+\layout LyX-Code
+
+\layout LyX-Code
+
+import getopt
+\layout LyX-Code
+
+import os
+\layout LyX-Code
+
+import sys
+\layout LyX-Code
+
+import cStringIO as StringIO
+\layout LyX-Code
+
+\layout LyX-Code
+
+from ZSI import ParseException, FaultFromException
+\layout LyX-Code
+
+from ZSI import _copyright, _seqtypes, resolvers
+\layout LyX-Code
+
+from ZSI.parse import ParsedSoap
+\layout LyX-Code
+
+from ZSI.writer import SoapWriter
+\layout LyX-Code
+
+from ZSI.dispatch import SOAPRequestHandler as BaseSOAPRequestHandler
+\layout LyX-Code
+
+from ZSI.ServiceContainer import ServiceContainer
+\layout LyX-Code
+
+from ZSI.ServiceContainer import PostNotSpecified
+\layout LyX-Code
+
+from ZSI.wstools.WSDLTools import WSDLReader
+\layout LyX-Code
+
+from FinancialService_services_server import FinancialService
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# default configuration
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+port = 8080
+\layout LyX-Code
+
+host = 'http://dev-b.handel-dev.local'
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# command line parsing
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+def usage(rcode=1):
+\layout LyX-Code
+
+    print "usage: ./myDateServer.py --port=,-c<port> [--help, -h]"
+\layout LyX-Code
+
+    sys.exit(rcode)
+\layout LyX-Code
+
+try:
+\layout LyX-Code
+
+    optlist, args = getopt.getopt(sys.argv[1:], "hp:", ['help', 'port='])
+\layout LyX-Code
+
+except getopt.GetoptError:
+\layout LyX-Code
+
+    usage()
+\layout LyX-Code
+
+for opt, arg in optlist:
+\layout LyX-Code
+
+    if opt in ["-h", "--help"]:
+\layout LyX-Code
+
+        usage(0)
+\layout LyX-Code
+
+    elif opt in ["-p", "--port"]:
+\layout LyX-Code
+
+        port = int(arg)
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# module code
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+class MySOAPRequestHandler(BaseSOAPRequestHandler):
+\layout LyX-Code
+
+    """SOAP handler.
+\layout LyX-Code
+
+    Dispatching is delegated to the _Dispatch function which wants a post
+\layout LyX-Code
+
+    and an action attribute to specify the service object and a service
+ method.
+\layout LyX-Code
+
+    Post is determined using the self.path attribute inherited from
+\layout LyX-Code
+
+    BaseHTTPRequestHandler, containing the incoming request path.
+ Action is taken
+\layout LyX-Code
+
+    from body root element of the parsed SOAP message, similar to what is
+ done
+\layout LyX-Code
+
+    in the ZSI.dispatch module.
+\layout LyX-Code
+
+    """
+\layout LyX-Code
+
+\layout LyX-Code
+
+    def do_POST(self):
+\layout LyX-Code
+
+        '''The POST command.
+\layout LyX-Code
+
+        '''
+\layout LyX-Code
+
+##        print ">>>>> %s.do_POST" % self
+\layout LyX-Code
+
+##        print ">>>>> %s.path: %s" % (self, self.path)
+\layout LyX-Code
+
+##        print "%s.headers:" % self
+\layout LyX-Code
+
+##        print self.headers
+\layout LyX-Code
+
+        # SOAPAction is a SOAP header field.
+ Should read the SOAP specs...
+\layout LyX-Code
+
+        # We strip off the quotation marks.
+ Why ZSI puts them in anyway
+\layout LyX-Code
+
+        # is not clear to me (gSOAP does not, same as VB WSR toolkit).
+\layout LyX-Code
+
+        soapAction = self.headers.getheader('SOAPAction').strip('
+\backslash 
+'"')
+\layout LyX-Code
+
+        action = soapAction
+\layout LyX-Code
+
+        post = self.path
+\layout LyX-Code
+
+        if not post:
+\layout LyX-Code
+
+            raise PostNotSpecified, 'HTTP POST not specified in request'
+\layout LyX-Code
+
+        post = post.strip('
+\backslash 
+'"')
+\layout LyX-Code
+
+        try:
+\layout LyX-Code
+
+            ct = self.headers['content-type']
+\layout LyX-Code
+
+            if ct.startswith('multipart/'):
+\layout LyX-Code
+
+                cid = resolvers.MIMEResolver(ct, self.rfile)
+\layout LyX-Code
+
+                xml = cid.GetSOAPPart()
+\layout LyX-Code
+
+                ps = ParsedSoap(xml, resolver=cid.Resolve)
+\layout LyX-Code
+
+            else:
+\layout LyX-Code
+
+                length = int(self.headers['content-length'])
+\layout LyX-Code
+
+                payload = self.rfile.read(length)
+\layout LyX-Code
+
+                print ">>>> Request message:"
+\layout LyX-Code
+
+                print payload
+\layout LyX-Code
+
+                ps = ParsedSoap(payload)
+\layout LyX-Code
+
+        except ParseException, e:
+\layout LyX-Code
+
+            self.send_fault(FaultFromZSIException(e))
+\layout LyX-Code
+
+        except Exception, e:
+\layout LyX-Code
+
+            # Faulted while processing; assume it's in the header.
+\layout LyX-Code
+
+            self.send_fault(FaultFromException(e, 1, sys.exc_info()[2]))
+\layout LyX-Code
+
+        else:
+\layout LyX-Code
+
+            # Take the action from the parsed SOAP body root element
+\layout LyX-Code
+
+##            print ">>>> post =", post
+\layout LyX-Code
+
+##            print ">>>> action =", ps.body_root.localName
+\layout LyX-Code
+
+##            print ">>>> namespaceURI =", ps.body_root.namespaceURI
+\layout LyX-Code
+
+##            print ">>>> ps.body_root =", ps.body_root.__dict__
+\layout LyX-Code
+
+##            print ">>>> ps.GetElementNSdict:", ps.GetElementNSdict(ps.body_root)
+\layout LyX-Code
+
+            # This time, we try to dispatch the actual worker methods with
+ a fully
+\layout LyX-Code
+
+            # namespace-qualified name...
+\layout LyX-Code
+
+            # ...
+ but only if SOAPAction was not given...
+\layout LyX-Code
+
+            # Trying to leave soapAction attribute out of the wsdl completely
+ lead
+\layout LyX-Code
+
+            # ZSI to put a SOAPAction of "None" into the header, as a string.
+\layout LyX-Code
+
+            # Should probably better be left empty in this case.
+\layout LyX-Code
+
+            if not action or action == "None":
+\layout LyX-Code
+
+                if ps.body_root.namespaceURI:
+\layout LyX-Code
+
+                    action = ps.body_root.namespaceURI + ':' + ps.body_root.localNam
+e
+\layout LyX-Code
+
+                else:
+\layout LyX-Code
+
+                    action = ps.body_root.localName
+\layout LyX-Code
+
+            _Dispatch(ps, self.server, self.send_xml, self.send_fault,
+\layout LyX-Code
+
+                post=post, action=action)
+\layout LyX-Code
+
+\layout LyX-Code
+
+    def do_GET(self):
+\layout LyX-Code
+
+        """Return the WSDL file.
+ We expect one WSDL file per service,
+\layout LyX-Code
+
+        and the file path is determined by the incoming HTTP GET request
+\layout LyX-Code
+
+        path.
+ Thus, if you want to use the service from Excel XP, you
+\layout LyX-Code
+
+        have to add the service name to the service address, e.g.:
+\layout LyX-Code
+
+        http://dev-b.handel-dev.local:8080/FinancialService
+\layout LyX-Code
+
+        """
+\layout LyX-Code
+
+##        print ">>>>> %s.do_GET" % self
+\layout LyX-Code
+
+##        print ">>>>> %s.path: %s" % (self, self.path)
+\layout LyX-Code
+
+        wsdlfile = os.path.join('.', self.path.replace('/', "", 1) + ".wsdl")
+\layout LyX-Code
+
+##        print ">>>>> using wsdlfile", wsdlfile
+\layout LyX-Code
+
+        wsdl = open(wsdlfile).read()
+\layout LyX-Code
+
+        self.send_xml(wsdl)
+\layout LyX-Code
+
+\layout LyX-Code
+
+def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={},
+ **kw):
+\layout LyX-Code
+
+    """Send ParsedSoap instance to ServiceContainer, which dispatches to
+\layout LyX-Code
+
+    appropriate service via post, and method via action.
+  Response is a
+\layout LyX-Code
+
+    self-describing pyobj, which is passed to a SoapWriter.
+\layout LyX-Code
+
+    Call SendResponse or SendFault to send the reply back, appropriately.
+\layout LyX-Code
+
+        server -- ServiceContainer instance
+\layout LyX-Code
+
+    """
+\layout LyX-Code
+
+    try:
+\layout LyX-Code
+
+        result = server(ps, post, action)
+\layout LyX-Code
+
+    except Exception, e:
+\layout LyX-Code
+
+        return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
+\layout LyX-Code
+
+    if result == None:
+\layout LyX-Code
+
+        return
+\layout LyX-Code
+
+    reply = StringIO.StringIO()
+\layout LyX-Code
+
+    try:
+\layout LyX-Code
+
+        SoapWriter(reply, nsdict=nsdict).serialize(result)
+\layout LyX-Code
+
+        return SendResponse(reply.getvalue(), **kw)
+\layout LyX-Code
+
+    except Exception, e:
+\layout LyX-Code
+
+        return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+def AsServer(port=80, services=()):
+\layout LyX-Code
+
+    '''port --
+\layout LyX-Code
+
+       services -- list of service instances
+\layout LyX-Code
+
+    '''
+\layout LyX-Code
+
+    address = ('', port)
+\layout LyX-Code
+
+    sc = ServiceContainer(address, RequestHandlerClass=MySOAPRequestHandler)
+\layout LyX-Code
+
+    for service in services:
+\layout LyX-Code
+
+        path = service.getPost()
+\layout LyX-Code
+
+        sc.setNode(service, path)
+\layout LyX-Code
+
+    sc.serve_forever()
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+# Put the service classes you want to expose in here.
+\layout LyX-Code
+
+# We expect one WSDL file for each service, and only one port defined
+\layout LyX-Code
+
+# for the service.
+\layout LyX-Code
+
+expose_services = [
+\layout LyX-Code
+
+    FinancialService,
+\layout LyX-Code
+
+    ]
+\layout LyX-Code
+
+\layout LyX-Code
+
+service_instances = []
+\layout LyX-Code
+
+\layout LyX-Code
+
+for serviceclass in expose_services:
+\layout LyX-Code
+
+    service_instances.append(serviceclass())
+\layout LyX-Code
+
+\layout LyX-Code
+
+AsServer(port, service_instances)
+\layout Standard
+
+This code should be pretty self-explanatory.
+ The modified do_POST method will now use the namespace-qualified toplevel
+ element as dispatch action, if no SOAPAction HTTP header field was given
+ (which won´t be the case due to our WSDL file).
+ Apart from that, it is very similar to the server implementation in section
+ 
+\begin_inset LatexCommand \ref{sub:SquareService-web-server}
+
+\end_inset 
+
+.
+\layout Subsubsection
+
+The FinancialService implementation
+\layout Standard
+
+Once again, the implentation is hooked into the 
+\family typewriter 
+<...>_services_server.py
+\family default 
+ skeleton.
+ This time, the generated 
+\family typewriter 
+soapAction
+\family default 
+ dictionary is empty.
+ We add the 
+\family typewriter 
+'<ns>:<operation>'
+\family default 
+ key here that maps to the 
+\family typewriter 
+soap_getPV
+\family default 
+ method:
+\layout LyX-Code
+
+from FinancialService_services import *
+\layout LyX-Code
+
+from ZSI.ServiceContainer import ServiceSOAPBinding
+\layout LyX-Code
+
+\layout LyX-Code
+
+class FinancialService(ServiceSOAPBinding):
+\layout LyX-Code
+
+    soapAction = {
+\layout LyX-Code
+
+        # This would be used if soapAction was specified in WSDL
+\layout LyX-Code
+
+        'urn:FinancialService/getPV': 'soap_getPV',
+\layout LyX-Code
+
+        # If no soapAction is in WSDL, we dispatch using the root element
+ name
+\layout LyX-Code
+
+        # (namespace-qualified)
+\layout LyX-Code
+
+        'http://dev-b.handel-dev.local:8080/FinancialService_NS:getPV': 'soap_getP
+V',
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+\layout LyX-Code
+
+    def __init__(self, post='/FinancialService', **kw):
+\layout LyX-Code
+
+        ServiceSOAPBinding.__init__(self, post)
+\layout LyX-Code
+
+\layout LyX-Code
+
+    def soap_getPV(self, ps):
+\layout LyX-Code
+
+        # input vals in request object
+\layout LyX-Code
+
+        args = ps.Parse( getPVRequestWrapper() )
+\layout LyX-Code
+
+\layout LyX-Code
+
+        # Worker code: Actual present value calculation
+\layout LyX-Code
+
+        t = 0
+\layout LyX-Code
+
+        PV = 0.0
+\layout LyX-Code
+
+        for CF in args._CFSequence._CF:
+\layout LyX-Code
+
+            PV += (CF or 0.0) * ((args._irate / 100.0 + 1) ** (-t)) 
+\layout LyX-Code
+
+            t += 1
+\layout LyX-Code
+
+        print "Present value is: ", PV
+\layout LyX-Code
+
+\layout LyX-Code
+
+        # assign return values to response object
+\layout LyX-Code
+
+        class SimpleTypeWrapper(float): typecode = getPVResponseWrapper()
+\layout LyX-Code
+
+\layout LyX-Code
+
+        # WARNING specify value eg.
+ SimpleTypeWrapper(1)
+\layout LyX-Code
+
+        response = SimpleTypeWrapper(PV)
+\layout LyX-Code
+
+        return response
+\layout Standard
+
+The request message fields are accessed through 
+\family typewriter 
+args
+\family default 
+, which is a 
+\family typewriter 
+FinancialService_services.getPVRequestWrapper
+\family default 
+ instance, in the same 
+\begin_inset Quotes eld
+\end_inset 
+
+_<name>
+\begin_inset Quotes erd
+\end_inset 
+
+-syntax as before.
+\layout LyX-Code
+
+\layout Subsection
+
+A Python ZSI client for the FinancialService
+\layout Standard
+
+We use the generated stub code in the client implementation 
+\family typewriter 
+myClient_FinancialService.py
+\family default 
+:
+\layout LyX-Code
+
+#!/apps/pydev/bin/python2.3
+\layout LyX-Code
+
+\layout LyX-Code
+
+import sys
+\layout LyX-Code
+
+import getopt
+\layout LyX-Code
+
+import ZSI.wstools.WSDLTools
+\layout LyX-Code
+
+\layout LyX-Code
+
+from FinancialService_services import *
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# default configuration
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+port = 8080
+\layout LyX-Code
+
+host = 'dev-b'
+\layout LyX-Code
+
+\layout LyX-Code
+
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+# command line parsing
+\layout LyX-Code
+
+#------------------------------------------------------------------------------
+\layout LyX-Code
+
+def usage(rcode=1):
+\layout LyX-Code
+
+    print "usage: myClient_FinancialService.py [--host=<hostname> --port=,-c<port
+> --help, -h]"
+\layout LyX-Code
+
+    sys.exit(rcode)
+\layout LyX-Code
+
+try:
+\layout LyX-Code
+
+    optlist, args = getopt.getopt(sys.argv[1:], "hp:", ['help', 'port='])
+\layout LyX-Code
+
+except getopt.GetoptError:
+\layout LyX-Code
+
+    usage()
+\layout LyX-Code
+
+for opt, arg in optlist:
+\layout LyX-Code
+
+    print opt, arg
+\layout LyX-Code
+
+    if opt in ["-h", "--help"]:
+\layout LyX-Code
+
+        usage(0)
+\layout LyX-Code
+
+    elif opt in ["--host"]:
+\layout LyX-Code
+
+        host = arg
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+    elif opt in ["-p", "--port"]:
+\layout LyX-Code
+
+        port = int(arg)
+\layout LyX-Code
+
+        continue
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+url = 'http://' + host + ':' + str(port) + '/FinancialService'
+\layout LyX-Code
+
+\layout LyX-Code
+
+service = FinancialServiceLocator().getFinancialService_PortType(tracefile=sys.std
+out)
+\layout LyX-Code
+
+\layout LyX-Code
+
+print '
+\backslash 
+nAccessing service FinancialService, method getPV...'
+\layout LyX-Code
+
+while 1:
+\layout LyX-Code
+
+    # Must use keyword arguments if use_wsdl was set
+\layout LyX-Code
+
+    irate = None
+\layout LyX-Code
+
+    while not (0.0 <= irate <= 100.0):
+\layout LyX-Code
+
+        try:
+\layout LyX-Code
+
+            irate = float(raw_input("Enter interest rate in percent: "))
+\layout LyX-Code
+
+        except ValueError, e:
+\layout LyX-Code
+
+            print e
+\layout LyX-Code
+
+    CFSequence = []
+\layout LyX-Code
+
+    period = 0
+\layout LyX-Code
+
+    while 1:
+\layout LyX-Code
+
+        try:
+\layout LyX-Code
+
+            CFSequence.append(float(raw_input("Enter CF(t=%s) [Ctrl-C to
+ end]: " % (period,))))
+\layout LyX-Code
+
+            period += 1
+\layout LyX-Code
+
+        except ValueError, e:
+\layout LyX-Code
+
+            print e
+\layout LyX-Code
+
+        except KeyboardInterrupt:
+\layout LyX-Code
+
+            print "...done."
+\layout LyX-Code
+
+            break
+\layout LyX-Code
+
+\layout LyX-Code
+
+    print "CF sequence is:", CFSequence
+\layout LyX-Code
+
+    print "Calculation interest rate is:", irate
+\layout LyX-Code
+
+\layout LyX-Code
+
+    getPV = getPVRequestWrapper()
+\layout LyX-Code
+
+    #print "getPV", getPV
+\layout LyX-Code
+
+    #print "getPV.__dict__", getPV.__dict__
+\layout LyX-Code
+
+\layout LyX-Code
+
+    getPV._irate = irate
+\layout LyX-Code
+
+    class CFSequence_class:
+\layout LyX-Code
+
+        _CF = CFSequence
+\layout LyX-Code
+
+\layout LyX-Code
+
+    getPV._CFSequence = CFSequence_class
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    #print "getPV", getPV
+\layout LyX-Code
+
+    #print "getPV.__dict__", getPV.__dict__
+\layout LyX-Code
+
+    result = service.getPV(getPV)
+\layout LyX-Code
+
+    print 'result:', result
+\layout Standard
+
+After the necessary data has been read from the user, the appropriate attributes
+ of the 
+\family typewriter 
+getPVRequestWrapper
+\family default 
+ instance are set.
+ To model the sequence of cash flow elements, the local class 
+\family typewriter 
+CFSequence_class
+\family default 
+ is used.
+ This class is 
+\begin_inset Quotes eld
+\end_inset 
+
+structurally equivalent
+\begin_inset Quotes erd
+\end_inset 
+
+ to the XML Schema 
+\family typewriter 
+CFSequence
+\family default 
+ complexType as defined in the WSDL.
+ ZSI then handles all the type mapping and serialization issues for us.
+\layout Standard
+
+Sample client session output:
+\layout LyX-Code
+
+Accessing service FinancialService, method getPV...
+\layout LyX-Code
+
+Enter interest rate in percent: 4
+\layout LyX-Code
+
+Enter CF (t=0): -100
+\layout LyX-Code
+
+Enter CF (t=1): 5
+\layout LyX-Code
+
+Enter CF (t=2): 5
+\layout LyX-Code
+
+Enter CF (t=3): 105
+\layout LyX-Code
+
+Enter CF (t=4): ^C...done.
+\layout LyX-Code
+
+CF sequence is: [-100.0, 5.0, 5.0, 105.0]
+\layout LyX-Code
+
+Calculation interest rate is: 4.0
+\layout LyX-Code
+
+\layout LyX-Code
+
+_________________________________ Wed Jul 20 15:39:14 2005 REQUEST:
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<getPV xmlns="http://dev-b.handel-dev.local:8080/FinancialService_NS">
+\layout LyX-Code
+
+<irate xsi:type="xsd:float">4.000000</irate>
+\layout LyX-Code
+
+<CFSequence xmlns="http://dev-b.handel-dev.local:8080/FinancialService_NS">
+\layout LyX-Code
+
+<CF xsi:type="xsd:float">-100.000000</CF>
+\layout LyX-Code
+
+<CF xsi:type="xsd:float">5.000000</CF>
+\layout LyX-Code
+
+<CF xsi:type="xsd:float">5.000000</CF>
+\layout LyX-Code
+
+<CF xsi:type="xsd:float">105.000000</CF>
+\layout LyX-Code
+
+</CFSequence>
+\layout LyX-Code
+
+</getPV>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+_________________________________ Wed Jul 20 15:39:15 2005 RESPONSE:
+\layout LyX-Code
+
+Server: ZSI/1.1 BaseHTTP/0.3 Python/2.3.4
+\layout LyX-Code
+
+Date: Wed, 20 Jul 2005 13:39:14 GMT
+\layout LyX-Code
+
+Content-type: text/xml; charset="utf-8"
+\layout LyX-Code
+
+Content-Length: 560
+\layout LyX-Code
+
+<?xml version="1.0" encoding="utf-8"?>
+\layout LyX-Code
+
+<SOAP-ENV:Envelope
+\layout LyX-Code
+
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+\layout LyX-Code
+
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+\layout LyX-Code
+
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+\layout LyX-Code
+
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+\layout LyX-Code
+
+  xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"
+\layout LyX-Code
+
+  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" >
+\layout LyX-Code
+
+<SOAP-ENV:Body>
+\layout LyX-Code
+
+<PV xmlns="http://dev-b.handel-dev.local:8080/FinancialService_NS" 
+\layout LyX-Code
+
+xsi:type="xsd:float">2.775091</PV>
+\layout LyX-Code
+
+</SOAP-ENV:Body>
+\layout LyX-Code
+
+</SOAP-ENV:Envelope>
+\layout LyX-Code
+
+result: 2.775091
+\layout Subsection
+
+An Excel XP VB client for the FinancialService
+\layout Subsubsection
+
+VB FinancialService stub generation
+\layout Standard
+
+Refer to 
+\begin_inset LatexCommand \ref{sub:VB-stub-generation-square}
+
+\end_inset 
+
+ for details.
+ The URL to receive the WSDL description is 
+\begin_inset Quotes eld
+\end_inset 
+
+http://dev-b.handel-dev.local:8080/FinancialService
+\begin_inset Quotes erd
+\end_inset 
+
+ for this example.
+\layout Subsubsection
+
+VB FinancialService client implementation & spreadsheet access
+\layout Standard
+
+Insert the following code (Insert->Module...):
+\layout LyX-Code
+
+Public Function getPV(ByRef irate As Double, ByRef CFs As Range) As Single
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim xml_getPV As MSXML2.IXMLDOMNodeList
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Set xml_document = CreateObject("Microsoft.XMLDOM")
+\layout LyX-Code
+
+    Dim xml_root As MSXML2.IXMLDOMNode
+\layout LyX-Code
+
+    Set xml_root = xml_document.createElement("getPV")
+\layout LyX-Code
+
+    xml_document.appendChild xml_root
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim irateNode As IXMLDOMNode
+\layout LyX-Code
+
+    Set irateNode = xml_document.createElement("irate")
+\layout LyX-Code
+
+    Dim irateVar As Variant
+\layout LyX-Code
+
+    irateVar = irate
+\layout LyX-Code
+
+    irateNode.nodeTypedValue = irate
+\layout LyX-Code
+
+    xml_root.appendChild irateNode
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim CFSeqNode As IXMLDOMNode
+\layout LyX-Code
+
+    Set CFSeqNode = xml_document.createElement("CFSequence")
+\layout LyX-Code
+
+    xml_root.appendChild CFSeqNode
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim CFNode As IXMLDOMNode
+\layout LyX-Code
+
+    For Each cf In CFs
+\layout LyX-Code
+
+      Set CFNode = xml_document.createElement("CF")
+\layout LyX-Code
+
+      CFNode.Text = cf.Value
+\layout LyX-Code
+
+      CFSeqNode.appendChild CFNode
+\layout LyX-Code
+
+    Next cf
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    'Set xml_getPV = xml_document.getElementsByTagName("getPV")
+\layout LyX-Code
+
+    Set xml_getPV = xml_document.getElementsByTagName("getPV/*")
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    Dim myFinancialService As New clsws_FinancialService
+\layout LyX-Code
+
+    getPV = myFinancialService.wsm_getPV(xml_getPV)
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+    
+\layout LyX-Code
+
+End Function
+\layout Standard
+
+This implements the function 
+\family typewriter 
+getPV
+\family default 
+ that can be invoked from within a spreadsheet.
+ It expects the interest rate and a range of cells (containing the cash
+ flows) as input parameters.
+ As opposed to the previous rpc/literal examples, the generated VB client
+ stubs expect us to build up the DOM structure for the request message on
+ our own this time.
+ The function does so and calls the 
+\family typewriter 
+wsm_getPV
+\family default 
+ method of the 
+\family typewriter 
+clsws_FinancialService
+\family default 
+ object - the 
+\begin_inset Quotes eld
+\end_inset 
+
+service proxy
+\begin_inset Quotes erd
+\end_inset 
+
+ instance of the actual web service.
+ The resulting return value of the web service - the net present value of
+ the cash flows - is then given back to the caller.
+\layout Subsection
+
+A gSOAP C++ client for the FinancialService
+\layout Subsubsection
+
+Code generation from WSDL
+\layout Enumerate
+
+Header:
+\begin_deeper 
+\layout LyX-Code
+
+$ /apps/pydev/bin/wsdl2h -o financialService.h 
+\layout LyX-Code
+
+http://dev-b.handel-dev.local:8080/FinancialService
+\layout LyX-Code
+
+**  The gSOAP WSDL parser for C and C++ 1.2.0
+\layout LyX-Code
+
+**  Copyright (C) 2000-2005 Robert van Engelen, Genivia Inc.
+\layout LyX-Code
+
+**  All Rights Reserved.
+ This product is provided "as is", without any warranty.
+\layout LyX-Code
+
+**  The gSOAP WSDL parser is released under one of the following two licenses:
+\layout LyX-Code
+
+**  GPL or the commercial license by Genivia Inc.
+ Use option -l for more info.
+\layout LyX-Code
+
+Saving financialService.h
+\layout LyX-Code
+
+Connecting to 'http://dev-b.handel-dev.local:8080/FinancialService' 
+\layout LyX-Code
+
+to retrieve WSDL...
+ done
+\layout LyX-Code
+
+Cannot open file 'typemap.dat'
+\layout LyX-Code
+
+Problem reading type map file typemap.dat.
+\layout LyX-Code
+
+Using internal type definitions for C++ instead.
+\layout LyX-Code
+
+To complete the process, compile with:
+\layout LyX-Code
+
+soapcpp2 financialService.h
+\layout LyX-Code
+
+\end_deeper 
+\layout Enumerate
+
+Stub code:
+\begin_deeper 
+\layout LyX-Code
+
+$ /apps/pydev/bin/soapcpp2 -I /data/pydev/DOWNLOADS/gsoap-2.7/soapcpp2/ 
+\layout LyX-Code
+
+financialService.h
+\layout LyX-Code
+
+**  The gSOAP Stub and Skeleton Compiler for C and C++ 2.7.1
+\layout LyX-Code
+
+**  Copyright (C) 2000-2005, Robert van Engelen, Genivia Inc.
+\layout LyX-Code
+
+**  All Rights Reserved.
+ This product is provided "as is", without any warranty.
+\layout LyX-Code
+
+**  The gSOAP compiler is released under one of the following three licenses:
+\layout LyX-Code
+
+**  GPL, the gSOAP public license, or the commercial license by Genivia
+ Inc.
+\layout LyX-Code
+
+**WARNING**: anonymous struct will be named '_Struct_1' (detected at line
+ 73 in
+\layout LyX-Code
+
+financialService.h)
+\layout LyX-Code
+
+Saving soapStub.h
+\layout LyX-Code
+
+Saving soapH.h
+\layout LyX-Code
+
+Saving soapC.cpp
+\layout LyX-Code
+
+Saving soapClient.cpp
+\layout LyX-Code
+
+Saving soapServer.cpp
+\layout LyX-Code
+
+Saving soapClientLib.cpp
+\layout LyX-Code
+
+Saving soapServerLib.cpp
+\layout LyX-Code
+
+Using ns1 service name: FinancialService_USCOREBinding
+\layout LyX-Code
+
+Using ns1 service style: document
+\layout LyX-Code
+
+Using ns1 service encoding: literal
+\layout LyX-Code
+
+Using ns1 service location: http://dev-b.handel-dev.local:8080/FinancialService
+\layout LyX-Code
+
+Using ns1 schema namespace: http://dev-b.handel-dev.local:8080/FinancialService.wsd
+l
+\layout LyX-Code
+
+Saving soapFinancialService_USCOREBindingProxy.h client proxy
+\layout LyX-Code
+
+Saving soapFinancialService_USCOREBindingObject.h server object
+\layout LyX-Code
+
+Saving FinancialService_USCOREBinding.getPV.req.xml sample SOAP/XML request
+\layout LyX-Code
+
+Saving FinancialService_USCOREBinding.getPV.res.xml sample SOAP/XML response
+\layout LyX-Code
+
+Saving FinancialService_USCOREBinding.nsmap namespace mapping table
+\layout LyX-Code
+
+Compilation successful (1 warning)
+\end_deeper 
+\layout Subsubsection
+
+Client implementation
+\layout LyX-Code
+
+#include "soapFinancialService_USCOREBindingProxy.h"
+\layout LyX-Code
+
+#include "FinancialService_USCOREBinding.nsmap"
+\layout LyX-Code
+
+int main()
+\layout LyX-Code
+
+{
+\layout LyX-Code
+
+    FinancialService fs;
+\layout LyX-Code
+
+    _ns2__getPV getPV;
+\layout LyX-Code
+
+    float PV;
+\layout LyX-Code
+
+    float irate;
+\layout LyX-Code
+
+    float CFval;
+\layout LyX-Code
+
+    std::string input;
+\layout LyX-Code
+
+    while (1) {
+\layout LyX-Code
+
+        std::cout << "Enter interest rate in %: ";
+\layout LyX-Code
+
+        std::cin >> irate;
+\layout LyX-Code
+
+        std::vector<float> CF;
+\layout LyX-Code
+
+        for (int t=0;; t++) {
+\layout LyX-Code
+
+            std::cout << "Enter CF(t=" << t << ")[e to exit]: ";
+\layout LyX-Code
+
+            std::cin >> input;
+\layout LyX-Code
+
+            if (input != "e") {
+\layout LyX-Code
+
+                CFval = atof(input.c_str());
+\layout LyX-Code
+
+                CF.push_back(CFval);
+\layout LyX-Code
+
+            } else {
+\layout LyX-Code
+
+                break;
+\layout LyX-Code
+
+            }
+\layout LyX-Code
+
+        }
+\layout LyX-Code
+
+        getPV.irate = irate;
+\layout LyX-Code
+
+        getPV.CFSequence.CF = CF;
+\layout LyX-Code
+
+        if (fs.__ns1__getPV(&getPV, PV) == SOAP_OK) {
+\layout LyX-Code
+
+            std::cout << "PV=" << PV << endl;
+\layout LyX-Code
+
+        } else
+\layout LyX-Code
+
+            soap_print_fault(fs.soap, stderr);
+\layout LyX-Code
+
+    }
+\layout LyX-Code
+
+}
+\layout Subsubsection
+
+gSOAP Client compilation
+\layout Paragraph
+
+gcc 2.95.2
+\layout LyX-Code
+
+g++ -o myClient -R/apps/prod/lib  -I/apps/pydev/include -L/apps/pydev/lib
+ 
+\layout LyX-Code
+
+soapC.cpp soapClient.cpp myClient_use_proxy.cpp -lgsoap++ -lsocket
+\layout Paragraph
+
+gcc 3.4.3
+\layout LyX-Code
+
+/apps/pydev/gcc/3.4.3/bin/g++ -o myClient_use_proxy -I/apps/pydev/include
+ 
+\layout LyX-Code
+
+-L/apps/pydev/gcc/3.4.3/lib -R /apps/pydev/gcc/3.4.3/lib 
+\layout LyX-Code
+
+myClient_use_proxy.cpp soapC.cpp soapClient.cpp -lsocket -lgsoap++ -lnsl
+\layout Section
+
+Aftertoughts
+\layout Standard
+
+
+\begin_inset LatexCommand \cite{whichWSDL}
+
+\end_inset 
+
+ states that one of the advantages of 
+\begin_inset Quotes eld
+\end_inset 
+
+literal
+\begin_inset Quotes erd
+\end_inset 
+
+ binding is a reduced SOAP message payload, as unnecessary type information
+ can be left out.
+ This type information is not needed any more, as it is specified in the
+ WSDL and thus known to both service producer and consumer.
+ A closer look at the messages that ZSI produces, however, shows that the
+ 
+\family typewriter 
+xsi:type=
+\begin_inset Quotes erd
+\end_inset 
+
+...
+\begin_inset Quotes erd
+\end_inset 
+
+
+\family default 
+ attributes are packed into the SOAP message anyway (e.g.
+ sample session output in section 
+\begin_inset LatexCommand \ref{sub:ZSI-SquareService-client}
+
+\end_inset 
+
+).
+ While you can set an attribute 
+\family typewriter 
+typed=0
+\family default 
+ for the typecode information, it remains unclear if you have to do that
+ for every single message element.
+\layout Standard
+
+Example: A modified SquareService implementation:
+\layout LyX-Code
+
+        ...
+\layout LyX-Code
+
+        # >>> ADDED MANUALLY
+\layout LyX-Code
+
+        # Here we hook in the actual worker method
+\layout LyX-Code
+
+        response._return = self.getSquare(args._x)
+\layout LyX-Code
+
+        # <<<
+\layout LyX-Code
+
+        response.typecode.typed = 0
+\layout LyX-Code
+
+        response.typecode.ofwhat[0].typed = 0
+\layout LyX-Code
+
+        return response
+\layout LyX-Code
+
+        ....
+\layout Section
+\start_of_appendix 
+ZSI 1.6.1 patches
+\begin_inset LatexCommand \label{sec:ZSI-1.6.1-patches}
+
+\end_inset 
+
+
+\layout Standard
+
+The following patches to ZSI 1.6.1 made all the examples 
+\begin_inset Quotes eld
+\end_inset 
+
+just work
+\begin_inset Quotes erd
+\end_inset 
+
+ for me.
+ One would have to read up on/know the specs to decide if they are actually
+ correct; I guess this is up to the ZSI specialists.
+\layout Description
+
+wsdl2python.py.patch (based on revision: # $Id: wsdl2python.py,v 1.69 2004/11/30
+ 00:28:38 boverhof Exp $)
+\begin_deeper 
+\layout Itemize
+
+Fixes the problem that namespaces are not put into the generated code for
+ rpc/literal and document/literal.
+ Note that ZSI clients seem not to care too much about these issues, but
+ a gSOAP client will not accept the answer of a ZSI-based server if the
+ namespace is not correct.
+\layout Itemize
+
+For doc/literal, adds xmlns=".." to top level simple elements
+\layout Standard
+
+Code:
+\layout Standard
+
+
+\begin_inset Minipage
+position 1
+inner_position 0
+height "0(null)"
+width "100col%"
+collapsed false
+
+\layout LyX-Code
+
+
+\size tiny 
+775,776c775,777
+\layout LyX-Code
+
+
+\size tiny 
+<                     namespace = ''
+\layout LyX-Code
+
+
+\size tiny 
+<               self.typecode += '
+\backslash 
+n%s%s.typecode = Struct(%s,[%s], pname=name, aname="_%%s" %% name, oname="%%s
+  xmlns=
+\backslash 
+
+\backslash 
+"%s
+\backslash 
+
+\backslash 
+"" %% name )'
+\backslash 
+
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>                     if namespace:
+\layout LyX-Code
+
+
+\size tiny 
+>                         namespace = "'" + namespace + "'"
+\layout LyX-Code
+
+
+\size tiny 
+>               self.typecode += '
+\backslash 
+n%s%s.typecode = Struct(%s,[%s], pname=name, aname="_%%s" %% name, oname="%%s
+ xmlns=
+\backslash 
+
+\backslash 
+"%%s
+\backslash 
+
+\backslash 
+"" %% (name, ns) )'
+\backslash 
+
+\layout LyX-Code
+
+
+\size tiny 
+778c779
+\layout LyX-Code
+
+
+\size tiny 
+<                                tcs,namespace)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>                                tcs)
+\layout LyX-Code
+
+
+\size tiny 
+783a785,786
+\layout LyX-Code
+
+
+\size tiny 
+>                 if namespace:
+\layout LyX-Code
+
+
+\size tiny 
+>                     namespace = "'" + namespace + "'"
+\layout LyX-Code
+
+
+\size tiny 
+795,796c798,799
+\layout LyX-Code
+
+
+\size tiny 
+<             self.typecode += '%stypecode = %s( name=%s, ns=None ).typecode'
+\backslash 
+
+\layout LyX-Code
+
+
+\size tiny 
+<                              % (ID1, message.getName(), name )
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>             self.typecode += '%stypecode = %s( name=%s, ns=%s ).typecode'
+\backslash 
+
+\layout LyX-Code
+
+
+\size tiny 
+>                              % (ID1, message.getName(), name, namespace
+ )
+\layout LyX-Code
+
+
+\size tiny 
+799,800c802,803
+\layout LyX-Code
+
+
+\size tiny 
+<             self.typecode += '
+\backslash 
+n%s%s.__init__( self, name=%s, ns=None )' 
+\backslash 
+
+\layout LyX-Code
+
+
+\size tiny 
+<                              % (ID2, message.getName(), name )
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>             self.typecode += '
+\backslash 
+n%s%s.__init__( self, name=%s, ns=%s )' 
+\backslash 
+
+\layout LyX-Code
+
+
+\size tiny 
+>                              % (ID2, message.getName(), name, namespace)
+\layout LyX-Code
+
+
+\size tiny 
+1233c1236,1238
+\layout LyX-Code
+
+
+\size tiny 
+<             self.basector.set('
+\backslash 
+n
+\backslash 
+n%s%s.__init__(self,pname=name, aname="_%%s" %% name,  **kw)' % (ID3,tpc))
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>             # If the element has a non-empty ns attribute, add xmlns to
+ the tag oname
+\layout LyX-Code
+
+
+\size tiny 
+>             self.basector.set('
+\backslash 
+n
+\backslash 
+n%s%s.__init__(self, pname=name, aname="_%%s" %% name, oname="%%s" %% (name
+ + (ns and 
+\backslash 
+'
+\layout LyX-Code
+
+
+\size tiny 
+xmlns="%%s"
+\backslash 
+' %% ns)), **kw)' % (ID3,tpc))
+\layout LyX-Code
+
+
+\size scriptsize 
+>
+\end_inset 
+
+
+\end_deeper 
+\layout Description
+
+ServiceProxy.py.patch (no revision information in file)
+\begin_deeper 
+\layout Itemize
+
+Fixes a problem with rash conversion of toplevel element maxOccurs attribute
+ value to int.
+ This attribute might be None, so we need to check if conversion is possible.
+\layout Standard
+
+Code:
+\layout Standard
+
+
+\begin_inset Minipage
+position 1
+inner_position 0
+height "0(null)"
+width "100col%"
+collapsed false
+
+\layout LyX-Code
+
+
+\size tiny 
+224c224,232
+\layout LyX-Code
+
+
+\size tiny 
+< minOccurs = int(element.getAttribute('minOccurs'))
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>
+\layout LyX-Code
+
+
+\size tiny 
+> # toplevel elements (=ElementDeclaration) must not have minOccurs and
+\layout LyX-Code
+
+
+\size tiny 
+> # maxOccurs attributes, as opposed to local elements.
+ So while we can
+\layout LyX-Code
+
+
+\size tiny 
+> # query these, direct conversion to int might prove fatal.
+\layout LyX-Code
+
+
+\size tiny 
+> # Maybe this should be handled in the XMLSchema module? Hmm, while the
+\layout LyX-Code
+
+
+\size tiny 
+> # attributes themselves are prohibited in the schema spec, what is the
+\layout LyX-Code
+
+
+\size tiny 
+> # intended value for toplevel components?
+\layout LyX-Code
+
+
+\size tiny 
+>
+\layout LyX-Code
+
+
+\size tiny 
+> minOccurs = element.getAttribute('minOccurs')
+\layout LyX-Code
+
+
+\size tiny 
+228c236
+\layout LyX-Code
+
+
+\size tiny 
+< typeObj.repeatable = (maxOccurs == 'unbounded') or (int(maxOccurs) > 1)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+> typeObj.repeatable = (maxOccurs == 'unbounded') or (maxOccurs and int(maxOccurs
+) > 1)
+\end_inset 
+
+
+\end_deeper 
+\layout Description
+
+TC.py.patch (based on revision: # $Header: /cvsroot/pywebsvcs/zsi/ZSI/TC.py,v
+ 1.35 2004/11/04 19:44:17 boverhof Exp $)
+\begin_deeper 
+\layout Itemize
+
+When using doc/literal and returning a message that just consists of a simple
+ element, a possible xmlns='...' attribute in the name must not occur in the
+ closing tag, so we remove it.
+ This patch fixes the serialize method, where necessary.
+\newline 
+Note: Did not change the serialize method for class Any, as I am not sure
+ about the different naming options that seem to happen there (e.g.
+ if 
+\begin_inset Quotes eld
+\end_inset 
+
+rpc
+\begin_inset Quotes erd
+\end_inset 
+
+ is used instead of 
+\begin_inset Quotes eld
+\end_inset 
+
+name
+\begin_inset Quotes erd
+\end_inset 
+
+, can it also contain 'xmlns=...'? If so, is 'xmlns=...' also guaranteed to be
+ the last attr?)
+\layout Standard
+
+Code:
+\layout Standard
+
+
+\begin_inset Minipage
+position 1
+inner_position 0
+height "0(null)"
+width "100col%"
+collapsed false
+
+\layout LyX-Code
+
+
+\size tiny 
+28a29,38
+\layout LyX-Code
+
+
+\size tiny 
+> def _without_trailing_xmlns_attr(name):
+\layout LyX-Code
+
+
+\size tiny 
+>     """Return name with xmlns='...' attribute removed, for use in closing
+\layout LyX-Code
+
+
+\size tiny 
+>     tags.
+ xmlns must be the last attr in name.
+\layout LyX-Code
+
+
+\size tiny 
+>     """
+\layout LyX-Code
+
+
+\size tiny 
+>     i = name.find('xmlns')
+\layout LyX-Code
+
+
+\size tiny 
+>     if i > 0:
+\layout LyX-Code
+
+
+\size tiny 
+>         return name[:i - 1]
+\layout LyX-Code
+
+
+\size tiny 
+>     else:
+\layout LyX-Code
+
+
+\size tiny 
+>         return name
+\layout LyX-Code
+
+
+\size tiny 
+>
+\layout LyX-Code
+
+
+\size tiny 
+276d285
+\layout LyX-Code
+
+
+\size tiny 
+<
+\layout LyX-Code
+
+
+\size tiny 
+451,456c460
+\layout LyX-Code
+
+
+\size tiny 
+<         i = n.find('xmlns')
+\layout LyX-Code
+
+
+\size tiny 
+<         if i > 0:
+\layout LyX-Code
+
+
+\size tiny 
+<             ctag = '</%s>' % n[:i - 1]
+\layout LyX-Code
+
+
+\size tiny 
+<         else:
+\layout LyX-Code
+
+
+\size tiny 
+<             ctag = '</%s>' % n
+\layout LyX-Code
+
+
+\size tiny 
+<
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>         ctag = '</%s>' % _without_trailing_xmlns_attr(name)
+\layout LyX-Code
+
+
+\size tiny 
+627c631
+\layout LyX-Code
+
+
+\size tiny 
+<                 (n, attrtext, tstr, pyobj, n)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>                 (n, attrtext, tstr, pyobj, _without_trailing_xmlns_attr(n))
+\layout LyX-Code
+
+
+\size tiny 
+751a756
+\layout LyX-Code
+
+
+\size tiny 
+>         ctagn = _without_trailing_xmlns_attr(n)
+\layout LyX-Code
+
+
+\size tiny 
+757c762
+\layout LyX-Code
+
+
+\size tiny 
+<             print >>sw, ('<%s%s%s>INF</%s>') % (n, attrtext, tstr, n)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>             print >>sw, ('<%s%s%s>INF</%s>') % (n, attrtext, tstr, ctagn)
+\layout LyX-Code
+
+
+\size tiny 
+759c764
+\layout LyX-Code
+
+
+\size tiny 
+<             print >>sw, ('<%s%s%s>-INF</%s>') % (n, attrtext, tstr, n)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>             print >>sw, ('<%s%s%s>-INF</%s>') % (n, attrtext, tstr, ctagn)
+\layout LyX-Code
+
+
+\size tiny 
+761c766
+\layout LyX-Code
+
+
+\size tiny 
+<             print >>sw, ('<%s%s%s>NaN</%s>') % (n, attrtext, tstr, n)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>             print >>sw, ('<%s%s%s>NaN</%s>') % (n, attrtext, tstr, ctagn)
+\layout LyX-Code
+
+
+\size tiny 
+764c769
+\layout LyX-Code
+
+
+\size tiny 
+<                 (n, attrtext, tstr, pyobj, n)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>                 (n, attrtext, tstr, pyobj, ctagn)
+\layout LyX-Code
+
+
+\size tiny 
+798c803
+\layout LyX-Code
+
+
+\size tiny 
+<         print >>sw, '<%s%s%s>%d</%s>' % (n, attrtext, tstr, pyobj, n)
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>         print >>sw, '<%s%s%s>%d</%s>' % (n, attrtext, tstr, pyobj, _without_tr
+ailing_xmlns_attr(n))
+\layout LyX-Code
+
+
+\size tiny 
+867c872
+\layout LyX-Code
+
+
+\size tiny 
+<         print >>sw, '</%s>' % n
+\layout LyX-Code
+
+
+\size tiny 
+---
+\layout LyX-Code
+
+
+\size tiny 
+>         print >>sw, '</%s>' % _without_trailing_xmlns_attr(n)
+\end_inset 
+
+
+\end_deeper 
+\layout Bibliography
+\bibitem {ZSIrefdoc}
+
+Salz, Rich; Blunck, Christopher: ZSI: The Zolera Soap Infrastructure.
+ <http://pywebsvcs.sourceforge.net/zsi.html>, Release 1.6.1, December 08, 2004.
+\layout Bibliography
+\bibitem {gSOAPdoc}
+
+van Engelen, Robert: gSOAP 2.7.3 User Guide.
+ <http://www.cs.fsu.edu/~engelen/soap.html>, Jun 27, 2005.
+\layout Bibliography
+\bibitem {whichWSDL}
+
+Butek, Russell: Which style of WSDL should I use? <http://www-106.ibm.com/develope
+rworks/webservices/library/ws-whichwsdl>, May 24, 2005.
+\the_end
