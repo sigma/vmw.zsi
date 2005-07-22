@@ -39,6 +39,7 @@ class TypeCode:
     '''The parent class for all parseable SOAP types.
     Class data:
         typechecks -- do init-time type checking if non-zero
+        typed -- output SOAP RPC typing info?
     Class data subclasses may define:
         parselist -- list of valid SOAP types for this class, as
             (uri,name) tuples, where a uri of None means "all the XML
@@ -50,9 +51,10 @@ class TypeCode:
     '''
 
     typechecks = 1
+    typed = 1
 
     def __init__(self, pname=None, oname=None, aname=None, optional=0,
-    typed=1, repeatable=0, unique=0, ons=None, **kw):
+    repeatable=0, unique=0, ons=None, **kw):
         '''Baseclass initialization.
         Instance data (and usually keyword arg)
             pname -- the parameter name (localname).
@@ -79,7 +81,7 @@ class TypeCode:
         self.aname = aname or self.pname
 
         self.optional = optional
-        self.typed = typed
+        self.typed = kw.get('typed', TypeCode.typed)
         self.repeatable = repeatable
         self.unique = unique
         if kw.has_key('default'): self.default = kw['default']

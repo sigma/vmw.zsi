@@ -91,6 +91,13 @@ If true (the default) then all typecode constructors do more
 rigorous type-checking on their parameters.
 \end{memberdesc}
 
+\begin{memberdesc}{typed}
+This is a class attribute.
+This sets the default value for whether or not typecodes output
+typing (\code{xsi:type} attribute) information.
+The default is none-zero.
+\end{memberdesc}
+
 The following methods are useful for defining new typecode classes;
 see the section on dynamic typing for more details.
 In all of the following, the \code{ps} parameter is a \class{ParsedSoap}
