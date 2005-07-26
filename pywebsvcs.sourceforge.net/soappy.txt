@@ -4,7 +4,7 @@ SOAPpy - Simple to use SOAP library for Python
 
 Current Maintainers: 	
 
-	Gregory R. Warnes <greg@warnes.net>
+	Gregory R. Warnes <gregory_r_warnes@groton.pfizer.com>
 	Christopher Blunck <blunck2@gst.com>
 
 Original Authors: 
@@ -108,7 +108,7 @@ Required Packages
 These packages should be installed before SOAPpy.
 
 - fpconst 0.6.0 or later,
-  <http://www.analytics.washington.edu/Zope/projects/fpconst>
+  <http://research.warnes.net/Zope/projects/fpconst>
 
 - pyXML 0.8.3 or later, <http://pyxml.sourceforge.net>
 
@@ -183,3 +183,4 @@ For further information see the files in the doc/ directory.
 
 
 $Id$
+
