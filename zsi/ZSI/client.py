@@ -37,9 +37,16 @@ class _NamedParamCaller:
         self.binding, self.name = binding, name
 
     def __call__(self, **params):
+        # Pull out arguments that Send() uses
+        kw = { }
+        for key in [ 'auth_header', 'nsdict', 'requestclass',
+                     'requesttypecode' 'soapaction' ]:
+            if params.has_key(key):
+                kw[kwy] = params[key]
+                del params[key]
         return self.binding.RPC(None, self.name, None, TC.Any(),
                 _args=params, ## requesttypecode correct? XXX
-                requesttypecode=TC.Any(self.name))
+                requesttypecode=TC.Any(self.name), **kw)
 
 
 class Binding:
@@ -259,9 +266,14 @@ class Binding:
                 print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
                 print >>trace, str(self.reply_headers)
                 print >>trace, self.data
-            for k,v in response.getheaders():
-                if k.lower() == 'set-cookie':
-                    self.cookies.load(v)
+            saved = None
+            for d in response.getallmatchingheaders('set-cookie'):
+                if d[0] in [ ' ', '\t' ]:
+                    saved += d.strip()
+                else:
+                    if saved: self.cookies.load(saved)
+                    saved = d.strip()
+            if saved: self.cookies.load(v)
             if response.status != 100: break
             # The httplib doesn't understand the HTTP continuation header.
             # Horrible internals hack to patch things up.
