@@ -7,6 +7,7 @@ from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
     FaultFromFaultMessage, _child_elements, _attrs, FaultException
 from ZSI.auth import AUTH
 import base64, httplib, Cookie, cStringIO as StringIO, types, time, urlparse
+from ZSI.digest_auth import fetch_challenge,generate_response,build_authorization_arg,dict_fetch
 
 _b64_encode = base64.encodestring
 
@@ -73,6 +74,7 @@ class Binding:
             readerclass -- DOM reader class
             ns -- the namespace to use for the SOAP:Body
             op_ns -- the namespace to use for the operation
+            http_callbacks -- dict of callbacks for specific HTTP Response Status
         '''
         self.data = None
         self.ps = None
@@ -89,6 +91,7 @@ class Binding:
         self.soapaction = soapaction
         self.cookies = Cookie.SimpleCookie()
         self.op_ns = op_ns
+        self.http_callbacks = {}
 
         if kw.has_key('auth'):
             self.SetAuth(*kw['auth'])
@@ -216,11 +219,6 @@ class Binding:
         sw.close()
         soapdata = s.getvalue()
 
-        # Tracing?
-        if self.trace:
-            print >>self.trace, "_" * 33, time.ctime(time.time()), "REQUEST:"
-            print >>self.trace, soapdata
-
         # Send the request.
         # host and port may be parsed from a WSDL file.  if they are, they
         # are most likely unicode format, which httplib does not care for
@@ -234,25 +232,81 @@ class Binding:
         else:
             self.h = httplib.HTTPSConnection(self.host, self.port,
                         **self.ssl_files)
-
+        
         self.h.connect()
+        self.SendSOAPData(soapdata, url, soapaction, **kw)
+
+    def SendSOAPData(self, soapdata, url, soapaction, headers={}, **kw):
+        # Tracing?
+        if self.trace:
+            print >>self.trace, "_" * 33, time.ctime(time.time()), "REQUEST:"
+            print >>self.trace, soapdata
+
         self.h.putrequest("POST", url or self.url)
         self.h.putheader("Content-length", "%d" % len(soapdata))
         self.h.putheader("Content-type", 'text/xml; charset=utf-8')
         self.__addcookies()
+
+        for header,value in headers.items():
+            self.h.putheader(header, value)
+
         SOAPActionValue = '"%s"' % (soapaction or self.soapaction)
         self.h.putheader("SOAPAction", SOAPActionValue)
         if self.auth_style & AUTH.httpbasic:
             val = _b64_encode(self.auth_user + ':' + self.auth_pass) \
                         .replace("\012", "")
             self.h.putheader('Authorization', 'Basic ' + val)
+        elif self.auth_style == AUTH.httpdigest and not headers.has_key('Authorization') \
+            and not headers.has_key('Expect'):
+            def digest_auth_cb(response): 
+                self.SendSOAPDataHTTPDigestAuth(response, soapdata, url, soapaction, **kw)
+                self.http_callbacks[401] = None
+            self.http_callbacks[401] = digest_auth_cb
+
         for header,value in self.user_headers:
             self.h.putheader(header, value)
         self.h.endheaders()
         self.h.send(soapdata)
+
         # Clear prior receive state.
         self.data, self.ps = None, None
 
+    def SendSOAPDataHTTPDigestAuth(self, response, soapdata, url, soapaction, **kw):
+        '''Resend the initial request w/http digest authorization headers.
+        The SOAP server has requested authorization.  Fetch the challenge, 
+        generate the authdict for building a response.
+        '''
+        if self.trace:
+            print >>self.trace, "------ Digest Auth Header"
+        url = url or self.url
+        if response.status != 401: 
+            raise RuntimeError, 'Expecting HTTP 401 response.'
+        if self.auth_style != AUTH.httpdigest:
+            raise RuntimeError,\
+                'Auth style(%d) does not support requested digest authorization.' %self.auth_style
+
+        from ZSI.digest_auth import fetch_challenge,\
+            generate_response,\
+            build_authorization_arg,\
+            dict_fetch
+
+        chaldict = fetch_challenge( response.getheader('www-authenticate') )
+        if dict_fetch(chaldict,'challenge','').lower() == 'digest' and \
+            dict_fetch(chaldict,'nonce',None) and \
+            dict_fetch(chaldict,'realm',None) and \
+            dict_fetch(chaldict,'qop',None):
+            authdict = generate_response(chaldict,
+                url, self.auth_user, self.auth_pass, method='POST')
+            headers = {\
+                'Authorization':build_authorization_arg(authdict),
+                'Expect':'100-continue',
+            }
+            self.SendSOAPData(soapdata, url, soapaction, headers, **kw)
+            return
+
+        raise RuntimeError,\
+            'Client expecting digest authorization challenge.'
+            
     def ReceiveRaw(self, **kw):
         '''Read a server reply, unconverted to any format and return it.
         '''
@@ -264,17 +318,26 @@ class Binding:
                 response.status, response.reason, response.msg, response.read()
             if trace:
                 print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
+                for i in (self.reply_code, self.reply_msg,):
+                    print >>trace, str(i)
+                print >>trace, "-------"
                 print >>trace, str(self.reply_headers)
                 print >>trace, self.data
             saved = None
-            for d in response.getallmatchingheaders('set-cookie'):
+            for d in response.msg.getallmatchingheaders('set-cookie'):
                 if d[0] in [ ' ', '\t' ]:
                     saved += d.strip()
                 else:
                     if saved: self.cookies.load(saved)
                     saved = d.strip()
             if saved: self.cookies.load(v)
+            if response.status == 401:
+                if not callable(self.http_callbacks.get(response.status,None)):
+                    raise RuntimeError, 'HTTP Digest Authorization Failed'
+                self.http_callbacks[response.status](response)
+                continue
             if response.status != 100: break
+
             # The httplib doesn't understand the HTTP continuation header.
             # Horrible internals hack to patch things up.
             self.h._HTTPConnection__state = httplib._CS_REQ_SENT

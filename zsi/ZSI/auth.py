@@ -20,6 +20,7 @@ class AUTH:
     none = 0
     httpbasic = 1
     zsibasic = 2
+    httpdigest = 4
 
 class ClientBinding:
     '''Information about the client that is connected to us.
