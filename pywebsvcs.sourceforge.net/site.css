@@ -3,7 +3,7 @@
 */
 
 body {
-  font: 69% "Lucida Grande", Verdana, Lucida, Helvetica, Arial, sans-serif;
+  font: 89% "Lucida Grande", Verdana, Lucida, Helvetica, Arial, sans-serif;
   background-color: White;
   color: Black;
   /*margin: 0;*/
@@ -442,12 +442,6 @@ pre {
   width: 200px;
 }
 
-#portal-logo {
-  background: url(http://rstatserver.pfizer.com:8080/Images/RLogo) no-repeat;
-  height: 77px;
-  width: 101px;
-}
-
 #portal-logo a {
   text-decoration: none;
   overflow: hidden;
@@ -464,28 +458,6 @@ pre {
 
 #portal-title a {
   font-size: 100%;
-}
-
-#zope-logo {
-  background: url(http://rstatserver.pfizer.com:8080/p_/ZopeButton) no-repeat;
-  height: 50px;
-  width: 115px;
-  float: right;
-  display: inline;
-}
-
-#zope-logo a {
-  display: block;
-  text-decoration: none;
-  overflow: hidden;
-  border: 0;
-  margin: 0;
-  padding: 0;
-  padding-top: 57px;
-  height 157px;
-  width: 219px;
-  cursor: pointer;
-  display: inline;
 }
 
 #breadcrumbs {
