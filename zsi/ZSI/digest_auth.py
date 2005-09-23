@@ -1,3 +1,8 @@
+#! /usr/bin/env python
+# $Header$
+'''Utilities for HTTP Digest Authentication
+'''
+
 from md5 import md5
 import random
 import time
@@ -97,3 +102,4 @@ def build_authorization_arg(authdict):
     vallist += ['%s=%s' % (k,authdict[k])]
   return 'Digest '+', '.join(vallist)
 
+if __name__ == '__main__': print _copyright
