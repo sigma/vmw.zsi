@@ -330,7 +330,7 @@ class Binding:
                 else:
                     if saved: self.cookies.load(saved)
                     saved = d.strip()
-            if saved: self.cookies.load(v)
+            if saved: self.cookies.load(saved)
             if response.status == 401:
                 if not callable(self.http_callbacks.get(response.status,None)):
                     raise RuntimeError, 'HTTP Digest Authorization Failed'
