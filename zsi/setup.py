@@ -26,7 +26,7 @@ setup(
     name="ZSI",
     version=_version,
     license="Python",
-    packages=[ "ZSI", "ZSI.wstools" ],
+    packages=[ "ZSI", "ZSI.generate", "ZSI.wstools"],
     scripts=["scripts/wsdl2py.py", "scripts/wsdl2dispatch.py"],
     description="Zolera SOAP Infrastructure",
     author="Rich Salz, et al",

@@ -3,7 +3,7 @@
 '''Simple CGI dispatching.
 '''
 
-import types, os, sys, cStringIO as StringIO
+import types, os, sys
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ZSI import *
 from ZSI import _child_elements, _copyright, _seqtypes, resolvers
@@ -23,6 +23,19 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
               nsdict={}, typesmodule=None, rpc=None, **kw):
     '''Find a handler for the SOAP request in ps; search modules.
     Call SendResponse or SendFault to send the reply back, appropriately.
+
+    Default Behavior -- Use "handler" method to parse request, and return
+       a self-describing request (w/typecode).
+
+    Other Behaviors:
+        docstyle -- Parse result into an XML typecode (DOM). Behavior, wrap result 
+          in a body_root "Response" appended message.
+
+        rpc -- Specify RPC wrapper of result. Behavior, ignore body root (RPC Wrapper)
+           of request, parse all "parts" of message via individual typecodes.  Expect
+           response pyobj w/typecode to represent the entire message (w/RPC Wrapper),
+           else pyobj w/o typecode only represents "parts" of message.
+
     '''
     global _client_binding
     try:
@@ -48,6 +61,13 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
         if docstyle:
             result = handler(ps.body_root)
             tc = TC.XML(aslist=1, pname=what + 'Response')
+        elif rpc is None:
+            # Not using typesmodule, expect 
+            # result to carry typecode
+            result = handler(ps)
+            if hasattr(result, 'typecode') is False:
+                raise TypeError("Expecting typecode in result")
+            tc = result.typecode
         else:
             data = _child_elements(ps.body_root)
             if len(data) == 0:
@@ -69,9 +89,9 @@ def _Dispatch(ps, modules, SendResponse, SendFault, docstyle=0,
             else:
                 tc = TC.Any(aslist=1, pname=what + 'Response')
                 result = [ result ]
-        reply = StringIO.StringIO()
-        SoapWriter(reply, nsdict=nsdict).serialize(result, tc, rpc=rpc)
-        return SendResponse(reply.getvalue(), **kw)
+        sw = SoapWriter(nsdict=nsdict)
+        sw.serialize(result, tc, rpc=rpc)
+        return SendResponse(str(sw), **kw)
     except Exception, e:
         # Something went wrong, send a fault.
         return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)

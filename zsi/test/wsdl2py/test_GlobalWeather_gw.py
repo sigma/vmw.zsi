@@ -4,9 +4,7 @@
 # David W. Robertson, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import sys, unittest
-
-
+import unittest
 from ServiceTest import ServiceTestCase, ServiceTestSuite
 """
 Unittest for contacting the GlobalWeather portType for the

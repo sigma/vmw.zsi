@@ -60,8 +60,8 @@ BUILDING
 
 You should (with a fresh checkout from cvs that's been installed) be able to run:
 
->wsdl2py -e -f Echo.wsdl
->wsdl2dispatch -e -f Echo.wsdl
+>wsdl2py -e -f Echo.wsdl --simple-naming
+>wsdl2dispatch -e -f Echo.wsdl --simple-naming
 
 Then in separate terminal windows:
 

@@ -10,39 +10,40 @@ class t2TestCase(unittest.TestCase):
         try: 
             ps = ParsedSoap(IN)
         except ParseException, e:
-             FaultFromZSIException(e).AsSOAP(OUT)
+             print >>OUT, FaultFromZSIException(e).AsSOAP()
              self.fail()
         except Exception, e:
             # Faulted while processing; assume it's in the
             # header.
-            FaultFromException(e, 1).AsSOAP(OUT)
+            print >>OUT, FaultFromException(e, 1).AsSOAP()
             self.fail()
         # We are not prepared to handle any actors or mustUnderstand elements.  
         # Arbitrary fault back with the first one found.  
         a = ps.WhatActorsArePresent() 
         if len(a): 
-            FaultFromActor(a[0]).AsSOAP(OUT) 
+            print >>OUT, FaultFromActor(a[0]).AsSOAP() 
             self.fail()
         mu = ps.WhatMustIUnderstand() 
         if len(mu): 
             uri, localname = mu[0] 
-            FaultFromNotUnderstood(uri, localname).AsSOAP(OUT) 
+            print >>OUT, FaultFromNotUnderstood(uri, localname).AsSOAP() 
             self.fail() 
            
                                             
         try: 
             player = ps.Parse(Player) 
         except EvaluateException, e: 
-            FaultFromZSIException(e).AsSOAP(OUT) 
+            print >>OUT, FaultFromZSIException(e).AsSOAP() 
             self.fail() 
             
         try: 
             import operator 
             total = reduce(operator.add, player.Scores, 0)
             result = Average(foo(total, len(player.Scores)))
-            SoapWriter(OUT).serialize(result) 
+            sw = SoapWriter().serialize(result) 
+            print >>OUT, str(sw)
         except Exception, e: 
-            FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT) 
+            print >>OUT, FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP() 
             self.fail()
 
 

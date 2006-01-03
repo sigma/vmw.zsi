@@ -4,10 +4,7 @@
 # Joshua R. Boverhof, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import os, sys, unittest
-from ConfigParser import ConfigParser
-from ZSI.wstools.WSDLTools import WSDLReader
-from ZSI.wsdl2python import WriteServiceModule
+import unittest
 from ServiceTest import ServiceTestCase, ServiceTestSuite
 
 """

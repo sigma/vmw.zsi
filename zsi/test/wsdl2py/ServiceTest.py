@@ -1,13 +1,29 @@
+#!/usr/bin/env python
 ############################################################################
 # Joshua R. Boverhof, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-import os, sys, unittest
-from ConfigParser import ConfigParser
-from ZSI.wstools.WSDLTools import WSDLReader
-from ZSI.wsdl2python import WriteServiceModule
+
+import os, sys, unittest, urlparse, signal, time, warnings
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from ZSI.wstools import WSDLTools
+from ZSI.wstools.Namespaces import WSA200408, WSA200403, WSA200303
+from ZSI.wstools.logging import setBasicLoggerDEBUG
+from ZSI.wstools.TimeoutSocket import TimeoutError
+from ZSI.generate.wsdl2python import WriteServiceModule
+from ZSI.generate.wsdl2dispatch import ServiceModuleWriter, WSAServiceModuleWriter
 import StringIO, copy, getopt
 
+# set up pyclass metaclass for complexTypes
+from ZSI.generate.containers import TypecodeContainerBase, TypesHeaderContainer
+TypecodeContainerBase.metaclass = 'pyclass_type'
+TypesHeaderContainer.imports.append(\
+        'from ZSI.generate.pyclass import pyclass_type'
+        )
+
+
+sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
+print sys.path[-1]
 
 """Global Variables:
     CONFIG_FILE -- configuration file 
@@ -16,7 +32,13 @@ import StringIO, copy, getopt
     LITERAL -- test section variable, specifying literal encodings.
     BROKE -- test section variable, specifying broken test.
     TESTS -- test section variable, whitespace separated list of modules.
+    SECTION_CONFIGURATION -- configuration section, turn on/off debuggging.
     TRACEFILE -- file class instance.
+    TOPDIR -- current working directory
+    MODULEDIR  -- stubs directory 
+    PORT -- port of local container
+    HOST -- address of local container
+    SECTION_SERVERS -- services to be tested, values are paths to executables.
 """
 CONFIG_FILE = 'config.txt'
 CONFIG_PARSER = ConfigParser()
@@ -24,9 +46,47 @@ DOCUMENT = 'document'
 LITERAL = 'literal'
 BROKE = 'broke'
 TESTS = 'tests'
+SECTION_CONFIGURATION = 'configuration'
 TRACEFILE = sys.stdout
+TOPDIR = os.getcwd()
+MODULEDIR = TOPDIR + '/stubs'
+PORT = 'port'
+HOST = 'host'
+SECTION_SERVERS = 'servers'
 
 CONFIG_PARSER.read(CONFIG_FILE)
+if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug'):
+    setBasicLoggerDEBUG()
+
+ENVIRON = copy.copy(os.environ)
+ENVIRON['PYTHONPATH'] = ENVIRON.get('PYTHONPATH', '') + ':' + MODULEDIR
+
+
+def WriteServiceStubModule(wsdl):
+    '''Create/Write Service Skeleton module.  If WS-Addressing schema is present 
+    assume this is a WS-Address enabled service.
+    '''
+    if len(filter(lambda addr: wsdl.types.has_key(addr), (WSA200408.ADDRESS, WSA200403.ADDRESS, WSA200303.ADDRESS))) > 0:
+        ss = WSAServiceModuleWriter
+    else:
+        ss = ServiceModuleWriter()
+    ss.fromWSDL(wsdl)
+    module_name = ss.getServiceModuleName()
+    fd = open(module_name + '.py', 'w+')
+    ss.write(fd)
+    fd.close()
+    return module_name
+
+
+def SpawnContainer(ex_name):
+    '''module_name must be executable, and set up ServiceContainer
+    to test against.
+    ex -- executable name
+    '''
+    port = CONFIG_PARSER.get(SECTION_CONFIGURATION, PORT)
+    processID = os.spawnle(os.P_NOWAIT, ex_name, ex_name, port, ENVIRON)
+    time.sleep(1)
+    return processID
 
 
 class ConfigException(Exception):
@@ -38,6 +98,7 @@ class TestException(Exception):
     """Exception thrown when test case isn't correctly set up.
     """
     pass
+
 
 class ServiceTestCase(unittest.TestCase):
     """Must set these class variables typeModuleName, serviceModuleName,
@@ -56,7 +117,7 @@ class ServiceTestCase(unittest.TestCase):
            methodName -- 
         instance variables:
            _moduleDict -- module dictionary
-           _port -- soap port, proxy rpc instance.
+           _ports -- soap ports (must be same binding), proxy rpc instance, to run tests on.
            _portName -- The name of the port to get using _getPort
            _importTypeModule -- boolean indicating whether to import the types file 
            _typeModuleName -- key to the generated type module
@@ -65,45 +126,79 @@ class ServiceTestCase(unittest.TestCase):
            _wsm -- WriteServiceModule instance
         """
         self._moduleDict = {}
-        self._port = None
+        self._ports = None
         self._portName = None
         self._importTypeModule = True
         self._typeModuleName = None
         self._serviceModuleName = None
         self._wsm = None
         self._section = None
+        self._processID = None
         unittest.TestCase.__init__(self, methodName)
 
     def setUp(self):
-        """
-        Generate types and services modules if no record of them in
-        the moduleDict variable.
+        """Generate types and services modules if no record of them
+           in the moduleDict variable.
         """
         
         if not self.url_section or not self.name:
             raise TestException, 'section(%s) or name(%s) not defined' %(self.url_section,self.name)
-        if not self._isSetModules():
-            if not CONFIG_PARSER.has_section(self.url_section):
-                raise TestException, 'No such section(%s) in configuration file(%s)' \
-                    %(self.url_section, CONFIG_FILE)
-            testDir = os.getcwd()
-            moduleDir = self._getModuleDirectory()
-            try:
-                os.mkdir(moduleDir)
-            except OSError, ex:
-                pass
-            if moduleDir not in sys.path:
-                sys.path.append(moduleDir)
-            reader = WSDLReader()
-            url = CONFIG_PARSER.get(self.url_section, self.name)
+        if self._isSetModules():
+            return
+        if not CONFIG_PARSER.has_section(self.url_section):
+            raise TestException, 'No such section(%s) in configuration file(%s)' \
+                %(self.url_section, CONFIG_FILE)
+
+        try:
+            os.mkdir(MODULEDIR)
+        except OSError, ex:
+            pass
+
+        os.chdir(MODULEDIR)
+        if MODULEDIR not in sys.path:
+            sys.path.append(MODULEDIR)
+
+        reader = WSDLTools.WSDLReader()
+        url = CONFIG_PARSER.get(self.url_section, self.name)
+
+        try:
             wsdl = reader.loadFromURL(url)
+        except TimeoutError:
+            # SKIP 
+            self.fail('socket timeout retrieving WSDL: %s' %url)
+            os.chdir(TOPDIR)
+        except:
+            os.chdir(TOPDIR)
+            raise
+           
+        try:
             self._wsm = WriteServiceModule(wsdl)
-            if CONFIG_PARSER.getboolean('configuration', 'regenerate') is True:
-                self._wsm.write(False, output_dir=moduleDir)
-            self._setModuleNames(self._importTypeModule, mod_dir=moduleDir)
-            locator = self._getLocator()
-            self._port = self._getPort(locator)
-        
+            fd = open('%s.py' %self._wsm.getTypesModuleName(), 'w+')
+            self._wsm.writeTypes(fd)
+            fd.close()
+            fd = open('%s.py' %self._wsm.getClientModuleName(), 'w+')
+            self._wsm.writeClient(fd)
+            fd.close()
+            self._setModuleNames(self._importTypeModule)
+            module_name = WriteServiceStubModule(wsdl)
+        finally:
+            os.chdir(TOPDIR)
+
+        locator = self._getLocator()
+        self._ports = []
+        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'net'):
+            self._ports.append(self._getPort(locator))
+
+        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'local'):
+            netloc = '%s:%d' %(CONFIG_PARSER.get(SECTION_CONFIGURATION, HOST),
+                CONFIG_PARSER.getint(SECTION_CONFIGURATION, PORT))
+            try:
+                ex_path = CONFIG_PARSER.get(SECTION_SERVERS, self.name)
+            except (NoSectionError, NoOptionError), ex:
+                warnings.warn('skipping local test for %s' %self.name)
+            else:
+                self._ports.append(self._getPort(locator, netloc=netloc))
+                self._processID = SpawnContainer(TOPDIR + '/' + ex_path)
 
     def tearDown(self):
         """
@@ -115,32 +210,29 @@ class ServiceTestCase(unittest.TestCase):
         We need a fresh namespace hash each time a unittest is run
         """
         del self._wsm
+        if self._processID is not None:
+            os.kill(self._processID, signal.SIGKILL)
         
-    def _getPortOptions(self):
+    def _getPortOptions(self, methodName, locator, netloc=None):
         kw = {}
-        if CONFIG_PARSER.getboolean('configuration', 'tracefile'):
+        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'tracefile'):
             kw['tracefile'] = TRACEFILE
+
+        if netloc is not None:
+            default_url = getattr(locator, methodName + 'Address')()
+            scheme, netloc_old, url, params, query, fragment = urlparse.urlparse(default_url)
+            kw['url'] = urlparse.urlunparse((scheme, netloc, url, params, query, fragment))
+
         return kw
 
-    def _getModuleDirectory(self):
-        if not hasattr(self, 'module_directory'):
-            md = os.path.splitdrive(os.getcwd())[1]
-            self.module_directory = os.path.join(md, 'stubs')
-
-        return self.module_directory
-
     def _getLocator(self):
-        """Hack to get at the Locator name, it would be much easier
-           if this information was directly available from the 
-           WriteServiceModule instance.
-
+        """Get the Locator name
            **Only expecting 1 service/WSDL, and 1 port/service.
-
            wsm -- WriteServiceModule instance
         """
-        #XXX locatorName: Would be nice to have a method call to get this.
-        serviceAdapter = self._getServiceAdapter()
-        locatorName = '%sLocator' %serviceAdapter.getName()
+        if len(self._wsm.services) != 1:
+            raise TestException, 'only supporting WSDL with one service information item'
+        locatorName = self._wsm.services[0].locator.getLocatorName()
         if self._moduleDict.has_key(self._serviceModuleName):
             sm = self._moduleDict[self._serviceModuleName]
             if sm.__dict__.has_key(locatorName):
@@ -148,55 +240,21 @@ class ServiceTestCase(unittest.TestCase):
             raise TestException, 'No Locator class (%s), missing SOAP location binding?' %locatorName
         raise TestException, 'missing service module, possibly no WSDL service item?'
 
-    def _getPort(self, locator):
+    def _getPort(self, locator, netloc=None):
         """Returns a rpc proxy port instance.
            **Only expecting 1 service/WSDL, and 1 port/service.
 
            locator -- Locator instance
         """
-        portAdapter = self._getPortAdapter()
-        #XXX methodName: Would be nice to have a method call to get this.
-        methodName = 'get%s' %portAdapter.getBinding().getPortType().getName()
-        callMethod = getattr(locator, methodName)
-        return callMethod(**self._getPortOptions())
-
-    def _getPortAdapter(self):
-        """
-           **Only expecting 1 service/WSDL, and 1 port/service.
-
-           Hack to get at the Locator getPort method name, it would be much easier
-           if this information was directly available from the 
-           WriteServiceModule instance.
-
-        """
-        serviceAdapter = self._getServiceAdapter()
-        portList = serviceAdapter.getPortList()
-        if len(portList) != 1 and self._portName == None:
-            raise TestException, 'Test framework expects service[%s] to define a single port, (%d) defined' \
-                %(serviceAdapter.getName(), len(portList))
-
-        if self._portName != None:
-            for port in portList:
-                if self._portName == port.getName():
-                    return port
-
-            raise TestException, 'Did not find the port specified by portName'
-        return portList[0]
-
-    def _getServiceAdapter(self):
-        """
-           **Only expecting 1 service/WSDL, and 1 port/service.
-
-           Hack to get at the Locator getPort method name, it would be much easier
-           if this information was directly available from the 
-           WriteServiceModule instance.
-
-        """
-        serviceList = self._wsm._wa.getServicesList()
-        if len(serviceList) != 1:
-            raise TestException, 'Test framework expects WSDL to define a single service, (%d) defined' \
-                %(len(serviceList))
-        return serviceList[0]
+        if len(self._wsm.services) != 1:
+            raise TestException, 'only supporting WSDL with one service information item'
+        methodNames = self._wsm.services[0].locator.getPortMethods()
+        if len(methodNames) == 0: 
+            raise TestException, 'No port defined for service.'
+        elif len(methodNames) > 1:
+            raise TestException, 'Not handling multiple ports.'
+        callMethod = getattr(locator, methodNames[0])
+        return callMethod(**self._getPortOptions(methodNames[0], locator, netloc))
 
     def _isSetModules(self):
         """Are the types/service modules already loaded?
@@ -205,53 +263,75 @@ class ServiceTestCase(unittest.TestCase):
             return True
         return False
 
-    def _setModuleNames(self, importTypes=True, mod_dir="."):
+    def _setModuleNames(self, importTypes=True):
         """set service and types modules key names, and import them.
 
            Some of the no schema tests do generate a types file
         """
-        self._typeModuleName, self._serviceModuleName = self._wsm.get_module_names()
-
+        self._typeModuleName = self._wsm.getTypesModuleName()
+        self._serviceModuleName = self._wsm.getClientModuleName()
         if importTypes:
             moduleTuple = (self._typeModuleName, self._serviceModuleName)
         else:
             moduleTuple = (self._serviceModuleName,)
 
         for name in moduleTuple:
-            bname = os.path.basename(name)
-            exec('import %s' % bname)
-            self._moduleDict[bname] = eval(bname)
+            exec('import %s' %name)
+            self._moduleDict[name] = eval(name)
+
 
     def checkSection(self):
         """Should the section be checked? If I know about it.
         """
         return type(self._section) is str
 
-    def checkPort(self, portAdapter, operationName):
+    def _checkPort(self, port, name):
         """Check if test is in correctly indexed in the configuration file, 
            port operation must conform to the bindings.  
 
            We check the style and use attributes from the soapOperation element.
            
-           portAdapter -- ZSIPortAdapter instance
-           operationName -- WSDL port operation name
+           port -- WSDLTools.Port instance
+           name -- WSDL port operation name
            port -- WSDLTools.Port instance
         """
-        name = operationName
-        if self.checkSection():
-            doc = CONFIG_PARSER.getboolean(self.getSection(), DOCUMENT)
-            lit = CONFIG_PARSER.getboolean(self.getSection(), LITERAL)
-            operation = portAdapter.getBinding().getOperationDict().get(operationName)
-            use = operation.getInput().getSoapBody().getUse()
-            style = portAdapter.getBinding().getSoapBinding().getStyle()
-            if doc and style != 'document':
-                raise ConfigException, 'operation(%s) is not document style' %name
-            elif not doc and style != 'rpc':
-                raise ConfigException, 'operation(%s) is not rpc style' %name
-            if lit is True and use != 'literal':
-                raise ConfigException, 'operation(%s) is not literal encoding' %name
-            if lit is False and use != 'encoded':
-                raise ConfigException, 'operation(%s) is not rpc style' %name
+        if self.checkSection() is False:
+            return
+
+        doc = CONFIG_PARSER.getboolean(self.getSection(), DOCUMENT)
+        lit = CONFIG_PARSER.getboolean(self.getSection(), LITERAL)
+        binding = port.getBinding()
+        if binding.operations.has_key(name) is False:
+            raise TestException, 'port(%s) binding(%s) has no operation(%s)'\
+                %(port.name, port.type, name)
+
+        soapbinding = binding.findBinding(WSDLTools.SoapBinding)
+        if soapbinding is None:
+            raise TestException, 'Missing soap:binding element'
+
+        opbinding = binding.operations[name]
+        if opbinding.input is None:
+            raise TestException, 'wsdl:binding(%s) operation(%s) is missing input' \
+                %(binding.name, name)
+       
+        msgrole = opbinding.input
+        soap_op_binding = opbinding.findBinding(WSDLTools.SoapOperationBinding)
+        style = soap_op_binding.style or soapbinding.style
+        use = None
+        body = msgrole.findBinding(WSDLTools.SoapBodyBinding)
+        if body is None:
+            raise TestException, 'Missing soap:body element'
+
+        use = body.use
+        style = soap_op_binding.style or soapbinding.style
+        if doc and style != 'document':
+            raise ConfigException, 'operation(%s) is not document style' %name
+        elif not doc and style != 'rpc':
+            raise ConfigException, 'operation(%s) is not rpc style' %name
+        if lit is True and use != 'literal':
+            raise ConfigException, 'operation(%s) is not literal encoding' %name
+        if lit is False and use != 'encoded':
+            raise ConfigException, 'operation(%s) is not rpc style' %name
     
     def setSection(self, section):
         """section -- this is the section the service is categorized in,
@@ -268,31 +348,42 @@ class ServiceTestCase(unittest.TestCase):
 
            operationName -- WSDL port operation name
         """
-        portAdapter = self._getPortAdapter()
-        self.checkPort(portAdapter, operationName)
-        operationList = portAdapter.getBinding().getPortType().getOperationList()
-        for operationAdapter in operationList:
-            if operationAdapter.getName() == operationName: break
+        service = self._wsm._wsdl.services[0]
+        port = service.ports[0]
+        try:
+            self._checkPort(port, operationName)
+        except TestException, ex:
+            raise TestException('Service(%s)' %service.name, *ex.args)
+
+        for operation in port.getBinding().getPortType().operations:
+            if operation.name == operationName: 
+                break
         else:
             raise TestException, 'Missing operation (%s) in portType operations'  %operationName
-        inputMsgName = '%sWrapper' %operationAdapter.getInput().getMessage().getName()
+
+        inputMsgName = '%s' %operation.input.message[1]
         if self._moduleDict.has_key(self._serviceModuleName):
             sm = self._moduleDict[self._serviceModuleName]
             if sm.__dict__.has_key(inputMsgName):
                 inputMsgWrapper = sm.__dict__[inputMsgName]()
                 return inputMsgWrapper
-        raise TestException, 'port(%s) does not define operation %s' %(portAdapter.getName(), operationName)
+            else:
+                raise TestException, 'service missing input message (%s)' %(inputMsgName)
+
+        raise TestException, 'port(%s) does not define operation %s' \
+            %(port.name, operationName)
 
     def RPC(self, operationName, request):
         """RPC serializes request, and returns response.
 
            operationName -- WSDL port operation name
         """
-        callMethod = getattr(self._port, operationName)
-        if callMethod:
-            callMethod(request)
-        else:
-            raise TestException, 'Port instance is missing method %s' %operationName 
+        for port in self._ports:
+            callMethod = getattr(port, operationName, None)
+            if callMethod is not None:
+                callMethod(request)
+            else:
+                raise TestException, 'Port instance is missing method %s' %operationName 
 
 
 class ServiceTestSuite(unittest.TestSuite):
@@ -315,127 +406,4 @@ class ServiceTestSuite(unittest.TestSuite):
         if isinstance(test, ServiceTestSuite):
             test.setSection(self._section)
         unittest.TestSuite.addTest(self, test)
-
-
-class CaseSensitiveConfigParser(ConfigParser):
-
-    def __init__(self):
-        ConfigParser.__init__(self)
-
-    def optionxform(self, optionstr):
-        """Overriding ConfigParser method allows configuration option
-           to contain both lower and upper case."""
-        return optionstr
-
-def handleExtraArgs(argv):
-    deleteFile = False
-    options, args = getopt.getopt(argv, 'hHdv')
-    for opt, value in options:
-        if opt == '-d':
-            deleteFile = True
-    return deleteFile
-    
-class TestDiff:
-    """TestDiff encapsulates comparing a string or StringIO object
-       against text in a test file.  Test files are located in a
-       subdirectory of the current directory, named diffs if a name
-       isn't provided.  If the sub-directory doesn't exist, it will
-       be created.  If a single test file is to be generated, the file
-       name is passed in.  If not, another sub-directory is created
-       below the diffs directory, in which a file is created for each
-       test.
-
-       The calling unittest.TestCase instance is passed
-       in on object creation.  Optional compiled regular expressions
-       can also be passed in, which are used to ignore strings
-       that one knows in advance will be different, for example
-       id="<hex digits>" .
-
-       The initial running of the test will create the test
-       files.  When the tests are run again, the new output
-       is compared against the old, line by line.  To generate
-       a new test file, remove the old one from the sub-directory.
-       The tests also allow this to be done automatically if the
-       -d option is passed in on the command-line.
-    """
-
-    def __init__(self, testInst, testFilePath='diffs', singleFileName='',
-                *ignoreList):
-        self.diffsFile = None
-        self.testInst = testInst
-        self.origStrFile = None
-        self.expectedFailures = copy.copy(ignoreList)
-
-        if not os.path.exists(testFilePath):
-            os.mkdir(testFilePath)
-
-        if not singleFileName:
-            #  if potentially multiple tests will be performed by
-            #  a test module, create a subdirectory for them.
-            testFilePath = testFilePath + os.sep + testInst.__class__.__name__
-            if not os.path.exists(testFilePath):
-                os.mkdir(testFilePath)
-
-                # get name of test method, and name the diffs file after
-                # it
-            f = inspect.currentframe()
-            fullName = testFilePath + os.sep + \
-                       inspect.getouterframes(f)[2][3] + '.diffs'
-        else:
-            fullName = testFilePath + os.sep + singleFileName
-
-        deleteFile = handleExtraArgs(sys.argv[1:])
-        if deleteFile:
-            try:
-                os.remove(fullName)
-            except OSError:
-                print fullName
-
-        try:
-            self.diffsFile = open(fullName, "r")
-            self.origStrFile = StringIO.StringIO(self.diffsFile.read())
-        except IOError:
-            try:
-                self.diffsFile = open(fullName, "w")
-            except IOError:
-                print "exception"
-
-
-    def failUnlessEqual(self, buffer):
-        """failUnlessEqual takes either a string or a StringIO
-           instance as input, and compares it against the original
-           output from the test file.  
-        """
-            # if not already a string IO 
-        if not isinstance(buffer, StringIO.StringIO):
-            testStrFile = StringIO.StringIO(buffer)
-        else:
-            testStrFile = buffer
-            testStrFile.seek(0)
-
-        hasContent = False
-        if self.diffsFile.mode == "r":
-            for testLine in testStrFile:
-                origLine = self.origStrFile.readline() 
-                if not origLine:
-                    break
-                else:
-                    hasContent = True
-
-                    # take out expected failure strings before
-                    # comparing original against new output
-                for cexpr in self.expectedFailures:
-                    origLine = cexpr.sub('', origLine)
-                    testLine = cexpr.sub('', testLine)
-
-                if origLine != testLine:
-                    self.testInst.failUnlessEqual(origLine, testLine)
-            return
-
-        if (self.diffsFile.mode == "w") or not hasContent:
-                # write new test file
-            for line in testStrFile:
-                self.diffsFile.write(line)
-
-        self.diffsFile.close()
 

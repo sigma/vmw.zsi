@@ -63,10 +63,10 @@ class BaseTypeInterpreter:
             ZSI.TC.String,
             ZSI.TC.URI,
             ZSI.TC.XMLString,
-            ZSI.TC.Token,
-            ZSI.TC.QName]
+            ZSI.TC.Token]
 
-        self._tc_to_date = [
+        self._tc_to_tuple = [
+            ZSI.TC.QName,
             ZSI.TCtimes.gDate,
             ZSI.TCtimes.gDateTime,
             ZSI.TCtimes.gDay,
@@ -84,16 +84,16 @@ class BaseTypeInterpreter:
         if untaged_xsd_types.has_key(msg_type):
             return untaged_xsd_types[msg_type]
         for tc in self._type_list:
-            if tc.tag == msg_type:
+            if tc.type == (SCHEMA.XSD3,msg_type):
                 break
         else:
-            tc = TC.Any
+            tc = TC.AnyType
         return tc
 
     def _get_soapenc_typecode(self, msg_type):
         if msg_type == 'Array':
             return TCcompound.Array
-        elif msg_type == 'base64':
+        if msg_type == 'base64':
             return TC.Base64String
         else:
             raise NamespaceException
@@ -117,12 +117,12 @@ class BaseTypeInterpreter:
             return 'float'
         elif tc in self._tc_to_string:
             return 'str'
-        elif tc in self._tc_to_date:
+        elif tc in self._tc_to_tuple:
             return 'tuple'
         elif tc in [TCcompound.Array]:
             return 'list'
         elif tc in [TC.Boolean]:
-            return 'boolean'
+            return 'bool'
         elif isinstance(tc, TypeCode):
             raise EvaluateException,\
                'failed to map zsi typecode to a python type'

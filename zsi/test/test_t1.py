@@ -35,37 +35,13 @@ class t1TestCase(unittest.TestCase):
         for key,val in self.goodTests:
             print "\n", "." * 60, key
             ps = ParsedSoap(val)
-#        for key,val in self.badTests:                
-#            try:
-#                print "\n", "." * 60, key
-#                ps = ParsedSoap(val)
-#            except ParseException, e:
-#                print "SOAP ParseException:", e 
-#                f = FaultFromZSIException(e)
-#                print f.AsSOAP()
-#                print `e` 
-#                continue
-#            wmiu = ps.WhatMustIUnderstand() 
-#            if len(wmiu): 
-#                print "mustUnderstand", len(wmiu), wmiu 
-#                actors = ps.WhatActorsArePresent() 
-#                if len(actors): 
-#                    print "actors", len(actors), actors 
-#                mine = ps.GetMyHeaderElements(['foobar', 'next']) 
-#                if len(mine): 
-#                    print "mine", len(mine), \
-#                        '[', ', '.join([m.nodeName for m in mine]), ']'
-        ps = ParsedSoap(datatest)
-        #print ps.GetElementNSdict(ps.dom)
-        elts = ps.data_elements
-#        print "XXX: elts is:"
-#        for item in elts:
-#            print item
-#        print elts[10]
 
-        self.failUnlessEqual(TC.Integer(None, optional=1).parse(elts[10], ps),
+        ps = ParsedSoap(datatest)
+        elts = ps.data_elements
+
+        self.failUnlessEqual(TC.Integer(None, nillable=True).parse(elts[10], ps),
                                                                         None)
-        self.failUnlessEqual(TC.Ibyte(None, optional=1).parse(elts[10], ps),
+        self.failUnlessEqual(TC.Ibyte(None, nillable=True).parse(elts[10], ps),
                                                                         None)
         B = [ TC.Integer('Price'), TC.Integer('p2'), TC.String(unique=1) ]
         self.failUnlessEqual(TC.Integer(('test-uri', 'Price')).parse(elts[0], ps), 
@@ -94,7 +70,7 @@ class t1TestCase(unittest.TestCase):
         S = TC.Struct(None, [TC.String('t'), TC.Integer('i')], inorder=0)
         pyobj = S.parse(elts[8], ps)
         S2 = TC.Struct(myclass, [TC.IunsignedShort('i'), TC.String('q:z',
-        optional=1), TC.String('t')], 'a2', typed=0)
+        minOccurs=0), TC.String('t')], 'a2', typed=0)
         pyobj2 = S2.parse(elts[8], ps)
         self.failUnlessEqual(TC.URI().parse(elts[12], ps), 
                                             u'"http://foo.com/~salz"')
@@ -109,6 +85,7 @@ class t1TestCase(unittest.TestCase):
         self.failUnlessEqual(sa, 
                     [(3, 12), (4, 13), (5, 14), (6, 15), (7, 16), (8, 17)])
 
+        """
         mychoice = TC.Choice([
             TC.String('n3'),
             TC.URI('uri'),
@@ -124,8 +101,9 @@ class t1TestCase(unittest.TestCase):
         b = mychoice.parse(elts[4], ps)
         self.failUnlessEqual(b[0], 'n3')
         self.failUnlessEqual(b[1], u'The value of n3')
+        """
 
-        self.failUnlessEqual(TC.Array('x', TC.Any()).parse(elts[15], ps),
+        self.failUnlessEqual(TC.Array(('test-uri','x'), TC.Any()).parse(elts[15], ps),
                                             [u'The value of n3', u'rich salz', 13])
         self.failUnlessEqual(TC.Struct(None,(TC.FPfloat('a'), TC.Decimal('b'),
                                             TC.FPdouble('c'))).parse(elts[13],ps),
@@ -139,31 +117,33 @@ class t1TestCase(unittest.TestCase):
         z.serialize(pyobj2, S2) 
         S2.inline = 1 
         S2.typed = 0 
-        #z.writeNSdict({'SOAP-ENV': 'foo'}) 
         tc = TC.gDateTime('dt') 
         z.serialize(pyobj2, S2) 
         z.serialize(pyobj, S) 
-        z.serialize(('n3', '******this is the value of a union'), mychoice) 
-        #z.serialize(nodelist, TC.XML('foo', nsdict=nsdict)) 
+        #z.serialize(('n3', '******this is the value of a union'), mychoice) 
         z.serialize('uri:some/place/special', TC.XML('foo', nsdict=nsdict)) 
-        tcary.sparse = 0 
+        tcary.sparse = False
         z.serialize(nsa, tcary, childnames='tt') 
-        tcary.sparse = 1 
+        tcary.sparse = True
         z.serialize(sa, tcary, name='MYSPARSEARRAY') 
         z.serialize(time.time(), tc) 
         z.serialize(time.time(), TC.gTime('monthday')) 
         z.serialize('$$$$$foo<', TC.String(textprotect=0)) 
-        z.close() 
         self.failUnlessEqual(TC.Any().parse(elts[11], ps),
                                         {'urt-i': 12, 'urt-t': u'rich salz'})
-        #print 'Anydict2=', TC.Any().parse(elts[8], ps)
+
         try: 
             a = bar() 
         except Exception, e: 
             f = FaultFromException(e, 0, sys.exc_info()[2]) 
             print f.AsSOAP() 
+        print
+        print
         print FaultFromNotUnderstood('myuri', 'dalocalname', actor='cher').AsSOAP() 
-        FaultFromActor('actor:i:dont:understand').AsSOAP(sys.stdout)
+        print
+        print
+        print FaultFromActor('actor:i:dont:understand').AsSOAP()
+
 
 def makeTestSuite():
     suite = unittest.TestSuite()

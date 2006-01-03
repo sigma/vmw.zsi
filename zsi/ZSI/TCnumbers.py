@@ -6,71 +6,72 @@
 from ZSI import _copyright, _inttypes, _floattypes, _seqtypes, \
         EvaluateException
 from ZSI.TC import TypeCode, Integer, Decimal
+from ZSI.wstools.Namespaces import SCHEMA
 
 class IunsignedByte(Integer):
     '''Unsigned 8bit value.
     '''
-    tag = "unsignedByte"
+    type = (SCHEMA.XSD3, "unsignedByte")
 
 class IunsignedShort(Integer):
     '''Unsigned 16bit value.
     '''
-    tag = "unsignedShort"
+    type = (SCHEMA.XSD3, "unsignedShort")
 
 class IunsignedInt(Integer):
     '''Unsigned 32bit value.
     '''
-    tag = "unsignedInt"
+    type = (SCHEMA.XSD3, "unsignedInt")
 
 class IunsignedLong(Integer):
     '''Unsigned 64bit value.
     '''
-    tag = "unsignedLong"
+    type = (SCHEMA.XSD3, "unsignedLong")
 
 class Ibyte(Integer):
     '''Signed 8bit value.
     '''
-    tag = "byte"
+    type = (SCHEMA.XSD3, "byte")
 
 class Ishort(Integer):
     '''Signed 16bit value.
     '''
-    tag = "short"
+    type = (SCHEMA.XSD3, "short")
 
 class Iint(Integer):
     '''Signed 32bit value.
     '''
-    tag = "int"
+    type = (SCHEMA.XSD3, "int")
 
 class Ilong(Integer):
     '''Signed 64bit value.
     '''
-    tag = "long"
+    type = (SCHEMA.XSD3, "long")
 
 class InegativeInteger(Integer):
     '''Value less than zero.
     '''
-    tag = "negativeInteger"
+    type = (SCHEMA.XSD3, "negativeInteger")
 
 class InonPositiveInteger(Integer):
     '''Value less than or equal to zero.
     '''
-    tag = "nonPositiveInteger"
+    type = (SCHEMA.XSD3, "nonPositiveInteger")
 
 class InonNegativeInteger(Integer):
     '''Value greater than or equal to zero.
     '''
-    tag = "nonNegativeInteger"
+    type = (SCHEMA.XSD3, "nonNegativeInteger")
 
 class IpositiveInteger(Integer):
     '''Value greater than zero.
     '''
-    tag = "positiveInteger"
+    type = (SCHEMA.XSD3, "positiveInteger")
 
 class Iinteger(Integer):
     '''Integer value.
     '''
-    tag = "integer"
+    type = (SCHEMA.XSD3, "integer")
 
 class IEnumeration(Integer):
     '''Integer value, limited to a specified set of values.
@@ -102,12 +103,12 @@ class IEnumeration(Integer):
 class FPfloat(Decimal):
     '''IEEE 32bit floating point value.
     '''
-    tag = "float"
+    type = (SCHEMA.XSD3, "float")
 
 class FPdouble(Decimal):
     '''IEEE 64bit floating point value.
     '''
-    tag = "double"
+    type = (SCHEMA.XSD3, "double")
 
 class FPEnumeration(FPfloat):
     '''Floating point value, limited to a specified set of values.

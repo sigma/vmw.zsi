@@ -3,15 +3,32 @@
 #
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
-from ZSI import _copyright, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI, \
-    FaultFromFaultMessage, _child_elements, _attrs, FaultException
+from ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
+    EvaluateException, FaultFromFaultMessage, _child_elements, _attrs,\
+    FaultException, WSActionException
 from ZSI.auth import AUTH
-import base64, httplib, Cookie, cStringIO as StringIO, types, time, urlparse
-from ZSI.digest_auth import fetch_challenge,generate_response,build_authorization_arg,dict_fetch
+from ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
+    _get_type_definition
+from ZSI.TCcompound import Struct
+import base64, httplib, Cookie, types, time, urlparse
+from ZSI.address import Address
 
 _b64_encode = base64.encodestring
 
-_AuthHeader = '<BasicAuth xmlns="' + ZSI_SCHEMA_URI + '''">
+class _AuthHeader:
+    """<BasicAuth xmlns="ZSI_SCHEMA_URI">
+           <Name>%s</Name><Password>%s</Password>
+       </BasicAuth>
+    """
+    def __init__(self, name=None, password=None):
+        self.Name = name
+        self.Password = password
+_AuthHeader.typecode = Struct(_AuthHeader, ofwhat=(String((ZSI_SCHEMA_URI,'Name'), typed=False), 
+        String((ZSI_SCHEMA_URI,'Password'), typed=False)), pname=(ZSI_SCHEMA_URI,'BasicAuth'), 
+        typed=False)
+  
+
+'<BasicAuth xmlns="' + ZSI_SCHEMA_URI + '''">
     <Name>%s</Name><Password>%s</Password>
 </BasicAuth>'''
 
@@ -57,75 +74,54 @@ class Binding:
     style.
     '''
 
-    def __init__(self, nsdict=None, ssl=0, url=None, tracefile=None,
-                 host='localhost', readerclass=None, port=None,
-                 typesmodule=None, soapaction='""', ns=None, op_ns=None, **kw):
+    def __init__(self, nsdict=None, transport=None, url=None, tracefile=None,
+                 readerclass=None, writerclass=None, soapaction='', 
+                 wsAddressURI=None, sig_handler=None, transdict=None, **kw):
         '''Initialize.
         Keyword arguments include:
-            host, port -- where server is; default is localhost
-            ssl -- use SSL? default is no
-            url -- resource to POST to
+            transport -- default use HTTPConnection. 
+            transdict -- dict of values to pass to transport.
+            url -- URL of resource, POST is path 
             soapaction -- value of SOAPAction header
             auth -- (type, name, password) triplet; default is unauth
-            ns -- default namespace
             nsdict -- namespace entries to add
             tracefile -- file to dump packet traces
             cert_file, key_file -- SSL data (q.v.)
             readerclass -- DOM reader class
-            ns -- the namespace to use for the SOAP:Body
-            op_ns -- the namespace to use for the operation
-            http_callbacks -- dict of callbacks for specific HTTP Response Status
+            writerclass -- DOM writer class, implements MessageInterface
+            wsAddressURI -- namespaceURI of WS-Address to use.  By default 
+            it's not used.
+            sig_handler -- XML Signature handler, must sign and verify.
+            endPointReference -- optional Endpoint Reference.
         '''
         self.data = None
         self.ps = None
-        self.ns = ns
         self.user_headers = []
-        self.port = None
-        self.typesmodule = typesmodule
         self.nsdict = nsdict or {}
-        self.ssl = ssl
+        self.transport = transport
+        self.transdict = transdict or {}
         self.url = url
         self.trace = tracefile
-        self.host = host
         self.readerclass = readerclass
+        self.writerclass = writerclass
         self.soapaction = soapaction
+        self.wsAddressURI = wsAddressURI
+        self.sig_handler = sig_handler
+        self.address = None
+        self.endPointReference = kw.get('endPointReference', None)
         self.cookies = Cookie.SimpleCookie()
-        self.op_ns = op_ns
         self.http_callbacks = {}
 
         if kw.has_key('auth'):
             self.SetAuth(*kw['auth'])
         else:
             self.SetAuth(AUTH.none)
-        if self.nsdict.has_key(''):
-            self.SetNS(nsdict[''])
-        elif kw.has_key('ns'):
-            self.SetNS(kw['ns'])
-        if port:
-            self.port = port
-        elif url:
-            hp = urlparse.urlsplit(url)
-            if hp and hp[1].find(':') != -1:
-                self.port = int(hp[1].split(':', 2)[1])
-        if not self.ssl:
-            if self.port is None: self.port = httplib.HTTP_PORT
-        else:
-            if self.port is None: self.port = httplib.HTTPS_PORT
-            self.ssl_files = {}
-            for k in [ 'cert_file', 'key_file' ]:
-                if kw.has_key(k): self.ssl_files[k] = kw[k]
 
     def SetAuth(self, style, user=None, password=None):
         '''Change auth style, return object to user.
         '''
         self.auth_style, self.auth_user, self.auth_pass = \
             style, user, password
-        return self
-
-    def SetNS(self, uri):
-        '''Change the default namespace.
-        '''
-        self.ns = uri
         return self
 
     def SetURL(self, url):
@@ -175,14 +171,21 @@ class Binding:
         self.Send(url, opname, obj, **kw)
         return self.Receive(replytype, **kw)
 
-    def Send(self, url, opname, obj, nsdict=None, soapaction=None, **kw):
+    def Send(self, url, opname, obj, nsdict={}, soapaction=None, wsaction=None, 
+             endPointReference=None, **kw):
         '''Send a message.  If url is None, use the value from the
         constructor (else error). obj is the object (data) to send.
         Data may be described with a requesttypecode keyword, or a
         requestclass keyword; default is the class's typecode (if
         there is one), else Any.
+
+        Optional WS-Address Keywords
+            wsaction -- WS-Address Action, goes in SOAP Header.
+            endPointReference --  set by calling party, must be an 
+                EndPointReference type instance.
+
         '''
-            
+        url = url or self.url
         # Get the TC for the obj.
         if kw.has_key('requesttypecode'):
             tc = kw['requesttypecode']
@@ -194,45 +197,57 @@ class Binding:
         else:
             tc = TC.Any(opname, aslist=1)
 
-        if self.op_ns:
-            opname = '%s:%s' % (self.op_ns, opname)
-            tc.oname = opname 
-
-        # Determine the SOAP auth element.
-        if kw.has_key('auth_header'):
-            auth_header = kw['auth_header']
-        elif self.auth_style & AUTH.zsibasic:
-            auth_header = _AuthHeader % (self.auth_user, self.auth_pass)
-        else:
-            auth_header = None
+        endPointReference = endPointReference or self.endPointReference
 
         # Serialize the object.
-        s = StringIO.StringIO()
-        d = self.nsdict or {}
-        if self.ns: d[''] = self.ns
-        d.update(nsdict or self.nsdict or {})
-        sw = SoapWriter(s, nsdict=d, header=auth_header)
+        d = {}
+
+        d.update(self.nsdict)
+        d.update(nsdict)
+
+        useWSAddress = self.wsAddressURI is not None
+        sw = SoapWriter(nsdict=d, header=True, outputclass=self.writerclass, 
+                 encodingStyle=kw.get('encodingStyle'), encoding=kw.get('encoding'))
         if kw.has_key('_args'):
             sw.serialize(kw['_args'], tc)
         else:
-            sw.serialize(obj, tc, typed=0)
-        sw.close()
-        soapdata = s.getvalue()
+            sw.serialize(obj, tc)
+
+        # Determine the SOAP auth element.  SOAP:Header element
+        if self.auth_style & AUTH.zsibasic:
+            sw.serialize_header(_AuthHeader(self.auth_user, self.auth_pass),
+                _AuthHeader.typecode)
+
+        # Serialize WS-Address
+        if useWSAddress is True:
+            if self.soapaction and wsaction.strip('\'"') != self.soapaction:
+                raise WSActionException, 'soapAction(%s) and WS-Action(%s) must match'\
+                    %(self.soapaction,wsaction)
+            self.address = Address(url, self.wsAddressURI)
+            self.address.setRequest(endPointReference, wsaction)
+            self.address.serialize(sw)
+
+        # WS-Security Signature Handler
+        if self.sig_handler is not None:
+            self.sig_handler.sign(sw)
+        soapdata = str(sw)
+
+        scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
+
+        # Determine transport from url if necessary
+        if self.transport == None and url is not None:
+            if scheme == 'https':
+                self.transport = httplib.HTTPSConnection
+            elif scheme == 'http':
+                self.transport = httplib.HTTPConnection
+            else:
+                raise RuntimeError, 'must specify transport or url startswith https/http'
 
         # Send the request.
-        # host and port may be parsed from a WSDL file.  if they are, they
-        # are most likely unicode format, which httplib does not care for
-        if isinstance(self.host, unicode):
-            self.host = str(self.host)
-        if not isinstance(self.port, int):
-            self.port = int(self.port)
-            
-        if not self.ssl:
-            self.h = httplib.HTTPConnection(self.host, self.port)
-        else:
-            self.h = httplib.HTTPSConnection(self.host, self.port,
-                        **self.ssl_files)
-        
+        if issubclass(self.transport, httplib.HTTPConnection) is False:
+            raise TypeError, 'transport must be a HTTPConnection'
+
+        self.h = self.transport(netloc, None, **self.transdict)
         self.h.connect()
         self.SendSOAPData(soapdata, url, soapaction, **kw)
 
@@ -242,7 +257,8 @@ class Binding:
             print >>self.trace, "_" * 33, time.ctime(time.time()), "REQUEST:"
             print >>self.trace, soapdata
 
-        self.h.putrequest("POST", url or self.url)
+        scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
+        self.h.putrequest("POST", path)
         self.h.putheader("Content-length", "%d" % len(soapdata))
         self.h.putheader("Content-type", 'text/xml; charset=utf-8')
         self.__addcookies()
@@ -258,7 +274,7 @@ class Binding:
             self.h.putheader('Authorization', 'Basic ' + val)
         elif self.auth_style == AUTH.httpdigest and not headers.has_key('Authorization') \
             and not headers.has_key('Expect'):
-            def digest_auth_cb(response): 
+            def digest_auth_cb(response):
                 self.SendSOAPDataHTTPDigestAuth(response, soapdata, url, soapaction, **kw)
                 self.http_callbacks[401] = None
             self.http_callbacks[401] = digest_auth_cb
@@ -279,7 +295,7 @@ class Binding:
         if self.trace:
             print >>self.trace, "------ Digest Auth Header"
         url = url or self.url
-        if response.status != 401: 
+        if response.status != 401:
             raise RuntimeError, 'Expecting HTTP 401 response.'
         if self.auth_style != AUTH.httpdigest:
             raise RuntimeError,\
@@ -306,7 +322,7 @@ class Binding:
 
         raise RuntimeError,\
             'Client expecting digest authorization challenge.'
-            
+
     def ReceiveRaw(self, **kw):
         '''Read a server reply, unconverted to any format and return it.
         '''
@@ -359,8 +375,15 @@ class Binding:
                 'Response is "%s", not "text/xml"' % self.reply_headers.type)
         if len(self.data) == 0:
             raise TypeError('Received empty response')
+
         self.ps = ParsedSoap(self.data, 
-                        readerclass=readerclass or self.readerclass)
+                        readerclass=readerclass or self.readerclass, 
+                        encodingStyle=kw.get('encodingStyle'),
+                        encoding=kw.get('encoding'))
+
+        if self.sig_handler is not None:
+            self.sig_handler.verify(self.ps)
+
         return self.ps
 
     def IsAFault(self):
@@ -378,67 +401,28 @@ class Binding:
             raise TypeError("Expected SOAP Fault not found")
         return FaultFromFaultMessage(self.ps)
 
-    def Receive(self, replytype=None, **kw):
-        '''Parse message, create Python object. if replytype is None, use
-        TC.Any to dynamically parse; otherwise it can be a Python class
-        or the typecode to use in parsing.
+    def Receive(self, replytype, **kw):
+        '''Parse message, create Python object.
+
+        KeyWord data:
+            faults   -- list of WSDL operation.fault typecodes
+            wsaction -- If using WS-Address, must specify Action value we expect to
+                receive.
         '''
         self.ReceiveSOAP(**kw)
         if self.ps.IsAFault():
             msg = FaultFromFaultMessage(self.ps)
             raise FaultException(msg)
 
-        if replytype is None:
-            tc = TC.Any(aslist=1)
-
-            # if the message is RPC style, skip the fooBarResponse
-            elt_name = '%s' % self.ps.body_root.localName
-            if elt_name.find('Response') > 0:
-                data = _child_elements(self.ps.body_root)
-            else:
-                data = [self.ps.body_root]
-                
-            if len(data) == 0: return None
-
-            # check for array type, loop and process if found
-            for attr in _attrs(data[0]):
-                if attr.localName.find('arrayType') >= 0:
-                    data = _child_elements(data[0])
-
-                    toReturn = []
-                    for node in data:
-                        type = node.localName
-
-                        # handle case where multiple elements are returned
-                        if type.find('element') >= 0:
-                            node = _child_elements(node)[0]
-                            type = node.localName
-
-                        toReturn.append(self.__parse(node, type))
-                    return toReturn
-
-            # parse a complex or primitive type and return it
-            type = data[0].localName
-            return self.__parse(data[0], type)
-        elif hasattr(replytype, 'typecode'):
+        tc = replytype
+        if hasattr(replytype, 'typecode'):
             tc = replytype.typecode
-        else:
-            tc = replytype
-        return self.ps.Parse(tc)
 
-    def __parse(self, node, type):
-        try:
-            if hasattr(self.typesmodule, type):
-                clazz = getattr(self.typesmodule, type)
-                tc = clazz.typecode
-                return tc.parse(node, self.ps)
-            else:
-                tc = TC.Any(aslist=1)
-                return tc.parse(node, self.ps)                
-        except Exception:
-            tc = TC.Any(aslist=1)
-            return tc.parse(node, self.ps)
-        
+        reply = self.ps.Parse(tc)
+        if self.address is not None:
+            self.address.checkResponse(self.ps, kw.get('wsaction'))
+        return reply
+
     def __repr__(self):
         return "<%s instance at 0x%x>" % (self.__class__.__name__, id(self))
 

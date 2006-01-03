@@ -9,8 +9,8 @@ class t7TestCase(unittest.TestCase):
     def checkt7(self):
         ps = ParsedSoap(text)
 
-        tcdict = TC.Apache.Map()
-        tclist = TC.Apache.Map(aslist=1)
+        tcdict = TC.Apache.Map('c-gensym1')
+        tclist = TC.Apache.Map('c-gensym1', aslist=1)
 
         d = tcdict.parse(ps.body_root, ps)
         self.assertEqual(d, { u'a':123, '\x00\x01':456 })
@@ -22,14 +22,14 @@ class t7TestCase(unittest.TestCase):
         print 'as list\n', l
 
         print '\n', '=' * 30
-        sw = SoapWriter(sys.stdout)
-        tcdict.serialize(sw, d)
-        sw.close()
+        sw = SoapWriter()
+        sw.serialize(d, tcdict)
+        print >>sys.stdout, sw
 
         print '\n', '=' * 30
-        sw = SoapWriter(sys.stdout)
-        tclist.serialize(sw, l)
-        sw.close()
+        sw = SoapWriter()
+        sw.serialize(l, tclist)
+        print >>sys.stdout, sw
 
 def makeTestSuite():
     suite = unittest.TestSuite()

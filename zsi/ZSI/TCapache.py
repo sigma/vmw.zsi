@@ -4,7 +4,7 @@
 '''
 
 from ZSI import _copyright, _child_elements
-from ZSI.TC import TypeCode, Struct as _Struct, Any as _Any
+from ZSI.TC import TypeCode, Struct as _Struct, Any as _Any, _get_object_id
 
 class Apache:
     NS = "http://xml.apache.org/xml-soap"
@@ -35,20 +35,39 @@ class _Map(TypeCode):
                 v[d['key']] = d['value']
         return v
 
-    def serialize(self, sw, pyobj, name=None, attrtext=None, **kw):
-        n = name or self.oname or 'E%x' % id(pyobj)
-        if self.typed:
-            tstr = ' xsi:type="A:Map" xmlns:A="%s"' % Apache.NS
-        else:
-            tstr = ''
-        print >>sw, "<%s%s%s>" % (n, attrtext or '', tstr)
+    def serialize(self, elt, sw, pyobj, name=None, **kw):
+        objid = _get_object_id(pyobj)
+        n = name or self.pname or ('E' + objid)
+
+        # nillable
+        el = elt.createAppendElement(self.nspname, n)
+        if self.nillable is True and pyobj is None:
+            self.serialize_as_nil(el)
+            return None
+
+        # other attributes
+        self.set_attributes(el, pyobj)
+
+        # soap href attribute
+        unique = self.unique or kw.get('unique', False)
+        if unique is False and sw.Known(orig or pyobj):
+            self.set_attribute_href(el, objid)
+            return None
+
+        # xsi:type attribute 
+        if kw.get('typed', self.typed) is True:
+            self.set_attribute_xsi_type(el, **kw)
+
+        # soap id attribute
+        if self.unique is False:
+            self.set_attribute_id(el, objid)
+
         if self.aslist:
             for k,v in pyobj:
-                self.tc.serialize(sw, {'key': k, 'value': v}, name='item')
+                self.tc.serialize(el, sw, {'key': k, 'value': v}, name='item')
         else:
             for k,v in pyobj.items():
-                self.tc.serialize(sw, {'key': k, 'value': v}, name='item')
-        print >>sw, "</%s>" % n
+                self.tc.serialize(el, sw, {'key': k, 'value': v}, name='item')
 
 
 Apache.Map = _Map

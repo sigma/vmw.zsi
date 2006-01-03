@@ -4,13 +4,12 @@
 # See Copyright for copyright notice!
 ###########################################################################
 import  unittest, optparse
-from ConfigParser import ConfigParser, NoOptionError
 from ServiceTest import CONFIG_PARSER, DOCUMENT, LITERAL, BROKE, TESTS
 
 
 def makeTestSuite(document=None, literal=None, broke=None):
     """Return a test suite containing all test cases that satisfy 
-       the parameters. None means don't check.
+    the parameters. None means don't check.
 
        document -- None, True, False
        literal -- None, True, False
@@ -18,10 +17,10 @@ def makeTestSuite(document=None, literal=None, broke=None):
     """
     cp = CONFIG_PARSER
     testSections = []
-    sections = ['rpc_encoded' , 'rpc_encoded_broke', 'doc_encoded', \
-                'doc_encoded_broke', 'rpc_literal', 'rpc_literal_broke', \
-                'rpc_literal_broke_interop', 'doc_literal', \
-                'doc_literal_broke', 'doc_literal_broke_interop' ]
+    sections = ['rpc_encoded' , 'rpc_encoded_broke',
+                'rpc_literal', 'rpc_literal_broke', 'rpc_literal_broke_interop',
+                'doc_literal', 'doc_literal_broke', 'doc_literal_broke_interop',
+                ]
     for section in sections:
     
         if (document is not None) and (cp.getboolean(section, DOCUMENT) is not document):
@@ -50,6 +49,9 @@ def workingTestSuite():
 def docLitTestSuite():
     return makeTestSuite(broke=False, document=True, literal=True)
 
+def rpcLitTestSuite():
+    return makeTestSuite(broke=False, document=False, literal=True)
+
 def rpcEncTestSuite():
     return makeTestSuite(broke=False, document=False, literal=False)
 
@@ -64,7 +66,7 @@ def main():
     """Gets tests to run from configuration file.
     """
     unittest.TestProgram(defaultTest="workingTestSuite")
-    
+
 if __name__ == "__main__" : main()
     
 

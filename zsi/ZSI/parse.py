@@ -5,10 +5,12 @@
 
 from ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
         _backtrace, EvaluateException, ParseException, _valid_encoding, \
-        _Node, _find_attr
+        _Node, _find_attr, _resolve_prefix
+from ZSI.TC import AnyElement
 import types
 
 from ZSI.wstools.Namespaces import SOAP, XMLNS
+from ZSI.wstools.Utility import SplitQName
 
 _find_actor = lambda E: E.getAttributeNS(SOAP.ENV, "actor") or None
 _find_mu = lambda E: E.getAttributeNS(SOAP.ENV, "mustUnderstand")
@@ -32,13 +34,14 @@ class ParsedSoap:
     '''
 
     def __init__(self, input, readerclass=None, keepdom=0,
-    trailers=0, resolver=None,  **kw):
+    trailers=0, resolver=None,  envelope=True, **kw):
         '''Initialize.
         Keyword arguments:
             trailers -- allow trailer elments (default is zero)
             resolver -- function (bound method) to resolve URI's
             readerclass -- factory class to create a reader
             keepdom -- do not release the DOM
+            envelope -- do not loop for a SOAP envelope.
         '''
 
         self.readerclass = readerclass
@@ -54,8 +57,9 @@ class ParsedSoap:
                 self.dom = self.reader.fromStream(input)
         except Exception, e:
             # Is this in the header?  Your guess is as good as mine.
-            raise ParseException("Can't parse document (" + \
-                str(e.__class__) + "): " + str(e), 0)
+            #raise ParseException("Can't parse document (" + \
+            #    str(e.__class__) + "): " + str(e), 0)
+            raise
 
         self.ns_cache = {
             id(self.dom): {
@@ -73,6 +77,10 @@ class ParsedSoap:
             raise ParseException("Document has no Envelope", 0)
         if len(c) != 1:
             raise ParseException("Document has extra child elements", 0)
+
+        if envelope is False:
+            self.body_root = c[0]
+            return
 
         # And that one child must be the Envelope
         elt = c[0]
@@ -326,5 +334,38 @@ class ParsedSoap:
             a = _find_actor(E)
             if a not in [ None, SOAP.ACTOR_NEXT ]: results.append(a)
         return results
+
+    def ParseHeaderElements(self, ofwhat):
+        '''Returns a dictionary of pyobjs.
+        ofhow -- list of typecodes w/matching nspname/pname to the header_elements.
+        '''
+        d = {}
+        lenofwhat = len(ofwhat)
+        c, crange = self.header_elements[:], range(len(self.header_elements))
+        for i,what in [ (i, ofwhat[i]) for i in range(lenofwhat) ]:
+            if isinstance(what, AnyElement): 
+                raise EvaluateException, 'not supporting <any> as child of SOAP-ENC:Header'
+
+            v = []
+            occurs = 0
+            namespaceURI,tagName = what.nspname,what.pname
+            for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
+                prefix,name = SplitQName(c_elt.tagName)
+                nsuri = _resolve_prefix(c_elt, prefix)
+                if tagName == name and namespaceURI == nsuri:
+                    pyobj = what.parse(c_elt, self)
+                else:
+                    continue
+                v.append(pyobj)
+                c[j] = None
+            if what.minOccurs > len(v) > what.maxOccurs:
+               raise EvaluateException, 'number of occurances(%d) doesnt fit constraints (%d,%s)'\
+                   %(len(v),what.minOccurs,what.maxOccurs)
+            if what.maxOccurs == 1:
+                if len(v) == 0: v = None
+                else: v = v[0]
+            d[(what.nspname,what.pname)] = v
+        return d
+
 
 if __name__ == '__main__': print _copyright

@@ -5,7 +5,6 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-
 from ServiceTest import ServiceTestCase, ServiceTestSuite
 """
 Unittest for contacting the StationInfo portType of the GlobalWeather

@@ -7,12 +7,30 @@
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:tns="urn:ZSI:examples"
   targetNamespace="urn:ZSI:examples" >
+  <types>
+  <xsd:schema elementFormDefault="qualified" targetNamespace="urn:ZSI:examples">
+      <xsd:element name="Echo">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="EchoIn" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="EchoResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="EchoResult" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+  </xsd:schema>
+  </types>
 
   <message name="EchoRequest">
-    <part name="in_str" type="xsd:string"/>
+    <part name="parameters" element="tns:Echo" />
   </message>
   <message name="EchoResponse">
-    <part name="result" type="xsd:string"/>
+    <part name="parameters" element="tns:EchoResponse"/>
   </message>
 
   <portType name="EchoServer">

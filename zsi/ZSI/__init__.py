@@ -149,7 +149,7 @@ import types as _types
 
 ##
 ##  Public constants.
-ZSI_SCHEMA_URI = 'http://www.zolera.com/schemas/ZSI/'
+from ZSI.wstools.Namespaces import ZSI_SCHEMA_URI
 
 
 ##
@@ -168,7 +168,7 @@ _child_elements = lambda E: [ n for n in (E.childNodes or [])
 
 ##
 ##  Stuff imported from elsewhere.
-from ZSI.wstools.Namespaces import SOAP as _SOAP, SCHEMA as _SCHEMA
+from ZSI.wstools.Namespaces import SOAP as _SOAP, SCHEMA as _SCHEMA, XMLNS as _XMLNS
 
 ##
 ##  Low-level DOM oriented utilities; useful for typecode implementors.
@@ -188,6 +188,17 @@ def _find_attr(E, attr):
             if v: return v
         except: pass
     return None
+
+def _find_attrNS(E, namespaceURI, localName):
+    '''namespaceURI
+       localName
+    '''
+    try:
+        v = E.getAttributeNS(namespaceURI, localName)
+        if v: return v
+    except: pass
+
+
 _find_href = lambda E: _find_attr(E, "href")
 _find_xsi_attr = lambda E, attr: \
                 E.getAttributeNS(_SCHEMA.XSI3, attr) \
@@ -195,8 +206,36 @@ _find_xsi_attr = lambda E, attr: \
                 or E.getAttributeNS(_SCHEMA.XSI2, attr)
 _find_type = lambda E: _find_xsi_attr(E, "type")
 
+_find_xmlns_prefix = lambda E, attr: E.getAttributeNS(_XMLNS.BASE, attr)
+#_find_default_namespace = lambda E, attr: E.getAttributeNS(None, 'xmlns')
+_find_default_namespace = lambda E: E.getAttributeNS(None, 'xmlns')
+
 _textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
 
+_get_element_nsuri_name = lambda E: (E.namespaceURI, E.localName)
+
+_is_element = lambda E: E.nodeType == _Node.ELEMENT_NODE
+
+def _resolve_prefix(celt, prefix):
+    '''resolve prefix to a namespaceURI.  If None or 
+    empty str, return default namespace or None.
+
+    Parameters:
+      celt -- element node
+      prefix -- xmlns:prefix, or empty str or None
+    '''
+    namespace = None
+    while _is_element(celt):
+        if prefix:
+            namespaceURI = _find_xmlns_prefix(celt, prefix)
+        else:
+            namespaceURI = _find_default_namespace(celt)
+        if namespaceURI: break
+        celt = celt.parentNode
+    else:
+        if prefix:  
+            raise EvaluateException, 'cant resolve xmlns:%s' %prefix
+    return namespaceURI
 
 def _valid_encoding(elt):
     '''Does this node have a valid encoding?
@@ -279,14 +318,18 @@ class FaultException(ZSIException):
 
     def __init__(self, fault):
         self.fault = fault
-        self.str = fault.string
 
     def __str__(self):
-        return self.str
+        return str(self.fault)
 
     def __repr__(self):
         return "<%s.FaultException at 0x%x>" % (__name__, id(self))
 
+class WSActionException(ZSIException):
+    '''Exception raised when WS-Address Action Header is incorrectly
+    specified when received by client or server.
+    '''
+    pass
 
 ##
 ##  Importing the rest of ZSI.
@@ -300,7 +343,7 @@ from fault import Fault, \
     FaultFromActor, FaultFromException, FaultFromFaultMessage, \
     FaultFromNotUnderstood, FaultFromZSIException
 import TC
-TC.RegisterType(TC.Void)
+#TC.RegisterType(TC.Void)
 TC.RegisterType(TC.String)
 TC.RegisterType(TC.URI)
 TC.RegisterType(TC.Base64String)
@@ -317,6 +360,8 @@ TC.RegisterType(TC.gMonthDay)
 TC.RegisterType(TC.gDay)
 TC.RegisterType(TC.gTime)
 TC.RegisterType(TC.Apache.Map)
+TC.RegisterAnyElement()
+
 try:
     from ServiceProxy import *
 except:

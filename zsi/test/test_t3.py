@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import unittest
 from ZSI import *
-
+from ZSI.wstools.logging import setBasicLoggerDEBUG
+setBasicLoggerDEBUG()
 
 class t3TestCase(unittest.TestCase):
     "Test case wrapper for old ZSI t3 test case"
@@ -23,6 +24,7 @@ class t3TestCase(unittest.TestCase):
             f = FaultFromFaultMessage(ps)
             print f.AsSOAP()
             self.failUnless(f.AsSOAP().find(str(a)) > 0)
+        print '--'*20
 
 
 def makeTestSuite():

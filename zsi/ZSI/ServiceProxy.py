@@ -13,8 +13,8 @@ from ZSI import *
 from ZSI.client import *
 from ZSI.TC import Any
 from ZSI.typeinterpreter import BaseTypeInterpreter
-import ZSI.wstools
-from ZSI.wstools.Utility import DOM
+import wstools
+from wstools.Utility import DOM
 from urlparse import urlparse
 import weakref
 
@@ -24,40 +24,36 @@ class ServiceProxy:
        that reflect the methods of the remote web service."""
 
     def __init__(self, wsdl, service=None, port=None, tracefile=None,
-                 typesmodule=None, nsdict=None, soapAction=None, ns=None, op_ns=None, use_wsdl=False):
+                 nsdict=None, transdict=None):
         """
-        Instance data
-           use_wsdl -- if True try to construct XML Instance from 
-                   information in WSDL.
+        Parameters:
+           wsdl -- WSDLTools.WSDL instance or URL of WSDL.
+           service -- service name or index
+           port -- port name or index
+           tracefile -- 
+           nsdict -- key prefix to namespace mappings for serialization
+              in SOAP Envelope.
+           transdict -- arguments to pass into HTTPConnection constructor.
         """
-        if not hasattr(wsdl, 'targetNamespace'):
-            wsdl = ZSI.wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
+        self._tracefile = tracefile
+        self._nsdict = nsdict or {}
+        self._transdict = transdict 
+        self._wsdl = wsdl
+        if isinstance(wsdl, basestring) is True:
+            self._wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
 
-#        for item in wsdl.types.items():
-#            self._serializer.loadSchema(item)
-
+        assert isinstance(self._wsdl, wstools.WSDLTools.WSDL), 'expecting a WSDL instance'
         self._service = wsdl.services[service or 0]
         self.__doc__ = self._service.documentation
         self._port = self._service.ports[port or 0]
         self._name = self._service.name
-        self._wsdl = wsdl
-        self._tracefile = tracefile
-        self._typesmodule = typesmodule
-        self._nsdict = nsdict or {}
-        self._soapAction = soapAction
-        self._ns = ns
-        self._op_ns = op_ns
-        self._use_wsdl = use_wsdl
-        self.methods = {}
         
         binding = self._port.getBinding()
         portType = binding.getPortType()
-        for port in self._service.ports:
-            for item in port.getPortType().operations:
-                callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
-                method = MethodProxy(self, callinfo)
-                setattr(self, item.name, method)
-                self.methods.setdefault(item.name, []).append(method)
+        for item in portType.operations:
+            callinfo = wstools.WSDLTools.callInfoFromWSDL(self._port, item.name)
+            method = MethodProxy(self, callinfo)
+            setattr(self, item.name, method)
 
     def _call(self, name, *args, **kwargs):
         """Call the named remote web service method."""
@@ -66,46 +62,34 @@ class ServiceProxy:
                 'Use positional or keyword argument only.'
                 )
 
-
-        # use the callinfo based upon the name of the method
         callinfo = getattr(self, name).callinfo
-
-        # go through the list of defined methods, and look for the one with
-        # the same number of arguments as what was passed.  this is a weak
-        # check that should probably be improved in the future to check the
-        # types of the arguments to allow for polymorphism
-        for method in self.methods[name]:
-            if len(method.callinfo.inparams) == len(kwargs):
-                callinfo = method.callinfo
-                
         soapAction = callinfo.soapAction
         url = callinfo.location
-        (scheme, host, uri, query, fragment, identifier) = urlparse(url)
-        port = 80
+        (protocol, host, uri, query, fragment, identifier) = urlparse(url)
+        port = None
         if host.find(':') >= 0:
             host, port = host.split(':')
-            port = int(port)
-        elif scheme == 'https':
-            port = 443
+
+        if protocol == 'http':
+            transport = httplib.HTTPConnection
+        elif protocol == 'https':
+            transport = httplib.HTTPSConnection
+        else:
+            raise RuntimeError, 'Unknown protocol %s' %protocol
 
         binding = Binding(host=host, tracefile=self._tracefile,
-                          ssl=(scheme == 'https'),
-                          port=port, url=None, typesmodule=self._typesmodule,
-                          nsdict=self._nsdict, soapaction=self._soapAction,
-                          ns=self._ns, op_ns=self._op_ns)
+                          transport=transport,transdict=self._transdict,
+                          port=port, url=url, nsdict=self._nsdict, 
+                          soapaction=soapAction,)
 
-        if self._use_wsdl:
-            request, response = self._getTypeCodes(callinfo)
-            if len(kwargs): args = kwargs
-            if request is None:
-                request = Any(oname=name)
-            binding.Send(url=uri, opname=None, obj=args,
-                         nsdict=self._nsdict, soapaction=soapAction, requesttypecode=request)
-            return binding.Receive(replytype=response)
+        request, response = self._getTypeCodes(callinfo)
+        if len(kwargs): args = kwargs
+        if request is None:
+            request = Any(oname=name)
+        binding.Send(url=uri, opname=None, obj=args,
+                     nsdict=self._nsdict, soapaction=soapAction, requesttypecode=request)
+        return binding.Receive(replytype=response)
 
-        apply(getattr(binding, callinfo.methodName), args)
-
-        return binding.Receive()
 
     def _getTypeCodes(self, callinfo):
         """Returns typecodes representing input and output messages, if request and/or

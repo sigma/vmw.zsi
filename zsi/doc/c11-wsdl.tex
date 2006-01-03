@@ -253,16 +253,28 @@ def main():
     kw = { 'tracefile' : sys.stdout }
     portType = loc.getTerraServiceSoap(**kw)
 
-       # ns1 is an alias for a namespace
-       # Place_Def is defined in TerraService_services_types,
-       # which TerraService_services imports
-    place = ns1.Place_Def()
-    place._City = 'Oak Harbor'
-    place._State = 'Washington'
-    place._Country = 'United States'
+    # --------------------------------
+    # From "TerraService_services.py"
+    #
+    #  ConvertPlaceToLonLatPtSoapIn = ns0.ConvertPlaceToLonLatPt_Dec().pyclass
 
-    request = ConvertPlaceToLonLatPtSoapInWrapper()
-    request._place = place
+    # --------------------------------
+    # From "TerraService_services_types.py"
+    #
+    #  class ConvertPlaceToLonLatPt_Dec(ZSI.TCcompound.Struct, ElementDeclaration):
+    #      ...
+    #      class Holder(SetAddByAname):
+    #          typecode = self
+    #          def __init__(self):
+    #              # pyclass
+    #              self._place = None
+    #
+    class Holder: pass
+    request = ConvertPlaceToLonLatPtSoapIn()
+    request._place = Holder()
+    request._place._City = 'Oak Harbor'
+    request._place._State = 'Washington'
+    request._place._Country = 'United States'
 
     response = portType.ConvertPlaceToLonLatPt(request)
     print "Latitude = %s" % response._ConvertPlaceToLonLatPtResult._Lat

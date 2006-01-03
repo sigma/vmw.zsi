@@ -57,11 +57,11 @@ serviceContainer = ServiceContainer(('localhost', 9999))
 hws = EchoServer()
 hwsi = EchoServer_interface.EchoServer(impl=hws,
                                                 auth_method_name="authorize")
-serviceContainer.setNode(hwsi, post="/EchoServer")
+serviceContainer.setNode(hwsi, url="/EchoServer")
 
 # Create the Inherited version of the server
 hws2 = EchoServIn()
-serviceContainer.setNode(hws2, post="/EchoServIn")
+serviceContainer.setNode(hws2, url="/EchoServIn")
 
 # Run the service container
 serviceContainer.serve_forever()

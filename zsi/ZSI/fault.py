@@ -4,14 +4,123 @@
 '''
 
 from ZSI import _copyright, _children, _child_elements, \
-        _textprotect, _stringtypes, _seqtypes, _Node, SoapWriter
+        _stringtypes, _seqtypes, _Node, SoapWriter, ZSIException
 
-from ZSI.wstools.Namespaces import SOAP
+from ZSI.TCcompound import Struct
+from ZSI.TC import QName, URI, String, XMLString, AnyElement, UNBOUNDED
+
+from ZSI.wstools.Namespaces import SOAP, ZSI_SCHEMA_URI
 from ZSI.wstools.c14n import Canonicalize
+from ZSI.TC import ElementDeclaration
 
 import traceback, cStringIO as StringIO
 
-class Fault:
+
+class Detail:
+    def __init__(self, any=None):
+        self.any = any
+
+Detail.typecode = Struct(Detail, [AnyElement(aname='any',minOccurs=0, maxOccurs="unbounded")], pname='detail', minOccurs=0)
+
+class FaultType:
+    def __init__(self, faultcode=None, faultstring=None, faultactor=None, detail=None):
+        self.faultcode = faultcode
+        self.faultstring= faultstring
+        self.faultactor = faultactor
+        self.detail = detail
+        
+FaultType.typecode = \
+    Struct(FaultType,
+        [QName(pname='faultcode'), 
+         String(pname='faultstring'),
+         URI(pname=(SOAP.ENV,'faultactor'), minOccurs=0),
+         Detail.typecode,
+         AnyElement(aname='any',minOccurs=0, maxOccurs=UNBOUNDED),
+        ], 
+        pname=(SOAP.ENV,'Fault'), 
+        inline=True,
+        hasextras=0, 
+    )
+
+class ZSIHeaderDetail:
+    def __init__(self, detail):
+        self.any = detail
+
+ZSIHeaderDetail.typecode =\
+    Struct(ZSIHeaderDetail, [AnyElement(aname='any')], pname=(ZSI_SCHEMA_URI, 'detail'))
+
+
+class ZSIFaultDetailTypeCode(ElementDeclaration, Struct):
+    '''<ZSI:FaultDetail>
+           <ZSI:string>%s</ZSI:string>
+           <ZSI:trace>%s</ZSI:trace>
+       </ZSI:FaultDetail>
+    '''
+    schema = ZSI_SCHEMA_URI
+    literal = 'FaultDetail'
+    def __init__(self, **kw):
+        Struct.__init__(self, ZSIFaultDetail, [String(pname=(ZSI_SCHEMA_URI, 'string')), 
+            String(pname=(ZSI_SCHEMA_URI, 'trace'),minOccurs=0),], 
+            pname=(ZSI_SCHEMA_URI, 'FaultDetail'), **kw
+        )
+
+class ZSIFaultDetail:
+    def __init__(self, string=None, trace=None):
+        self.string = string
+        self.trace = trace
+
+    def __str__(self):
+        if self.trace:
+            return self.string + '\n[trace: ' + self.trace + ']'
+        return self.string
+
+    def __repr__(self):
+        return "<%s.ZSIFaultDetail at 0x%x>" % (__name__, id(self))
+ZSIFaultDetail.typecode = ZSIFaultDetailTypeCode()
+
+
+class URIFaultDetailTypeCode(ElementDeclaration, Struct):
+    '''
+    <ZSI:URIFaultDetail>
+        <ZSI:URI>uri</ZSI:URI>
+        <ZSI:localname>localname</ZSI:localname>
+    </ZSI:URIFaultDetail>
+    '''
+    schema = ZSI_SCHEMA_URI
+    literal = 'URIFaultDetail'
+    def __init__(self, **kw):
+        Struct.__init__(self, URIFaultDetail, 
+           [String(pname=(ZSI_SCHEMA_URI, 'URI')), String(pname=(ZSI_SCHEMA_URI, 'localname')),], 
+            pname=(ZSI_SCHEMA_URI, 'URIFaultDetail'), **kw
+        )
+
+class URIFaultDetail:
+    def __init__(self, uri=None, localname=None):
+        self.URI = uri
+        self.localname = localname
+URIFaultDetail.typecode = URIFaultDetailTypeCode()
+
+
+class ActorFaultDetailTypeCode(ElementDeclaration, Struct):
+    '''
+    <ZSI:ActorFaultDetail>
+        <ZSI:URI>%s</ZSI:URI>
+    </ZSI:ActorFaultDetail>
+    '''
+    schema = ZSI_SCHEMA_URI
+    literal = 'ActorFaultDetail'
+    def __init__(self, **kw):
+        Struct.__init__(self, ActorFaultDetail, [String(pname=(ZSI_SCHEMA_URI, 'URI')),],
+            pname=(ZSI_SCHEMA_URI, 'ActorFaultDetail'), **kw
+        )
+
+class ActorFaultDetail:
+    def __init__(self, uri=None):
+        self.URI = uri
+ActorFaultDetail.typecode = ActorFaultDetailTypeCode()
+
+
+class Fault(ZSIException):
     '''SOAP Faults.
     '''
 
@@ -21,74 +130,65 @@ class Fault:
 
     def __init__(self, code, string,
                 actor=None, detail=None, headerdetail=None):
+        if detail is not None and type(detail) not in _seqtypes:
+            detail = (detail,)
+        #if headerdetail is not None and type(headerdetail) not in _seqtypes:
+        #    headerdetail = (headerdetail,)
         self.code, self.string, self.actor, self.detail, self.headerdetail = \
                 code, string, actor, detail, headerdetail
-
-    def _do_details(self, out, header):
-        if header:
-            elt, detail = 'ZSI:detail', self.headerdetail
-        else:
-            elt, detail = 'detail', self.detail
-        print >>out, '<%s>' % elt
-        if type(detail) in _stringtypes:
-            print >>out, detail
-        else:
-            for d in self.detail: Canonicalize(d, out)
-        print >>out, '</%s>' % elt
+        ZSIException.__init__(self, code, string, actor, detail, headerdetail)
 
     def DataForSOAPHeader(self):
         if not self.headerdetail: return None
         # SOAP spec doesn't say how to encode header fault data.
-        s = StringIO.StringIO()
-        self._do_details(s, 1)
-        return s.getvalue()
+        return ZSIHeaderDetail(self.headerdetail)
 
     def serialize(self, sw):
         '''Serialize the object.'''
-        print >>sw, '<SOAP-ENV:Fault>\n', \
-            '<faultcode>%s</faultcode>\n' % self.code, \
-            '<faultstring>%s</faultstring>' % self.string
-        if self.actor:
-            print >>sw, \
-                '<SOAP-ENV:faultactor>%s</SOAP-ENV:faultactor>' % self.actor
-        if self.detail: self._do_details(sw, 0)
-        print >>sw, '</SOAP-ENV:Fault>'
+        detail = None
+        if self.detail is not None: 
+            detail = Detail()
+            detail.any = self.detail
 
-    def AsSOAP(self, output=None, **kw):
-        if output is None:
-            s = StringIO.StringIO()
-            output = s
-        else:
-            s = None
-        mykw = { 'header': self.DataForSOAPHeader() }
-        if kw: mykw.update(kw)
-        sw = SoapWriter(output, **mykw)
+        pyobj = FaultType(self.code, self.string, self.actor, detail)
+        sw.serialize(pyobj, typed=False)
+
+    def AsSOAP(self, **kw):
+
+        header = self.DataForSOAPHeader() 
+        sw = SoapWriter(**kw)
         self.serialize(sw)
-        sw.close()
-        if s: 
-            return s.getvalue()
-        else:
-            return None
+        if header is not None:
+            sw.serialize_header(header, header.typecode, typed=False)
+        return str(sw)
+
+    def __str__(self):
+        strng = str(self.string) + "\n"
+        if hasattr(self, 'detail'):
+            if hasattr(self.detail, '__len__'):
+                for d in self.detail:
+                    strng += str(d)
+            else:
+                strng += str(self.detail)
+        return strng
+
+    def __repr__(self):
+        return "<%s.Fault at 0x%x>" % (__name__, id(self))
+
     AsSoap = AsSOAP
 
+
 def FaultFromNotUnderstood(uri, localname, actor=None):
-    elt = '''<ZSI:URIFaultDetail>
-<ZSI:URI>%s</ZSI:URI>
-<ZSI:localname>%s</ZSI:localname>
-</ZSI:URIFaultDetail>
-''' % (uri, localname)
-    detail, headerdetail = None, elt
+    detail, headerdetail = None, URIFaultDetail(uri, localname)
     return Fault(Fault.MU, 'SOAP mustUnderstand not understood',
                 actor, detail, headerdetail)
 
+
 def FaultFromActor(uri, actor=None):
-    elt = '''<ZSI:ActorFaultDetail>
-<ZSI:URI>%s</ZSI:URI>
-</ZSI:ActorFaultDetail>
-''' % uri
-    detail, headerdetail = None, elt
+    detail, headerdetail = None, ActorFaultDetail(uri)
     return Fault(Fault.Client, 'Cannot process specified actor',
                 actor, detail, headerdetail)
+
 
 def FaultFromZSIException(ex, actor=None):
     '''Return a Fault object created from a ZSI exception object.
@@ -99,7 +199,7 @@ def FaultFromZSIException(ex, actor=None):
 <ZSI:string>%s</ZSI:string>
 <ZSI:trace>%s</ZSI:trace>
 </ZSI:ParseFaultDetail>
-''' % (_textprotect(mystr), _textprotect(mytrace))
+''' % (mystr, mytrace)
     if getattr(ex, 'inheader', 0):
         detail, headerdetail = None, elt
     else:
@@ -107,23 +207,36 @@ def FaultFromZSIException(ex, actor=None):
     return Fault(Fault.Client, 'Unparseable message',
                 actor, detail, headerdetail)
 
+
 def FaultFromException(ex, inheader, tb=None, actor=None):
     '''Return a Fault object created from a Python exception.
+
+    <SOAP-ENV:Fault>
+      <faultcode>SOAP-ENV:Server</faultcode>
+      <faultstring>Processing Failure</faultstring>
+      <detail>
+        <ZSI:FaultDetail>
+          <ZSI:string></ZSI:string>
+          <ZSI:trace></ZSI:trace>
+        </ZSI:FaultDetail>
+      </detail>
+    </SOAP-ENV:Fault>
     '''
+    tracetext = None
     if tb:
         try:
             lines = '\n'.join(['%s:%d:%s' % (name, line, func)
                         for name, line, func, text in traceback.extract_tb(tb)])
-            tracetext = '<ZSI:trace>\n' + _textprotect(lines) + '</ZSI:trace>\n'
         except:
-            tracetext = ''
-    else:
-        tracetext = ''
-
-    elt = '''<ZSI:FaultDetail>
-<ZSI:string>%s</ZSI:string>
-%s</ZSI:FaultDetail>
-''' % ( _textprotect(str(ex)), tracetext)
+            pass
+        else:
+            tracetext = lines
+  
+    exceptionName = ""
+    try:
+        exceptionName = ":".join([ex.__module__, ex.__class__.__name__])
+    except: pass
+    elt = ZSIFaultDetail(string=exceptionName + "\n" + str(ex), trace=tracetext)
     if inheader:
         detail, headerdetail = None, elt
     else:
@@ -131,20 +244,17 @@ def FaultFromException(ex, inheader, tb=None, actor=None):
     return Fault(Fault.Server, 'Processing Failure',
                 actor, detail, headerdetail)
 
+
 def FaultFromFaultMessage(ps):
     '''Parse the message as a fault.
     '''
-    d = { 'faultcode': None, 'faultstring': None, 'faultactor': None,
-        'detail': None, }
-    for elt in _child_elements(ps.body_root):
-        n = elt.localName
-        if n == 'detail':
-            d['detail'] = _child_elements(elt)
-        if n in [ 'faultcode', 'faultstring', 'faultactor' ]:
-            d[n] = ''.join([E.nodeValue for E in _children(elt)
-                            if E.nodeType 
-                            in [ _Node.TEXT_NODE, _Node.CDATA_SECTION_NODE ]])
-    return Fault(d['faultcode'], d['faultstring'],
-                d['faultactor'], d['detail'])
+    pyobj = ps.Parse(FaultType.typecode)
+
+    if pyobj.detail == None:  detailany = None
+    else:  detailany = pyobj.detail.any
+
+    return Fault(pyobj.faultcode, pyobj.faultstring,
+                pyobj.faultactor, detailany)
+
 
 if __name__ == '__main__': print _copyright
