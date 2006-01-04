@@ -11,10 +11,13 @@ cf.read('setup.cfg')
 major = cf.getint('version', 'major')
 minor = cf.getint('version', 'minor')
 patchlevel = cf.getint('version', 'patchlevel')
+candidate = cf.getint('version', 'candidate')
+
+_version = "%d.%d" % ( major, minor )
 if patchlevel:
-    _version = "%d.%d.%d" % ( major, minor, patchlevel )
-else:
-    _version = "%d.%d" % ( major, minor )
+    _version += '.%d' % patchlevel
+if candidate:
+    _version += '_rc%d' % candidate
 
 try:
     open('ZSI/version.py', 'r').close()

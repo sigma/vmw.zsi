@@ -5,7 +5,7 @@ PYTHON = python
 
 # This should be the Python that generated RPMs depend on and install
 # into; this may be different from the Python used to build the RPM.
-RPM_TARGET_PYTHON=/usr/bin/python2
+RPM_TARGET_PYTHON=/usr/bin/python
 
 
 all:	rpm
