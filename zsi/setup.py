@@ -1,7 +1,10 @@
 #! /usr/bin/env python
 # $Header$
 import sys
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 _url = "http://pywebsvcs.sf.net/"
 
@@ -37,5 +40,5 @@ setup(
     maintainer="Rich Salz, et al",
     maintainer_email="pywebsvcs-talk@lists.sf.net",
     url=_url,
-    long_description='For additional information, please see ' + _url
+    long_description='For additional information, please see ' + _url,
 )
