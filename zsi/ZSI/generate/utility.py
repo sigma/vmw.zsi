@@ -129,15 +129,16 @@ def GetPartsSubNames(args, wsdl):
 		     	    # tuple of (namespace, name). This hack fixes things, 
 			    # but I'm not sure why this happens or has happened.
 			    # IRJ - 2005-05-25
-                            for c in i.content.mgContent:
-                                nValue = "None"
-                                if c.isWildCard():
-                                    nValue="any"
-                                elif c.attributes.has_key("name"):
-                                    nValue = c.attributes["name"]
-                                elif c.attributes.has_key("ref"):
-                                    nValue = c.attributes["ref"][1]
-                                argSubnames.append(nValue)
+                            if i.content.mgContent != None:
+                                for c in i.content.mgContent:
+                                    nValue = "None"
+                                    if c.isWildCard():
+                                        nValue="any"
+                                    elif c.attributes.has_key("name"):
+                                        nValue = c.attributes["name"]
+                                    elif c.attributes.has_key("ref"):
+                                        nValue = c.attributes["ref"][1]
+                                    argSubnames.append(nValue)
 
         toReturn.append(argSubnames)
     return toReturn
