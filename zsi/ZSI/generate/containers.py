@@ -81,7 +81,7 @@ def FromMessageGetSimpleElementDeclaration(message):
 class AttributeMixIn:
     '''for containers that can declare attributes.
     '''
-    typecode = 'attribute_typecode_dict'
+    attribute_typecode = 'self.attribute_typecode_dict'
     
     def _setAttributes(self, attributes):
         '''parameters
@@ -91,7 +91,7 @@ class AttributeMixIn:
         
         returns a list of strings representing the attribute_typecode_dict.
         '''
-        atd = AttributeMixIn.typecode
+        atd = self.attribute_typecode
         atd_list = formatted_attribute_list = []
         if not attributes:
             return formatted_attribute_list
@@ -105,7 +105,7 @@ class AttributeMixIn:
             
             if a.isWildCard() and a.isDeclaration():
                 atd_list.append(\
-                    'self.%s[("%s","anyAttribute")] = ZSI.TC.AnyElement()'\
+                    '%s[("%s","anyAttribute")] = ZSI.TC.AnyElement()'\
                     % (atd, SCHEMA.XSD3)
                     )
             elif a.isDeclaration():
@@ -141,7 +141,7 @@ class AttributeMixIn:
                           % a.getAttribute('form')
                           
                 atd_list.append(\
-                    'self.%s[%s] = %s' % (atd, key, tc)
+                    '%s[%s] = %s' % (atd, key, tc)
                     )
             elif a.isReference() and a.isAttributeGroup():
                 # flatten 'em out....
@@ -163,14 +163,14 @@ class AttributeMixIn:
                         # TODO: attribute declaration could be anonymous type
                         # hack in something to work
                         atd_list.append(\
-                            'self.%s[%s] = ZSI.TC.String()' %(atd, key)
+                            '%s[%s] = ZSI.TC.String()' %(atd, key)
                             )
 #                        raise ContainerError,\
 #                              'no type in attribute declaration: %s'\
 #                              %a.getItemTrace()
                     else:
                         atd_list.append(\
-                            'self.%s[%s] = %s()' %(atd, key, 
+                            '%s[%s] = %s()' %(atd, key, 
                                  BTI.get_typeclass(typeName, namespace))
                             )
                 else:
@@ -180,7 +180,7 @@ class AttributeMixIn:
                     key = '("%s","%s")' \
                           % (ga.getTargetNamespace(),ga.getAttribute('name'))
                     atd_list.append(\
-                        'self.%s[%s] = %s.%s(None)' \
+                        '%s[%s] = %s.%s(None)' \
                         % (atd, key, alias, type_class_name(typeName))
                         )
             else:
@@ -1748,7 +1748,7 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
             '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
             ]
             
-        element.append('%sself.%s = {}'%(ID3, AttributeMixIn.typecode))
+        element.append('%s%s = {}'%(ID3, self.attribute_typecode))
         element.append(\
             '%(ID3)sZSI.TCcompound.ComplexType.__init__(self, None, TClist, inorder=0, **kw)' %KW
         )
@@ -1910,6 +1910,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
         else:
             self.mgContent = ()
 
+        self.attribute_typecode = 'attributes'
         self.attrComponents = self._setAttributes(attributeContent)
         
     def _setContent(self):
@@ -1970,24 +1971,34 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             definition.append(\
                 '%s'   % self.getBasesLogic(ID3),
             )
-            definition.append('%sself.%s = {}'%(ID3, AttributeMixIn.typecode))
             definition.append(\
-                '%s%s.%s.__init__(self, pname, **kw)' \
-                %(ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
+                '%sattributes = {}'%(ID3)
             )
+            for l in self.attrComponents: 
+                definition.append('%s%s'%(ID3, l))
+                
             if self.restriction:
                 definition.append(\
-                    '%sself.ofwhat = tuple(TClist)' %ID3,
-                ) 
-            else:
+                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, attributes=%s, restrict=True, **kw)' \
+                    %(ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), self.attribute_typecode ),
+                )
+            elif self.extension:
                 definition.append(\
-                    '%sself.ofwhat += tuple(TClist)' %ID3,
-                ) 
+                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, attributes=%s, extend=True, **kw)' \
+                    %(ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), self.attribute_typecode ),
+                )
+            else:
+                raise Wsdl2PythonError,\
+                    'ComplexContent must be a restriction or extension'
 
-        for l in self.attrComponents: definition.append('%s%s'%(ID3, l))
         self.writeArray(definition)
 
-
+    def pnameConstructor(self, superclass=None):
+        if superclass:
+            return '%s.__init__(self, pname, ofwhat=(), extend=False, restrict=False, **kw)' % superclass
+        
+        return 'def __init__(self, pname, ofwhat=(), extend=False, restrict=False, **kw):'
+      
 
 class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
     '''Represents a global complexType definition.
@@ -2030,14 +2041,20 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
             '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
             ]
 
-        definition.append('%sself.%s = {}'%(ID3, AttributeMixIn.typecode))
+        definition.append('%s%s = attributes or {}' %(ID3, self.attribute_typecode))
+        # IF EXTEND
+        definition.append('%sif extend: TClist += ofwhat'%(ID3))
+        # IF RESTRICT
+        definition.append('%sif restrict: TClist = ofwhat' %(ID3))
+        # ELSE
+        if len(self.attrComponents) > 0:
+            definition.append('%selse:' %(ID3))
+            for l in self.attrComponents:  definition.append('%s%s'%(ID4, l))
+        
         definition.append(\
             '%sZSI.TCcompound.ComplexType.__init__(self, None, TClist, pname=pname, inorder=0, %s**kw)' \
             %(ID3, self.getExtraFlags())
         )
-        
-        #self._setAttributes()
-        for l in self.attrComponents: definition.append('%s%s'%(ID3, l))
 
         # pyclass class definition
         definition += self.getPyClassDefinition()
@@ -2048,7 +2065,15 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         definition.append('%(ID3)sself.pyclass = %(pyclass)s' %kw)
         self.writeArray(definition)
 
+    def pnameConstructor(self, superclass=None):
+        ''' TODO: Logic is a little tricky.  If superclass is ComplexType this is not used.
+        '''
+        if superclass:
+            return '%s.__init__(self, pname, ofwhat=(), attributes=None, extend=False, restrict=False, **kw)' % superclass
 
+        return 'def __init__(self, pname, ofwhat=(), attributes=None, extend=False, restrict=False, **kw):'
+        
+        
 class SimpleTypeContainer(TypecodeContainerBase):
     type = DEF
 
@@ -2230,10 +2255,10 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
                 ]
     
             if self.getPythonType() is None:
-                definition.append('%sself.%s = {}'%(ID3, AttributeMixIn.typecode))
+                definition.append('%s%s = {}'%(ID3, self.attribute_typecode))
                 definition.append('%s%s.__init__(self, pname, **kw)' %(ID3, self.sKlass))
             else:
-                definition.append('%sself.%s = {}'%(ID3, AttributeMixIn.typecode))
+                definition.append('%s%s = {}'%(ID3, self.attribute_typecode))
                 definition.append(\
                     '%s%s.__init__(self, pname, pyclass=None, **kw)'\
                     %(ID3, self.sKlass)
@@ -2255,7 +2280,7 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
                 '%s%s' % (ID2, self.pnameConstructor()),
                 '%s%s' % (ID3, self.nsuriLogic()),
                 '%s'   % self.getBasesLogic(ID3),
-                '%sself.%s = {}'%(ID3, AttributeMixIn.typecode),
+                '%s%s = {}'%(ID3, self.attribute_typecode),
                 '%s%s.%s.__init__(self, pname, **kw)' \
                 % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
                 ]
