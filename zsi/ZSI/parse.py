@@ -32,6 +32,7 @@ class ParsedSoap:
             data_elements -- list of non-root elements in the SOAP Body
             trailer_elements -- list of elements following the SOAP body
     '''
+    defaultReaderClass = None
 
     def __init__(self, input, readerclass=None, keepdom=0,
     trailers=0, resolver=None,  envelope=True, **kw):
@@ -47,8 +48,11 @@ class ParsedSoap:
         self.readerclass = readerclass
         self.keepdom = keepdom
         if not self.readerclass:
-            from xml.dom.ext.reader import PyExpat
-            self.readerclass = PyExpat.Reader
+            if self.defaultReaderClass != None:
+                self.readerclass = self.defaultReaderClass
+            else:
+                from xml.dom.ext.reader import PyExpat
+                self.readerclass = PyExpat.Reader
         try:
             self.reader = self.readerclass()
             if type(input) in _stringtypes:
