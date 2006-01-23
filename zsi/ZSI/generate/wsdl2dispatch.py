@@ -372,6 +372,23 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
         ServiceModuleWriter.__init__(self, base, prefix, service_class)
         self.strict = strict
 
+    def createMethodBody(msgInName, msgOutName, **kw):
+        '''return a tuple of strings containing the body of a method.
+        msgInName -- None or a str
+        msgOutName --  None or a str
+        '''
+        body = []
+        if msgInName is not None:
+            body.append('self.request = ps.Parse(%s.typecode)' %msgInName)
+            
+        if msgOutName is not None:
+            body.append('return %s()' %msgOutName)
+        else: 
+            body.append('return None')
+            
+        return tuple(body)
+    createMethodBody = staticmethod(createMethodBody)
+
     def setUpClassDef(self, service):
         '''use soapAction dict for WS-Action input, setup wsAction
         dict for grabbing WS-Action output values.
@@ -425,30 +442,28 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
                     'Port(%s) operation(%s) in Binding(%s) soapAction(%s) MUST match WS-Action(%s)' \
                      %(port.name, op.name, binding.name, soap_action, wsaction_in)
 
-            msgin = op.getInputMessage()
-            msgin_name = TextProtect(msgin.name)
             method_name = self.getMethodName(op.name)
 
             m = s.newMethod()
             print >>m, '%sdef %s(self, ps, address):' %(self.getIndent(level=1), method_name)
-            if msgin is not None:
-                print >>m, '%sself.request = ps.Parse(%s.typecode)' %(self.getIndent(level=2), msgin_name)
-            else:
-                print >>m, '%s# NO input' %self.getIndent(level=2)
-        
-            msgout = op.getOutputMessage()
-            if msgout is not None:
+            
+            msgin_name = msgout_name = None
+            msgin,msgout = op.getInputMessage(),op.getOutputMessage()
+            if msgin is not None: 
+                msgin_name = TextProtect(msgin.name)
+            if msgout is not None: 
                 msgout_name = TextProtect(msgout.name)
-                print >>m, '%sreturn %s()' %(self.getIndent(level=2), msgout_name)
-            else:
-                print >>m, '%s# NO output' % self.getIndent(level=2)
-                print >>m, '%sreturn None' % self.getIndent(level=2)
+        
+            indent = self.getIndent(level=2)
+            for l in self.createMethodBody(msgin_name, msgout_name):
+                print >>m, indent + l
 
             print >>m, ''
             print >>m, '%ssoapAction[\'%s\'] = \'%s\'' %(self.getIndent(level=1), wsaction_in, method_name)
             print >>m, '%swsAction[\'%s\'] = \'%s\'' %(self.getIndent(level=1), method_name, wsaction_out)
             print >>m, '%sroot[(%s.typecode.nspname,%s.typecode.pname)] = \'%s\'' \
                      %(self.getIndent(level=1), msgin_name, msgin_name, method_name)
+ 
 
 class DelAuthServiceModuleWriter(ServiceModuleWriter):
     ''' Includes the generation of lines to call an authorization method on the server side

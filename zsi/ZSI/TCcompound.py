@@ -5,9 +5,8 @@
 
 from ZSI import _copyright, _children, _child_elements, \
     _inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
-    _find_type, _find_xmlns_prefix,\
-    EvaluateException
-from ZSI.TC import _get_element_nsuri_name, _get_object_id, \
+    _find_type, _find_xmlns_prefix, _get_idstr, EvaluateException
+from ZSI.TC import _get_element_nsuri_name, \
     _get_substitute_element, _get_type_definition, _get_xsitype, \
     TypeCode, Any, AnyElement, AnyType, ElementDeclaration, TypeDefinition
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
@@ -241,7 +240,7 @@ class ComplexType(TypeCode):
         if inline or self.inline:
             self.cb(elt, sw, pyobj, **kw)
         else:
-            objid = _get_object_id(pyobj)
+            objid = _get_idstr(pyobj)
             n = name or self.pname or ('E' + objid)
             el = elt.createAppendElement(None, n)
             el.setAttributeNS(None, 'href', "#%s" %objid)
@@ -260,7 +259,7 @@ class ComplexType(TypeCode):
         if self.mutable is False and sw.Known(pyobj): 
             return
         
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         #n = name or self.pname or ('E' + objid)
         n = name or self.pname
         self.logger.debug("TAG: (%s, %s)", str(self.nspname), n)
@@ -539,7 +538,7 @@ class Array(TypeCode):
 
     def serialize(self, elt, sw, pyobj, name=None, childnames=None, **kw):
         if self.mutable is False and sw.Known(pyobj): return
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         n = name or self.pname or ('E' + objid)
         el = elt.createAppendElement(self.nspname, n)
 
@@ -563,7 +562,7 @@ class Array(TypeCode):
 
         # soap id attribute
         if self.unique is False:
-            self.set_attribute_id(el, _get_object_id(pyobj))
+            self.set_attribute_id(el, _get_idstr(pyobj))
 
         offset = 0
         if self.sparse is False and self.nooffset is False:

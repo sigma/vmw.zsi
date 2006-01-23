@@ -3,7 +3,7 @@
 '''SOAP message serialization.
 '''
 
-from ZSI import _copyright, ZSI_SCHEMA_URI
+from ZSI import _copyright, _get_idstr, ZSI_SCHEMA_URI
 from ZSI import _backtrace, _stringtypes, _seqtypes
 from ZSI.TC import AnyElement, TypeCode
 from ZSI.wstools.Utility import MessageInterface, ElementProxy
@@ -151,7 +151,7 @@ class SoapWriter:
         '''Seen this object (known by its id()?  Return 1 if so,
         otherwise add it to our memory and return 0.
         '''
-        obj = id(obj)
+        obj = _get_idstr(obj)
         if obj in self.memo: return 1
         self.memo.append(obj)
         return 0
@@ -159,7 +159,7 @@ class SoapWriter:
     def Forget(self, obj):
         '''Forget we've seen this object.
         '''
-        obj = id(obj)
+        obj = _get_idstr(obj)
         try:
             self.memo.remove(obj)
         except ValueError:

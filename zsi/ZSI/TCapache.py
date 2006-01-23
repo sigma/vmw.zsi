@@ -3,8 +3,8 @@
 '''Apache typecodes.
 '''
 
-from ZSI import _copyright, _child_elements
-from ZSI.TC import TypeCode, Struct as _Struct, Any as _Any, _get_object_id
+from ZSI import _copyright, _child_elements, _get_idstr
+from ZSI.TC import TypeCode, Struct as _Struct, Any as _Any
 
 class Apache:
     NS = "http://xml.apache.org/xml-soap"
@@ -36,7 +36,7 @@ class _Map(TypeCode):
         return v
 
     def serialize(self, elt, sw, pyobj, name=None, **kw):
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         n = name or self.pname or ('E' + objid)
 
         # nillable

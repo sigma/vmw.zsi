@@ -3,8 +3,8 @@
 '''Typecodes for dates and times.
 '''
 
-from ZSI import _copyright, _floattypes, _inttypes, EvaluateException
-from ZSI.TC import TypeCode, SimpleType, _get_object_id
+from ZSI import _copyright, _floattypes, _inttypes, _get_idstr, EvaluateException
+from ZSI.TC import TypeCode, SimpleType
 from ZSI.wstools.Namespaces import SCHEMA
 import operator, re, time
 
@@ -71,7 +71,7 @@ class Duration(TypeCode):
 
     def serialize(self, sw, pyobj, name=None, attrtext='', **kw):
         # XXX FIX
-        n = name or self.pname or ('E%s' % _get_object_id(pyobj))
+        n = name or self.pname or ('E%s' % _get_idstr(pyobj))
         if 1 in map(lambda x: x < 0, pyobj[0:6]):
             pyobj = map(abs, pyobj)
             neg = '-'
