@@ -245,8 +245,8 @@ pre {
 
 #header {
   margin: 10px 0px 10px 0px;
-  padding: 20px 0px 0px 20px;
-  height: 110px;
+  padding: 10px 0px 0px 0px;
+  height: 60px;
   border-style: solid;
   border-color: black;
   border-width: 1px 0px; /* top and bottom borders: 1px; left and right borders: 0px */
@@ -260,16 +260,13 @@ pre {
 }
 
 #footer {
-  position: relative;
-  margin: 50px 0px 10px 0px;
-  padding: 17px 0px 0px 20px;
-  height: 30px;
+  margin: 10px 0px 10px 0px;
+  height: 60px; 
   border-style: solid;
   border-color: black;
-  border-width: 1px 0px; /* top and bottom borders: 1px; left and right borders: 0px */
-  line-height: 11px;
+  border-width: 1px 0px;
   background-color: #ddeeff;
-  text-align: center;
+  white-space: nowrap;
 }
 
 #footnote {
@@ -408,8 +405,18 @@ pre {
 #contentfooter {
   width: 100%;
   text-align: center;
-  clear: both;
-  padding-top: 2em;
+}
+
+#contentfooterleft {
+  left: 10px;
+  horizontal-align: left;
+  vertical-align: center;
+}
+
+#contentfooterright {
+  right: 10px;
+  horizontal-align: right;
+  vertical-align: center;
 }
 
 #sidebar {
