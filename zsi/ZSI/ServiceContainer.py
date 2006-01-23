@@ -7,6 +7,7 @@ import urlparse, types, os, sys, cStringIO as StringIO, thread
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ZSI import ParseException, FaultFromException, FaultFromZSIException, Fault
 from ZSI import _copyright, _seqtypes, _get_element_nsuri_name, resolvers
+from ZSI import _get_idstr
 from ZSI.address import Address
 from ZSI.parse import ParsedSoap
 from ZSI.writer import SoapWriter
@@ -178,7 +179,7 @@ class ServiceInterface:
         return 1
 
     def __str__(self):
-        return '%s(%s) POST(%s)' %(self.__class__.__name__, id(self), self.post)
+        return '%s(%s) POST(%s)' %(self.__class__.__name__, _get_idstr(self), self.post)
 
     def sign(self, sw):
         return
@@ -428,7 +429,7 @@ class ServiceContainer(HTTPServer):
         map(lambda s: self.setNode(s), services)
 
     def __str__(self):
-        return '%s(%s) nodes( %s )' %(self.__class__, id(self), str(self._nodes))
+        return '%s(%s) nodes( %s )' %(self.__class__, _get_idstr(self), str(self._nodes))
 
     def __call__(self, ps, post, action, address=None):
         '''ps -- ParsedSoap representing the request

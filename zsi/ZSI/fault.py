@@ -4,7 +4,7 @@
 '''
 
 from ZSI import _copyright, _children, _child_elements, \
-        _stringtypes, _seqtypes, _Node, SoapWriter, ZSIException
+        _get_idstr, _stringtypes, _seqtypes, _Node, SoapWriter, ZSIException
 
 from ZSI.TCcompound import Struct
 from ZSI.TC import QName, URI, String, XMLString, AnyElement, UNBOUNDED
@@ -75,7 +75,7 @@ class ZSIFaultDetail:
         return self.string
 
     def __repr__(self):
-        return "<%s.ZSIFaultDetail at 0x%x>" % (__name__, id(self))
+        return "<%s.ZSIFaultDetail %s>" % (__name__, _get_idstr(self))
 ZSIFaultDetail.typecode = ZSIFaultDetailTypeCode()
 
 
@@ -173,7 +173,7 @@ class Fault(ZSIException):
         return strng
 
     def __repr__(self):
-        return "<%s.Fault at 0x%x>" % (__name__, id(self))
+        return "<%s.Fault at %s>" % (__name__, _get_idstr(self))
 
     AsSoap = AsSOAP
 

@@ -5,7 +5,7 @@
 
 from ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
     EvaluateException, FaultFromFaultMessage, _child_elements, _attrs,\
-    FaultException, WSActionException
+    _get_idstr, FaultException, WSActionException
 from ZSI.auth import AUTH
 from ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
     _get_type_definition
@@ -424,7 +424,7 @@ class Binding:
         return reply
 
     def __repr__(self):
-        return "<%s instance at 0x%x>" % (self.__class__.__name__, id(self))
+        return "<%s instance %s>" % (self.__class__.__name__, _get_idstr(self))
 
     def __getattr__(self, name):
         '''Return a callable object that will invoke the RPC method

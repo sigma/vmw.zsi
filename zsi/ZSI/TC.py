@@ -7,7 +7,8 @@ from ZSI import _copyright, _children, _child_elements, \
     _floattypes, _stringtypes, _seqtypes, _find_attr, _find_attrNS, \
     _find_arraytype, _find_default_namespace, _find_href, _find_encstyle, \
     _resolve_prefix, _find_xsi_attr, _find_type, \
-    _find_xmlns_prefix, _get_element_nsuri_name, _Node, EvaluateException, \
+    _find_xmlns_prefix, _get_element_nsuri_name, _get_idstr, \
+    _Node, EvaluateException, \
     _valid_encoding, ParseException
 
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
@@ -33,16 +34,6 @@ def _get_xsitype(pyclass):
         return (pyclass.schema, pyclass.type)
 
     return (None,None)
-
-def _get_object_id(pyobj):
-    '''Python 2.3.x will generate a FutureWarning for negative IDs, so
-    we use a different prefix character to ensure uniqueness, and
-    call abs() to avoid the warning.'''
-    x = id(pyobj)
-    if x < 0:
-        return 'x%x' % abs(x)
-    
-    return 'o%x' % x
 
 def _get_type_definition(namespaceURI, name):
     return SchemaInstanceType.getTypeDefinition(namespaceURI, name)
@@ -450,7 +441,7 @@ class SimpleType(TypeCode):
             sw --
             pyobj -- processed content.
         '''
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         n = name or self.pname or ('E' + objid)
 
         # nillable
@@ -586,7 +577,7 @@ class Any(TypeCode):
             pyobj.typecode.serialize(elt, sw, pyobj, **kw)
             return
 
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         n = self.get_name(name, objid)
 
         kw['name'] = n
@@ -1327,7 +1318,7 @@ class XML(TypeCode):
             Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
                 comments=self.comments)
             return
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         n = name or self.pname or ('E' + objid)
         xmlelt = elt.createAppendElement(self.nspname, n)
 
@@ -1343,7 +1334,7 @@ class XML(TypeCode):
 
     def cb(self, elt, sw, pyobj, unsuppressedPrefixes=[]):
         if sw.Known(pyobj): return
-        objid = _get_object_id(pyobj)
+        objid = _get_idstr(pyobj)
         n = self.pname or ('E' + objid)
 
         xmlelt = elt.createAppendElement(self.nspname, n)

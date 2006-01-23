@@ -269,6 +269,15 @@ def _backtrace(elt, dom):
         elt = parent
     return s
 
+def _get_idstr(pyobj):
+    '''Python 2.3.x generates a FutureWarning for negative IDs, so
+    we use a different prefix character to ensure uniqueness, and
+    call abs() to avoid the warning.'''
+    x = id(pyobj)
+    if x < 0:
+        return 'x%x' % abs(x)
+    return 'o%x' % x
+
 
 ##
 ##  Exception classes.
@@ -293,7 +302,7 @@ class ParseException(ZSIException):
         return self.str
 
     def __repr__(self):
-        return "<%s.ParseException at 0x%x>" % (__name__, id(self))
+        return "<%s.ParseException %s>" % (__name__, _get_idstr(self))
 
 
 class EvaluateException(ZSIException):
@@ -310,7 +319,7 @@ class EvaluateException(ZSIException):
         return self.str
 
     def __repr__(self):
-        return "<%s.EvaluateException at 0x%x>" % (__name__, id(self))
+        return "<%s.EvaluateException %s>" % (__name__, _get_idstr(self))
 
 class FaultException(ZSIException):
     '''Exception raised when a fault is received.
@@ -323,7 +332,7 @@ class FaultException(ZSIException):
         return str(self.fault)
 
     def __repr__(self):
-        return "<%s.FaultException at 0x%x>" % (__name__, id(self))
+        return "<%s.FaultException %s>" % (__name__, _get_idstr(self))
 
 class WSActionException(ZSIException):
     '''Exception raised when WS-Address Action Header is incorrectly

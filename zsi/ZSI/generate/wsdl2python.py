@@ -8,6 +8,7 @@
 # $Id$
 
 import os
+from ZSI import _get_idstr
 from ZSI.wstools.Utility import Base
 from ZSI.wstools import WSDLTools
 from ZSI.wstools.WSDLTools import SoapAddressBinding,\
@@ -157,7 +158,7 @@ class WriteServiceModule(Base):
         for schema in self._wsdl.types.values():
             tns = schema.getTargetNamespace()
             self.logger.debug('Register schema(%s) -- TNS(%s)'\
-                %(hex(id(schema)), tns),)
+                %(_get_idstr(schema), tns),)
             if self.usedNamespaces.has_key(tns) is False:
                 self.usedNamespaces[tns] = []
             self.usedNamespaces[tns].append(schema)
@@ -167,7 +168,7 @@ class WriteServiceModule(Base):
         # to used namespace and to the Alias dict
         for k,v in SchemaReader.namespaceToSchema.items():
             self.logger.debug('Register schema(%s) -- TNS(%s)'\
-                %(hex(id(v)), k),)
+                %(_get_idstr(v), k),)
             if self.usedNamespaces.has_key(k) is False:
                 self.usedNamespaces[k] = []
             self.usedNamespaces[k].append(v)
