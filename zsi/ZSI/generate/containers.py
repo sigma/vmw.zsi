@@ -826,18 +826,41 @@ class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerIn
               )
         ofwhat = '[%s]' %tcb.getTypecodeList()
         pyclass = msgRole.getMessage().name
-        message = [
-            'class %s:' %pyclass,
-            '%sdef __init__(self):' % ID1,
-            ]
 
+        fdict = KW.copy()
+        fdict['nspname'] = sbody.namespace
+        fdict['pname'] = pname
+        fdict['pyclass'] = None
+        fdict['ofwhat'] = ofwhat
+        fdict['encoded'] = namespace
+        fdict['typecode'] = \
+            'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
+
+        message = ['class %(pyclass)s:',
+                    '%(ID1)sdef __init__(self):']
+                    
         for aname in tcb.getAttributeNames():
-            message.append('%sself.%s = None' %(ID2, aname))
-        message.append('%sreturn' %ID2)
-
-        message.append('%s.typecode = Struct(pname=("%s","%s"), ofwhat=%s, pyclass=%s, encoded="%s")' \
-            %(pyclass, sbody.namespace, pname, ofwhat, pyclass, namespace),)
-        self.writeArray(message)
+            message.append('%(ID2)sself.' + aname +' = None')
+        message.append('%(ID2)sreturn')
+                    
+        # TODO: This isn't a TypecodeContainerBase instance but it
+        #    certaintly generates a pyclass and typecode.
+        #if self.metaclass is None:
+        if TypecodeContainerBase.metaclass is None:
+            fdict['pyclass'] = pyclass
+            fdict['typecode'] = fdict['typecode'] %fdict
+            message.append('%(pyclass)s.typecode = %(typecode)s')
+        else:
+            # Need typecode to be available when class is constructed.
+            fdict['typecode'] = fdict['typecode'] %fdict
+            fdict['pyclass'] = pyclass
+            fdict['metaclass'] = TypecodeContainerBase.metaclass
+            message.insert(0, '_%(pyclass)sTypecode = %(typecode)s')
+            message.insert(2, '%(ID1)stypecode = _%(pyclass)sTypecode')
+            message.insert(3, '%(ID1)s__metaclass__ = %(metaclass)s')
+            message.append('%(pyclass)s.typecode.pyclass = %(pyclass)s')
+ 
+        self.writeArray(map(lambda l: l %fdict, message))
 
 
 class ServiceRPCLiteralMessageContainer(ServiceContainerBase, MessageContainerInterface):
@@ -878,27 +901,50 @@ class ServiceRPCLiteralMessageContainer(ServiceContainerBase, MessageContainerIn
         sbody = msgRoleB.findBinding(WSDLTools.SoapBodyBinding)
         if not sbody or not sbody.namespace:            
             raise WSInteropError, WSISpec.R2717
-
-        mName = msgRole.getMessage().name
-        parts = msgRole.getMessage().parts.list
-        tcb = MessageTypecodeContainer(tuple(parts))
+        
+        namespace = sbody.namespace
+        tcb = MessageTypecodeContainer(\
+                  tuple(msgRole.getMessage().parts.list),
+              )
         ofwhat = '[%s]' %tcb.getTypecodeList()
-        pyclass = mName
+        pyclass = msgRole.getMessage().name
 
-        message = [
-            'class %s:' %mName,
-            '%sdef __init__(self):' % ID1,
-            ]
+        fdict = KW.copy()
+        fdict['nspname'] = sbody.namespace
+        fdict['pname'] = pname
+        fdict['pyclass'] = None
+        fdict['ofwhat'] = ofwhat
+        fdict['encoded'] = namespace
+        fdict['typecode'] = \
+            'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
 
-        anames = tcb.getAttributeNames()
-        for aname in anames:
-            message.append('%sself.%s = None' %(ID2, aname))
-        if not len(anames):
-            message.append('%sreturn' %ID2)
-
-        message.append('%s.typecode = Struct(pname=("%s","%s"), ofwhat=%s, pyclass=%s)' \
-            %(mName, sbody.namespace, pname, ofwhat, pyclass),)
-        self.writeArray(message)
+        message = ['class %(pyclass)s:',
+                    '%(ID1)sdef __init__(self):']
+                    
+        for aname in tcb.getAttributeNames():
+            message.append('%(ID2)sself.' + aname +' = None')
+        message.append('%(ID2)sreturn')
+                    
+        # TODO: This isn't a TypecodeContainerBase instance but it
+        #    certaintly generates a pyclass and typecode.
+        #if self.metaclass is None:
+        if TypecodeContainerBase.metaclass is None:
+            fdict['pyclass'] = pyclass
+            fdict['typecode'] = fdict['typecode'] %fdict
+            message.append('%(pyclass)s.typecode = %(typecode)s')
+        else:
+            # Need typecode to be available when class is constructed.
+            fdict['typecode'] = fdict['typecode'] %fdict
+            fdict['pyclass'] = pyclass
+            fdict['metaclass'] = TypecodeContainerBase.metaclass
+            message.insert(0, '_%(pyclass)sTypecode = %(typecode)s')
+            message.insert(2, '%(ID1)stypecode = _%(pyclass)sTypecode')
+            message.insert(3, '%(ID1)s__metaclass__ = %(metaclass)s')
+            message.append('%(pyclass)s.typecode.pyclass = %(pyclass)s')
+ 
+        self.writeArray(map(lambda l: l %fdict, message))
+        
+        
 
 
 
