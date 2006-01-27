@@ -1964,79 +1964,61 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
         ns, name, -- type definition?
         sKlass, sKlassNS? -- element declaration?
         '''
+        comment = 'not processed correctly'
         definition = []
         if self._is_array is True:
+            comment = 'complexType/complexContent base="SOAP-ENC:Array"'
             # 
             # SOAP-ENC:Array
             if _is_xsd_or_soap_ns(self.sKlassNS) is False and self.sKlass == 'Array':
                 raise ContainerError, 'unknown type: (%s,%s)'\
                     %(self.sKlass, self.sKlassNS)
-            definition.append(\
-                '%sclass %s(ZSI.TC.Array, TypeDefinition):' % (ID1, self.getClassName()),
-            )
-            definition.append(\
-                '%s%s' % (ID2, self.schemaTag()),
-            )
-            definition.append(\
-                '%s%s' % (ID2, self.typeTag()),
-            )
-            definition.append(\
-                '%s%s' % (ID2, self.pnameConstructor()),
-            )
+                    
             # No need to xsi:type array items since specify with
             # SOAP-ENC:arrayType attribute.
-            definition.append(\
-                '%(id3)sofwhat = %(ofwhat)s(None, typed=False)' %self._kw_array,
-            )
-            definition.append(\
-                '%(id3)satype = %(atype)s' %self._kw_array,
-            )
-            definition.append(\
-                '%s%s.__init__(self, atype, ofwhat, pname=pname, childnames=\'item\', **kw)'
-                %(ID3, self.sKlass),
-            )
-        else:
-            definition.append(\
-                '%sclass %s(TypeDefinition):' % (ID1, self.getClassName()),
-            )
-            definition.append(\
+            definition += [\
+                '%sclass %s(ZSI.TC.Array, TypeDefinition):' % (ID1, self.getClassName()),
                 '%s%s' % (ID2, self.schemaTag()),
-            )
-            definition.append(\
                 '%s%s' % (ID2, self.typeTag()),
-            )
-            definition.append(\
                 '%s%s' % (ID2, self.pnameConstructor()),
-            )
-            definition.append(\
+                '%(id3)sofwhat = %(ofwhat)s(None, typed=False)' %self._kw_array,
+                '%(id3)satype = %(atype)s' %self._kw_array,
+                '%s%s.__init__(self, atype, ofwhat, pname=pname, childnames=\'item\', **kw)'
+                    %(ID3, self.sKlass),
+                ]
+        else:
+            definition += [\
+                '%sclass %s(TypeDefinition):' % (ID1, self.getClassName()),
+                '%s%s' % (ID2, self.schemaTag()),
+                '%s%s' % (ID2, self.typeTag()),
+                '%s%s' % (ID2, self.pnameConstructor()),
                 '%s%s' % (ID3, self.nsuriLogic()),
-            )
-            definition.append(\
                 '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
-            )
-            definition.append(\
                 '%s'   % self.getBasesLogic(ID3),
-            )
-            definition.append(\
-                '%sattributes = {}'%(ID3)
-            )
+                '%(ID3)s%(atc)s = kw["%(atc)s"] = kw.get("%(atc)s", {})'\
+                    %{'ID3':ID3, 'atc':self.attribute_typecode},
+                ]
+                    
             for l in self.attrComponents: 
                 definition.append('%s%s'%(ID3, l))
                 
             if self.restriction:
+                comment = 'complexType/complexContent restriction'
                 definition.append(\
-                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, attributes=%s, restrict=True, **kw)' \
-                    %(ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), self.attribute_typecode ),
+                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, restrict=True, **kw)' %(ID3, 
+                        NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), ),
                 )
             elif self.extension:
+                comment = 'complexType/complexContent extension'
                 definition.append(\
-                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, attributes=%s, extend=True, **kw)' \
-                    %(ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), self.attribute_typecode ),
+                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, extend=True, **kw)'%(ID3,
+                        NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), ),
                 )
             else:
                 raise Wsdl2PythonError,\
                     'ComplexContent must be a restriction or extension'
 
+        definition.insert(1, '%s#%s' %(ID2, comment))
         self.writeArray(definition)
 
     def pnameConstructor(self, superclass=None):

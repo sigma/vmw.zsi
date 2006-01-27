@@ -71,8 +71,7 @@ class Address(object):
                 if netloc[1]==netlocF[1] and \
                    socket.gethostbyname(netloc[0])==socket.gethostbyname(netlocF[0]):
                     return
-            print urlparse.urlsplit(value)
-            print urlparse.urlsplit(self._addressTo)
+
             raise WSActionException, 'wrong WS-Address From(%s), expecting %s'%(value,self._addressTo)
 
     def _checkRelatesTo(self, value):
@@ -101,18 +100,18 @@ class Address(object):
     def getMessageID(self):
         return self._messageID
 
-    def getWSAddressTypeCodes(self, **kw):
+    def _getWSAddressTypeCodes(self, **kw):
         '''kw -- namespaceURI keys with sequence of element names.
         '''
         typecodes = []
         try:
             for nsuri,elements in kw.items():
                 for el in elements:
-                    pyclass = _get_global_element_declaration(nsuri, el)
-                    if pyclass is None:
+                    typecode = _get_global_element_declaration(nsuri, el)
+                    if typecode is None:
                         raise WSActionException, 'Missing namespace, import "%s"' %nsuri
 
-                    typecodes.append(pyclass())
+                    typecodes.append(typecode)
             else:
                 pass
         except EvaluateException, ex:
@@ -127,7 +126,7 @@ class Address(object):
         '''
         namespaceURI = self.wsAddressURI
         d = {namespaceURI:("MessageID","Action","To","From","RelatesTo")}
-        typecodes = self.getWSAddressTypeCodes(**d)
+        typecodes = self._getWSAddressTypeCodes(**d)
         pyobjs = ps.ParseHeaderElements(typecodes)
 
         got_action = pyobjs.get((namespaceURI,"Action"))
@@ -146,21 +145,35 @@ class Address(object):
         '''Call For Request
         '''
         self._action = action
-        self.header_pyobjs = pyobjs = {}
+        self.header_pyobjs = None
+        pyobjs = []
         namespaceURI = self.wsAddressURI
-        self.header_typecodes = typecodes = self.getWSAddressTypeCodes(\
-            **{namespaceURI:("MessageID", "Action", 'To', 'From')})
-        pyobjs[(namespaceURI, "Action")] = action
-        pyobjs[(namespaceURI,"MessageID")] = self._messageID = "uuid:%s" %time.time()
-        pyobjs[(namespaceURI, "To")] = self._addressTo
+        addressTo = self._addressTo
+        messageID = self._messageID = "uuid:%s" %time.time()
 
-        pyobj = MessageContainer()
-        pyobj._Address = self.anonymousURI
-        pyobjs[(namespaceURI,"From")] = pyobj
+        # Set Message Information Headers
+        # MessageID
+        typecode = _get_global_element_declaration(namespaceURI, "MessageID")
+        pyobjs.append(typecode.pyclass(messageID))
+
+        # Action
+        typecode = _get_global_element_declaration(namespaceURI, "Action")
+        pyobjs.append(typecode.pyclass(action))
+
+        # To
+        typecode = _get_global_element_declaration(namespaceURI, "To")
+        pyobjs.append(typecode.pyclass(addressTo))
+
+        # From
+        typecode = _get_global_element_declaration(namespaceURI, "From")
+        mihFrom = typecode.pyclass()
+        mihFrom._Address = self.anonymousURI
+        pyobjs.append(mihFrom)
 
         if endPointReference:
             if hasattr(endPointReference, 'typecode') is False:
                 raise EvaluateException, 'endPointReference must have a typecode attribute'
+
             if isinstance(endPointReference.typecode, \
                 _get_type_definition(namespaceURI ,'EndpointReferenceType')) is False:
                 raise EvaluateException, 'endPointReference must be of type %s' \
@@ -190,78 +203,50 @@ class Address(object):
                 raise EvaluateException, 'ReferenceProperties <any> assumed maxOccurs unbounded'
 
             for v in any:
-                if hasattr(v,'typecode') is True:
-                    typecodes.append(v.typecode)
-                else:
-                    raise EvaluateException, '<any> element broke '
+                if not hasattr(v,'typecode'):
+                    raise EvaluateException, '<any> element, instance missing typecode attribute'
 
-                k = (typecodes[-1].nspname,typecodes[-1].pname)
-                pyobjs[k] = v
+                pyobjs.append(v)
 
-    def setResponse(self, address, action):
-        '''Call For Response
-        address -- Request Address
-        '''
-        self.header_typecodes = typecodes = []
-        self.header_pyobjs = pyobjs = {}
+            #pyobjs.append(v)
 
-        self.replyTo = self.anonymousURI
-        self._relatesTo = "uuid:%s" %time.time()
-        self.From = None
-
-        namespaceURI = self.wsAddressURI
-        typecodes = self.getWSAddressTypeCodes(\
-            **{namespaceURI:("MessageID", "Action", 'To',)})
-
-        # wsa:Action
-        pyobjs[(namespaceURI, "Action")] = action or self._action
-
-        # wsa:MessageID
-        pyobjs[(namespaceURI,"MessageID")] = address.getRelatesTo()
-
-        # wsa:To
-        if address.getFrom() is None:
-            self.From = 'http://%s:%s%s' %(self.host,self.port,self.url)
-            pyobjs[(namespaceURI, "To")] = self.From
-        else:
-            to = address.getFrom()
-            pyobjs[(namespaceURI, "To")] = to._Address
-            self.From = to._Address
+        self.header_pyobjs = tuple(pyobjs)
 
     def setResponseFromWSAddress(self, address, localURL):
         '''Server-side has to set these fields in response.
         address -- Address instance, representing a WS-Address
         '''
         self.From = localURL
-        pyobjs = self.header_pyobjs = {}
+        self.header_pyobjs = None
+        pyobjs = []
         namespaceURI = self.wsAddressURI
-        d = {namespaceURI:("MessageID", "Action", "From", "To", "RelatesTo")}
-        self.header_typecodes = self.getWSAddressTypeCodes(**d)
 
-        pyobjs[(namespaceURI, "Action")] = self._action
-        pyobjs[(namespaceURI,"MessageID")] = "uuid:%s" %time.time()
-        pyobjs[(namespaceURI,"RelatesTo")] = address.getMessageID()
-        pyobjs[(namespaceURI,"To")] = self.anonymousURI
+        for nsuri,name,value in (\
+             (namespaceURI, "Action", self._action), 
+             (namespaceURI, "MessageID","uuid:%s" %time.time()),
+             (namespaceURI, "RelatesTo", address.getMessageID()),
+             (namespaceURI, "To", self.anonymousURI),):
 
-        typecode = self.header_typecodes[2]
-        pyobj = MessageContainer()
-        pyobj.setUp(typecode)
+            typecode = _get_global_element_declaration(nsuri, name)
+            pyobjs.append(typecode.pyclass(value))
+
+        typecode = _get_global_element_declaration(nsuri, "From")
+        pyobj = typecode.pyclass()
         pyobj._Address = self.From
-        pyobjs[(namespaceURI,"From")] = pyobj
+        pyobjs.append(pyobj)
+        self.header_pyobjs = tuple(pyobjs)
 
 
     def serialize(self, sw, **kw):
         '''
         sw -- SoapWriter instance, add WS-Address header.
         '''
-        typecodes, pyobjs_d = self.header_typecodes,self.header_pyobjs
-        for typecode in typecodes:
-            nspname,key = typecode.nspname,typecode.pname
-            if nspname:
-                key = (nspname,key)
-            pyobjs = pyobjs_d.get(key)
-            if pyobjs is not None:
-                sw.serialize_header(pyobjs, typecode, **kw)
+        for pyobj in self.header_pyobjs:
+            if hasattr(pyobj, 'typecode') is False:
+                raise RuntimeError, 'all header pyobjs must have a typecode attribute'
+
+            sw.serialize_header(pyobj, **kw)
+        
 
     def parse(self, ps, **kw):
         '''
@@ -270,7 +255,7 @@ class Address(object):
         namespaceURI = self.wsAddressURI
         elements = ("MessageID","Action","To","From","RelatesTo")
         d = {namespaceURI:elements}
-        typecodes = self.getWSAddressTypeCodes(**d)
+        typecodes = self._getWSAddressTypeCodes(**d)
         pyobjs = ps.ParseHeaderElements(typecodes)
         self._messageID = pyobjs[(namespaceURI,elements[0])]
         self._action = pyobjs[(namespaceURI,elements[1])]
@@ -278,7 +263,9 @@ class Address(object):
         self._from = pyobjs[(namespaceURI,elements[3])]
         self._relatesTo = pyobjs[(namespaceURI,elements[4])]
 
-
+# TODO: Remove MessageContainer.  Hopefully the new <any> functionality
+#       makes this irrelevant.  But could create an Interop problem.
+"""
 class MessageContainer:
     '''Automatically wraps all primitive types so attributes 
     can be specified.
@@ -332,7 +319,11 @@ class MessageContainer:
         If what is a ComplexType or a simpleType w/attributes instantiate 
         a new MessageContainer, else set attribute aname to None.
         '''
-        if typecode is None: typecode = self.typecode
+        if typecode is None: 
+            typecode = self.typecode
+        else:
+            self.typecode = typecode
+
         if not isinstance(typecode, TypeCode):
             raise TypeError, 'typecode must be a TypeCode class instance'
 
@@ -348,6 +339,7 @@ class MessageContainer:
                     getattr(self, what.aname).setUp(typecode=what)
         else:
             raise TypeError, 'Primitive type'
+"""
 
 
 if __name__ == '__main__': print _copyright

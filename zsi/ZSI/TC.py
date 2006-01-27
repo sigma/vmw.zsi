@@ -52,10 +52,19 @@ class SchemaInstanceType(type):
     '''Register all types/elements, when hit already defined 
     class dont create a new one just give back reference.  Thus 
     import order determines which class is loaded.
+
+    class variables:
+        types -- dict of typecode classes definitions 
+            representing global type definitions.
+        elements -- dict of typecode classes representing 
+            global element declarations.
+        element_typecode_cache -- dict of typecode instances 
+            representing global element declarations.
     '''
     types = {}
     elements = {}
-
+    element_typecode_cache = {}
+    
     def __new__(cls,classname,bases,classdict):
         '''If classdict has literal and schema register it as a
         element declaration, else if has type and schema register
@@ -85,19 +94,38 @@ class SchemaInstanceType(type):
         raise TypeError, 'SchemaInstanceType must be an ElementDeclaration or TypeDefinition '
 
     def getTypeDefinition(cls, namespaceURI, name):
-        '''Grab a type definition
-        namespaceURI -- 
-        name -- 
+        '''Grab a type definition, returns a typecode class definition
+        because the facets (name, minOccurs, maxOccurs) must be provided.
+ 
+        Parameters:
+           namespaceURI -- 
+           name -- 
         '''
         return cls.types.get((namespaceURI, name), None)
     getTypeDefinition = classmethod(getTypeDefinition)
 
-    def getElementDeclaration(cls, namespaceURI, name):
-        '''Grab an element declaration
-        namespaceURI -- 
-        name -- 
+    def getElementDeclaration(cls, namespaceURI, name, isref=False):
+        '''Grab an element declaration, returns a typecode instance
+        representation or a typecode class definition.  An element 
+        reference has its own facets, and is local so it will not be
+        cached.
+
+        Parameters:
+            namespaceURI -- 
+            name -- 
+            isref -- if element reference, return class definition.
         '''
-        return cls.elements.get((namespaceURI, name), None)
+        key = (namespaceURI, name)
+        if isref:
+            return cls.elements.get(key,None)
+ 
+        typecode = cls.element_typecode_cache.get(key, None)
+        if typecode is None:
+            tcls = cls.elements.get(key,None)
+            if tcls is not None:
+                typecode = cls.element_typecode_cache[key] = tcls()
+            
+        return typecode
     getElementDeclaration = classmethod(getElementDeclaration)
 
 
@@ -1590,8 +1618,8 @@ class AnyElement(AnyType):
         3) if 'strict' get declaration, or raise.
         '''
         nspname,pname = _get_element_nsuri_name(elt)
-        pyclass = _get_global_element_declaration(nspname, pname)
-        if pyclass is None:
+        what = _get_global_element_declaration(nspname, pname)
+        if what is None:
             # if self.processContents == 'strict': raise
             # Allow use of "<any>" element declarations w/ local element declarations
             prefix, typeName = SplitQName(_find_type(elt))
@@ -1630,7 +1658,6 @@ class AnyElement(AnyType):
                     what = String(pname=(nspname,pname))
                     pyobj = Wrap(what.parse(elt, ps), what)
         else:
-            what = pyclass()
             pyobj = what.parse(elt, ps)
             try:
                 pyobj.typecode = what
@@ -1659,12 +1686,12 @@ class Union(SimpleType):
         if self.__class__.memberTypes is None:
             raise EvaluateException, 'uninitialized class variable memberTypes [(namespace,name),]'
         for nsuri,name in self.__class__.memberTypes:
-            pyclass = _get_type_definition(nsuri,name)
-            if pyclass is None:
+            tcclass = _get_type_definition(nsuri,name)
+            if tcclass is None:
                 tc = Any.parsemap.get((nsuri,name))
                 typecode = tc.__class__(pname=(self.nspname,self.pname))
             else:
-                typecode = pyclass(pname=(self.nspname,self.pname))
+                typecode = tcclass(pname=(self.nspname,self.pname))
 
             if typecode is None:
                 raise EvaluateException, \

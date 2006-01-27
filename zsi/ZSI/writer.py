@@ -58,26 +58,36 @@ class SoapWriter:
             return None
         return self.header
 
-    def serialize_header(self, hpyobjs, htypecode, **kw):
+    def serialize_header(self, pyobj, typecode=None, **kw):
         '''Serialize a Python object in SOAP-ENV:Header, make
         sure everything in Header unique (no #href).
+
+        Parameters: 
+            pyobjs -- instances to serialize in SOAP Header
+            typecode -- default typecode
         '''
         kw['unique'] = True
         soap_env = _reserved_ns['SOAP-ENV']
-        header = self.dom.getElement(soap_env, 'Header')
-        if type(hpyobjs) not in _seqtypes:
-           hpyobjs = (hpyobjs,)
-        for hpyobj in hpyobjs:
-            helt = htypecode.serialize(header, self, hpyobj, **kw)
+        #header = self.dom.getElement(soap_env, 'Header')
+        header = self._header
+        if header is None:
+            header = self._header = self.dom.createAppendElement(soap_env, 'Header')
 
-    def serialize(self, pyobj, typecode=None, root=None, header_pyobjs={}, 
-                   header_typecodes=(), **kw):
+        typecode = getattr(pyobj, 'typecode', typecode)
+        if typecode is None:
+            raise RuntimeError, 'typecode is required to serialize pyobj in header'
+
+        helt = typecode.serialize(header, self, pyobj, **kw)
+
+    #def serialize(self, pyobj, typecode=None, root=None, header_pyobjs={}, 
+    #               header_typecodes=(), **kw):
+    def serialize(self, pyobj, typecode=None, root=None, header_pyobjs=(), **kw):
         '''Serialize a Python object to the output stream.
            pyobj -- python instance to serialize in body.
            typecode -- typecode describing body 
            root -- SOAP-ENC:root
-           header_pyobjs -- dictionary of header instances
-           header_typecodes -- list of header typecodes
+           header_pyobjs -- list of pyobj for soap header inclusion, each
+              instance must specify the typecode attribute.
         '''
         self.body = None
         if self.envelope: 
@@ -90,12 +100,10 @@ class SoapWriter:
                 self.dom.setAttributeNS(soap_env, 'encodingStyle', 
                                         self.encodingStyle)
             if self.header:
-                header = self.dom.createAppendElement(soap_env, 'Header')
-                for htypecode in header_typecodes:
-                    nspname,pname = htypecode.nspname,htypecode.pname
-                    hpyobjs = header_pyobjs.get((nspname,pname))
-                    if hpyobjs is not None:
-                        self.serialize_header(hpyobjs, htypecode, **kw)
+                self._header = self.dom.createAppendElement(soap_env, 'Header')
+
+                for h in header_pyobjs:
+                    self.serialize_header(h, **kw)
 
             self.body = self.dom.createAppendElement(soap_env, 'Body')
         else:
