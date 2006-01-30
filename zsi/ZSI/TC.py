@@ -38,8 +38,8 @@ def _get_xsitype(pyclass):
 def _get_type_definition(namespaceURI, name):
     return SchemaInstanceType.getTypeDefinition(namespaceURI, name)
 
-def _get_global_element_declaration(namespaceURI, name):
-    return SchemaInstanceType.getElementDeclaration(namespaceURI, name)
+def _get_global_element_declaration(namespaceURI, name, **kw):
+    return SchemaInstanceType.getElementDeclaration(namespaceURI, name, **kw)
 
 def _get_substitute_element(elt, what):
     raise NotImplementedError, 'Not implemented'
