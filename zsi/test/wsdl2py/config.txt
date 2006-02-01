@@ -44,6 +44,17 @@ port = 9080
 #
 ##########################################################################
 
+########################## SIMPLE ########################################
+# Just basic unittest, they will be run without any additional configuration.
+# Variables:
+#   tests -- whitespace separated list of test modules that 
+#            must define a makeTestSuite function that returns a test suite.
+#
+##########################################################################
+[simple]
+tests = 
+
+
 ########################## RPC/ENCODED ###################################
 #
 # Broken:

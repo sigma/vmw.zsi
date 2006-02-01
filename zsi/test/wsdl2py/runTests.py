@@ -16,7 +16,7 @@ def makeTestSuite(document=None, literal=None, broke=None):
        broke -- None, True, False
     """
     cp = CONFIG_PARSER
-    testSections = []
+    testSections = ['simple']
     sections = ['rpc_encoded' , 'rpc_encoded_broke',
                 'rpc_literal', 'rpc_literal_broke', 'rpc_literal_broke_interop',
                 'doc_literal', 'doc_literal_broke', 'doc_literal_broke_interop',
