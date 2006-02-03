@@ -833,8 +833,21 @@ class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerIn
         fdict['pyclass'] = None
         fdict['ofwhat'] = ofwhat
         fdict['encoded'] = namespace
-        fdict['typecode'] = \
-            'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
+
+        #    
+        # SOAP-1.1 Note:
+        # Each parameter accessor has a name corresponding to the name of the 
+        # parameter and type corresponding to the type of the parameter. The name of 
+        # the return value accessor is not significant. Likewise, the name of the struct is 
+        # not significant. However, a convention is to name it after the method name 
+        # with the string "Response" appended.
+        #    
+        if self.input is False:
+            fdict['typecode'] = \
+                'Struct(pname=None, ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
+        else:
+            fdict['typecode'] = \
+                'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
 
         message = ['class %(pyclass)s:',
                     '%(ID1)sdef __init__(self):']
@@ -1837,7 +1850,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
             '%s'   % self.getBasesLogic(ID3),
             '%s%s.%s.__init__(self, **kw)' \
             % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
-            '%sself.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
+            '%sif self.pyclass is not None: self.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
             ]
 
         self.writeArray(element)
@@ -2345,6 +2358,8 @@ class UnionContainer(SimpleTypeContainer):
             '%s%s' % (ID2, self.pnameConstructor()),
             '%s%s' % (ID3, self.pnameConstructor(self.sKlass)),
             ]
+
+        # TODO: Union pyclass is None
         self.writeArray(definition)
 
 
