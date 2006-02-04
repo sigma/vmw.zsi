@@ -283,7 +283,7 @@ class ServiceDescription(Base):
             else:
                 sop_container.setReaderClass(kw.get('readerclass'))
                 sop_container.setWriterClass(kw.get('writerclass'))
-                for soc in sop_container.getOperationContainers():
+                for soc in sop_container.operations:
                     if soc.hasInput() is True:
                         mw = MessageWriter(do_extended=self.do_extended)
                         mw.setUp(soc, port, input=True)

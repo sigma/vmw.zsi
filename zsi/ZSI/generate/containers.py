@@ -37,6 +37,33 @@ element_class_name -- function to return the name formatted as an element class.
 type_class_name = lambda n: '%s%s' %(NC_to_CN(n), DEF)
 element_class_name = lambda n: '%s%s' %(NC_to_CN(n), DEC)
 
+
+def IsRPC(item):
+    """item -- OperationBinding instance.
+    """
+    if not isinstance(item, WSDLTools.OperationBinding):
+        raise TypeError, 'IsRPC takes 1 argument of type WSDLTools.OperationBinding'
+    soapbinding = item.getBinding().findBinding(WSDLTools.SoapBinding)
+    sob = item.findBinding(WSDLTools.SoapOperationBinding)
+    style = soapbinding.style
+    if sob is not None:
+        style = sob.style or soapbinding.style
+    return style == 'rpc'
+
+
+def IsLiteral(item):
+    """item -- MessageRoleBinding instance.
+    """
+    if not isinstance(item, WSDLTools.MessageRoleBinding):
+        raise TypeError, 'IsLiteral takes 1 argument of type WSDLTools.MessageRoleBinding'
+    sbb = None
+    if item.type == 'input' or item.type == 'output':
+        sbb = item.findBinding(WSDLTools.SoapBodyBinding)
+    if sbb is None:
+        raise ValueError, 'Missing soap:body binding.'
+    return sbb.use == 'literal'
+
+
 def SetTypeNameFunc(func):
     global type_class_name
     type_class_name = func
@@ -97,10 +124,6 @@ class AttributeMixIn:
             return formatted_attribute_list
         
         atd_list.append('# attribute handling code')
-#        atd_list.append('self.%s = {}' %atd)
-#        atd_list.append('self.%s.update(%s.%s.%s)' \
-#            %(atd, self.getNSAlias(), self.getClassName(), atd))
-
         for a in attributes:
             
             if a.isWildCard() and a.isDeclaration():
@@ -120,9 +143,6 @@ class AttributeMixIn:
                     try:
                         tc = BTI.get_typeclass(t[1], t[0])
                     except:
-#                        raise ContainerError,\
-#                            'type attribute(%s) not primitive type?: %s' \
-#                            %(t, a.getItemTrace())
                         # hand back a string by default.
                         tc = ZSI.TC.String
                             
@@ -165,9 +185,6 @@ class AttributeMixIn:
                         atd_list.append(\
                             '%s[%s] = ZSI.TC.String()' %(atd, key)
                             )
-#                        raise ContainerError,\
-#                              'no type in attribute declaration: %s'\
-#                              %a.getItemTrace()
                     else:
                         atd_list.append(\
                             '%s[%s] = %s()' %(atd, key, 
@@ -408,26 +425,6 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
         cls.writerclass = className 
     setWriterClass = classmethod(setWriterClass)
 
-    def getOperationContainers(self):
-        '''retrieve list of ServiceOperationContainer instances.
-        '''
-        assert self.bName is not None, 'call setUp first.'
-        return self.operations
-
-    def addOperation(self, name, port):
-        '''
-        name -- Operation Name.
-        port -- WSDL.Port instance
-        '''
-        bop = port.getBinding().operations.get(name)
-        op = port.getBinding().getPortType().operations.get(name)
-        if op is None or bop is None:
-            raise Wsdl2PythonError, 'no matching portType/Binding operation(%s)' % bop.name
-
-        c = ServiceOperationContainer(name, useWSA=self.useWSA, do_extended=self.do_extended, wsdl=self._wsdl)
-        c.setUp(port)
-        self.operations.append(c)
-
     def setUp(self, port):
         '''This method finds all SOAP Binding Operations, it will skip 
         all bindings that are not SOAP.  
@@ -437,16 +434,17 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
 
         self.bName = port.getBinding().name
         self.rProp = port.getBinding().getPortType().getResourceProperties() 
-
         soap_binding = port.getBinding().findBinding(WSDLTools.SoapBinding)
         if soap_binding is None:
-            raise Wsdl2PythonError, 'port(%s) missing WSDLTools.SoapBinding' %port.name
+            raise Wsdl2PythonError,\
+                'port(%s) missing WSDLTools.SoapBinding' %port.name
 
         for bop in port.getBinding().operations:
             soap_bop = bop.findBinding(WSDLTools.SoapOperationBinding)
             if soap_bop is None:
                 self.logger.warning(\
-                    'Skip port(%s) operation(%s) no SOAP Binding Operation' %(port.name, bop.name),
+                    'Skip port(%s) operation(%s) no SOAP Binding Operation'\
+                    %(port.name, bop.name),
                 )
                 continue
 
@@ -460,7 +458,15 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
                     )
                     continue
                 
-            self.addOperation(bop.name, port)
+            op = port.getBinding().getPortType().operations.get(bop.name)
+            if op is None:
+                raise Wsdl2PythonError,\
+                    'no matching portType/Binding operation(%s)' % bop.name
+                    
+            c = ServiceOperationContainer(useWSA=self.useWSA, 
+                    do_extended=self.do_extended)
+            c.setUp(bop)
+            self.operations.append(c)
 
     def _setContent(self):
         if self.useWSA is True:
@@ -494,26 +500,19 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
 
 
 class ServiceOperationContainer(ServiceContainerBase):
-    def __init__(self, name, useWSA=False, soapAction=None, do_extended=False, wsdl=None):
+    #def __init__(self, name, useWSA=False, soapAction=None, do_extended=False, wsdl=None):
+    def __init__(self, useWSA=False, do_extended=False):
         '''Parameters:
-        name -- binding name
-        useWSA   -- boolean, enable ws-addressing
-        soapAction -- soapaction value for this operation
+              useWSA -- boolean, enable ws-addressing
+              do_extended -- boolean
         '''
         ServiceContainerBase.__init__(self)
-        self.name = name
         self.useWSA  = useWSA
-        self.port = None
-        self.soapaction = None
-        self.inputName  = None
-        self.outputName = None
-        self.inputSimpleType  = None
-        self.outputSimpleType = None
-        self.inputAction  = None
-        self.outputAction = None
         self.do_extended = do_extended
-        if do_extended:
-            self._wsdl = wsdl
+
+        # TODO: Remove this.. setUp()  item.getWSDL()
+        #if do_extended:
+        #    self._wsdl = kw.get('wsdl', None)
 
     def hasInput(self):
         return self.inputName is not None
@@ -522,19 +521,14 @@ class ServiceOperationContainer(ServiceContainerBase):
         return self.outputName is not None
 
     def isRPC(self):
-        binding = self.port.getBinding()
-        soap = binding.findBinding(WSDLTools.SoapBinding)
-        return soap.style=='rpc'
+        return IsRPC(self.binding_operation)
 
     def isLiteral(self, input=True):
-        binding = self.port.getBinding()
-        bop = binding.operations.get(self.name)
-        msgrole = bop.input
+        msgrole = self.binding_operation.input
         if input is False:
-            msgrole = bop.output
-        body = msgrole.findBinding(WSDLTools.SoapBodyBinding)
-        return body.use=='literal'
-
+            msgrole = self.binding_operation.output
+        return IsLiteral(msgrole)
+    
     def isSimpleType(self, input=True):
         if input is False:
             return self.outputSimpleType
@@ -549,17 +543,31 @@ class ServiceOperationContainer(ServiceContainerBase):
     def getOperationName(self):
         return self.name
 
-    def setUp(self, port):
-        '''Parameters:
-	port -- WSDLTools Port instance.
+    def setUp(self, item):
         '''
-        assert isinstance(port, WSDLTools.Port), 'expecting WSDLTools Operation instance'
-
-        self.port = port
-        name = self.name
-        bop = port.getBinding().operations.get(name)
-        op = port.getBinding().getPortType().operations.get(name)
-        if op is None or bop is None:
+        Parameters:
+	        item -- WSDLTools BindingOperation instance.
+        '''
+        if not isinstance(item, WSDLTools.OperationBinding):
+            raise TypeError, 'expecting WSDLTools Operation instance'
+        
+        self.name = None
+        self.port = None
+        self.soapaction = None
+        self.inputName  = None
+        self.outputName = None
+        self.inputSimpleType  = None
+        self.outputSimpleType = None
+        self.inputAction  = None
+        self.outputAction = None
+        self.port = port = item.getBinding().getPortType()
+        self._wsdl = item.getWSDL()
+        self.name = name = item.name
+        self.binding_operation = item
+        
+        op = port.operations.get(name)
+        bop = item
+        if bop is None:
             raise Wsdl2PythonError, 'no matching portType/Binding operation(%s)' %name
 
         soap_bop = bop.findBinding(WSDLTools.SoapOperationBinding)
@@ -571,17 +579,19 @@ class ServiceOperationContainer(ServiceContainerBase):
             self.encodingStyle = None
             if sbody.use == 'encoded':
                 assert sbody.encodingStyle == SOAP.ENC,\
-                    'Supporting encodingStyle=%s, not %s' %(SOAP.ENC, sbody.encodingStyle)
+                    'Supporting encodingStyle=%s, not %s'%(SOAP.ENC, sbody.encodingStyle)
                 self.encodingStyle = sbody.encodingStyle
 
         self.soapaction=soap_bop.soapAction
-        if op.input:
+        if item.input:
             self.inputName  = op.getInputMessage().name
-            self.inputSimpleType = FromMessageGetSimpleElementDeclaration(op.getInputMessage())
+            self.inputSimpleType = \
+                FromMessageGetSimpleElementDeclaration(op.getInputMessage())
             self.inputAction = op.getInputAction()
-        if op.output:
+        if item.output:
             self.outputName = op.getOutputMessage().name
-            self.outputSimpleType = FromMessageGetSimpleElementDeclaration(op.getOutputMessage())
+            self.outputSimpleType = \
+                FromMessageGetSimpleElementDeclaration(op.getOutputMessage())
             self.outputAction = op.getOutputAction()
 
     def _setContent(self):
@@ -654,10 +664,40 @@ class ServiceOperationContainer(ServiceContainerBase):
                 '%sself.binding.Send(None, None, request, soapaction="%s", %s'\
                 %(ID2, self.soapaction, bindArgs),
             ]
+            
+        #
+        # BP 1.0: rpc/literal
+        # WSDL 1.1 Section 3.5 could be interpreted to mean the RPC response 
+        # wrapper element must be named identical to the name of the 
+        # wsdl:operation.
+        # R2729
 
+        #    
+        # SOAP-1.1 Note: rpc/encoded
+        # Each parameter accessor has a name corresponding to the name of the 
+        # parameter and type corresponding to the type of the parameter. The name of 
+        # the return value accessor is not significant. Likewise, the name of the struct is 
+        # not significant. However, a convention is to name it after the method name 
+        # with the string "Response" appended.
+        #   
         if self.outputName:
             response = ['%s%s' % (ID2, wsactionOut),]
-            response.append('%sresponse = self.binding.Receive(%s.typecode%s)' %(ID2, self.outputName, responseArgs))
+            if self.isRPC() and not self.isLiteral():
+                # rpc/encoded Replace wrapper name with None
+                response.append(\
+                    '%stypecode = Struct(pname=None, ofwhat=%s.typecode.ofwhat, pyclass=%s.typecode.pyclass)' %(
+                         ID2, self.outputName, self.outputName)
+                    )
+                response.append(\
+                    '%sresponse = self.binding.Receive(typecode%s)' %(
+                         ID2, responseArgs)
+                    )
+            else:
+                response.append(\
+                    '%sresponse = self.binding.Receive(%s.typecode%s)' %(
+                         ID2, self.outputName, responseArgs)
+                    )
+
             if self.outputSimpleType:
                 response.append('%sreturn %s(response)' %(ID2, self.outputName))
             else: 
@@ -833,21 +873,13 @@ class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerIn
         fdict['pyclass'] = None
         fdict['ofwhat'] = ofwhat
         fdict['encoded'] = namespace
-
-        #    
-        # SOAP-1.1 Note:
-        # Each parameter accessor has a name corresponding to the name of the 
-        # parameter and type corresponding to the type of the parameter. The name of 
-        # the return value accessor is not significant. Likewise, the name of the struct is 
-        # not significant. However, a convention is to name it after the method name 
-        # with the string "Response" appended.
-        #    
-        if self.input is False:
-            fdict['typecode'] = \
-                'Struct(pname=None, ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
-        else:
-            fdict['typecode'] = \
-                'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
+ 
+        #if self.input is False:
+        #    fdict['typecode'] = \
+        #        'Struct(pname=None, ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
+        #else:
+        fdict['typecode'] = \
+            'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
 
         message = ['class %(pyclass)s:',
                     '%(ID1)sdef __init__(self):']
