@@ -13,7 +13,7 @@ from twisted.python import log, failure
 from twisted.web.error import NoResource
 from twisted.web.server import NOT_DONE_YET
 import twisted.web.http
-import twisted.web.resource.Resource
+import twisted.web.resource
 
 # ZSI imports
 from ZSI import _get_element_nsuri_name, EvaluateException, ParseException
@@ -99,7 +99,7 @@ class DefaultCallbackHandler:
         except TypeError, ex:
             log.err(
                 'ERROR: service %s is broken, method MUST return request, response'\
-                    %self.__class__.__name__
+                    % cls.__name__
             )
             raise
         except Exception, ex:
@@ -225,7 +225,7 @@ def CheckInputArgs(*interfaces):
                     continue
                 raise TypeError, 'got %s, expecting %s' %(args[i], types[i])
             func(self, *args, **kw)
-        return check
+        return check_args
     return wrapper
             
 
