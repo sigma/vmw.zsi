@@ -212,7 +212,7 @@ class ServiceModuleWriter:
             except KeyError, ex:
                 raise WsdlGeneratorError,\
                     'Port(%s) PortType(%s) missing operation(%s) defined in Binding(%s)' \
-                    %(port.name,portType.name,op.name,binding.name)
+                    %(port.name,portType.name,bop.name,binding.name)
 
             for ext in bop.extensions:
                  if isinstance(ext, WSDLTools.SoapOperationBinding):
