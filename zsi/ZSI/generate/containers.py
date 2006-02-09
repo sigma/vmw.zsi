@@ -535,10 +535,10 @@ class ServiceOperationContainer(ServiceContainerBase):
         return self.inputSimpleType
 
     def getOperation(self):
-        return self.port.getBinding().getPortType().operations.get(self.name)
+        return self.port.operations.get(self.name)
 
     def getBOperation(self):
-        return self.port.getBinding().get(self.name)
+        return self.port.get(self.name)
 
     def getOperationName(self):
         return self.name
