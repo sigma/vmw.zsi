@@ -406,7 +406,6 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
         self.useWSA = useWSA
         self.rProp = None
         self.bName = None
-        self.readerclass = self.writerclass = None
         self.operations = []
         self.do_extended = do_extended
         self._wsdl = wsdl # None unless do_extended == True
