@@ -217,13 +217,16 @@ class WSAdddressCallbackHandler:
 
 
 def CheckInputArgs(*interfaces):
+    """Must provide at least one interface, the last one may be repeated.
+    """
     l = len(interfaces)
     def wrapper(func):
         def check_args(self, *args, **kw):
             for i in range(len(args)):
-                if (l > i and interfaces[i].providedBy(args[i])) or type(args[i]) is interfaces[-1]:
+                if (l > i and interfaces[i].providedBy(args[i])) or interfaces[-1].providedBy(args[i]):
                     continue
-                raise TypeError, 'got %s, expecting %s' %(args[i], types[i])
+                if l > i: raise TypeError, 'arg %s does not implement %s' %(args[i], interfaces[i])
+                raise TypeError, 'arg %s does not implement %s' %(args[i], interfaces[-1])
             func(self, *args, **kw)
         return check_args
     return wrapper
