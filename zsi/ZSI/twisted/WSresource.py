@@ -1,11 +1,10 @@
 ###########################################################################
 # Joshua R. Boverhof, LBNL
 # See Copyright for copyright notice!
+# $Id$
 ###########################################################################
 
-# $Id $
-
-import sys,warnings
+import sys, warnings
 
 # twisted & related imports
 from zope.interface import classProvides, implements, Interface
@@ -185,7 +184,7 @@ class WSAddressHandler:
         return sw
     
 
-class WSAdddressCallbackHandler:
+class WSAddressCallbackHandler:
     classProvides(CallbackChainInterface)
 
     @classmethod
