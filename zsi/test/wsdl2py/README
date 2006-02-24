@@ -11,6 +11,14 @@ the Server stubs will are runtime tested only if "local" is
 specified and an executable is provided via the "servers"
 section.
 
+To run all "working" tests:
+    %./runTests.py
+
+
+
+TODO: 
+    change all "test_" methods to "test_rpc_" or "test_nonrpc"
+
 
 DIRECTORIES:
      "stubs" -- 

@@ -5,6 +5,7 @@
 ###########################################################################
 import sys, unittest
 from ServiceTest import ServiceTestCase, ServiceTestSuite
+import ZSI
 from ZSI import FaultException
 """
 Unittest for contacting the OPC XML-DA Service.
@@ -35,7 +36,7 @@ class OPCServiceTest(ServiceTestCase):
         ServiceTestCase.setSection(self,self.name)
         ServiceTestCase.setUp(self)
         
-    def test_GetProperties(self):
+    def test_rpc_GetProperties(self):
         """sending an empty GetProperties request, 
         receiving empty response.
         
@@ -59,7 +60,7 @@ class OPCServiceTest(ServiceTestCase):
         self.failUnless(len(response._Errors) == 0)
         
         
-    def test_Browse(self):
+    def test_rpc_Browse(self):
         """FaultException: The item path is not known to the server.
         """
         operationName = 'Browse'
@@ -74,7 +75,7 @@ class OPCServiceTest(ServiceTestCase):
         self.failUnlessRaises(FaultException, self._ports[0].Browse, msg)
         
         
-    def test_Read(self):
+    def test_rpc_Read(self):
         """FaultException: The item path is not known to the server.
         """
         msg = self.getInputMessageInstance('Read')
@@ -102,6 +103,28 @@ class OPCServiceTest(ServiceTestCase):
              )
 
         self._ports[0].Read(msg)
+        
+    def test_nonrpc_anyType(self):
+        """serialize an int via anyType, then parse it back.
+        """
+        from OpcXmlDaSrv_services import ReadSoapOut
+        import time
+        print ZSI.TC.Any.serialmap
+        #tc = ZSI.TC.Any.serialmap.get(int)
+        #tc.logger = ZSI.wstools.logging.BasicLogger("AnyInt")
+        pyobj = ReadSoapOut()
+        pyobj.RItemList = pyobj.new_RItemList()
+        item = pyobj.RItemList.Items = pyobj.RItemList.new_Items()
+        item.typecode.ofwhat[1].processContents = 'lax'
+        item.Value = 123
+        s = str(ZSI.SoapWriter().serialize(pyobj))
+        print s
+        
+        ps = ZSI.ParsedSoap(s)
+        pyobj = ps.Parse(pyobj.typecode)
+        print "Parse\n", pyobj
+        for item in pyobj.RItemList.Items:
+            print item.Value
 
         
 

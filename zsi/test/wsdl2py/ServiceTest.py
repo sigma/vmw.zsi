@@ -6,25 +6,6 @@
 
 import os, sys, unittest, urlparse, signal, time, warnings
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from ZSI.wstools import WSDLTools
-from ZSI.wstools.Namespaces import WSA200408, WSA200403, WSA200303
-from ZSI.wstools.logging import setBasicLoggerDEBUG
-from ZSI.wstools.TimeoutSocket import TimeoutError
-from ZSI.generate.wsdl2python import WriteServiceModule
-from ZSI.generate.wsdl2dispatch import ServiceModuleWriter, WSAServiceModuleWriter
-import StringIO, copy, getopt
-
-# set up pyclass metaclass for complexTypes
-from ZSI.generate.containers import TypecodeContainerBase, TypesHeaderContainer
-TypecodeContainerBase.metaclass = 'pyclass_type'
-TypesHeaderContainer.imports.append(\
-        'from ZSI.generate.pyclass import pyclass_type'
-        )
-
-
-sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
-print sys.path[-1]
-
 """Global Variables:
     CONFIG_FILE -- configuration file 
     CONFIG_PARSER -- ConfigParser instance
@@ -56,8 +37,27 @@ SECTION_SERVERS = 'servers'
 
 CONFIG_PARSER.read(CONFIG_FILE)
 if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug'):
+    from ZSI.wstools.logging import setBasicLoggerDEBUG
     setBasicLoggerDEBUG()
 
+
+from ZSI.wstools import WSDLTools
+from ZSI.wstools.Namespaces import WSA200408, WSA200403, WSA200303
+from ZSI.wstools.TimeoutSocket import TimeoutError
+from ZSI.generate.wsdl2python import WriteServiceModule
+from ZSI.generate.wsdl2dispatch import ServiceModuleWriter, WSAServiceModuleWriter
+import StringIO, copy, getopt
+
+# set up pyclass metaclass for complexTypes
+from ZSI.generate.containers import TypecodeContainerBase, TypesHeaderContainer
+TypecodeContainerBase.metaclass = 'pyclass_type'
+TypesHeaderContainer.imports.append(\
+        'from ZSI.generate.pyclass import pyclass_type'
+        )
+
+
+sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
+print sys.path[-1]
 ENVIRON = copy.copy(os.environ)
 ENVIRON['PYTHONPATH'] = ENVIRON.get('PYTHONPATH', '') + ':' + MODULEDIR
 
@@ -149,14 +149,14 @@ class ServiceTestCase(unittest.TestCase):
             raise TestException, 'No such section(%s) in configuration file(%s)' \
                 %(self.url_section, CONFIG_FILE)
 
-        try:
-            os.mkdir(MODULEDIR)
-        except OSError, ex:
-            pass
+        #try:
+        #    os.mkdir(MODULEDIR)
+        #except OSError, ex:
+        #    pass
 
-        os.chdir(MODULEDIR)
-        if MODULEDIR not in sys.path:
-            sys.path.append(MODULEDIR)
+        #os.chdir(MODULEDIR)
+        #if MODULEDIR not in sys.path:
+        #    sys.path.append(MODULEDIR)
 
         reader = WSDLTools.WSDLReader()
         url = CONFIG_PARSER.get(self.url_section, self.name)
@@ -166,10 +166,19 @@ class ServiceTestCase(unittest.TestCase):
         except TimeoutError:
             # SKIP 
             self.fail('socket timeout retrieving WSDL: %s' %url)
-            os.chdir(TOPDIR)
+            #os.chdir(TOPDIR)
         except:
-            os.chdir(TOPDIR)
+            #os.chdir(TOPDIR)
             raise
+
+        try:
+            os.mkdir(MODULEDIR)
+        except OSError, ex:
+            pass
+
+        os.chdir(MODULEDIR)
+        if MODULEDIR not in sys.path:
+            sys.path.append(MODULEDIR)
            
         try:
             self._wsm = WriteServiceModule(wsdl)

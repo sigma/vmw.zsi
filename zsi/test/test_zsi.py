@@ -6,6 +6,7 @@ import test_t3
 import test_t5
 import test_t6
 import test_t7
+import test_t8
 
 def makeTestSuite():
     suite1 = test_t1.makeTestSuite()
@@ -14,7 +15,8 @@ def makeTestSuite():
     suite5 = test_t5.makeTestSuite()
     suite6 = test_t6.makeTestSuite()
     suite7 = test_t7.makeTestSuite()
-    t = (suite1, suite2, suite3, suite5, suite6, suite7)
+    suite8 = test_t8.makeTestSuite()
+    t = (suite1, suite2, suite3, suite5, suite6, suite7, suite8)
     suite = unittest.TestSuite(t)
     return suite
 def main():

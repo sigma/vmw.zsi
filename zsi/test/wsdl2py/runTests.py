@@ -16,21 +16,18 @@ def makeTestSuite(document=None, literal=None, broke=None):
        broke -- None, True, False
     """
     cp = CONFIG_PARSER
-    testSections = ['simple']
-    sections = ['rpc_encoded' , 'rpc_encoded_broke',
-                'rpc_literal', 'rpc_literal_broke', 'rpc_literal_broke_interop',
-                'doc_literal', 'doc_literal_broke', 'doc_literal_broke_interop',
-                ]
-    for section in sections:
-    
-        if (document is not None) and (cp.getboolean(section, DOCUMENT) is not document):
-            pass
-        elif (literal is not None) and (cp.getboolean(section, LITERAL) is not literal):
-            pass
-        elif (broke is not None) and (cp.getboolean(section, BROKE) is not broke):
-            pass
-        else:
-            testSections.append(section)
+    testSections = []
+    sections = [\
+        'rpc_encoded' , 'rpc_encoded_broke',
+        'rpc_literal', 'rpc_literal_broke', 'rpc_literal_broke_interop',
+        'doc_literal', 'doc_literal_broke', 'doc_literal_broke_interop',
+    ]
+    boo = cp.getboolean
+    for s,d,l,b in map(\
+        lambda sec: \
+            (sec, (None,boo(sec,DOCUMENT)), (None,boo(sec,LITERAL)), (None,boo(sec,BROKE))), sections):
+        if document in d and literal in l and broke in b:
+            testSections.append(s)
         
     suite = unittest.TestSuite()
     for section in testSections:
@@ -40,11 +37,23 @@ def makeTestSuite(document=None, literal=None, broke=None):
             suite.addTest(s)
     return suite
 
+
+def simple(suite=None):
+    section = 'simple'
+    moduleList = CONFIG_PARSER.get(section, TESTS).split()
+    suite = suite or unittest.TestSuite()
+    for module in  map(__import__, moduleList):
+        suite.addTest(module.makeTestSuite())
+    return suite
+
+
 def brokeTestSuite():
     return makeTestSuite(broke=True)
 
 def workingTestSuite():
-    return makeTestSuite(broke=False)
+    suite = makeTestSuite(broke=False)
+    simple(suite)
+    return suite
 
 def docLitTestSuite():
     return makeTestSuite(broke=False, document=True, literal=True)

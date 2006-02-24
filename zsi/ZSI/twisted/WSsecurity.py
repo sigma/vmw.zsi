@@ -319,9 +319,11 @@ class WSSecurityHandler:
         
         @classmethod
         def processRequest(cls, ps, signature, **kw):
-    
-"""
+            return ps
 
+
+
+"""
 <element name="KeyInfo" type="ds:KeyInfoType"/>
 <complexType name="KeyInfoType" mixed="true">
   <choice maxOccurs="unbounded">

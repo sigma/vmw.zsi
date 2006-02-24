@@ -352,13 +352,20 @@ from fault import Fault, \
     FaultFromActor, FaultFromException, FaultFromFaultMessage, \
     FaultFromNotUnderstood, FaultFromZSIException
 import TC
-#TC.RegisterType(TC.Void)
 TC.RegisterType(TC.String)
 TC.RegisterType(TC.URI)
 TC.RegisterType(TC.Base64String)
 TC.RegisterType(TC.HexBinaryString)
-TC.RegisterType(TC.Integer)
-TC.RegisterType(TC.Decimal)
+
+#TC.RegisterType(TC.Integer)
+#TC.RegisterType(TC.Decimal)
+for pyclass in (TC.IunsignedByte, TC.IunsignedShort, TC.IunsignedInt, TC.IunsignedLong,
+    TC.Ibyte, TC.Ishort, TC.Iint, TC.Ilong, TC.InegativeInteger,
+    TC.InonPositiveInteger, TC.InonNegativeInteger, TC.IpositiveInteger,
+    TC.Iinteger, TC.FPfloat, TC.FPdouble, ):
+
+    TC.RegisterType(pyclass)
+
 TC.RegisterType(TC.Boolean)
 TC.RegisterType(TC.Duration)
 TC.RegisterType(TC.gDateTime)

@@ -1484,6 +1484,7 @@ class AnyLax(AnyConcrete):
 
         return self.checktype(elt, ps)
 
+
 class AnyType(TypeCode):
     """XML Schema xsi:anyType type definition wildCard.
        class variables: 
@@ -1508,8 +1509,8 @@ class AnyType(TypeCode):
         if hasattr(what, 'typecode'):
             what = pyobj.typecode
         elif not isinstance(what, TypeCode):
-            #May want to look thru containers and try to find a match
-            #raise EvaluateException, '<anyType> pyobj must be self-describing.'
+            # TODO: resolve this, "strict" processing but no 
+            # concrete schema makes little sense.
             what = AnyStrict(pname=(self.nspname,self.pname), aslist=False)
             kw['typed'] = True
             what.serialize(elt, sw, pyobj, **kw)

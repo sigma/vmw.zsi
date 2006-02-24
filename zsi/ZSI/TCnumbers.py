@@ -2,7 +2,7 @@
 # $Header$
 '''Typecodes for numbers.
 '''
-
+import types
 from ZSI import _copyright, _inttypes, _floattypes, _seqtypes, \
         EvaluateException
 from ZSI.TC import TypeCode, Integer, Decimal
@@ -12,66 +12,92 @@ class IunsignedByte(Integer):
     '''Unsigned 8bit value.
     '''
     type = (SCHEMA.XSD3, "unsignedByte")
+    parselist = [ (None, "unsignedByte") ]
+    seriallist = [ ]
 
 class IunsignedShort(Integer):
     '''Unsigned 16bit value.
     '''
     type = (SCHEMA.XSD3, "unsignedShort")
+    parselist = [ (None, "unsignedShort") ]
+    seriallist = [ ]
 
 class IunsignedInt(Integer):
     '''Unsigned 32bit value.
     '''
     type = (SCHEMA.XSD3, "unsignedInt")
+    parselist = [ (None, "unsignedInt") ]
+    seriallist = [ ]
 
 class IunsignedLong(Integer):
     '''Unsigned 64bit value.
     '''
     type = (SCHEMA.XSD3, "unsignedLong")
+    parselist = [ (None, "unsignedLong") ]
+    seriallist = [ ]
 
 class Ibyte(Integer):
     '''Signed 8bit value.
     '''
     type = (SCHEMA.XSD3, "byte")
+    parselist = [ (None, "byte") ]
+    seriallist = [ ]
 
 class Ishort(Integer):
     '''Signed 16bit value.
     '''
     type = (SCHEMA.XSD3, "short")
+    parselist = [ (None, "short") ]
+    seriallist = [ ]
 
 class Iint(Integer):
     '''Signed 32bit value.
     '''
     type = (SCHEMA.XSD3, "int")
+    parselist = [ (None, "int") ]
+    seriallist = [ types.IntType ]
 
 class Ilong(Integer):
     '''Signed 64bit value.
     '''
     type = (SCHEMA.XSD3, "long")
+    parselist = [(None, "long")]
+    seriallist = [ types.LongType ]
 
 class InegativeInteger(Integer):
     '''Value less than zero.
     '''
     type = (SCHEMA.XSD3, "negativeInteger")
+    parselist = [ (None, "negativeInteger") ]
+    seriallist = [ ]
 
 class InonPositiveInteger(Integer):
     '''Value less than or equal to zero.
     '''
     type = (SCHEMA.XSD3, "nonPositiveInteger")
+    parselist = [ (None, "nonPositiveInteger") ]
+    seriallist = [ ]
 
 class InonNegativeInteger(Integer):
     '''Value greater than or equal to zero.
     '''
     type = (SCHEMA.XSD3, "nonNegativeInteger")
+    parselist = [ (None, "nonNegativeInteger") ]
+    seriallist = [ ]
 
 class IpositiveInteger(Integer):
     '''Value greater than zero.
     '''
     type = (SCHEMA.XSD3, "positiveInteger")
+    parselist = [ (None, "positiveInteger") ]
+    seriallist = [ ]
 
 class Iinteger(Integer):
     '''Integer value.
     '''
     type = (SCHEMA.XSD3, "integer")
+    parselist = [ (None, "integer") ]
+    seriallist = [ ]
 
 class IEnumeration(Integer):
     '''Integer value, limited to a specified set of values.
@@ -104,11 +130,15 @@ class FPfloat(Decimal):
     '''IEEE 32bit floating point value.
     '''
     type = (SCHEMA.XSD3, "float")
+    parselist = [ (None, "float") ]
+    seriallist = [ ]
 
 class FPdouble(Decimal):
     '''IEEE 64bit floating point value.
     '''
     type = (SCHEMA.XSD3, "double")
+    parselist = [ (None, "double") ]
+    seriallist = [ ]
 
 class FPEnumeration(FPfloat):
     '''Floating point value, limited to a specified set of values.
