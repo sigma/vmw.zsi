@@ -131,7 +131,7 @@ class FPfloat(Decimal):
     '''
     type = (SCHEMA.XSD3, "float")
     parselist = [ (None, "float") ]
-    seriallist = [ ]
+    seriallist = [ types.FloatType ]
 
 class FPdouble(Decimal):
     '''IEEE 64bit floating point value.
