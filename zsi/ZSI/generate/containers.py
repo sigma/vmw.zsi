@@ -7,7 +7,8 @@
 
 # $Id$
 import types
-from utility import StringWriter, TextProtect, TextProtectAttributeName, GetPartsSubNames
+from utility import StringWriter, TextProtect, TextProtectAttributeName,\
+    GetPartsSubNames
 from utility import NamespaceAliasDict as NAD, NCName_to_ClassName as NC_to_CN
 
 import ZSI
@@ -16,7 +17,8 @@ from ZSI.wstools import XMLSchema, WSDLTools
 from ZSI.wstools.Namespaces import SCHEMA, SOAP, WSDL
 from ZSI.wstools.Utility import Base
 from ZSI.typeinterpreter import BaseTypeInterpreter
-from ZSI.generate import WSISpec, WSInteropError, Wsdl2PythonError, WsdlGeneratorError
+from ZSI.generate import WSISpec, WSInteropError, Wsdl2PythonError,\
+    WsdlGeneratorError
 
 ID1 = '    '
 ID2 = 2*ID1
@@ -171,11 +173,21 @@ class AttributeMixIn:
                 continue
             elif a.isReference():
                 ga = a.getAttributeDeclaration()
-                tp = ga.getTypeDefinition('type')
-                key = '("%s","%s")' %(ga.getTargetNamespace(),
-                         ga.getAttribute('name'))
-                         
-                if tp is None:
+                tp = None
+                if ga is not None:
+                    tp = ga.getTypeDefinition('type')           
+                    key = '("%s","%s")' %(ga.getTargetNamespace(),
+                             ga.getAttribute('name'))
+                             
+                if ga is None:
+                    # TODO: probably SOAPENC:arrayType
+                    key = '("%s","%s")' %(
+                             a.getAttribute('ref').getTargetNamespace(),
+                             a.getAttribute('ref').getName())
+                    atd_list.append(\
+                        '%s[%s] = ZSI.TC.String()' %(atd, key)
+                        )
+                elif tp is None:
                     # built in simple type
                     try:
                         namespace,typeName = ga.getAttribute('type')
@@ -1893,46 +1905,54 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
     type = DEF
 
     def __init__(self, do_extended=False):
-        '''
-        restriction
-        extension
-        extType -- used in figuring attrs for extensions
-        '''
         TypecodeContainerBase.__init__(self, do_extended=do_extended)
-        self.restriction = False
-        self.extension = False
-        self.extType = None
-        self._is_array = False
-        self._kw_array = None
 
     def setUp(self, tp):
         '''complexContent/[extension,restriction]
+            restriction
+            extension
+            extType -- used in figuring attrs for extensions
         '''
         assert tp.content.isComplex() is True and \
             (tp.content.content.isRestriction() or tp.content.content.isExtension() is True),\
             'expecting complexContent/[extension,restriction]'
-
-        attributeContent = ()
+            
+        self.extType = None
+        self.restriction = False
+        self.extension = False
+        self._kw_array = None
+        self._is_array = False
         self.name = tp.getAttribute('name')
         self.ns = tp.getTargetNamespace()
+        
+        # xxx: what is this for?
+        #self.attribute_typecode = 'attributes'
+        
         derivation = tp.content.content
+        # Defined in Schema instance?
         try:
             base = derivation.getTypeDefinition('base')
         except XMLSchema.SchemaError, ex:
             base = None
 
+        # anyType, arrayType, etc...
         if base is None:
+            base = derivation.getAttributeQName('base')
+            if base is None:
+                raise ContainerError, 'Unsupported derivation: %s'\
+                        %derivation.getItemTrace()
+                        
+            if base != (SOAP.ENC,'Array') and base != (SCHEMA.XSD3,'anyType'):
+                raise ContainerError, 'Unsupported base(%s): %s' %(
+                    base, derivation.getItemTrace()
+                    )
+                
+        if base == (SOAP.ENC,'Array'):
             # SOAP-ENC:Array expecting arrayType attribute reference
-            qname = derivation.getAttributeQName('base')
-            if qname is None:
-                raise ContainerError, 'No arrayType declared for Array: %s'\
-                    %derivation.getItemTrace()
-
-            self.sKlass = BTI.get_typeclass(qname[1], qname[0])
-            self.sKlassNS = qname[0]
-
             self._is_array = True
             self._kw_array = {'atype':None, 'id3':ID3, 'ofwhat':None}
+            self.sKlass = BTI.get_typeclass(base[1], base[0])
+            self.sKlassNS = base[0]
             attr = None
             for a in derivation.getAttributeContent():
                 assert a.isAttribute() is True,\
@@ -1963,30 +1983,30 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
                     raise ContainerError, 'For Array could not resolve ofwhat typecode(%s,%s): %s'\
                         %(namespace, ncname, derivation.getItemTrace())
        
-        else:
+        elif isinstance(base, XMLSchema.XMLSchemaComponent):
             self.sKlass = base.getAttribute('name')
             self.sKlassNS = base.getTargetNamespace()
+        else:
+            # TypeDescriptionComponent
+            self.sKlass = base.getName()
+            self.sKlassNS = base.getTargetNamespace()
 
+        attrs = []
         if derivation.isRestriction():
             self.restriction = True
             self.extension = False
-            if hasattr(tp, 'getAttributeContent'):
-                attributeContent = tp.getAttributeContent()
-        elif derivation.isExtension():
+            # derivation.getAttributeContent subset of tp.getAttributeContent 
+            attrs += derivation.getAttributeContent() or ()
+        else:
             self.restriction = False
             self.extension = True
-            attrs = []
-            if hasattr(tp, 'getAttributeContent') and \
-                tp.getAttributeContent() != None:
-                attrs += tp.getAttributeContent()
-            if hasattr(derivation, 'getAttributeContent') and \
-                derivation.getAttributeContent():
-                attrs += derivation.getAttributeContent()
-            if attrs:
-                attributeContent = attrs
-                self.extType = derivation
-        else:
-            raise Wsdl2PythonError, 'neither restriction nor extension?'
+            attrs += tp.getAttributeContent() or ()
+            if isinstance(derivation, XMLSchema.XMLSchemaComponent):
+                attrs += derivation.getAttributeContent() or ()
+                
+        # XXX: not sure what this is doing
+        if attrs:
+            self.extType = derivation
 
         if derivation.content is not None \
             and derivation.content.isModelGroup():
@@ -2000,19 +2020,16 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
         else:
             self.mgContent = ()
 
-        self.attribute_typecode = 'attributes'
-        self.attrComponents = self._setAttributes(attributeContent)
-        
+        self.attrComponents = self._setAttributes(tuple(attrs))
+                
     def _setContent(self):
         '''JRB What is the difference between instance data
         ns, name, -- type definition?
         sKlass, sKlassNS? -- element declaration?
         '''
-        comment = 'not processed correctly'
+        kw = KW.copy()
         definition = []
-        if self._is_array is True:
-            comment = 'complexType/complexContent base="SOAP-ENC:Array"'
-            # 
+        if self._is_array:
             # SOAP-ENC:Array
             if _is_xsd_or_soap_ns(self.sKlassNS) is False and self.sKlass == 'Array':
                 raise ContainerError, 'unknown type: (%s,%s)'\
@@ -2022,6 +2039,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             # SOAP-ENC:arrayType attribute.
             definition += [\
                 '%sclass %s(ZSI.TC.Array, TypeDefinition):' % (ID1, self.getClassName()),
+                '%s#complexType/complexContent base="SOAP-ENC:Array"' %(ID2),
                 '%s%s' % (ID2, self.schemaTag()),
                 '%s%s' % (ID2, self.typeTag()),
                 '%s%s' % (ID2, self.pnameConstructor()),
@@ -2030,46 +2048,87 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
                 '%s%s.__init__(self, atype, ofwhat, pname=pname, childnames=\'item\', **kw)'
                     %(ID3, self.sKlass),
                 ]
-        else:
-            definition += [\
-                '%sclass %s(TypeDefinition):' % (ID1, self.getClassName()),
-                '%s%s' % (ID2, self.schemaTag()),
-                '%s%s' % (ID2, self.typeTag()),
-                '%s%s' % (ID2, self.pnameConstructor()),
-                '%s%s' % (ID3, self.nsuriLogic()),
-                '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
-                '%s'   % self.getBasesLogic(ID3),
-                '%(ID3)s%(atc)s = kw["%(atc)s"] = kw.get("%(atc)s", {})'\
-                    %{'ID3':ID3, 'atc':self.attribute_typecode},
-                ]
-                    
-            for l in self.attrComponents: 
-                definition.append('%s%s'%(ID3, l))
+            self.writeArray(definition)
+            return
+    
+        definition += [\
+            '%sclass %s(TypeDefinition):' % (ID1, self.getClassName()),
+            '%s%s' % (ID2, self.schemaTag()),
+            '%s%s' % (ID2, self.typeTag()),
+            '%s%s' % (ID2, self.pnameConstructor()),
+            '%s%s' % (ID3, self.nsuriLogic()),
+            '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
+            ]
                 
-            if self.restriction:
-                comment = 'complexType/complexContent restriction'
-                definition.append(\
-                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, restrict=True, **kw)' %(ID3, 
-                        NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), ),
-                )
-            elif self.extension:
-                comment = 'complexType/complexContent extension'
-                definition.append(\
-                    '%s%s.%s.__init__(self, pname, ofwhat=TClist, extend=True, **kw)'%(ID3,
-                        NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass), ),
-                )
-            else:
-                raise Wsdl2PythonError,\
-                    'ComplexContent must be a restriction or extension'
+        definition.append(
+            '%(ID3)s%(atc)s = attributes or {}' %{
+                'ID3':ID3, 'atc':self.attribute_typecode}
+        )
 
-        definition.insert(1, '%s#%s' %(ID2, comment))
-        self.writeArray(definition)
+        #
+        # Special case: anyType restriction
+        isAnyType = (self.sKlassNS, self.sKlass) == (SCHEMA.XSD3, 'anyType')
+        if isAnyType:
+            del definition[0]
+            definition.insert(0,
+                '%sclass %s(ZSI.TC.ComplexType, TypeDefinition):' % (
+                             ID1, self.getClassName())
+            )
+            definition.insert(1, 
+                '%s#complexType/complexContent restrict anyType' %(
+                               ID2)
+            )
+            definition.append('%sif extend: TClist += ofwhat'%(ID3))
+            definition.append('%sif restrict: TClist = ofwhat' %(ID3))
+            if len(self.attrComponents) > 0:
+                definition.append('%selse:' %(ID3))
+                for l in self.attrComponents: 
+                    definition.append('%s%s'%(ID4, l))
+
+            definition.append(\
+                '%sZSI.TC.ComplexType.__init__(self, None, TClist, pname=pname, **kw)' %(
+                    ID3),
+            )
+            
+            # pyclass class definition
+            definition += self.getPyClassDefinition()
+            kw['pyclass'] = self.getPyClass()
+            definition.append('%(ID3)sself.pyclass = %(pyclass)s' %kw)  
+            self.writeArray(definition)
+            return
+    
+        for l in self.attrComponents: 
+            definition.append('%s%s'%(ID3, l))
+            
+        definition.append('%s'   % self.getBasesLogic(ID3))
+        prefix = NAD.getAlias(self.sKlassNS)
+        typeClassName = type_class_name(self.sKlass)
+        if self.restriction:
+            definition.append(\
+                '%s%s.%s.__init__(self, pname, ofwhat=TClist, restrict=True, **kw)' %(
+                    ID3, prefix, typeClassName),
+            )
+            definition.insert(1, '%s#complexType/complexContent restriction' %ID2)
+            self.writeArray(definition)
+            return
+        
+        if self.extension:
+            definition.append(\
+                '%s%s.%s.__init__(self, pname, ofwhat=TClist, extend=True, **kw)'%(
+                    ID3, prefix, typeClassName),
+            )
+            definition.insert(1, '%s#complexType/complexContent extension' %(ID2))
+            self.writeArray(definition)
+            return
+            
+        raise Wsdl2PythonError,\
+            'ComplexContent must be a restriction or extension'
 
     def pnameConstructor(self, superclass=None):
         if superclass:
-            return '%s.__init__(self, pname, ofwhat=(), extend=False, restrict=False, **kw)' % superclass
+            return '%s.__init__(self, pname, ofwhat=(), extend=False, restrict=False, attributes=None, **kw)' % superclass
         
-        return 'def __init__(self, pname, ofwhat=(), extend=False, restrict=False, **kw):'
+        return 'def __init__(self, pname, ofwhat=(), extend=False, restrict=False, attributes=None, **kw):'
       
 
 class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):

@@ -469,39 +469,50 @@ class TypeWriter(SchemaItemWriter):
     """contains/generates a single definition"""
         
     def fromSchemaItem(self, item):
-        self.content = None
         if item.isDefinition() is False or item.isLocal() is True:
             raise TypeError, \
                 'expecting global type definition not: %s' %item.getItemTrace()
 
-        kw = {}
-        if item.isSimple() is True:
-            if item.content.isRestriction() is True:
+        self.content = None
+        if item.isSimple():
+            if item.content.isRestriction():
                 self.content = RestrictionContainer()
-            elif item.content.isUnion() is True:
+            elif item.content.isUnion():
                 self.content = UnionContainer()
-            elif item.content.isList() is True:
+            elif item.content.isList():
                 self.content = ListContainer()
-
-        elif item.isComplex() is True:
-            if item.content is None or item.content.isModelGroup() is True:
+            else:
+                raise Wsdl2PythonError,\
+                    'unknown simple type definition: %s' %item.getItemTrace()
+                    
+            self.content.setUp(item)
+            return
+        
+        if item.isComplex():
+            kw = {}
+            if item.content is None or item.content.isModelGroup():
                 self.content = \
                     ComplexTypeContainer(\
                         do_extended=self.do_extended, 
                         extPyClasses=self.extPyClasses
                         )
                 kw['empty'] = item.content is None
-            elif item.content.isSimple() is True:
-                self.content = ComplexTypeSimpleContentContainer()
-            elif item.content.isComplex() is True:
-                self.content = \
-                    ComplexTypeComplexContentContainer(\
-                        do_extended=self.do_extended
-                        )
+            elif item.content.isSimple():
+                    self.content = ComplexTypeSimpleContentContainer()
+            elif item.content.isComplex():
+                    self.content = \
+                        ComplexTypeComplexContentContainer(\
+                            do_extended=self.do_extended
+                            )
+            else:
+                raise Wsdl2PythonError,\
+                    'unknown complex type definition: %s' %item.getItemTrace()
+                    
+            self.content.setUp(item, **kw)
+            return
 
-        if self.content is None:
-            raise Wsdl2PythonError,\
-                'unknown type definition: %s' %item.getItemTrace()
+        raise TypeError,\
+            'expecting SimpleType or ComplexType: %s' %item.getItemTrace()
 
-        self.content.setUp(item, **kw)
+        
 
