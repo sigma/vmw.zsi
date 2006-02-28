@@ -6,7 +6,33 @@ from ZSI import *
 class t8TestCase(unittest.TestCase):
     "Test Any serialize and parse"
 
-    def check(self):
+    def check_parse_empty_all(self):
+        # None
+        skip = [TC.FPEnumeration, TC.Enumeration, TC.IEnumeration, TC.List, TC.Integer]
+        for typeclass in filter(lambda c: type(c) in [types.ClassType,type] and not issubclass(c, TC.String) and issubclass(c, TC.SimpleType), TC.__dict__.values()):
+            if typeclass in skip: continue
+            tc = typeclass()
+            sw = SoapWriter()
+            sw.serialize(None, typecode=tc, typed=True)
+            soap = str(sw)
+            ps = ParsedSoap(soap)
+            parsed = ps.Parse(Any())
+            self.assertEqual(None, parsed)
+
+    def check_parse_empty_string(self):
+        # Empty String
+        typecodes = TC.Any.parsemap.values()
+        for tc in filter(lambda c: isinstance(c, TC.String), TC.Any.parsemap.values()):
+            sw = SoapWriter()
+            sw.serialize("", typecode=tc, typed=True)
+            soap = str(sw)
+            print 
+            print soap
+            ps = ParsedSoap(soap)
+            parsed = ps.Parse(Any())
+            self.assertEqual("", parsed)
+
+    def check_builtins(self):
         typecode = Any(type=True)
         myInt,myLong,myStr,myDate,myFloat = 123,2147483648,\
             u"hello", time.gmtime(), 1.0001

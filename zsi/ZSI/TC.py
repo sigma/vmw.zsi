@@ -506,7 +506,6 @@ class SimpleType(TypeCode):
         return el
 
 
-#XXX NOT FIXED YET
 class Any(TypeCode):
     '''When the type isn't defined in the schema, but must be specified
     in the incoming operation.
@@ -557,7 +556,11 @@ class Any(TypeCode):
         if len(_children(elt)) == 0:
             href = _find_href(elt)
             if not href:
-                if self.optional: return None
+                if self.optional:
+                    if _is_xsd_or_soap_ns(ns):
+                        parser = Any.parsemap.get((None,type))
+                        if parser: return parser.parse(elt, ps)
+                    return None
                 raise EvaluateException('Non-optional Any missing',
                         ps.Backtrace(elt))
             elt = ps.FindLocalHREF(href, elt)
