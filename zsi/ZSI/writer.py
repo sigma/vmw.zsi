@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# $Header$
+# $Id$
 '''SOAP message serialization.
 '''
 

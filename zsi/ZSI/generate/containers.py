@@ -398,120 +398,8 @@ class ServiceLocatorContainer(ServiceContainerBase):
         self.writeArray(locator)
 
 
-class ServiceOperationsClassContainer(ServiceContainerBase):
-    '''
-    class variables:
-        readerclass --  
-        writerclass --
-    '''
-    readerclass = None
-    writerclass = None
-    
-    def __init__(self, useWSA=False, do_extended=False, wsdl=None):
-        '''Parameters:
-        name -- binding name
-        property -- resource properties
-        useWSA   -- boolean, enable ws-addressing
-        name -- binding name
-        '''
-        ServiceContainerBase.__init__(self)
-        self.useWSA = useWSA
-        self.rProp = None
-        self.bName = None
-        self.operations = []
-        self.do_extended = do_extended
-        self._wsdl = wsdl # None unless do_extended == True
-
-    def setReaderClass(cls, className):
-        '''specify a reader class name, this must be imported
-        in service module.
-        '''
-        cls.readerclass = className
-    setReaderClass = classmethod(setReaderClass)
-
-    def setWriterClass(cls, className):
-        '''specify a writer class name, this must be imported
-        in service module.
-        '''
-        cls.writerclass = className 
-    setWriterClass = classmethod(setWriterClass)
-
-    def setUp(self, port):
-        '''This method finds all SOAP Binding Operations, it will skip 
-        all bindings that are not SOAP.  
-        port -- WSDL.Port instance
-        '''
-        assert isinstance(port, WSDLTools.Port), 'expecting WSDLTools Port instance'
-
-        self.bName = port.getBinding().name
-        self.rProp = port.getBinding().getPortType().getResourceProperties() 
-        soap_binding = port.getBinding().findBinding(WSDLTools.SoapBinding)
-        if soap_binding is None:
-            raise Wsdl2PythonError,\
-                'port(%s) missing WSDLTools.SoapBinding' %port.name
-
-        for bop in port.getBinding().operations:
-            soap_bop = bop.findBinding(WSDLTools.SoapOperationBinding)
-            if soap_bop is None:
-                self.logger.warning(\
-                    'Skip port(%s) operation(%s) no SOAP Binding Operation'\
-                    %(port.name, bop.name),
-                )
-                continue
-
-            #soapAction = soap_bop.soapAction
-            if bop.input is not None:
-                soapBodyBind = bop.input.findBinding(WSDLTools.SoapBodyBinding)
-                if soapBodyBind is None:
-                    self.logger.warning(\
-                        'Skip port(%s) operation(%s) Bindings(%s) not supported'\
-                        %(port.name, bop.name, bop.extensions)
-                    )
-                    continue
-                
-            op = port.getBinding().getPortType().operations.get(bop.name)
-            if op is None:
-                raise Wsdl2PythonError,\
-                    'no matching portType/Binding operation(%s)' % bop.name
-                    
-            c = ServiceOperationContainer(useWSA=self.useWSA, 
-                    do_extended=self.do_extended)
-            c.setUp(bop)
-            self.operations.append(c)
-
-    def _setContent(self):
-        if self.useWSA is True:
-            ctorArgs = 'endPointReference=None, **kw'
-            epr      = 'self.endPointReference = endPointReference'
-        else:
-            ctorArgs = '**kw'
-            epr      = '# no ws-addressing'
-
-        if self.rProp:
-            rprop = 'kw.setdefault("ResourceProperties", ("%s","%s"))'\
-                %(self.rProp[0], self.rProp[1])
-        else:
-            rprop = '# no resource properties'
-
-        methods = [
-            '# Methods',
-            'class %s%s:' % (self.bName, self.clientClassSuffix),
-            '%sdef __init__(self, url, %s):' % (ID1, ctorArgs),
-            '%skw.setdefault("readerclass", %s)' % (ID2, self.readerclass),
-            '%skw.setdefault("writerclass", %s)' % (ID2, self.writerclass),
-            '%s%s' % (ID2, rprop),
-            '%sself.binding = client.Binding(url=url, **kw)' %ID2,
-            '%s%s' % (ID2,epr),
-            ]
-
-        for op in self.operations:
-            methods += [ op.getvalue() ]
-
-        self.writeArray(methods)
-
-
 class ServiceOperationContainer(ServiceContainerBase):
-    #def __init__(self, name, useWSA=False, soapAction=None, do_extended=False, wsdl=None):
+
     def __init__(self, useWSA=False, do_extended=False):
         '''Parameters:
               useWSA -- boolean, enable ws-addressing
@@ -520,10 +408,6 @@ class ServiceOperationContainer(ServiceContainerBase):
         ServiceContainerBase.__init__(self)
         self.useWSA  = useWSA
         self.do_extended = do_extended
-
-        # TODO: Remove this.. setUp()  item.getWSDL()
-        #if do_extended:
-        #    self._wsdl = kw.get('wsdl', None)
 
     def hasInput(self):
         return self.inputName is not None
@@ -557,7 +441,7 @@ class ServiceOperationContainer(ServiceContainerBase):
     def setUp(self, item):
         '''
         Parameters:
-	        item -- WSDLTools BindingOperation instance.
+            item -- WSDLTools BindingOperation instance.
         '''
         if not isinstance(item, WSDLTools.OperationBinding):
             raise TypeError, 'expecting WSDLTools Operation instance'
@@ -732,6 +616,128 @@ class ServiceOperationContainer(ServiceContainerBase):
             method += response
 
         self.writeArray(method)
+
+
+class ServiceOperationsClassContainer(ServiceContainerBase):
+    '''
+    class variables:
+        readerclass --  
+        writerclass --
+        operationclass -- representation of each operation.
+    '''
+    readerclass = None
+    writerclass = None
+    operationclass = ServiceOperationContainer
+    
+    def __init__(self, useWSA=False, do_extended=False, wsdl=None):
+        '''Parameters:
+        name -- binding name
+        property -- resource properties
+        useWSA   -- boolean, enable ws-addressing
+        name -- binding name
+        '''
+        ServiceContainerBase.__init__(self)
+        self.useWSA = useWSA
+        self.rProp = None
+        self.bName = None
+        self.operations = None
+        self.do_extended = do_extended
+        self._wsdl = wsdl # None unless do_extended == True
+
+    def setReaderClass(cls, className):
+        '''specify a reader class name, this must be imported
+        in service module.
+        '''
+        cls.readerclass = className
+    setReaderClass = classmethod(setReaderClass)
+
+    def setWriterClass(cls, className):
+        '''specify a writer class name, this must be imported
+        in service module.
+        '''
+        cls.writerclass = className 
+    setWriterClass = classmethod(setWriterClass)
+    
+    def setOperationClass(cls, className):
+        '''specify an operation container class name.
+        '''
+        cls.operationclass = className
+    setOperationClass = classmethod(setOperationClass)
+
+    def setUp(self, port):
+        '''This method finds all SOAP Binding Operations, it will skip 
+        all bindings that are not SOAP.  
+        port -- WSDL.Port instance
+        '''
+        assert isinstance(port, WSDLTools.Port), 'expecting WSDLTools Port instance'
+
+        self.operations = []
+        self.bName = port.getBinding().name
+        self.rProp = port.getBinding().getPortType().getResourceProperties() 
+        soap_binding = port.getBinding().findBinding(WSDLTools.SoapBinding)
+        if soap_binding is None:
+            raise Wsdl2PythonError,\
+                'port(%s) missing WSDLTools.SoapBinding' %port.name
+
+        for bop in port.getBinding().operations:
+            soap_bop = bop.findBinding(WSDLTools.SoapOperationBinding)
+            if soap_bop is None:
+                self.logger.warning(\
+                    'Skip port(%s) operation(%s) no SOAP Binding Operation'\
+                    %(port.name, bop.name),
+                )
+                continue
+
+            #soapAction = soap_bop.soapAction
+            if bop.input is not None:
+                soapBodyBind = bop.input.findBinding(WSDLTools.SoapBodyBinding)
+                if soapBodyBind is None:
+                    self.logger.warning(\
+                        'Skip port(%s) operation(%s) Bindings(%s) not supported'\
+                        %(port.name, bop.name, bop.extensions)
+                    )
+                    continue
+                
+            op = port.getBinding().getPortType().operations.get(bop.name)
+            if op is None:
+                raise Wsdl2PythonError,\
+                    'no matching portType/Binding operation(%s)' % bop.name
+                    
+            c = self.operationclass(useWSA=self.useWSA, 
+                    do_extended=self.do_extended)
+            c.setUp(bop)
+            self.operations.append(c)
+
+    def _setContent(self):
+        if self.useWSA is True:
+            ctorArgs = 'endPointReference=None, **kw'
+            epr      = 'self.endPointReference = endPointReference'
+        else:
+            ctorArgs = '**kw'
+            epr      = '# no ws-addressing'
+
+        if self.rProp:
+            rprop = 'kw.setdefault("ResourceProperties", ("%s","%s"))'\
+                %(self.rProp[0], self.rProp[1])
+        else:
+            rprop = '# no resource properties'
+
+        methods = [
+            '# Methods',
+            'class %s%s:' % (self.bName, self.clientClassSuffix),
+            '%sdef __init__(self, url, %s):' % (ID1, ctorArgs),
+            '%skw.setdefault("readerclass", %s)' % (ID2, self.readerclass),
+            '%skw.setdefault("writerclass", %s)' % (ID2, self.writerclass),
+            '%s%s' % (ID2, rprop),
+            '%sself.binding = client.Binding(url=url, **kw)' %ID2,
+            '%s%s' % (ID2,epr),
+            ]
+
+        for op in self.operations:
+            methods += [ op.getvalue() ]
+
+        self.writeArray(methods)
+
 
 
 class MessageContainerInterface:
