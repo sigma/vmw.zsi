@@ -124,6 +124,7 @@ class SchemaInstanceType(type):
             tcls = cls.elements.get(key,None)
             if tcls is not None:
                 typecode = cls.element_typecode_cache[key] = tcls()
+                typecode.typed = False
             
         return typecode
     getElementDeclaration = classmethod(getElementDeclaration)
