@@ -496,7 +496,7 @@ class ServiceOperationContainer(ServiceContainerBase):
         tCheck = 'if isinstance(request, %s) is False:' % self.inputName
         bindArgs = ''
         if self.encodingStyle is not None:
-            bindArgs = 'encoding="%s", ' %self.encodingStyle
+            bindArgs = 'encodingStyle="%s", ' %self.encodingStyle
 
         if self.useWSA:
             wsactionIn = 'wsaction = "%s"' % self.inputAction
@@ -2382,48 +2382,59 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
             'simple content derivation bad base attribute: ' %tp.getItemTrace()
 
     def _setContent(self):
+        # TODO: Add derivation logic to constructors. 
         if type(self.sKlass) in (types.ClassType, type):
             definition = [
                 '%sclass %s(%s, TypeDefinition):' \
                 % (ID1, self.getClassName(), self.sKlass),
+                '%s# ComplexType/SimpleContent derivation of built-in type' %ID2,
                 '%s%s' % (ID2, self.schemaTag()),
                 '%s%s' % (ID2, self.typeTag()),
                 '%s%s' % (ID2, self.pnameConstructor()),
+                '%s%s = {}'%(ID3, self.attribute_typecode),
                 ]
     
-            if self.getPythonType() is None:
-                definition.append('%s%s = {}'%(ID3, self.attribute_typecode))
-                definition.append('%s%s.__init__(self, pname, **kw)' %(ID3, self.sKlass))
-            else:
-                definition.append('%s%s = {}'%(ID3, self.attribute_typecode))
-                definition.append(\
-                    '%s%s.__init__(self, pname, pyclass=None, **kw)'\
-                    %(ID3, self.sKlass)
-                )
-              
-                # pyclass class definition
+            for l in self.attrComponents: 
+                definition.append('%s%s'%(ID3, l))
+
+            definition.append('%s%s.__init__(self, pname, **kw)' %(ID3, self.sKlass))
+            if self.getPythonType() is not None:
                 definition += self.getPyClassDefinition()
-                    
-                # set pyclass
                 kw = KW.copy()
                 kw['pyclass'] = self.getPyClass()
                 definition.append('%(ID3)sself.pyclass = %(pyclass)s' %kw)    
-        
-        else:
-            definition = [
-                '%sclass %s(TypeDefinition):' % (ID1, self.getClassName()),
-                '%s%s' % (ID2, self.schemaTag()),
-                '%s%s' % (ID2, self.typeTag()),
-                '%s%s' % (ID2, self.pnameConstructor()),
-                '%s%s' % (ID3, self.nsuriLogic()),
-                '%s'   % self.getBasesLogic(ID3),
-                '%s%s = {}'%(ID3, self.attribute_typecode),
-                '%s%s.%s.__init__(self, pname, **kw)' \
-                % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
-                ]
 
-        for l in self.attrComponents: definition.append('%s%s'%(ID3, l))
+            self.writeArray(definition)
+            return
+        
+        definition = [
+            '%sclass %s(TypeDefinition):' % (ID1, self.getClassName()),
+            '%s# ComplexType/SimpleContent derivation of user-defined type' %ID2,
+            '%s%s' % (ID2, self.schemaTag()),
+            '%s%s' % (ID2, self.typeTag()),
+            '%s%s' % (ID2, self.pnameConstructor()),
+            '%s%s' % (ID3, self.nsuriLogic()),
+            '%s'   % self.getBasesLogic(ID3),
+            '%s%s = {}'%(ID3, self.attribute_typecode),
+            '%s%s.%s.__init__(self, pname, **kw)' \
+            % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
+            ]
+
+        for l in self.attrComponents:
+            definition.append('%s%s'%(ID3, l))
+
         self.writeArray(definition)
+
+    def getPyClassDefinition(self):
+        definition = []
+        pt = self.getPythonType()
+        if pt is not None:
+            definition.append('%sclass %s(%s):' %(ID3,self.getPyClass(),pt))
+            definition.append('%s__metaclass__ = pyclass_type' %ID4)
+            definition.append('%stypecode = self' %ID4)
+        return definition
+
+
 
 
 

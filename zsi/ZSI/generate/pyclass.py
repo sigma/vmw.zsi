@@ -52,19 +52,19 @@ class pyclass_type(type):
                 classdict[get.__name__] = get
                 classdict[set.__name__] = set
                 
-            attribute_typecode_dict = typecode.attribute_typecode_dict or {}
-            for key,what in attribute_typecode_dict.items():
-                get,set = cls.__create_attr_functions_from_what(key, what)
-                if classdict.has_key(get.__name__):
-                    raise AttributeError,\
-                        'attribute %s previously defined.' %get.__name__
-                        
-                if classdict.has_key(set.__name__):
-                    raise AttributeError,\
-                        'attribute %s previously defined.' %set.__name__
-                
-                classdict[get.__name__] = get
-                classdict[set.__name__] = set
+            #attribute_typecode_dict = typecode.attribute_typecode_dict or {}
+            #for key,what in attribute_typecode_dict.items():
+            #    get,set = cls.__create_attr_functions_from_what(key, what)
+            #    if classdict.has_key(get.__name__):
+            #        raise AttributeError,\
+            #            'attribute %s previously defined.' %get.__name__
+            #            
+            #    if classdict.has_key(set.__name__):
+            #        raise AttributeError,\
+            #            'attribute %s previously defined.' %set.__name__
+            #    
+            #    classdict[get.__name__] = get
+            #    classdict[set.__name__] = set
                 
             for what in typecode.ofwhat:
                 get,set,new_func = cls.__create_functions_from_what(what)
@@ -108,6 +108,25 @@ class pyclass_type(type):
                         'property for element (%s,%s), minOccurs="%s" maxOccurs="%s" nillable="%s"'\
                         %(what.nspname,what.pname,what.minOccurs,what.maxOccurs,what.nillable)
                         )
+
+        # 
+        # mutable type <complexType> complexContent | modelGroup
+        # or immutable type <complexType> simpleContent (float, str, etc)
+        # 
+        if hasattr(typecode, 'attribute_typecode_dict'):
+            attribute_typecode_dict = typecode.attribute_typecode_dict or {}
+            for key,what in attribute_typecode_dict.items():
+                get,set = cls.__create_attr_functions_from_what(key, what)
+                if classdict.has_key(get.__name__):
+                    raise AttributeError,\
+                        'attribute %s previously defined.' %get.__name__
+                        
+                if classdict.has_key(set.__name__):
+                    raise AttributeError,\
+                        'attribute %s previously defined.' %set.__name__
+                
+                classdict[get.__name__] = get
+                classdict[set.__name__] = set
 
         return type.__new__(cls,classname,bases,classdict)
 

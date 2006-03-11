@@ -31,7 +31,7 @@ class SoapWriter:
            outputclass -- ElementProxy class.
     '''
 
-    def __init__(self, envelope=True, encoding=None, header=True, 
+    def __init__(self, envelope=True, encodingStyle=None, header=True, 
     nsdict={}, outputclass=None, **kw):
         '''Initialize.
         '''
@@ -43,7 +43,7 @@ class SoapWriter:
         self.dom, self.memo, self.nsdict= \
             outputclass(self), [], nsdict
         self.envelope = envelope
-        self.encodingStyle = encoding
+        self.encodingStyle = encodingStyle
         self.header = header
         self.body = None
         self.callbacks = []

@@ -43,7 +43,8 @@ class _Caller:
 
     def __call__(self, *args):
         return self.binding.RPC(None, self.name, args, 
-                                requesttypecode=TC.Any(self.name, aslist=1))
+                                encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
+                                requesttypecode=TC.Any(self.name, aslist=0))
     
 
 class _NamedParamCaller:
@@ -63,7 +64,7 @@ class _NamedParamCaller:
                 kw[kwy] = params[key]
                 del params[key]
         return self.binding.RPC(None, self.name, None, TC.Any(),
-                _args=params, ## requesttypecode correct? XXX
+                _args=params, encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
                 requesttypecode=TC.Any(self.name), **kw)
 
 
@@ -207,7 +208,7 @@ class Binding:
 
         useWSAddress = self.wsAddressURI is not None
         sw = SoapWriter(nsdict=d, header=True, outputclass=self.writerclass, 
-                 encodingStyle=kw.get('encodingStyle'), encoding=kw.get('encoding'))
+                 encodingStyle=kw.get('encodingStyle'),)
         if kw.has_key('_args'):
             sw.serialize(kw['_args'], tc)
         else:
@@ -378,8 +379,7 @@ class Binding:
 
         self.ps = ParsedSoap(self.data, 
                         readerclass=readerclass or self.readerclass, 
-                        encodingStyle=kw.get('encodingStyle'),
-                        encoding=kw.get('encoding'))
+                        encodingStyle=kw.get('encodingStyle'))
 
         if self.sig_handler is not None:
             self.sig_handler.verify(self.ps)
