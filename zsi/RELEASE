@@ -20,13 +20,19 @@ information on getting and setting up those tools.
 
 3.  Make sure CHANGES is up to date, including the version number at
     the top.
+    
+4.  Make sure the documentation is up to date. Try all of the examples,
+	and make sure they work. For a release candidate, the docs do not
+	have to be up to date, but we must at least mark the parts of the
+	docs that are no longer accurate. For a final release, the docs
+	*must* be up to date with the code.
 
-4.  Commit all changes to CVS.
+5.  Commit all changes to SVN.
 
-5.  Run all the tests; they must all pass.  See `Running Tests`_ for
+6.  Run all the tests; they must all pass.  See `Running Tests`_ for
     details.
 
-6.  Tag the CVS repository.  Release tags are of the form::
+7.  Tag the SVN repository.  Release tags are of the form::
 
         "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
 
@@ -39,37 +45,37 @@ information on getting and setting up those tools.
     You'll need to tag the ``wstools`` package separately, but using
     the same tag.
 
-7.  Export the tagged sources from CVS.  You'll need to run the
+8.  Export the tagged sources from CVS.  You'll need to run the
     commands::
 
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG zsi
         cd zsi/ZSI/
         cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG wstools
 
-8.  Build the release from the export.  Switch to the export directory
+9.  Build the release from the export.  Switch to the export directory
     (the one containing setup.py) and run **make kit**.
 
-9.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
+10.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
     0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
     it to dist/zsi-$MAJOR.$MINOR.$PATCHLEVEL.pdf.  This will leave you
     with all the files you need to upload in a single directory
     (dist/).
 
-10. Using the constructed distribution (usually the .tar.gz version),
+11. Using the constructed distribution (usually the .tar.gz version),
     build and test the software; they must all pass.  See `Running
     Tests`_ for details.
 
-11. Use the SourceForge tools to create a release and upload the
+12. Use the SourceForge tools to create a release and upload the
     files.  If appropriate, hide obsolete releases.  Hiding old
     releases is normally only done if the older release contains
     security bugs or other critical bugs that render it unusable.
 
-12. The web pages are in pywebsvcs.sourceforge.net, at the same level
+13. The web pages are in pywebsvcs.sourceforge.net, at the same level
     as the zsi directory.  Copy zsi.html from zsi/doc into there.
     Update index.html to refer (and link) to the new release.  Commit
     those changes.  The cron job will update it every couple of hours.
 
-13. Announce the release:
+14. Announce the release:
 
     - Freshmeat.  The details of how to do this have been lost to the
       travesties of time, but there is a ZSI package there.
