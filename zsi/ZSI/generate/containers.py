@@ -1279,82 +1279,139 @@ class TypecodeContainerBase(TypesContainerBase):
         else:
             return 'def __init__(self, pname, **kw):'
 
-    # _flattenContent() is a pre-processor called before either the
-    # elements or typecode strings are generated.  it flattens out
-    # embedded/anonymous model group elements.  _setElements() and
-    # _setTypecodeList() skip the model groups and pay attention
-    # to the elements contained therein.
-
-    def _flattenContent(self):
-        if not self.contentFlattened:
-            self.contentFlattened = True
-            if type(self.mgContent) is not tuple:
-                raise TypeError, 'expecting tuple for mgContent, not: %s' %type(self.mgContent)
-            for c in self.mgContent:
-                if c.isChoice() or c.isSequence():
-                    self.mgContent += c.content
-
-    # getElements() and _setElements() generate the class variable
-    # elements lists in definition classes
-
     def _setElements(self):
+        """This method ONLY sets up the instance attributes.
+        """
+        flattened = []
+        content = self.mgContent
         if type(self.mgContent) is not tuple:
-            raise TypeError, 'expecting tuple for mgContent got %s' %type(self.mgContent)
+            content = self.mgContent.content
+            if self.mgContent.isAll():
+                flattend = content
+                content = []
 
-        for c in self.mgContent:
+        idx = 0
+        content = list(content)
+        while idx < len(content):
+            c = content[idx]
+            if not c.isModelGroup():
+                flattened.append(c)
+                idx += 1
+                continue
+                
+            if c.isSequence() or c.isChoice():
+                begIdx = idx
+                endIdx = begIdx + len(c.content)
+                for i in range(begIdx, endIdx):
+                    content.insert(i, c.content[i-begIdx])
+                    
+                content.remove(c)
+                continue
+            
+            raise ContainerError, 'unexpected schema item: %s' %c.getItemTrace()
+                
+        for c in flattened:
             if c.isDeclaration() and c.isElement():
-                if c.getAttribute('maxOccurs') == 'unbounded':
-                    defaultValue = "[]"
-                else:
-                    defaultValue = "None"
-                if c.getAttribute('name'):
-                    e = '%sself.%s = %s' \
-                        %(ID3, self.getAttributeName(c.getAttribute('name')), defaultValue)
-                    self.elementAttrs.append(e)
-                elif c.isWildCard():
-                    e = '%sself.%s = %s' % (ID3, self.getAttributeName(c.getAttribute('name')), defaultValue)
-                else:
-                    raise ContainerError, 'This is not an element declaration: %s' %c.getItemTrace()
-            elif c.isReference():
-                if c.getAttribute('ref')[1]:
-                    e = '%sself._%s = None' \
-                        % (ID3,self.mangle(c.getAttribute('ref')[1]))
-                    self.elementAttrs.append(e)
-                else:
-                    raise ContainerError, 'ouch as well'
-            elif c.isSequence() or c.isChoice():
-                if not self.contentFlattened:
-                    raise ContainerError, 'unflattened content found!'
-                else:
-                    # model group contents already flattened
-                    pass
-            else:
-                raise ContainerError, 'unexpected item: %s' % c.getItemTrace()
+                defaultValue = "None"
+                parent = c
+                while 1:
+                    maxOccurs = parent.getAttribute('maxOccurs')
+                    if maxOccurs == 'unbounded' or int(maxOccurs) > 1:
+                        defaultValue = "[]"
+                        break
+                    
+                    parent = parent._parent()
+                    if not parent.isModelGroup():
+                        break
+                    
+                e = '%sself.%s = %s' %(ID3, 
+                        self.getAttributeName(c.getAttribute('name')), defaultValue)
+                self.elementAttrs.append(e)
+                continue
+                        
+            # TODO: This seems wrong 
+            if c.isReference():
+                e = '%sself._%s = None' %(ID3,
+                        self.mangle(c.getAttribute('ref')[1]))
+                self.elementAttrs.append(e)
+                continue
+            
+            raise ContainerError, 'unexpected item: %s' % c.getItemTrace()
 
     def getElements(self):
         if not self.elementsSet:
-            self._flattenContent()
+#            self._flattenContent()
             self._setElements()
             self.elementsSet = True
 
         return '\n'.join(self.elementAttrs)
 
     def _setTypecodeList(self):
-        '''getTypecodeList and _setTypecodeList generates the TClist 
-        strings where appropriate.
-
+        '''generates ofwhat content, minOccurs/maxOccurs facet generation.
             mgContent -- 
             localTypes -- produce local class definitions later
             tcListElements -- elements, local/global 
- 
         '''
+        flattened = []
+        content = self.mgContent
         if type(self.mgContent) is not tuple:
-            raise TypeError, 'expecting tuple for mgContent got %s' %type(self.mgContent)
+            content = self.mgContent.content
+            if self.mgContent.isAll():
+                flattend = content
+                content = []
+    
+        idx = 0
+        content = list(content)
+        while idx < len(content):
+            c = content[idx]
+            if not c.isModelGroup():
+                flattened.append(c)
+                idx += 1
+                continue
+                
+            if c.isSequence() or c.isChoice():
+                begIdx = idx
+                endIdx = begIdx + len(c.content)
+                for i in range(begIdx, endIdx):
+                    content.insert(i, c.content[i-begIdx])
+                    
+                content.remove(c)
+                continue
+            
+            raise ContainerError, 'unexpected schema item: %s' %c.getItemTrace()
 
-        for c in self.mgContent:
+        for c in flattened:
             tc = TcListComponentContainer()
+            # TODO: Remove _getOccurs
             min,max,nil = self._getOccurs(c)
-            tc.setOccurs(min, max, nil)
+            min = max = None
+            maxOccurs = 1
+            
+            parent = c
+            while 1:
+                max = parent.getAttribute('maxOccurs')
+                if max == 'unbounded':
+                    maxOccurs = '"%s"' %max 
+                    break
+                
+                maxOccurs = int(max) * maxOccurs
+                parent = parent._parent()
+                if not parent.isModelGroup():
+                    break
+                
+            parent = c
+            while 1:
+                minOccurs = int(parent.getAttribute('minOccurs'))
+                if minOccurs == 0 or parent.isChoice():
+                    minOccurs = 0
+                    break
+                
+                parent = parent._parent()
+                if not parent.isModelGroup():
+                    minOccurs = int(c.getAttribute('minOccurs'))
+                    break
+            
+            tc.setOccurs(minOccurs, maxOccurs, nil)
             processContents = self._getProcessContents(c)
             tc.setProcessContents(processContents)
 
@@ -1400,10 +1457,6 @@ class TypecodeContainerBase(TypesContainerBase):
                 tc.klass = '%s.%s' % (NAD.getAlias(ns),
                                           element_class_name(c.getAttribute('ref')[1]) )
                 tc.setStyleElementReference()
-            elif c.isSequence() or c.isChoice():
-                if not self.contentFlattened:
-                    raise ContainerError, 'unflattened content found!'
-                continue
             else:
                 raise ContainerError, 'unexpected item: %s' % c.getItemTrace()
 
@@ -1411,7 +1464,7 @@ class TypecodeContainerBase(TypesContainerBase):
 
     def getTypecodeList(self):
         if not self.tcListSet:
-            self._flattenContent()
+#            self._flattenContent()
             self._setTypecodeList()
             self.tcListSet = True
 
@@ -1541,7 +1594,7 @@ class MessageTypecodeContainer(TypecodeContainerBase):
     def setParts(self, parts):
         self.mgContent = parts
 
-#class TcListComponentContainer(TypecodeContainerBase):
+
 class TcListComponentContainer(ContainerBase):
     '''Encapsulates a single value in the TClist list.
     it inherits TypecodeContainerBase only to get the mangle() method,
@@ -2153,18 +2206,26 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         self.ns = tp.getTargetNamespace()
         self.mixed = tp.isMixed()
         self.mgContent = ()
-        
-        if empty is True or tp.content is None:
-            pass
-
-        elif tp.content.isReference() is True: 
-            ref = tp.content.getModelGroupReference()
-            if ref.content.content is not None:
-               self.mgContent = ref.content.content
-        elif tp.content.content is not None:
-            self.mgContent = tp.content.content
-
         self.attrComponents = self._setAttributes(tp.getAttributeContent())
+        
+        if empty:
+            return
+        
+        model = tp.content
+        if model.isReference(): 
+            model = model.getModelGroupReference()
+        
+        if model is None:
+            return
+        
+        if model.content is None:
+            return
+       
+        # sequence, all or choice
+        #self.mgContent = model.content
+        self.mgContent = model
+
+        
         
     def _setContent(self):
         definition = [
@@ -2178,7 +2239,8 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
             '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
             ]
 
-        definition.append('%s%s = attributes or {}' %(ID3, self.attribute_typecode))
+        definition.append('%s%s = attributes or {}' %(ID3, 
+                           self.attribute_typecode))
         # IF EXTEND
         definition.append('%sif extend: TClist += ofwhat'%(ID3))
         # IF RESTRICT
