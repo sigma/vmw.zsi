@@ -1281,31 +1281,48 @@ class TypecodeContainerBase(TypesContainerBase):
 
     def _setElements(self):
         """This method ONLY sets up the instance attributes.
+        Dependency instance attribute:
+            mgContent -- expected to be either a complex definition
+                with model group content, a model group, or model group 
+                content.  TODO: should only support the first two.
         """
         flattened = []
         content = self.mgContent
         if type(self.mgContent) is not tuple:
-            content = self.mgContent.content
-            if self.mgContent.isAll():
+            mg = self.mgContent
+            if not mg.isModelGroup(): 
+                mg = mg.content
+                
+            content = mg.content
+            if mg.isAll():
                 flattend = content
-                content = []
-
+                content = [] 
+            elif mg.isModelGroup() and mg.isDefinition():
+                mg = mg.content
+                content = mg.content            
+    
         idx = 0
         content = list(content)
         while idx < len(content):
-            c = content[idx]
-            if not c.isModelGroup():
+            c = orig = content[idx]
+            if c.isElement():
                 flattened.append(c)
                 idx += 1
                 continue
+            
+            if c.isReference() and c.isModelGroup():
+                c = c.getModelGroupReference()
                 
+            if c.isDefinition() and c.isModelGroup():
+                c = c.content
+
             if c.isSequence() or c.isChoice():
                 begIdx = idx
                 endIdx = begIdx + len(c.content)
                 for i in range(begIdx, endIdx):
                     content.insert(i, c.content[i-begIdx])
                     
-                content.remove(c)
+                content.remove(orig)
                 continue
             
             raise ContainerError, 'unexpected schema item: %s' %c.getItemTrace()
@@ -1314,16 +1331,25 @@ class TypecodeContainerBase(TypesContainerBase):
             if c.isDeclaration() and c.isElement():
                 defaultValue = "None"
                 parent = c
-                while 1:
+                defs = []
+                # stop recursion via global ModelGroupDefinition 
+                while defs.count(parent) <= 1:
                     maxOccurs = parent.getAttribute('maxOccurs')
                     if maxOccurs == 'unbounded' or int(maxOccurs) > 1:
                         defaultValue = "[]"
                         break
-                    
+                        
                     parent = parent._parent()
                     if not parent.isModelGroup():
                         break
                     
+                    if parent.isReference():
+                        parent = parent.getModelGroupReference()
+                        
+                    if parent.isDefinition():
+                        parent = parent.content
+                        defs.append(parent)                
+                
                 e = '%sself.%s = %s' %(ID3, 
                         self.getAttributeName(c.getAttribute('name')), defaultValue)
                 self.elementAttrs.append(e)
@@ -1347,27 +1373,43 @@ class TypecodeContainerBase(TypesContainerBase):
         return '\n'.join(self.elementAttrs)
 
     def _setTypecodeList(self):
-        '''generates ofwhat content, minOccurs/maxOccurs facet generation.
-            mgContent -- 
+        """generates ofwhat content, minOccurs/maxOccurs facet generation.
+        Dependency instance attribute:
+            mgContent -- expected to be either a complex definition
+                with model group content, a model group, or model group 
+                content.  TODO: should only support the first two.
             localTypes -- produce local class definitions later
             tcListElements -- elements, local/global 
-        '''
+        """
         flattened = []
         content = self.mgContent
         if type(self.mgContent) is not tuple:
-            content = self.mgContent.content
-            if self.mgContent.isAll():
+            mg = self.mgContent
+            if not mg.isModelGroup(): 
+                mg = mg.content
+                
+            content = mg.content
+            if mg.isAll():
                 flattend = content
-                content = []
-    
+                content = [] 
+            elif mg.isModelGroup() and mg.isDefinition():
+                mg = mg.content
+                content = mg.content
+                
         idx = 0
         content = list(content)
         while idx < len(content):
-            c = content[idx]
-            if not c.isModelGroup():
+            c = orig = content[idx]
+            if c.isElement():
                 flattened.append(c)
                 idx += 1
                 continue
+            
+            if c.isReference() and c.isModelGroup():
+                c = c.getModelGroupReference()
+                
+            if c.isDefinition() and c.isModelGroup():
+                c = c.content
                 
             if c.isSequence() or c.isChoice():
                 begIdx = idx
@@ -1375,11 +1417,15 @@ class TypecodeContainerBase(TypesContainerBase):
                 for i in range(begIdx, endIdx):
                     content.insert(i, c.content[i-begIdx])
                     
-                content.remove(c)
+                content.remove(orig)
                 continue
             
             raise ContainerError, 'unexpected schema item: %s' %c.getItemTrace()
 
+        # TODO: Need to store "parents" in a dict[id] = list(),
+        #    because cannot follow references, but not currently
+        #    a big concern. 
+        
         for c in flattened:
             tc = TcListComponentContainer()
             # TODO: Remove _getOccurs
@@ -1388,7 +1434,9 @@ class TypecodeContainerBase(TypesContainerBase):
             maxOccurs = 1
             
             parent = c
-            while 1:
+            defs = []
+            # stop recursion via global ModelGroupDefinition 
+            while defs.count(parent) <= 1:
                 max = parent.getAttribute('maxOccurs')
                 if max == 'unbounded':
                     maxOccurs = '"%s"' %max 
@@ -1399,6 +1447,14 @@ class TypecodeContainerBase(TypesContainerBase):
                 if not parent.isModelGroup():
                     break
                 
+                if parent.isReference():
+                    parent = parent.getModelGroupReference()
+                    
+                if parent.isDefinition():
+                    parent = parent.content
+                    defs.append(parent)
+                
+            del defs
             parent = c
             while 1:
                 minOccurs = int(parent.getAttribute('minOccurs'))
@@ -1410,11 +1466,16 @@ class TypecodeContainerBase(TypesContainerBase):
                 if not parent.isModelGroup():
                     minOccurs = int(c.getAttribute('minOccurs'))
                     break
+                
+                if parent.isReference():
+                    parent = parent.getModelGroupReference()
+                    
+                if parent.isDefinition():
+                    parent = parent.content       
             
             tc.setOccurs(minOccurs, maxOccurs, nil)
             processContents = self._getProcessContents(c)
             tc.setProcessContents(processContents)
-
             if c.isDeclaration() and c.isElement():
                 global_type = c.getAttribute('type')
                 content = getattr(c, 'content', None)
