@@ -191,10 +191,14 @@ class pyclass_type(type):
             getattr(self, what.attrs_aname)[key] = value
         
         # TODO: need to make sure these function names are legal.
+        
         if type(key) in (tuple, list):
-            key = key[1]
-        get.__name__ = 'get_attribute_%s' %key
-        set.__name__ = 'set_attribute_%s' %key
+            get.__name__ = 'get_attribute_%s' %key[1]
+            set.__name__ = 'set_attribute_%s' %key[1]
+        else:
+            get.__name__ = 'get_attribute_%s' %key
+            set.__name__ = 'set_attribute_%s' %key
+
         return get,set
     __create_attr_functions_from_what = \
         staticmethod(__create_attr_functions_from_what)

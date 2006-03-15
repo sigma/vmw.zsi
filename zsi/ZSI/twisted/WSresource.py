@@ -63,6 +63,11 @@ class CallbackChainInterface(Interface):
         """
 
 class DataHandler:
+    """
+    class variables:
+        readerClass -- factory class to create reader for ParsedSoap instances.
+        writerClass -- ElementProxy implementation to use for SoapWriter instances.
+    """
     classProvides(HandlerChainInterface)
     readerClass = None
     writerClass = None
@@ -286,8 +291,8 @@ class WSResource(twisted.web.resource.Resource, object):
     """
     class variables:
         encoding  --
-        readerClass -- factory class to create reader for ParsedSoap instances.
-        writerClass -- ElementProxy implementation to use for SoapWriter instances.
+        factory -- hander chain, which has a factory method "newInstance"
+		that returns a 
     """
     encoding = "UTF-8"
     factory = DefaultHandlerChainFactory
