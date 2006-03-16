@@ -177,7 +177,7 @@ class pyclass_type(type):
     def __create_attr_functions_from_what(key, what):
         def get(self):
             '''returns attribute value for attribute %s, else None.
-            ''' %key
+            ''' %str(key)
             return getattr(self, what.attrs_aname, {}).get(key, None)
                 
         #get.im_func = 'get_element_%s' %what.aname
@@ -185,7 +185,7 @@ class pyclass_type(type):
         def set(self, value):
             '''set value for attribute %s.
             value -- initialize value, immutable type
-            ''' %key
+            ''' %str(key)
             if not hasattr(self, what.attrs_aname):
                 setattr(self, what.attrs_aname, {})
             getattr(self, what.attrs_aname)[key] = value
