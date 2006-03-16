@@ -392,7 +392,8 @@ class TypeCode(Base):
                 if what is None and namespaceURI is None:
                     what = self.attribute_typecode_dict.get(localName)
 
-            if hasattr(value, 'typecode'):
+            # allow derived type
+            if hasattr(value, 'typecode') and not isinstance(what, AnyType):
                 if what is not None and not isinstance(value.typecode, what):
                     raise EvaluateException, \
                         'self-describing attribute must subclass %s'\
@@ -1504,6 +1505,12 @@ class AnyType(TypeCode):
     minOccurs=1, maxOccurs=1, strip=1, **kw):
         TypeCode.__init__(self, pname=pname, minOccurs=minOccurs, maxOccurs=maxOccurs, **kw)
         self.namespaces = namespaces
+
+    def get_formatted_content(self, pyobj):
+        # TODO: not sure this makes sense, 
+        # parse side will be clueless, but oh well..
+        what = getattr(pyobj, 'typecode', Any())
+        return what.get_formatted_content(pyobj)
 
     def serialize(self, elt, sw, pyobj, **kw):
         nsuri,typeName = _get_xsitype(pyobj)
