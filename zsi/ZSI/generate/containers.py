@@ -2514,7 +2514,8 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
                 '%s%s' % (ID2, self.schemaTag()),
                 '%s%s' % (ID2, self.typeTag()),
                 '%s%s' % (ID2, self.pnameConstructor()),
-                '%s%s = {}'%(ID3, self.attribute_typecode),
+                '%sif getattr(self, "attribute_typecode_dict", None) is None: %s = {}' %(
+                    ID3, self.attribute_typecode),
                 ]
     
             for l in self.attrComponents: 
@@ -2538,8 +2539,8 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
             '%s%s' % (ID2, self.pnameConstructor()),
             '%s%s' % (ID3, self.nsuriLogic()),
             '%s'   % self.getBasesLogic(ID3),
-            '%sif not hasattr(self, %s): self.%s = {}'%(
-                ID3, self.attribute_typecode, self.attribute_typecode),
+            '%sif getattr(self, "attribute_typecode_dict", None) is None: %s = {}' %(
+                ID3, self.attribute_typecode),
             ]
 
         for l in self.attrComponents:
