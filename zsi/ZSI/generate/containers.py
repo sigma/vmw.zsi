@@ -2538,13 +2538,15 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
             '%s%s' % (ID2, self.pnameConstructor()),
             '%s%s' % (ID3, self.nsuriLogic()),
             '%s'   % self.getBasesLogic(ID3),
-            '%s%s = {}'%(ID3, self.attribute_typecode),
-            '%s%s.%s.__init__(self, pname, **kw)' \
-            % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
+            '%sif not hasattr(self, %s): self.%s = {}'%(
+                ID3, self.attribute_typecode, self.attribute_typecode),
             ]
 
         for l in self.attrComponents:
             definition.append('%s%s'%(ID3, l))
+
+        definition.append('%s%s.%s.__init__(self, pname, **kw)' %(
+            ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass)))
 
         self.writeArray(definition)
 
