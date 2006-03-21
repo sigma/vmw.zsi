@@ -4,7 +4,7 @@
 '''
 
 from ZSI import _copyright, _children, _child_elements, \
-    _floattypes, _stringtypes, _seqtypes, _find_attr, _find_attrNS, \
+    _floattypes, _stringtypes, _seqtypes, _find_attr, _find_attrNS, _find_attrNodeNS, \
     _find_arraytype, _find_default_namespace, _find_href, _find_encstyle, \
     _resolve_prefix, _find_xsi_attr, _find_type, \
     _find_xmlns_prefix, _get_element_nsuri_name, _get_idstr, \
@@ -392,17 +392,17 @@ class TypeCode(Base):
         
         attributes = {}
         for attr,what in self.attribute_typecode_dict.items():
+            namespaceURI,localName = None,attr
             if type(attr) in _seqtypes: 
                 namespaceURI,localName = attr
-                value = _find_attrNS(elt, namespaceURI, localName)
-                self.logger.debug("Parsed Attribute (%s,%s) -- %s", 
-                                   namespaceURI, localName, value)
-            else:
-                value = _find_attr(elt, attr)
-                self.logger.debug("Parsed Attribute (%s) -- %s", attr, value)
+            value = _find_attrNodeNS(elt, namespaceURI, localName)
+            self.logger.debug("Parsed Attribute (%s,%s) -- %s", 
+                               namespaceURI, localName, value)
+
             # For Now just set it w/o any type interpretation.
             if value is None: continue
             attributes[attr] = what.text_to_data(value, elt, ps)
+
         return attributes
 
     def set_attributes(self, el, pyobj):

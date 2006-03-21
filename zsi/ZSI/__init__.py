@@ -197,6 +197,23 @@ def _find_attrNS(E, namespaceURI, localName):
         v = E.getAttributeNS(namespaceURI, localName)
         if v: return v
     except: pass
+    return None
+
+
+def _find_attrNodeNS(E, namespaceURI, localName):
+    '''Must grab the attribute Node to distinquish between
+    an unspecified attribute(None) and one set to empty string("").
+       namespaceURI
+       localName
+    '''
+    attr = E.getAttributeNodeNS(namespaceURI, localName)
+    if attr is None: return None
+    try:
+        return attr.value
+    except: pass
+    return E.getAttributeNS(namespaceURI, localName)
+
+
 
 
 _find_href = lambda E: _find_attr(E, "href")

@@ -140,6 +140,22 @@ class AttributeTest(unittest.TestCase):
         #test = pyobj2.get_attribute_myGMonthDay()
         #self.failUnlessEqual(myGDateTime[1:3], test[1:3])
 
+    def test_empty_attribute(self):
+        # [ 1452752 ] attribute with empty value doesn't appear in parsed object
+        myString = ""
+        pyobj = GED("urn:example", "Test1").pyclass()
+        pyobj.set_attribute_myString(myString)
+
+        sw = SoapWriter()
+        sw.serialize(pyobj)
+        soap = str(sw)
+ 
+        print soap
+        ps = ParsedSoap(soap)
+        pyobj2 = ps.Parse(pyobj.typecode)
+
+        test = pyobj2.get_attribute_myString() 
+        self.failUnlessEqual(myString, str(test))
 
 
 def makeTestSuite():
