@@ -39,28 +39,44 @@ class AttributeTest(unittest.TestCase):
     def test_attribute1(self):
         """
         """
-        pyobj = GED("urn:example", "Test1").pyclass()
-        pyobj.set_attribute_myAnyURI("urn:whatever")
-        #pyobj.set_attribute_myBase64Binary("")
-        pyobj.set_attribute_myDate(time.time())
-        pyobj.set_attribute_myDateTime(time.time())
-        pyobj.set_attribute_myDecimal(8.999)
-        pyobj.set_attribute_myDouble(4.5)
-        pyobj.set_attribute_myFloat(3.0001)
-        pyobj.set_attribute_myGDay(time.time())
-        pyobj.set_attribute_myGMonthDay(time.time())
-        pyobj.set_attribute_myGYear(time.time())
-        pyobj.set_attribute_myGYearMonth(time.time())
-        pyobj.set_attribute_myHexBinary(hex(888))
-        pyobj.set_attribute_myInt(9)
-        pyobj.set_attribute_myQName(("urn:test", "qbert"))
-        pyobj.set_attribute_myString("whatever")
-        pyobj.set_attribute_myTime(time.time())
+        myDouble = 4.5
+        myInt = 9
+        myFloat = 3.0001
+        myDecimal = 8.999
+        myGDateTime = time.gmtime()
+        myAnyURI = "urn:whatever"
+        myQName = ("urn:test", "qbert")
+        myString = "whatever"
+        myHexBinary = hex(888)
 
-        #BROKE 
+        pyobj = GED("urn:example", "Test1").pyclass()
+        # Test serialize/parse
+        pyobj.set_attribute_myDecimal(myDecimal)
+        pyobj.set_attribute_myDouble(myDouble)
+        pyobj.set_attribute_myFloat(myFloat)
+        pyobj.set_attribute_myInt(myInt)
+        pyobj.set_attribute_myDateTime(myGDateTime)
+
+        pyobj.set_attribute_myGDay(myGDateTime)
+        pyobj.set_attribute_myGMonth(myGDateTime)
+        pyobj.set_attribute_myGYear(myGDateTime)
+        pyobj.set_attribute_myGYearMonth(myGDateTime)
+        pyobj.set_attribute_myDate(myGDateTime)
+        pyobj.set_attribute_myTime(myGDateTime)
+
+        pyobj.set_attribute_myAnyURI(myAnyURI)
+        pyobj.set_attribute_myString(myString)
+        pyobj.set_attribute_myHexBinary(myHexBinary)
+        pyobj.set_attribute_myDuration(myGDateTime)
+
+        # Problems parsings 
+        pyobj.set_attribute_myQName(myQName)
+        pyobj.set_attribute_myGMonthDay(myGDateTime)
+
+
+        #TODO:
+        #pyobj.set_attribute_myBase64Binary("")
         #pyobj.set_attribute_myNOTATION("NOT")
-        #pyobj.set_attribute_myGMonth(time.time())
-        #pyobj.set_attribute_myDuration("DUR")
 
         sw = SoapWriter()
         sw.serialize(pyobj)
@@ -69,12 +85,61 @@ class AttributeTest(unittest.TestCase):
         print soap
         ps = ParsedSoap(soap)
         pyobj2 = ps.Parse(pyobj.typecode)
-        for get in ['get_attribute_myInt','get_attribute_myDouble',
-            'get_attribute_myFloat',]:
-            #x = getattr(pyobj, get)()
-            y = getattr(pyobj2, get)()
-            #self.failUnlessEqual(x, y)
-            print y
+
+        test = pyobj2.get_attribute_myInt()
+        self.failUnlessEqual(myInt, test)
+
+        test = pyobj2.get_attribute_myDouble()
+        self.failUnlessEqual(myDouble, test)
+
+        test = pyobj2.get_attribute_myFloat()
+        self.failUnlessEqual(myFloat, test)
+
+        test = pyobj2.get_attribute_myDecimal()
+        self.failUnlessEqual(myDecimal, test)
+
+        test = pyobj2.get_attribute_myAnyURI()
+        self.failUnlessEqual(myAnyURI, test)
+
+        test = pyobj2.get_attribute_myQName()
+        self.failUnlessEqual(myQName, test)
+
+        test = pyobj2.get_attribute_myString()
+        self.failUnlessEqual(myString, test)
+
+        test = pyobj2.get_attribute_myHexBinary()
+        self.failUnlessEqual(myHexBinary, test)
+
+        # DateTime stuff
+        test = pyobj2.get_attribute_myDateTime()
+        self.failUnlessEqual(myGDateTime[:-3], test[:-3])
+
+        test = pyobj2.get_attribute_myDate()
+        self.failUnlessEqual(myGDateTime[:3], test[:3])
+
+        test = pyobj2.get_attribute_myTime()
+        self.failUnlessEqual(myGDateTime[4:5], test[4:5])
+
+        test = pyobj.get_attribute_myDuration()
+        self.failUnlessEqual(myGDateTime, test)
+
+        # Bug [ 1453421 ] Incorrect format for type gDay
+        test = pyobj2.get_attribute_myGDay()
+        self.failUnlessEqual(myGDateTime[2], test[2])
+
+        test = pyobj2.get_attribute_myGMonth()
+        self.failUnlessEqual(myGDateTime[1], test[1])
+
+        test = pyobj2.get_attribute_myGYear()
+        self.failUnlessEqual(myGDateTime[0], test[0])
+
+        test = pyobj2.get_attribute_myGYearMonth()
+        self.failUnlessEqual(myGDateTime[:2], test[:2])
+
+        # hmm? negated?
+        #test = pyobj2.get_attribute_myGMonthDay()
+        #self.failUnlessEqual(myGDateTime[1:3], test[1:3])
+
 
 
 def makeTestSuite():

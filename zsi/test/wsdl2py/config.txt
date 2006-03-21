@@ -52,7 +52,7 @@ port = 9080
 #
 ##########################################################################
 [simple]
-tests = test_Echo test_Choice
+tests = test_Echo test_Choice test_Attributes
 
 
 ########################## RPC/ENCODED ###################################

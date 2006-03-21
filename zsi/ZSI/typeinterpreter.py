@@ -24,8 +24,8 @@ class BaseTypeInterpreter:
     def __init__(self):
         self._type_list = [TC.Iinteger, TC.IunsignedShort, TC.gYearMonth, \
                            TC.InonNegativeInteger, TC.Iint, TC.String, \
-                           TC.gDateTime, TC.IunsignedInt, \
-                           TC.IpositiveInteger, TC.FPfloat, TC.gDay, \
+                           TC.gDateTime, TC.IunsignedInt, TC.Duration,\
+                           TC.IpositiveInteger, TC.FPfloat, TC.gDay, TC.gMonth, \
                            TC.InegativeInteger, TC.gDate, TC.URI, \
                            TC.HexBinaryString, TC.IunsignedByte, \
                            TC.gMonthDay, TC.InonPositiveInteger, \
@@ -66,6 +66,7 @@ class BaseTypeInterpreter:
             ZSI.TC.Token]
 
         self._tc_to_tuple = [
+            ZSI.TC.Duration,
             ZSI.TC.QName,
             ZSI.TCtimes.gDate,
             ZSI.TCtimes.gDateTime,
@@ -73,6 +74,7 @@ class BaseTypeInterpreter:
             ZSI.TCtimes.gMonthDay,
             ZSI.TCtimes.gTime,
             ZSI.TCtimes.gYear,
+            ZSI.TCtimes.gMonth,
             ZSI.TCtimes.gYearMonth]
         
         return

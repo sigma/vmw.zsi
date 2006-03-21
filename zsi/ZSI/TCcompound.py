@@ -8,7 +8,8 @@ from ZSI import _copyright, _children, _child_elements, \
     _find_type, _find_xmlns_prefix, _get_idstr, EvaluateException
 from ZSI.TC import _get_element_nsuri_name, \
     _get_substitute_element, _get_type_definition, _get_xsitype, \
-    TypeCode, Any, AnyElement, AnyType, ElementDeclaration, TypeDefinition
+    TypeCode, Any, AnyElement, AnyType, ElementDeclaration, TypeDefinition, \
+    Nilled
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 from ZSI.wstools.Utility import SplitQName
 import re, types
@@ -117,8 +118,8 @@ class ComplexType(TypeCode):
         self.checkname(elt, ps)
         if self.type and \
         self.checktype(elt, ps) not in [ self.type, (None,None) ]:
-            raise EvaluateException('Struct for %s has wrong type(%s), looking for %s' \
-                %(self.pname, self.checktype(elt,ps), self.type), ps.Backtrace(elt))
+            raise EvaluateException('ComplexType for %s has wrong type(%s), looking for %s' %(
+                self.pname, self.checktype(elt,ps), self.type), ps.Backtrace(elt))
         href = _find_href(elt)
         if href:
             if _children(elt):
@@ -127,7 +128,7 @@ class ComplexType(TypeCode):
             elt = ps.FindLocalHREF(href, elt)
         c = _child_elements(elt)
         count = len(c)
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
         repeatable_args = False
         for tc in self.ofwhat:
             if tc.maxOccurs > 1:
@@ -136,14 +137,15 @@ class ComplexType(TypeCode):
 
         if not repeatable_args:
             if count > len(self.ofwhat) and not self.hasextras:
-                raise EvaluateException('Too many sub-elements (%d>%d)' %(count,len(self.ofwhat)), ps.Backtrace(elt))
+                raise EvaluateException('Too many sub-elements (%d>%d)' %(
+                    count,len(self.ofwhat)), ps.Backtrace(elt))
 
         # Create the object.
         v = {}
 
         # parse all attributes contained in attribute_typecode_dict (user-defined attributes),
         # the values (if not None) will be keyed in self.attributes dictionary.
-        attributes = self.parse_attributes(elt)
+        attributes = self.parse_attributes(elt, ps)
         if attributes:
             v[self.attrs_aname] = attributes
 
@@ -215,8 +217,8 @@ class ComplexType(TypeCode):
             if any.maxOccurs == 1 and occurs == 0:
                 v[any.aname] = None
             elif occurs < any.minOccurs or (any.maxOccurs!='unbounded' and any.maxOccurs<occurs):
-                raise EvaluateException, 'occurances of <any> elements(#%d) bound by (%d,%s)'\
-                    %(occurs, any.minOccurs,str(any.maxOccurs))
+                raise EvaluateException('occurances of <any> elements(#%d) bound by (%d,%s)' %(
+                    occurs, any.minOccurs,str(any.maxOccurs)), ps.Backtrace(elt))
 
         if not self.pyclass: 
             return v
@@ -253,8 +255,8 @@ class ComplexType(TypeCode):
                 elem = elt.createAppendElement(self.nspname, self.pname)
                 self.serialize_as_nil(elem)
                 return
-            raise EvaluateException, \
-                'element(%s,%s) is not nillable(%s)' %(self.nspname,self.pname,self.nillable)
+            raise EvaluateException, 'element(%s,%s) is not nillable(%s)' %(
+                self.nspname,self.pname,self.nillable)
 
         if self.mutable is False and sw.Known(pyobj): 
             return
@@ -279,9 +281,8 @@ class ComplexType(TypeCode):
                        self.logger.debug("mixed text content:\n\t%s", textContent)
                        elem.createAppendTextNode(textContent)
                    else:
-                       raise EvaluateException, \
-                           'mixed test content in element (%s,%s) must be a string type' \
-                           %(self.nspname,self.pname)
+                       raise EvaluateException('mixed test content in element (%s,%s) must be a string type' %(
+                           self.nspname,self.pname), sw.Backtrace(elt))
                else:
                    self.logger.debug("mixed NO text content in %s", self.mixed_aname)
         else:
@@ -292,7 +293,8 @@ class ComplexType(TypeCode):
         if self.inline:
             pass
         elif not self.inline and self.unique:
-            raise EvaluateException, 'Not inline, but unique makes no sense. No href/id.'
+            raise EvaluateException('Not inline, but unique makes no sense. No href/id.',
+                sw.Backtrace(elt))
         elif n is not None:
             self.set_attribute_id(elem, objid)
 
@@ -335,16 +337,16 @@ class ComplexType(TypeCode):
 
             if whatTC.maxOccurs > 1 and v is not None:
                 if type(v) not in _seqtypes:
-                    raise EvaluateException, \
-                        'pyobj (%s,%s), aname "%s": maxOccurs %s, expecting a %s' \
-                        %(self.nspname,self.pname,what.aname,whatTC.maxOccurs,_seqtypes)
+                    raise EvaluateException('pyobj (%s,%s), aname "%s": maxOccurs %s, expecting a %s' %(
+                         self.nspname,self.pname,what.aname,whatTC.maxOccurs,_seqtypes), 
+                         sw.Backtrace(elt))
 
                 for v2 in v: 
                     occurs += 1
                     if occurs > whatTC.maxOccurs:
-                        raise EvaluateException, \
-                            'occurances (%d) exceeded maxOccurs(%d) for <%s>' \
-                            %(occurs, whatTC.maxOccurs, what.pname)
+                        raise EvaluateException('occurances (%d) exceeded maxOccurs(%d) for <%s>' %(
+                                occurs, whatTC.maxOccurs, what.pname), 
+                                sw.Backtrace(elt))
                     try:
                         what.serialize(elem, sw, v2, **kw)
                     except Exception, e:
@@ -352,9 +354,8 @@ class ComplexType(TypeCode):
                             (n, whatTC.aname or '?', e.__class__.__name__, str(e)))
 
                 if occurs < whatTC.minOccurs:
-                    raise EvaluateException, \
-                        'occurances(%d) less than minOccurs(%d) for <%s>' \
-                        %(occurs, whatTC.minOccurs, what.pname)
+                    raise EvaluateException('occurances(%d) less than minOccurs(%d) for <%s>' %(
+                            occurs, whatTC.minOccurs, what.pname), sw.Backtrace(elt))
                 continue
 
             if v is not None or what.nillable is True:
@@ -362,11 +363,13 @@ class ComplexType(TypeCode):
                     what.serialize(elem, sw, v, **kw)
                 except Exception, e:
                     raise EvaluateException('Serializing %s.%s, %s %s' %
-                        (n, whatTC.aname or '?', e.__class__.__name__, str(e)))
+                        (n, whatTC.aname or '?', e.__class__.__name__, str(e)),
+                        sw.Backtrace(elt))
                 continue
 
-            raise EvaluateException, 'Got None for nillable(%s), minOccurs(%d) element (%s,%s), %s'\
-                %(what.nillable, what.minOccurs, what.nspname, what.pname, elem)
+            raise EvaluateException('Got None for nillable(%s), minOccurs(%d) element (%s,%s), %s' %
+                    (what.nillable, what.minOccurs, what.nspname, what.pname, elem),
+                    sw.Backtrace(elt))
 
 
     def setDerivedTypeContents(self, extensions=None, restrictions=None):
@@ -511,7 +514,7 @@ class Array(TypeCode):
                 raise EvaluateException('Array has content and HREF',
                         ps.Backtrace(elt))
             elt = ps.FindLocalHREF(href, elt)
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
         if not _find_arraytype(elt) and self.undeclared is False:
             raise EvaluateException('Array expected', ps.Backtrace(elt))
         t = _find_type(elt)

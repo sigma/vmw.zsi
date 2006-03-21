@@ -17,6 +17,31 @@ except:
 del _x
 
 
+#def GetNil(typecode=None):
+#    """returns the nilled element, use to set an element 
+#    as nilled for immutable instance.
+#    """
+# 
+#    nil = TC.Nilled()
+#    if typecode is not None: nil.typecode = typecode
+#    return nil
+#
+#
+#def GetNilAsSelf(cls, typecode=None):
+#    """returns the nilled element with typecode specified, 
+#    use returned instance to set this element as nilled.
+#    
+#    Key Word Parameters:
+#        typecode -- use to specify a derived type or wildcard as nilled.
+#    """
+#    if typecode is not None and not isinstance(typecode, TC.TypeCode):
+#        raise TypeError, "Expecting a TypeCode instance"
+#    
+#    nil = TC.Nilled()
+#    nil.typecode = typecode or cls.typecode
+#    return nil
+
+
 class pyclass_type(type):
     """Stability: Unstable
 
@@ -25,18 +50,24 @@ class pyclass_type(type):
     and setting the elements specified in the ofwhat list, and factory methods
     for constructing the elements.
     """
-    def __new__(cls,classname,bases,classdict):
+    def __new__(cls, classname, bases, classdict):
         """
         """
-        import new
+        #import new
         typecode = classdict.get('typecode')
         assert typecode is not None, 'MUST HAVE A TYPECODE.'
 
-        # Assume this means not immutable type. ie. ofwhat.
-        if len(bases) == 0:
+        # Assume this means immutable type. ie. str
+        if len(bases) > 0:
+            #classdict['new_Nill'] = classmethod(GetNilAsSelf)
+            pass
+        # Assume this means mutable type. ie. ofwhat.
+        else:
             assert hasattr(typecode, 'ofwhat'), 'typecode has no ofwhat list??'
             assert hasattr(typecode, 'attribute_typecode_dict'),\
                 'typecode has no attribute_typecode_dict??'
+                
+            #classdict['new_Nill'] = staticmethod(GetNil)
             
             if typecode.mixed:
                 get,set = cls.__create_text_functions_from_what(typecode)
@@ -51,20 +82,6 @@ class pyclass_type(type):
                 
                 classdict[get.__name__] = get
                 classdict[set.__name__] = set
-                
-            #attribute_typecode_dict = typecode.attribute_typecode_dict or {}
-            #for key,what in attribute_typecode_dict.items():
-            #    get,set = cls.__create_attr_functions_from_what(key, what)
-            #    if classdict.has_key(get.__name__):
-            #        raise AttributeError,\
-            #            'attribute %s previously defined.' %get.__name__
-            #            
-            #    if classdict.has_key(set.__name__):
-            #        raise AttributeError,\
-            #            'attribute %s previously defined.' %set.__name__
-            #    
-            #    classdict[get.__name__] = get
-            #    classdict[set.__name__] = set
                 
             for what in typecode.ofwhat:
                 get,set,new_func = cls.__create_functions_from_what(what)
@@ -89,11 +106,6 @@ class pyclass_type(type):
                 assert not classdict.has_key(what.pname),\
                     'collision with pname="%s", bail..' %what.pname
                     
-                #if classdict.has_key(what.pname):
-                #    classdict['p%s' %what.aname] =\
-                #        property(get, set, None, 
-                #            'property for element (%s,%s)' %(what.nspname,what.pname))
-                #else:
                 pname = what.pname
                 if pname is None and isinstance(what, TC.AnyElement): pname = 'any'
                 assert pname is not None, 'Element with no name: %s' %what
@@ -172,8 +184,6 @@ class pyclass_type(type):
         return get,set,new_func
     __create_functions_from_what = staticmethod(__create_functions_from_what)
     
-    
-
     def __create_attr_functions_from_what(key, what):
         def get(self):
             '''returns attribute value for attribute %s, else None.

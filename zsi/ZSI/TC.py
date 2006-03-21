@@ -149,6 +149,12 @@ class TypeDefinition:
     __metaclass__ = SchemaInstanceType
 
 
+#class Nilled:
+#    '''Just a placeholder for nilled elements.
+#    '''
+#    __init__ = None
+Nilled = None   
+
 class TypeCode(Base):
     '''The parent class for all parseable SOAP types.
     Class data:
@@ -211,31 +217,45 @@ class TypeCode(Base):
             self.nspname = kw['encoded']
 
     def parse(self, elt, ps):
-        '''elt -- the DOM element being parsed
-        ps -- the ParsedSoap object.
+        '''
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
         raise EvaluateException("Unimplemented evaluation", ps.Backtrace(elt))
 
     def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
-        '''elt -- the current DOMWrapper element 
+        '''
+        Parameters:
+           elt -- the current DOMWrapper element 
            sw -- soapWriter object
            pyobj -- python object to serialize
 
         '''
         raise EvaluateException("Unimplemented evaluation", sw.Backtrace(elt))
 
-    def text_to_data(self, text):
+    def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
+        Parameters:
+            text -- text content
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
-        raise EvaluateException("Unimplemented evaluation", sw.Backtrace(elt))
+        raise EvaluateException("Unimplemented evaluation", ps.Backtrace(elt))
 
     def serialize_as_nil(self, elt):
-        '''elt -- the current DOMWrapper element 
+        '''
+        Parameters:
+            elt -- the current DOMWrapper element 
         '''
         elt.setAttributeNS(SCHEMA.XSI3, 'nil', '1')
 
     def SimpleHREF(self, elt, ps, tag):
         '''Simple HREF for non-string and non-struct and non-array.
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
+            tag -- 
         '''
         if len(_children(elt)): return elt
         href = _find_href(elt)
@@ -263,6 +283,9 @@ class TypeCode(Base):
     def checkname(self, elt, ps):
         '''See if the name and type of the "elt" element is what we're
         looking for.   Return the element's type.
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
 
         parselist,errorlist = self.get_parse_and_errorlist()
@@ -289,6 +312,9 @@ class TypeCode(Base):
     def checktype(self, elt, ps):
         '''See if the type of the "elt" element is what we're looking for.
         Return the element's type.
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
         typeName = _find_type(elt)
         if typeName is None or typeName == "":
@@ -313,12 +339,17 @@ class TypeCode(Base):
 
     def name_match(self, elt):
         '''Simple boolean test to see if we match the element name.
+        Parameters:
+            elt -- the DOM element being parsed
         '''
         return self.pname == elt.localName and \
                     self.nspname in [None, elt.namespaceURI]
 
     def nilled(self, elt, ps):
         '''Is the element NIL, and is that okay?
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
         if _find_nil(elt) not in [ "true",  "1"]: return False
         if self.nillable is False:
@@ -328,6 +359,9 @@ class TypeCode(Base):
 
     def simple_value(self, elt, ps):
         '''Get the value of the simple content of this element.
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
         if not _valid_encoding(elt):
             raise EvaluateException('Invalid encoding', ps.Backtrace(elt))
@@ -345,24 +379,30 @@ class TypeCode(Base):
                 if E.nodeType 
                 in [ _Node.TEXT_NODE, _Node.CDATA_SECTION_NODE ]])
 
-    def parse_attributes(self, elt):
+    def parse_attributes(self, elt, ps):
         '''find all attributes specified in the attribute_typecode_dict in
         current element tag, if an attribute is found set it in the 
         self.attributes dictionary.  Default to putting in String.
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
         '''
+        if self.attribute_typecode_dict is None: 
+            return
+        
         attributes = {}
-        if self.attribute_typecode_dict is None: return
         for attr,what in self.attribute_typecode_dict.items():
             if type(attr) in _seqtypes: 
                 namespaceURI,localName = attr
                 value = _find_attrNS(elt, namespaceURI, localName)
-                self.logger.debug("Parsed Attribute (%s,%s) -- %s", namespaceURI, localName, value)
+                self.logger.debug("Parsed Attribute (%s,%s) -- %s", 
+                                   namespaceURI, localName, value)
             else:
                 value = _find_attr(elt, attr)
                 self.logger.debug("Parsed Attribute (%s) -- %s", attr, value)
             # For Now just set it w/o any type interpretation.
             if value is None: continue
-            attributes[attr] = value
+            attributes[attr] = what.text_to_data(value, elt, ps)
         return attributes
 
     def set_attributes(self, el, pyobj):
@@ -370,8 +410,9 @@ class TypeCode(Base):
         of keys (namespaceURI,localName) and attribute values.
         These values can be self-describing (typecode), or use
         attribute_typecode_dict to determine serialization.
-            el -- MessageInterface instance representing the element
-                declaration.
+        Paramters:
+            el -- MessageInterface representing the element
+            pyobj -- 
         '''
         if not hasattr(pyobj, self.attrs_aname):
             return
@@ -415,6 +456,8 @@ class TypeCode(Base):
 
     def set_attribute_xsi_type(self, el, **kw):
         '''if typed, set the xsi:type attribute 
+        Paramters:
+            el -- MessageInterface representing the element
         '''
         if kw.get('typed', self.typed):
             namespaceURI,typeName = kw.get('type', _get_xsitype(self))
@@ -424,16 +467,27 @@ class TypeCode(Base):
 
     def set_attribute_href(self, el, objid):
         '''set href attribute
+        Paramters:
+            el -- MessageInterface representing the element
+            objid -- ID type, unique id
         '''
         el.setAttributeNS(None, 'href', "#%s" %objid)
 
     def set_attribute_id(self, el, objid):
         '''set id attribute
+        Paramters:
+            el -- MessageInterface representing the element
+            objid -- ID type, unique id
         '''
         if self.unique is False:
             el.setAttributeNS(None, 'id', "%s" %objid)
 
     def get_name(self, name, objid):
+        '''
+        Paramters:
+            name -- element tag
+            objid -- ID type, unique id
+        '''
         n = name or self.pname or ('E' + objid)
         return n
 
@@ -448,7 +502,50 @@ class TypeCode(Base):
 
 class SimpleType(TypeCode):
     '''SimpleType -- consist exclusively of a tag, attributes, and a value
+    class attributes:
+        empty_content -- value representing an empty element.
     '''
+    empty_content = None
+    
+    def parse(self, elt, ps):
+        self.checkname(elt, ps)
+        if len(_children(elt)) == 0:
+            href = _find_href(elt)
+            if not href:
+                if self.nilled(elt, ps) is False:
+                    # No content, no HREF, not NIL:  empty string
+                    return self.text_to_data(self.empty_content, elt, ps)
+                    
+                # No content, no HREF, and is NIL...
+                if self.nillable is True: 
+                    return Nilled
+                raise EvaluateException('Non-optional string missing',
+                        ps.Backtrace(elt))
+                        
+            if href[0] != '#':
+                return ps.ResolveHREF(href, self)
+            
+            elt = ps.FindLocalHREF(href, elt)
+            self.checktype(elt, ps)
+            if self.nilled(elt, ps): return Nilled
+            if len(_children(elt)) == 0: 
+                v = self.empty_content
+            else:
+                v = self.simple_value(elt, ps)
+        else:
+            v = self.simple_value(elt, ps)
+            
+        pyobj = self.text_to_data(v, elt, ps)
+        
+        # parse all attributes contained in attribute_typecode_dict 
+        # (user-defined attributes), the values (if not None) will 
+        # be keyed in self.attributes dictionary.
+        if self.attribute_typecode_dict is not None:
+            attributes = self.parse_attributes(elt, ps)
+            if attributes:
+                setattr(pyobj, self.attrs_aname, attributes)
+        
+        return pyobj
 
     def get_formatted_content(self, pyobj):
         raise NotImplementedError, 'method get_formatted_content is not implemented'
@@ -456,6 +553,7 @@ class SimpleType(TypeCode):
     def serialize_text_node(self, elt, sw, pyobj):
         '''Serialize without an element node.
         '''
+        textNode = None
         if pyobj is not None:
             text = self.get_formatted_content(pyobj)
             if type(text) not in _stringtypes:
@@ -476,7 +574,7 @@ class SimpleType(TypeCode):
 
         # nillable
         el = elt.createAppendElement(self.nspname, n)
-        if self.nillable is True and pyobj is None:
+        if self.nillable is True and pyobj is Nilled:
             self.serialize_as_nil(el)
             return None
 
@@ -498,12 +596,7 @@ class SimpleType(TypeCode):
             self.set_attribute_id(el, objid)
 
         #Content, <empty tag/>c
-        if pyobj is not None:
-            textNode = self.get_formatted_content(pyobj)
-            if type(textNode) not in _stringtypes:
-                raise TypeError, 'pyobj must be a formatted string'
-
-            el.createAppendTextNode(textNode)
+        self.serialize_text_node(el, sw, pyobj)
 
         return el
 
@@ -545,7 +638,7 @@ class Any(TypeCode):
             c = _child_elements(elt)
             count = len(c)
             if count == 0: return self.listify(v)
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
 
         for c_elt in c:
             # append (name,value) tuple to list
@@ -554,7 +647,7 @@ class Any(TypeCode):
 
     def parse(self, elt, ps):
         (ns,type) = self.checkname(elt, ps)
-        if not type and self.nilled(elt, ps): return None
+        if not type and self.nilled(elt, ps): return Nilled
         if len(_children(elt)) == 0:
             href = _find_href(elt)
             if not href:
@@ -773,6 +866,7 @@ def RegisterGeneratedTypesWithMapping(generatedTypes, mapping, generatedClassSuf
 class String(SimpleType):
     '''A string type.
     '''
+    empty_content = ''
     parselist = [ (None,'string') ]
     seriallist = [ types.StringType, types.UnicodeType ]
     type = (SCHEMA.XSD3, 'string')
@@ -782,35 +876,13 @@ class String(SimpleType):
         if kw.has_key('resolver'): self.resolver = kw['resolver']
         self.strip = strip
 
-    def text_to_data(self, text):
+    def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
         '''
         if self.strip: text = text.strip()
         if self.pyclass is not None:
             return self.pyclass(text)    
         return text
-
-    def parse(self, elt, ps):
-        self.checkname(elt, ps)
-        if len(_children(elt)) == 0:
-            href = _find_href(elt)
-            if not href:
-                if self.nilled(elt, ps) is False:
-                    # No content, no HREF, not NIL:  empty string
-                    return ""
-                # No content, no HREF, and is NIL...
-                if self.minOccurs == 0 or self.nillable is True: 
-                    return None
-                raise EvaluateException('Non-optional string missing',
-                        ps.Backtrace(elt))
-            if href[0] != '#':
-                return ps.ResolveHREF(href, self)
-            elt = ps.FindLocalHREF(href, elt)
-            self.checktype(elt, ps)
-        if self.nilled(elt, ps): return None
-        if len(_children(elt)) == 0: return ''
-        v = self.simple_value(elt, ps)
-        return self.text_to_data(v)
 
     def get_formatted_content(self, pyobj):
         if type(pyobj) not in _stringtypes:
@@ -825,11 +897,15 @@ class URI(String):
     parselist = [ (None,'anyURI'),(SCHEMA.XSD3, 'anyURI')]
     type = (SCHEMA.XSD3, 'anyURI')
 
-    def parse(self, elt, ps):
-        val = String.parse(self, elt, ps)
+    def text_to_data(self, text, elt, ps):
+        '''text --> typecode specific data.
+        '''
+        val = String.text_to_data(self, text, elt, ps)   
         return urldecode(val)
 
     def get_formatted_content(self, pyobj):
+        '''typecode data --> text
+        '''
         pyobj = String.get_formatted_content(self, pyobj)
         return urlencode(pyobj)
 
@@ -862,44 +938,27 @@ class QName(String):
             namespaceURI,localName = pyobj
             self.prefix = elt.getPrefix(namespaceURI)
 
-    def parse(self, elt, ps):
-        '''Since this typecode parses value first as a string, and then
-        interprets it as a tuple must trick String.parse to not package
-        up in pyclass tuple class.
+    def text_to_data(self, text, elt, ps):
+        '''convert text into typecode specific data.
         '''
-        pyclass = self.pyclass
-        if self.pyclass is not None:
-            self.pyclass = None
-
-        val = String.parse(self, elt, ps)
-        self.pyclass = pyclass
-        prefix,localName = SplitQName(val)
+        prefix,localName = SplitQName(text)
         nsdict = ps.GetElementNSdict(elt)
         try:
             namespaceURI = nsdict[prefix]
         except KeyError, ex:
-            raise EvaluateException, 'cannot resolve prefix(%s)'%prefix
+            raise EvaluateException('cannot resolve prefix(%s)'%prefix,
+                ps.Backtrace(elt))
+                
         v = (namespaceURI,localName)
-        if self.pyclass is not None and self.__class__ is QName:
+        if self.pyclass is not None:
             return self.pyclass(v)    
         return v
-
-    def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
-        '''pyobj -- qualifiedName or (namespaceURI,elementName) tuple
-        '''
-        self.set_prefix(elt, pyobj)
-        String.serialize(self, elt, sw, pyobj, name, orig, **kw)
 
     def serialize_text_node(self, elt, sw, pyobj):
         '''Serialize without an element node.
         '''
         self.set_prefix(elt, pyobj)
-        if pyobj is not None:
-            text = self.get_formatted_content(pyobj)
-            if type(text) not in _stringtypes:
-                raise TypeError, 'pyobj must be a formatted string'
-            textNode = elt.createAppendTextNode(text)
-        return textNode
+        return String.serialize_text_node(self, elt, sw, pyobj)
 
 
 class Token(String):
@@ -908,12 +967,6 @@ class Token(String):
     parselist = [ (None, 'token') ]
     type = (SCHEMA.XSD3, 'token')
 
-    def parse(self, elt, ps):
-        v = String.parse(self, elt, ps)
-        if self.pyclass is not None and self.__class__ is Token:
-            return self.pyclass(v)    
-        return v
-
 
 class Base64String(String):
     '''A Base64 encoded string.
@@ -921,13 +974,13 @@ class Base64String(String):
     parselist = [ (None,'base64Binary'), (SOAP.ENC, 'base64') ]
     type = (SOAP.ENC, 'base64')
 
-    def parse(self, elt, ps):
-        val = String.parse(self, elt, ps)
-        v = b64decode(val.replace(' ', '').replace('\n','').replace('\r',''))
-
-        if self.pyclass is not None and self.__class__ is Base64String:
-            return self.pyclass(v) 
-        return v
+    def text_to_data(self, text, elt, ps):
+        '''convert text into typecode specific data.
+        '''
+        val = b64decode(text.replace(' ', '').replace('\n','').replace('\r',''))
+        if self.pyclass is not None:
+            return self.pyclass(val)
+        return val
 
     def get_formatted_content(self, pyobj):
         pyobj = '\n' + b64encode(pyobj)
@@ -938,20 +991,16 @@ class Base64Binary(String):
     parselist = [ (None,'base64Binary'), ]
     type = (SCHEMA.XSD3, 'base64Binary')
 
-    def parse(self, elt, ps):
-        val = String.parse(self, elt, ps)
-        if val is None: 
-            if self.nillable is True: return None
-            raise EvaluateException, "Base64Binary (%s,%s) is not nillable" %(self.nspname,self.pname)
-
-        v = b64decode(val)
-        if self.pyclass is not None and self.__class__ is Base64String:
-            return self.pyclass(v) 
-        return v
+    def text_to_data(self, text, elt, ps):
+        '''convert text into typecode specific data.
+        '''
+        val = b64decode(text)
+        if self.pyclass is not None:
+            return self.pyclass(val) 
+        return val
 
     def get_formatted_content(self, pyobj):
         pyobj = b64encode(pyobj).strip()
-        #return String.get_formatted_content(self, pyobj)
         return pyobj
 
 
@@ -961,13 +1010,13 @@ class HexBinaryString(String):
     parselist = [ (None,'hexBinary') ]
     type = (SCHEMA.XSD3, 'hexBinary')
 
-    def parse(self, elt, ps):
-        val = String.parse(self, elt, ps)
-        v = hexdecode(val)
-
-        if self.pyclass is not None and self.__class__ is Base64String:
-            return self.pyclass(v) 
-        return v
+    def text_to_data(self, text, elt, ps):
+        '''convert text into typecode specific data.
+        '''
+        val = hexdecode(text)
+        if self.pyclass is not None:
+            return self.pyclass(val) 
+        return val
 
     def get_formatted_content(self, pyobj):
         pyobj = hexencode(pyobj).upper()
@@ -1052,7 +1101,7 @@ class Integer(SimpleType):
         TypeCode.__init__(self, pname, **kw)
         self.format = format
 
-    def text_to_data(self, text):
+    def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
         '''
         if self.pyclass is not None:
@@ -1064,13 +1113,13 @@ class Integer(SimpleType):
                 try:
                     v = long(text)
                 except:
-                    raise EvaluateException('Unparseable integer',
+                    raise EvaluateException('Unparseable integer', 
                         ps.Backtrace(elt))
         return v
 
     def parse(self, elt, ps):
         (ns,type) = self.checkname(elt, ps)
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
         elt = self.SimpleHREF(elt, ps, 'integer')
         if not elt: return None
 
@@ -1081,7 +1130,7 @@ class Integer(SimpleType):
                 'got %s wanted %s' % (type,self.type[1]), ps.Backtrace(elt))
         
         v = self.simple_value(elt, ps)
-        v = self.text_to_data(v)
+        v = self.text_to_data(v, elt, ps)
 
         (rmin, rmax) = Integer.ranges.get(type, (_ignored, _ignored))
         if rmin != _ignored and v < rmin:
@@ -1183,7 +1232,7 @@ class Decimal(SimpleType):
         self.format = format
 
 
-    def text_to_data(self, text):
+    def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
         '''
         v = text
@@ -1196,7 +1245,8 @@ class Decimal(SimpleType):
         try:
             return float(v)
         except:
-            raise EvaluateException('Unparseable floating point number')
+            raise EvaluateException('Unparseable floating point number',
+                    ps.Backtrace(elt))
 
     def parse(self, elt, ps):
         (ns,type) = self.checkname(elt, ps)
@@ -1210,10 +1260,10 @@ class Decimal(SimpleType):
                 raise EvaluateException('Floating point type mismatch; ' \
                         'got (%s,%s) wanted %s' % (ns,type,tag), ps.Backtrace(elt))
         # Special value?
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
         v = self.simple_value(elt, ps)
         try:
-            fp = self.text_to_data(v)
+            fp = self.text_to_data(v, elt, ps)
         except EvaluateException, ex:
             ex.args.append(ps.Backtrace(elt))
             raise ex
@@ -1256,7 +1306,7 @@ class Boolean(SimpleType):
     seriallist = [ bool ]
     type = (SCHEMA.XSD3, 'boolean')
 
-    def text_to_data(self, text):
+    def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
         '''
         v = text
@@ -1276,8 +1326,8 @@ class Boolean(SimpleType):
             try:
                 v = long(v)
             except:
-                raise EvaluateException('Unparseable boolean',
-                    ps.Backtrace(elt))
+                raise EvaluateException('Unparseable boolean', 
+                        ps.Backtrace(elt))
 
         if v:
             if self.pyclass is None:
@@ -1292,10 +1342,10 @@ class Boolean(SimpleType):
         self.checkname(elt, ps)
         elt = self.SimpleHREF(elt, ps, 'boolean')
         if not elt: return None
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
 
         v = self.simple_value(elt, ps).lower()
-        return self.text_to_data(v)
+        return self.text_to_data(v, elt, ps)
 
     def get_formatted_content(self, pyobj):
         if pyobj: return 'true'
@@ -1422,7 +1472,7 @@ class AnyLax(AnyConcrete):
             c = _child_elements(elt)
             count = len(c)
             if count == 0: return self.listify([])
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
 
         # group consecutive elements with the same name together
         #   We treat consecutive elements with the same name as lists.
@@ -1542,8 +1592,8 @@ class AnyType(TypeCode):
         #element name must be declared ..
         nspname,pname = _get_element_nsuri_name(elt)
         if nspname != self.nspname or pname != self.pname:
-            raise EvaluateException, '<anyType> instance is (%s,%s) found (%s,%s)'\
-                %(self.nspname,self.pname,nspname,pname)
+            raise EvaluateException('<anyType> instance is (%s,%s) found (%s,%s)' %(
+                    self.nspname,self.pname,nspname,pname), ps.Backtrace(elt))
 
         #locate xsi:type
         prefix, typeName = SplitQName(_find_type(elt))
@@ -1642,8 +1692,8 @@ class AnyElement(AnyType):
                 pyclass = _get_type_definition(namespaceURI, typeName)
                 if pyclass is None:
                     if not _is_xsd_or_soap_ns(namespaceURI):
-                        raise EvaluateException, '<any> cant find typecode for type (%s,%s)'\
-                            %(namespaceURI,typeName)
+                        raise EvaluateException('<any> cant find typecode for type (%s,%s)' %(
+                            namespaceURI,typeName), ps.Backtrace(elt))
                     if self.getProcessContents=='lax':
                         pyclass = AnyLax
                     else:
@@ -1808,13 +1858,13 @@ class List(SimpleType):
             self.itemTypeCode = itemTypeCode
 
 
-    def text_to_data(self, text):
+    def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.  items in
         list are space separated.
         '''
         v = []
         for item in text.split(' '):
-            v.append(self.itemTypeCode.text_to_data(item))
+            v.append(self.itemTypeCode.text_to_data(item, elt, ps))
 
         if self.pyclass is not None:
             return self.pyclass(v)
@@ -1832,8 +1882,8 @@ class List(SimpleType):
                     # No content, no HREF, not NIL:  empty string
                     return ""
                 # No content, no HREF, and is NIL...
-                if self.minOccurs == 0 or self.nillable is True: 
-                    return None
+                if self.nillable is True: 
+                    return Nilled
                 raise EvaluateException('Non-optional string missing',
                         ps.Backtrace(elt))
             if href[0] != '#':
@@ -1841,11 +1891,11 @@ class List(SimpleType):
             elt = ps.FindLocalHREF(href, elt)
             self.checktype(elt, ps)
 
-        if self.nilled(elt, ps): return None
+        if self.nilled(elt, ps): return Nilled
         if len(_children(elt)) == 0: return ''
 
         v = self.simple_value(elt, ps)
-        return self.text_to_data(v)
+        return self.text_to_data(v, elt, ps)
 
     def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
         '''elt -- the current DOMWrapper element 
