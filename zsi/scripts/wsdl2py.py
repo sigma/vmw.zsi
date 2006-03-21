@@ -94,7 +94,7 @@ def main():
                   action="callback", callback=SetPyclassMetaclass, 
                   callback_kwargs={'module':'ZSI.generate.pyclass', 
                   	'metaclass':'pyclass_type'},
-                  help="add convenience functions for complexTypes, including Getters, Setters, factory methods, and properties (via metaclass).")
+                  help="add convenience functions for complexTypes, including Getters, Setters, factory methods, and properties (via metaclass). *** DONT USE WITH --simple-naming ***")
     
     # Extended generation options
     op.add_option("-e", "--extended",
