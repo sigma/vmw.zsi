@@ -129,7 +129,11 @@ def main():
 
     wsdl = None
     if options.file is not None:
-        wsdl = reader.loadFromFile(location)
+	try:
+            wsdl = reader.loadFromFile(location)
+	except Exception, e:
+	    print "Error loading %s: \n\t%s" % (location, e)
+	    sys.exit(0)
     elif options.url is not None:
         wsdl = reader.loadFromURL(location)
 

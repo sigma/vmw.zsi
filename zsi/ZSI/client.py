@@ -410,6 +410,7 @@ class Binding:
                 receive.
         '''
         self.ReceiveSOAP(**kw)
+
         if self.ps.IsAFault():
             msg = FaultFromFaultMessage(self.ps)
             raise FaultException(msg)

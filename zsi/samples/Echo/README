@@ -66,10 +66,10 @@ You should (with a fresh checkout from cvs that's been installed) be able to run
 Then in separate terminal windows:
 
 Terminal 1:
->EchoServer.py
+>python EchoServer.py
 
 Terminal 2:
->EchoClient.py
+>python EchoClient.py
 
 Expected SERVER Output:
 
