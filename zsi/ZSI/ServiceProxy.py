@@ -43,17 +43,20 @@ class ServiceProxy:
             self._wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
 
         assert isinstance(self._wsdl, wstools.WSDLTools.WSDL), 'expecting a WSDL instance'
-        self._service = wsdl.services[service or 0]
+        self._service = self._wsdl.services[service or 0]
         self.__doc__ = self._service.documentation
         self._port = self._service.ports[port or 0]
         self._name = self._service.name
+        self._methods = {}
         
         binding = self._port.getBinding()
         portType = binding.getPortType()
-        for item in portType.operations:
-            callinfo = wstools.WSDLTools.callInfoFromWSDL(self._port, item.name)
-            method = MethodProxy(self, callinfo)
-            setattr(self, item.name, method)
+        for port in self._service.ports:
+            for item in port.getPortType().operations:
+                callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
+                method = MethodProxy(self, callinfo)
+                setattr(self, item.name, method)
+                self._methods.setdefault(item.name, []).append(method)
 
     def _call(self, name, *args, **kwargs):
         """Call the named remote web service method."""
@@ -63,6 +66,15 @@ class ServiceProxy:
                 )
 
         callinfo = getattr(self, name).callinfo
+
+        # go through the list of defined methods, and look for the one with
+        # the same number of arguments as what was passed.  this is a weak
+        # check that should probably be improved in the future to check the
+        # types of the arguments to allow for polymorphism
+        for method in self._methods[name]:
+            if len(method.callinfo.inparams) == len(kwargs):
+                callinfo = method.callinfo
+
         soapAction = callinfo.soapAction
         url = callinfo.location
         (protocol, host, uri, query, fragment, identifier) = urlparse(url)
@@ -86,7 +98,7 @@ class ServiceProxy:
         if len(kwargs): args = kwargs
         if request is None:
             request = Any(oname=name)
-        binding.Send(url=uri, opname=None, obj=args,
+        binding.Send(url=url, opname=None, obj=args,
                      nsdict=self._nsdict, soapaction=soapAction, requesttypecode=request)
         return binding.Receive(replytype=response)
 
@@ -125,7 +137,7 @@ class ServiceProxy:
         #THIS IS FOR RPC/ENCODED, DOC/ENCODED Wrapper
         if request and prefix and callinfo.use == 'encoded':
             request.oname = '%(prefix)s:%(name)s xmlns:%(prefix)s="%(namespaceURI)s"' \
-                %{'prefix':prefix, 'name':request.oname, 'namespaceURI':callinfo.namespace}
+                %{'prefix':prefix, 'name':request.aname, 'namespaceURI':callinfo.namespace}
 
         return request, response
 
@@ -221,6 +233,7 @@ class ServiceProxy:
 
         minOccurs = int(element.getAttribute('minOccurs'))
         typeObj.optional = not minOccurs
+        typeObj.minOccurs = minOccurs
 
         maxOccurs = element.getAttribute('maxOccurs')
         typeObj.repeatable = (maxOccurs == 'unbounded') or (int(maxOccurs) > 1)
