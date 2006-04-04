@@ -357,21 +357,23 @@ class TypeCode(Base):
                     ps.Backtrace(elt))
         return True
 
-    def simple_value(self, elt, ps):
+    def simple_value(self, elt, ps, mixed=False):
         '''Get the value of the simple content of this element.
         Parameters:
             elt -- the DOM element being parsed
             ps -- the ParsedSoap object.
+            mixed -- ignore element content, optional text node
         '''
         if not _valid_encoding(elt):
             raise EvaluateException('Invalid encoding', ps.Backtrace(elt))
         c = _children(elt)
-        if len(c) == 0:
-            raise EvaluateException('Value missing', ps.Backtrace(elt))
-        for c_elt in c:
-            if c_elt.nodeType == _Node.ELEMENT_NODE:
-                raise EvaluateException('Sub-elements in value',
-                    ps.Backtrace(c_elt))
+        if mixed is False:
+            if len(c) == 0:
+                raise EvaluateException('Value missing', ps.Backtrace(elt))
+            for c_elt in c:
+                if c_elt.nodeType == _Node.ELEMENT_NODE:
+                    raise EvaluateException('Sub-elements in value',
+                        ps.Backtrace(c_elt))
 
         # It *seems* to be consensus that ignoring comments and
         # concatenating the text nodes is the right thing to do.
@@ -1561,6 +1563,17 @@ class AnyType(TypeCode):
         # parse side will be clueless, but oh well..
         what = getattr(pyobj, 'typecode', Any())
         return what.get_formatted_content(pyobj)
+
+    def text_to_data(self, text, elt, ps):
+        '''convert text into typecode specific data.  Used only with
+        attributes so will not know anything about this content so
+        why guess?
+        Parameters:
+            text -- text content
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
+        '''
+        return text
 
     def serialize(self, elt, sw, pyobj, **kw):
         nsuri,typeName = _get_xsitype(pyobj)

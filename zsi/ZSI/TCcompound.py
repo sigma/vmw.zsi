@@ -151,7 +151,7 @@ class ComplexType(TypeCode):
 
         #MIXED
         if self.mixed is True:
-            v[self.mixed_aname] = self.simple_value(elt,ps)
+            v[self.mixed_aname] = self.simple_value(elt,ps, mixed=True)
 
         # Clone list of kids (we null it out as we process)
         c, crange = c[:], range(len(c))
