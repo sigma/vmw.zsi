@@ -299,9 +299,7 @@ class WSResource(twisted.web.resource.Resource, object):
 
     def __init__(self):
         """
-        chain -- request/response handler chain.
         """
-        self.chain = self.factory.newInstance()
         twisted.web.resource.Resource.__init__(self)
 
     def _writeResponse(self, request, response, status=200):
@@ -333,17 +331,19 @@ class WSResource(twisted.web.resource.Resource, object):
         return self._writeResponse(request, response, status=500)
 
     def render_POST(self, request):
-        """Dispatch Method called by twisted render.
+        """Dispatch Method called by twisted render, creates a 
+        request/response handler chain.
         request -- twisted.web.server.Request
         """
+        chain = self.factory.newInstance()
         data = request.content.read()
         try:
-            pyobj = self.chain.processRequest(data, request=request, resource=self)
+            pyobj = chain.processRequest(data, request=request, resource=self)
         except Exception, ex:
             return self._writeFault(request, ex)
 
         try:
-            soap = self.chain.processResponse(pyobj, request=request, resource=self)
+            soap = chain.processResponse(pyobj, request=request, resource=self)
         except Exception, ex:
             return self._writeFault(request, ex)
 
