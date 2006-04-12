@@ -74,6 +74,8 @@ class Binding:
     receiving SOAP messages are available, including a "name overloading"
     style.
     '''
+    defaultHttpTransport = httplib.HTTPConnection
+    defaultHttpsTransport = httplib.HTTPSConnection
 
     def __init__(self, nsdict=None, transport=None, url=None, tracefile=None,
                  readerclass=None, writerclass=None, soapaction='', 
@@ -238,9 +240,9 @@ class Binding:
         # Determine transport from url if necessary
         if self.transport == None and url is not None:
             if scheme == 'https':
-                self.transport = httplib.HTTPSConnection
+                self.transport = Binding.defaultHttpsTransport
             elif scheme == 'http':
-                self.transport = httplib.HTTPConnection
+                self.transport = Binding.defaultHttpTransport
             else:
                 raise RuntimeError, 'must specify transport or url startswith https/http'
 
