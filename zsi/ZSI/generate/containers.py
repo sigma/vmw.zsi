@@ -1789,11 +1789,15 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
     type = DEC
 
     def setUp(self, tp):
-        self.name = tp.getAttribute('name')
-        self.ns = tp.getTargetNamespace()
-        qName = tp.getAttribute('type')
-        self.sKlass = BTI.get_typeclass(qName[1], qName[0])
-        self.pyclass = BTI.get_pythontype(None, None, typeclass=self.sKlass)
+        try:
+            self.name = tp.getAttribute('name')
+            self.ns = tp.getTargetNamespace()
+            qName = tp.getAttribute('type')
+            self.sKlass = BTI.get_typeclass(qName[1], qName[0])
+            self.pyclass = BTI.get_pythontype(None, None, typeclass=self.sKlass)
+        except Exception, ex:
+            raise Wsdl2PythonError('Error occured processing type: %s' %(
+                tp.getItemTrace()), *ex.args)
 
     def _setContent(self):
         aname = self.getAttributeName(self.name)
