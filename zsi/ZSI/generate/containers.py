@@ -1350,8 +1350,12 @@ class TypecodeContainerBase(TypesContainerBase):
                         parent = parent.content
                         defs.append(parent)                
                 
-                e = '%sself.%s = %s' %(ID3, 
-                        self.getAttributeName(c.getAttribute('name')), defaultValue)
+                if None ==  c.getAttribute('name') and c.isWildCard():
+                    e = '%sself.%s = %s' %(ID3, 
+                            self.getAttributeName('any'), defaultValue)
+                else:
+                    e = '%sself.%s = %s' %(ID3, 
+                            self.getAttributeName(c.getAttribute('name')), defaultValue)
                 self.elementAttrs.append(e)
                 continue
                         
