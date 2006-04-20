@@ -224,8 +224,7 @@ _find_xsi_attr = lambda E, attr: \
 _find_type = lambda E: _find_xsi_attr(E, "type")
 
 _find_xmlns_prefix = lambda E, attr: E.getAttributeNS(_XMLNS.BASE, attr)
-#_find_default_namespace = lambda E, attr: E.getAttributeNS(None, 'xmlns')
-_find_default_namespace = lambda E: E.getAttributeNS(None, 'xmlns')
+_find_default_namespace = lambda E: E.getAttributeNS(_XMLNS.BASE, None)
 
 _textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
 
