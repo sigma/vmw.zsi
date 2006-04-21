@@ -17,6 +17,10 @@ known limitation is that it cannot handle multi-dimensional arrays.
 ZSI is built on top of DOM.  It requires Python 2.3 or later, and PyXML
 0.8.3 or later.  It is open source.  We hope you find it useful.
 
+The ZSI.twisted package will only be built if you're using Python >= 2.4, 
+and in order to use it you'll need twisted >= 2.0 and twistedWeb >= 0.5.0
+
+
 The documentation (in PDF and HTML) is accurate.  We should probably
 restructure the document as a HOWTO.  You probably can't usefully edit
 the docs without having the Python2.0 sources and some other utilities
