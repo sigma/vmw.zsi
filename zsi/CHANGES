@@ -1,4 +1,6 @@
 Change for xxx released xxx:
+    -   Added ZSI.twisted package w/client and server, requires Python 2.4
+    -   If Python >= 2.4, build/install ZSI.twisted package
     -   Make XMLSchema.py work in cases where threading isn't built in
     -   Add client-side Cookie Support (Jorgen Frojk Kjaersgaard)
     -   Add Typecode.typed to control xsi:type data system-wide
