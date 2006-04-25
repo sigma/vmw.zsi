@@ -13,65 +13,61 @@ Unittest for contacting the WhiteMesa web service for rpc/literal tests.
 WSDL: http://www.whitemesa.net/wsdl/test-rpc-lit.wsdl
 
 """
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(WhiteMesaTest, 'test_dispatch'))
+    return suite
 
-CONFIG_FILE = 'config.txt'
-CONFIG_SECTION = 'WSDL'
-SERVICE_NAME = 'WhiteMesa'
-PORT_NAME = 'Soap11TestRpcLitPort'
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(WhiteMesaTest, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(WhiteMesaTest, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(WhiteMesaTest, 'test_'))
+    return suite
 
 
 class WhiteMesaTest(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
     name = "test_WhiteMesa"
-
-    def getInputMessageInstance(self, operationName):
-        """Returns an instance of the input message to send for this operation.
-        Grap the SOAP 1.1 port.
-           operationName -- WSDL port operation name
-        """
-        service = self._wsm._wsdl.services[0]
-        port = service.ports[1]
-        try:
-            self._checkPort(port, operationName)
-        except TestException, ex:
-            raise TestException('Service(%s)' %service.name, *ex.args)
-
-        for operation in port.getBinding().getPortType().operations:
-            if operation.name == operationName:
-                break
-        else:
-            raise TestException, 'Missing operation (%s) in portType operations'  %operationName
-
-        inputMsgName = '%s' %operation.input.message[1]
-        if self._moduleDict.has_key(self._serviceModuleName):
-            sm = self._moduleDict[self._serviceModuleName]
-            if sm.__dict__.has_key(inputMsgName):
-                inputMsgWrapper = sm.__dict__[inputMsgName]()
-                return inputMsgWrapper
-            else:
-                raise TestException, 'service missing input message (%s)' %(inputMsgName)
-
-        raise TestException, 'port(%s) does not define operation %s' \
-            %(port.name, operationName)
-
-    def setUp(self):
-        self._portName = PORT_NAME
-        ServiceTestCase.setSection(self,self.name)
-        ServiceTestCase.setUp(self)
-
-    def test_EchoBoolean(self):
-        operationName = 'echoBoolean'
-        request = self.getInputMessageInstance(operationName)
-        request._inputBoolean = True
-        response = self.RPC(operationName, request)
-
-
-def makeTestSuite():
-    suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(WhiteMesaTest, 'test_'))
-    return suite
-
+    client_file_name = "RPC_Literal_TestDefinitions_services.py"
+    types_file_name = "RPC_Literal_TestDefinitions_services_types.py"
+    server_file_name = "RPC_Literal_TestDefinitions_services_server.py"
+    
+    def test_local_EchoBoolean(self):
+        from ZSI.writer import SoapWriter
+        msg = self.client_module.echoBooleanRequest()
+        msg._inputBoolean = True
+        sw = SoapWriter()
+        sw.serialize(msg)
+        
+    def test_net_EchoBoolean(self):
+        msg = self.client_module.echoBooleanRequest()
+        msg._inputBoolean = True
+        
+        loc = self.client_module.WhiteMesaSoapRpcLitTestSvcLocator()
+        port = loc.getSoapTestPortTypeRpc(**self.getPortKWArgs())
+        rsp = port.echoBoolean(msg)
+        
+        self.failUnless(msg._inputBoolean == rsp._return,
+                        "EchoBoolean Failed")
+        
+    def test_dispatch_EchoBoolean(self):
+        self.test_net_EchoBoolean()
+    
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="all")

@@ -48,6 +48,6 @@ class Service(WhiteMesa):
 
 if __name__ == "__main__" :
     port = int(sys.argv[1])
-    AsServer(port, (Service(),))
+    AsServer(port, (Service('test'),))
 
 

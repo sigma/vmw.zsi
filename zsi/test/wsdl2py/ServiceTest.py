@@ -3,9 +3,12 @@
 # Joshua R. Boverhof, LBNL
 # See LBNLCopyright for copyright notice!
 ###########################################################################
-
-import os, sys, unittest, urlparse, signal, time, warnings
+from compiler.ast import Module
+import StringIO, copy, getopt
+import os, sys, unittest, urlparse, signal, time, warnings, subprocess
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from ZSI.wstools.TimeoutSocket import TimeoutError
+
 """Global Variables:
     CONFIG_FILE -- configuration file 
     CONFIG_PARSER -- ConfigParser instance
@@ -28,66 +31,37 @@ LITERAL = 'literal'
 BROKE = 'broke'
 TESTS = 'tests'
 SECTION_CONFIGURATION = 'configuration'
+SECTION_DISPATCH = 'dispatch'
 TRACEFILE = sys.stdout
 TOPDIR = os.getcwd()
 MODULEDIR = TOPDIR + '/stubs'
-PORT = 'port'
-HOST = 'host'
 SECTION_SERVERS = 'servers'
 
 CONFIG_PARSER.read(CONFIG_FILE)
-if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug'):
+
+DEBUG = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug')
+SKIP = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'skip')
+
+if DEBUG:
     from ZSI.wstools.logging import setBasicLoggerDEBUG
     setBasicLoggerDEBUG()
 
-
-from ZSI.wstools import WSDLTools
-from ZSI.wstools.Namespaces import WSA200408, WSA200403, WSA200303
-from ZSI.wstools.TimeoutSocket import TimeoutError
-from ZSI.generate.wsdl2python import WriteServiceModule
-from ZSI.generate.wsdl2dispatch import ServiceModuleWriter, WSAServiceModuleWriter
-import StringIO, copy, getopt
-
-# set up pyclass metaclass for complexTypes
-from ZSI.generate.containers import TypecodeContainerBase, TypesHeaderContainer
-TypecodeContainerBase.metaclass = 'pyclass_type'
-TypesHeaderContainer.imports.append(\
-        'from ZSI.generate.pyclass import pyclass_type'
-        )
-
-
 sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
-print sys.path[-1]
 ENVIRON = copy.copy(os.environ)
 ENVIRON['PYTHONPATH'] = ENVIRON.get('PYTHONPATH', '') + ':' + MODULEDIR
 
 
-def WriteServiceStubModule(wsdl):
-    '''Create/Write Service Skeleton module.  If WS-Addressing schema is present 
-    assume this is a WS-Address enabled service.
-    '''
-    if len(filter(lambda addr: wsdl.types.has_key(addr), (WSA200408.ADDRESS, WSA200403.ADDRESS, WSA200303.ADDRESS))) > 0:
-        ss = WSAServiceModuleWriter
-    else:
-        ss = ServiceModuleWriter()
-    ss.fromWSDL(wsdl)
-    module_name = ss.getServiceModuleName()
-    fd = open(module_name + '.py', 'w+')
-    ss.write(fd)
-    fd.close()
-    return module_name
 
-
-def SpawnContainer(ex_name):
-    '''module_name must be executable, and set up ServiceContainer
-    to test against.
-    ex -- executable name
+def LaunchContainer(cmd):
     '''
-    port = CONFIG_PARSER.get(SECTION_CONFIGURATION, PORT)
-    processID = os.spawnle(os.P_NOWAIT, ex_name, ex_name, port, ENVIRON)
+    Parameters:
+        cmd -- executable, sets up a ServiceContainer or ?
+    '''
+    host = CONFIG_PARSER.get(SECTION_DISPATCH, 'host')
+    port = CONFIG_PARSER.get(SECTION_DISPATCH, 'port')
+    process = subprocess.Popen([cmd, port], env=ENVIRON)
     time.sleep(1)
-    return processID
-
+    return process
 
 class ConfigException(Exception):
     """Exception thrown when configuration settings arent correct.
@@ -101,75 +75,92 @@ class TestException(Exception):
 
 
 class ServiceTestCase(unittest.TestCase):
-    """Must set these class variables typeModuleName, serviceModuleName,
-       path, and schema.  moduleDict is filled in after modules are created.
-
-       class variables:
-           name -- configuration item, must be set in class.
-           url_section -- configuration section, maps a test module name to an URL.
+    """Conventions for method names:
+    test_net*
+    -- network tests
+    
+    test_local*
+    -- local tests
+    
+    test_dispatch*
+    -- tests that use the a spawned local container
+    
+    class attributes: Edit/Override these in the inheriting class as needed
+        name -- configuration item, must be set in class.
+        url_section -- configuration section, maps a test module 
+           name to an URL.
+        client_file_name --
+        types_file_name --
+        server_file_name --
     """
     name = None
     url_section = 'WSDL'
-
+    client_file_name = None
+    types_file_name = None
+    server_file_name = None
+    
     def __init__(self, methodName):
         """
         parameters:
            methodName -- 
         instance variables:
-           _moduleDict -- module dictionary
-           _ports -- soap ports (must be same binding), proxy rpc instance, to run tests on.
-           _portName -- The name of the port to get using _getPort
-           _importTypeModule -- boolean indicating whether to import the types file 
-           _typeModuleName -- key to the generated type module
-           _serviceModuleName -- key to the generated service module
-           _section -- if set, do a runtime check that test is correctly indexed.
-           _wsm -- WriteServiceModule instance
+            client_module
+            types_module
+            server_module
+            processID
+            done
+
         """
-        self._moduleDict = {}
-        self._ports = None
-        self._portName = None
-        self._importTypeModule = True
-        self._typeModuleName = None
-        self._serviceModuleName = None
-        self._wsm = None
-        self._section = None
-        self._processID = None
+        self.methodName = methodName
+        self.url = None
+        self.wsdl2py_args = []
+        self.wsdl2dispatch_args = []
+        self.portkwargs = {}
+        self.client_module = self.types_module = self.server_module = None
+        self.done = False
         unittest.TestCase.__init__(self, methodName)
 
-    def setUp(self):
-        """Generate types and services modules if no record of them
-           in the moduleDict variable.
-        """
+    def getPortKWArgs(self):
+        kw = {}
+        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'tracefile'):
+            kw['tracefile'] = TRACEFILE
         
-        if not self.url_section or not self.name:
-            raise TestException, 'section(%s) or name(%s) not defined' %(self.url_section,self.name)
-        if self._isSetModules():
+        kw.update(self.portkwargs)
+        return kw
+    
+    def _setUpDispatch(self):
+        """Set this test up as a dispatch test.
+        url -- 
+        """
+        host = CONFIG_PARSER.get(SECTION_DISPATCH, 'host')
+        port = CONFIG_PARSER.get(SECTION_DISPATCH, 'port')
+        path = CONFIG_PARSER.get(SECTION_DISPATCH, 'path')
+        
+        scheme = 'http'
+        netloc = '%s:%s' %(host, port)
+        params = query = fragment = None
+        
+        self.portkwargs['url'] = \
+            urlparse.urlunparse((scheme,netloc,path,params,query,fragment))
+        
+    _wsdl = {}
+    def _generate(self):
+        """call the wsdl2py.py and wsdl2dispatch.py scripts and
+        automatically add the "-f" or "-u" argument.  Other args
+        can be appended via the "wsdl2py_args" and "wsdl2dispatch_args"
+        instance attributes.
+        """
+        url = self.url
+        if SKIP:
+            ServiceTestCase._wsdl[url] = True
             return
-        if not CONFIG_PARSER.has_section(self.url_section):
-            raise TestException, 'No such section(%s) in configuration file(%s)' \
-                %(self.url_section, CONFIG_FILE)
-
-        #try:
-        #    os.mkdir(MODULEDIR)
-        #except OSError, ex:
-        #    pass
-
-        #os.chdir(MODULEDIR)
-        #if MODULEDIR not in sys.path:
-        #    sys.path.append(MODULEDIR)
-
-        reader = WSDLTools.WSDLReader()
-        url = CONFIG_PARSER.get(self.url_section, self.name)
-
-        try:
-            wsdl = reader.loadFromURL(url)
-        except TimeoutError:
-            # SKIP 
-            self.fail('socket timeout retrieving WSDL: %s' %url)
-            #os.chdir(TOPDIR)
-        except:
-            #os.chdir(TOPDIR)
-            raise
+        
+        args = []
+        ServiceTestCase._wsdl[url] = False
+        if os.path.isfile(url):
+            args.append('-f %s' %url)
+        else:
+            args.append('-u %s' %url)
 
         try:
             os.mkdir(MODULEDIR)
@@ -179,222 +170,111 @@ class ServiceTestCase(unittest.TestCase):
         os.chdir(MODULEDIR)
         if MODULEDIR not in sys.path:
             sys.path.append(MODULEDIR)
-           
+            
         try:
-            self._wsm = WriteServiceModule(wsdl)
-            fd = open('%s.py' %self._wsm.getTypesModuleName(), 'w+')
-            self._wsm.writeTypes(fd)
-            fd.close()
-            fd = open('%s.py' %self._wsm.getClientModuleName(), 'w+')
-            self._wsm.writeClient(fd)
-            fd.close()
-            self._setModuleNames(self._importTypeModule)
-            module_name = WriteServiceStubModule(wsdl)
+            # Client Stubs
+            try:
+                exit = subprocess.call(['wsdl2py.py'] + args +
+                                       self.wsdl2py_args)
+            except OSError, ex:
+                warnings.warn("TODO: Not sure what is going on here?")
+            
+            self.failUnless(os.WIFEXITED(exit), 
+                'wsdl2py.py exited with signal#: %d' %exit)
+            self.failUnless(exit == 0, 
+                'wsdl2py.py exited with exit status: %d' %exit)
+            
+            # Service Stubs
+            try:
+                exit = subprocess.call(['wsdl2dispatch.py'] + args +
+                                       self.wsdl2dispatch_args)
+            except OSError, ex:
+                warnings.warn("TODO: Not sure what is going on here?")
+        
+            self.failUnless(os.WIFEXITED(exit), 
+                'wsdl2dispatch.py exited with signal#: %d' %exit)
+            self.failUnless(exit == 0, 
+                'wsdl2dispatch.py exited with exit status: %d' %exit)
+            
+            ServiceTestCase._wsdl[url] = True
+            
         finally:
             os.chdir(TOPDIR)
-
-        locator = self._getLocator()
-        self._ports = []
-        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'net'):
-            self._ports.append(self._getPort(locator))
-
-        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'local'):
-            netloc = '%s:%d' %(CONFIG_PARSER.get(SECTION_CONFIGURATION, HOST),
-                CONFIG_PARSER.getint(SECTION_CONFIGURATION, PORT))
-            try:
-                ex_path = CONFIG_PARSER.get(SECTION_SERVERS, self.name)
-            except (NoSectionError, NoOptionError), ex:
-                warnings.warn('skipping local test for %s' %self.name)
-            else:
-                self._ports.append(self._getPort(locator, netloc=netloc))
-                self._processID = SpawnContainer(TOPDIR + '/' + ex_path)
-
-    def tearDown(self):
+            
+    _process = None
+    _lastToDispatch = None
+    def setUp(self):
+        """Generate types and services modules once, then make them
+        available thru the *_module attributes if the *_file_name 
+        attributes were specified.
         """
-        This must be deleted because it has reference to
-        a namespace hash object which keeps its dictionary in
-        a class variable.If we run multiple ServiceTestSuites then
-        namespaces in the first prior ServiceTestSuite will remain
-        in the hash, and the code generator will import them in the
-        We need a fresh namespace hash each time a unittest is run
-        """
-        del self._wsm
-        if self._processID is not None:
-            os.kill(self._processID, signal.SIGKILL)
+        section = self.url_section
+        name = self.name
+        if not section or not name:
+            raise TestException, 'section(%s) or name(%s) not defined' %(
+                section, name)
+            
+        if not CONFIG_PARSER.has_section(section):
+            raise TestException,\
+                'No such section(%s) in configuration file(%s)' %(
+                self.url_section, CONFIG_FILE)
+
+        self.url = CONFIG_PARSER.get(section, name)
         
-    def _getPortOptions(self, methodName, locator, netloc=None):
-        kw = {}
-        if CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'tracefile'):
-            kw['tracefile'] = TRACEFILE
+        status = ServiceTestCase._wsdl.get(self.url)
+        if status is False:
+            self.fail('generation failed for "%s"' %self.url)
+            
+        if status is None:
+            self._generate()
+            
+        # Check for files
+        tfn = self.types_file_name
+        cfn = self.client_file_name
+        sfn = self.server_file_name
+    
+        files = [cfn, tfn,sfn]
+        if None is cfn is tfn is sfn:
+            return
+        
+        for n,m in map(lambda i: (i,__import__(i.split('.py')[0])), files):
+            if tfn is not None and tfn == n:
+                self.types_module = m
+            elif cfn is not None and cfn == n:
+                self.client_module = m
+            elif sfn is not None and sfn == n:
+                self.server_module = m
+            else: 
+                self.fail('Unexpected module %s' %n)
 
-        if netloc is not None:
-            default_url = getattr(locator, methodName + 'Address')()
-            scheme, netloc_old, url, params, query, fragment = urlparse.urlparse(default_url)
-            kw['url'] = urlparse.urlunparse((scheme, netloc, url, params, query, fragment))
-
-        return kw
-
-    def _getLocator(self):
-        """Get the Locator name
-           **Only expecting 1 service/WSDL, and 1 port/service.
-           wsm -- WriteServiceModule instance
-        """
-        if len(self._wsm.services) != 1:
-            raise TestException, 'only supporting WSDL with one service information item'
-        locatorName = self._wsm.services[0].locator.getLocatorName()
-        if self._moduleDict.has_key(self._serviceModuleName):
-            sm = self._moduleDict[self._serviceModuleName]
-            if sm.__dict__.has_key(locatorName):
-                return sm.__dict__[locatorName]()
-            raise TestException, 'No Locator class (%s), missing SOAP location binding?' %locatorName
-        raise TestException, 'missing service module, possibly no WSDL service item?'
-
-    def _getPort(self, locator, netloc=None):
-        """Returns a rpc proxy port instance.
-           **Only expecting 1 service/WSDL, and 1 port/service.
-
-           locator -- Locator instance
-        """
-        if len(self._wsm.services) != 1:
-            raise TestException, 'only supporting WSDL with one service information item'
-        methodNames = self._wsm.services[0].locator.getPortMethods()
-        if len(methodNames) == 0: 
-            raise TestException, 'No port defined for service.'
-        elif len(methodNames) > 1:
-            raise TestException, 'Not handling multiple ports.'
-        callMethod = getattr(locator, methodNames[0])
-        return callMethod(**self._getPortOptions(methodNames[0], locator, netloc))
-
-    def _isSetModules(self):
-        """Are the types/service modules already loaded?
-        """
-        if self._serviceModuleName: 
-            return True
-        return False
-
-    def _setModuleNames(self, importTypes=True):
-        """set service and types modules key names, and import them.
-
-           Some of the no schema tests do generate a types file
-        """
-        self._typeModuleName = self._wsm.getTypesModuleName()
-        self._serviceModuleName = self._wsm.getClientModuleName()
-        if importTypes:
-            moduleTuple = (self._typeModuleName, self._serviceModuleName)
-        else:
-            moduleTuple = (self._serviceModuleName,)
-
-        for name in moduleTuple:
-            exec('import %s' %name)
-            self._moduleDict[name] = eval(name)
-
-
-    def checkSection(self):
-        """Should the section be checked? If I know about it.
-        """
-        return type(self._section) is str
-
-    def _checkPort(self, port, name):
-        """Check if test is in correctly indexed in the configuration file, 
-           port operation must conform to the bindings.  
-
-           We check the style and use attributes from the soapOperation element.
-           
-           port -- WSDLTools.Port instance
-           name -- WSDL port operation name
-           port -- WSDLTools.Port instance
-        """
-        if self.checkSection() is False:
+        # DISPATCH PORTION OF SETUP
+        if not self.methodName.startswith('test_dispatch'):
+            return
+        
+        self._setUpDispatch()
+        if ServiceTestCase._process is not None:
             return
 
-        doc = CONFIG_PARSER.getboolean(self.getSection(), DOCUMENT)
-        lit = CONFIG_PARSER.getboolean(self.getSection(), LITERAL)
-        binding = port.getBinding()
-        if binding.operations.has_key(name) is False:
-            raise TestException, 'port(%s) binding(%s) has no operation(%s)'\
-                %(port.name, port.type, name)
-
-        soapbinding = binding.findBinding(WSDLTools.SoapBinding)
-        if soapbinding is None:
-            raise TestException, 'Missing soap:binding element'
-
-        opbinding = binding.operations[name]
-        if opbinding.input is None:
-            raise TestException, 'wsdl:binding(%s) operation(%s) is missing input' \
-                %(binding.name, name)
-       
-        msgrole = opbinding.input
-        soap_op_binding = opbinding.findBinding(WSDLTools.SoapOperationBinding)
-        style = soap_op_binding.style or soapbinding.style
-        use = None
-        body = msgrole.findBinding(WSDLTools.SoapBodyBinding)
-        if body is None:
-            raise TestException, 'Missing soap:body element'
-
-        use = body.use
-        style = soap_op_binding.style or soapbinding.style
-        if doc and style != 'document':
-            raise ConfigException, 'operation(%s) is not document style' %name
-        elif not doc and style != 'rpc':
-            raise ConfigException, 'operation(%s) is not rpc style' %name
-        if lit is True and use != 'literal':
-            raise ConfigException, 'operation(%s) is not literal encoding' %name
-        if lit is False and use != 'encoded':
-            raise ConfigException, 'operation(%s) is not rpc style' %name
-    
-    def setSection(self, section):
-        """section -- this is the section the service is categorized in,
-               if set STC will do a sanity check against the WSDL, etc.
-        """
-        self._section = section 
-
-    def getSection(self):
-        return self._section
-
-    def getInputMessageInstance(self, operationName):
-        """Returns an instance of the input message to send for this operation.
-           Assuming there is only 1 service/wsdl, and 1 port/service.
-
-           operationName -- WSDL port operation name
-        """
-        service = self._wsm._wsdl.services[0]
-        port = service.ports[0]
         try:
-            self._checkPort(port, operationName)
-        except TestException, ex:
-            raise TestException('Service(%s)' %service.name, *ex.args)
+            expath = CONFIG_PARSER.get(SECTION_DISPATCH, name)
+        except (NoSectionError, NoOptionError), ex:
+            self.fail('section dispatch has no item "%s"' %name)
 
-        for operation in port.getBinding().getPortType().operations:
-            if operation.name == operationName: 
-                break
-        else:
-            raise TestException, 'Missing operation (%s) in portType operations'  %operationName
-
-        inputMsgName = '%s' %operation.input.message[1]
-        if self._moduleDict.has_key(self._serviceModuleName):
-            sm = self._moduleDict[self._serviceModuleName]
-            if sm.__dict__.has_key(inputMsgName):
-                inputMsgWrapper = sm.__dict__[inputMsgName]()
-                return inputMsgWrapper
-            else:
-                raise TestException, 'service missing input message (%s)' %(inputMsgName)
-
-        raise TestException, 'port(%s) does not define operation %s' \
-            %(port.name, operationName)
-
-    def RPC(self, operationName, request):
-        """RPC serializes request, and returns response.
-
-           operationName -- WSDL port operation name
-        """
-        for port in self._ports:
-            callMethod = getattr(port, operationName, None)
-            if callMethod is not None:
-                callMethod(request)
-            else:
-                raise TestException, 'Port instance is missing method %s' %operationName 
-
-
+        if ServiceTestCase._lastToDispatch == expath:
+            return
+        
+        if ServiceTestCase._lastToDispatch is not None:
+           ServiceTestCase.CleanUp()
+        
+        ServiceTestCase._lastToDispatch = expath
+        ServiceTestCase._process = LaunchContainer(TOPDIR + '/' + expath)
+                    
+    def CleanUp(cls):
+        if cls._process is None:
+            return
+        os.kill(cls._process.pid, signal.SIGKILL)    
+    CleanUp = classmethod(CleanUp)
+         
 class ServiceTestSuite(unittest.TestSuite):
     """A test suite is a composite test consisting of a number of TestCases.
 
@@ -406,13 +286,17 @@ class ServiceTestSuite(unittest.TestSuite):
     """
     def __init__(self, tests=()):
         unittest.TestSuite.__init__(self, tests)
-        self._section = None
-
-    def setSection(self, section):
-        self._section = section
 
     def addTest(self, test):
-        if isinstance(test, ServiceTestSuite):
-            test.setSection(self._section)
         unittest.TestSuite.addTest(self, test)
+
+    def run(self, result):
+        for test in self._tests:
+            if result.shouldStop:
+                break
+            test(result)
+            
+        ServiceTestCase.CleanUp()
+        return result
+    
 

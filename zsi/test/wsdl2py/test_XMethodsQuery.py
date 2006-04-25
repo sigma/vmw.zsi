@@ -13,54 +13,77 @@ Unittest for contacting the XMethodsQuery Web service.
 WSDL:  http://www.xmethods.net/wsdl/query.wsdl
 """
 
-CONFIG_FILE = 'config.txt'
-CONFIG_SECTION = 'complex_types'
-SERVICE_NAME = 'XMethodsQuery'
-PORT_NAME = 'XMethodsQuerySoapPortType'
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_dispatch'))
+    return suite
+
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_'))
+    return suite
 
 
 class XMethodsQueryTest(ServiceTestCase):
     """Test case for XMethodsQuery Web service
     """
     name = "test_XMethodsQuery"
-    
-    def setUp(self):
-        ServiceTestCase.setSection(self,self.name)
-        ServiceTestCase.setUp(self)
+    client_file_name = "XMethodsQuery_services.py"
+    types_file_name = "XMethodsQuery_services_types.py"
+    server_file_name = "XMethodsQuery_services_server.py"
+
+    def test_net_getAllServiceNames(self):
+        loc = self.client_module.XMethodsQueryLocator()
+        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
         
-    def test_getAllServiceNames(self):
-        operationName = 'getAllServiceNames'
-        request = self.getInputMessageInstance(operationName)
-        response = self.RPC(operationName, request)   
+        msg = self.client_module.getAllServiceNames2SoapIn()
+        rsp = port.getAllServiceNames(msg)
 
-    def test_getAllServiceSummaries(self):
-        operationName = 'getAllServiceSummaries'
-        request = self.getInputMessageInstance(operationName)
-        response = self.RPC(operationName, request)
-          
-    def test_getServiceDetail(self):
-        operationName = 'getServiceDetail'
-        request = self.getInputMessageInstance(operationName)
-        request._id = 'uuid:A29C0D6C-5529-0D27-A91A-8E02D343532B'
-        response = self.RPC(operationName, request)   
+    def test_net_getAllServiceSummaries(self):
+        loc = self.client_module.XMethodsQueryLocator()
+        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        
+        msg = self.client_module.getAllServiceSummaries1SoapIn()
+        rsp = port.getAllServiceSummaries(msg)
+        
+    def test_net_getServiceDetail(self):
+        loc = self.client_module.XMethodsQueryLocator()
+        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        
+        msg = self.client_module.getServiceDetail4SoapIn()
+        msg._id = 'uuid:A29C0D6C-5529-0D27-A91A-8E02D343532B'
+        rsp = port.getServiceDetail(msg)
     
-    def test_getServiceNamesByPublisher(self):
-        operationName = 'getServiceNamesByPublisher'
-        request = self.getInputMessageInstance(operationName)
-        request._publisherID = 'xmethods.net'
-        response = self.RPC(operationName, request)   
+    def test_net_getServiceNamesByPublisher(self):
+        loc = self.client_module.XMethodsQueryLocator()
+        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        
+        msg = self.client_module.getServiceNamesByPublisher3SoapIn()
+        msg._publisherID = 'xmethods.net'
+        rsp = port.getServiceNamesByPublisher(msg)
     
-    def test_getServiceSummariesByPublisher(self):
-        operationName = 'getServiceSummariesByPublisher'
-        request = self.getInputMessageInstance(operationName)
-        request._publisherID = 'xmethods.net'
-        response = self.RPC(operationName, request)  
-
-
-def makeTestSuite():
-    suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_'))
-    return suite
+    def test_net_getServiceSummariesByPublisher(self):
+        loc = self.client_module.XMethodsQueryLocator()
+        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        
+        msg = self.client_module.getServiceSummariesByPublisher0SoapIn()
+        msg._publisherID = 'xmethods.net'
+        rsp = port.getServiceSummariesByPublisher(msg)
 
 
 if __name__ == "__main__" :

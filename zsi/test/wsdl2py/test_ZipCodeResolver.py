@@ -14,20 +14,36 @@ WSDL: http://webservices.eraserver.net/zipcoderesolver/zipcoderesolver.asmx?WSDL
 
 """
 
-CONFIG_FILE = 'config.txt'
-CONFIG_SECTION = 'WSDL'
-SERVICE_NAME = 'ZipCodeResolver'
-PORT_NAME = 'ZipCodeResolverSoap'
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_dispatch'))
+    return suite
+
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(XMethodsQueryTest, 'test_'))
+    return suite
 
 
 class ZipCodeResolverTest(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
     name = "test_ZipCodeResolver"
-    def setUp(self):
-        self._portName = PORT_NAME
-        ServiceTestCase.setSection(self,self.name)
-        ServiceTestCase.setUp(self)
     
     def test_CorrectedAddressHtml(self):
         operationName = 'CorrectedAddressHtml'
@@ -66,27 +82,7 @@ class ZipCodeResolverTest(ServiceTestCase):
         request = self.getInputMessageInstance(operationName)
         response = self.RPC(operationName, request)
 
-    def _getPort(self, locator, netloc=None):
-        """Returns a rpc proxy port instance.
-           **Only expecting 1 service/WSDL, and 1 port/service.
-
-           locator -- Locator instance
-        """
-        if len(self._wsm.services) != 1:
-            raise TestException, 'only supporting WSDL with one service information item'
-        methodNames = self._wsm.services[0].locator.getPortMethods()
-        if len(methodNames) == 0:
-            raise TestException, 'No port defined for service.'
-        #elif len(methodNames) > 1:
-        #    raise TestException, 'Not handling multiple ports.'
-        callMethod = getattr(locator, methodNames[0])
-        return callMethod(**self._getPortOptions(methodNames[0], locator, netloc))
-
-def makeTestSuite():
-    suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(ZipCodeResolverTest, 'test_'))
-    return suite
-
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="all")
+

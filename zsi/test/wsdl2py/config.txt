@@ -4,20 +4,26 @@
 #
 # CONFIGURATION SECTIONS 
 #  [configuration] - global configuration of service tests.
-#     net -- run network tests
-#     local -- run local tests, using wsdl2dispatch and local container.
-#         Must have host and port defined for container, else ignore.
+#	  tracefile -- trace soap messages
+#     debug -- turn on debugging
+#     skip -- skip generation steps, code generated don't generate again
+#
+#  [dispatch] -- configuration for test_dispatch* tests
 #     host -- address of local container
 #     port -- port of local container
+#     path -- path of service
 #
 ##########################################################################
 [configuration]
 tracefile = True
 debug = True
-net = True
-local = True
+skip = False
+
+[dispatch]
 host = localhost
 port = 9080
+path = test
+test_WhiteMesa = servers/WhiteMesa.py
 
 
 ##########################################################################
@@ -178,14 +184,6 @@ test_WhiteMesa = http://www.whitemesa.net/wsdl/test-rpc-lit.wsdl
 test_OpcDaGateway = http://tswinc.us/XMLDADemo/ts_sim/OpcDaGateway.asmx?WSDL
 test_MapPoint = http://staging.mappoint.net/standard-30/mappoint.wsdl
 test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
-
-
-##########################################################################
-# SECTION [servers] - used for local tests, and for wsdl2dispatch.
-# 
-##########################################################################
-[servers]
-test_WhiteMesa = servers/WhiteMesa.py
 
 
 
