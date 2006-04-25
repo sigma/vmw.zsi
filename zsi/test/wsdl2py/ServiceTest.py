@@ -233,7 +233,7 @@ class ServiceTestCase(unittest.TestCase):
         cfn = self.client_file_name
         sfn = self.server_file_name
     
-        files = [cfn, tfn,sfn]
+        files = filter(lambda f: f is not None, [cfn, tfn,sfn])
         if None is cfn is tfn is sfn:
             return
         
