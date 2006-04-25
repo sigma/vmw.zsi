@@ -12,9 +12,31 @@ Unittest for contacting
 WSDL:  http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
 """
 
-CONFIG_FILE = 'config.txt'
-SERVICE_NAME = 'SessionCreateRQService'
-PORT_NAME = 'SessionCreatePortType'
+
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ServiceTest, 'test_dispatch'))
+    return suite
+
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ServiceTest, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ServiceTest, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ServiceTest, 'test_'))
+    return suite
 
 
 class ServiceTest(ServiceTestCase):
@@ -22,12 +44,15 @@ class ServiceTest(ServiceTestCase):
     
     """
     name = "test_Sabre"
+    client_file_name = "SessionCreateRQService_services.py"
+    types_file_name = "SessionCreateRQService_services_types.py"
+    server_file_name = "SessionCreateRQService_services_server.py"
 
-    def setUp(self):
-        ServiceTestCase.setSection(self,self.name)
-        ServiceTestCase.setUp(self)
-        
-    def test_SessionCreate(self):
+    def __init__(self, methodName):
+        ServiceTestCase.__init__(self, methodName)
+        self.wsdl2py_args.append('-b')
+
+    def test_net_SessionCreate(self):
         """
 _________________________________ Mon Jan  2 13:41:22 2006 REQUEST:
 <SOAP-ENV:Envelope xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ZSI="http://www.zolera.com/schemas/ZSI/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Header></SOAP-ENV:Header><SOAP-ENV:Body xmlns:ns1="http://www.opentravel.org/OTA/2002/11"><ns1:SessionCreateRQ><ns1:POS><ns1:Source PseudoCityCode="SF"></ns1:Source></ns1:POS></ns1:SessionCreateRQ></SOAP-ENV:Body></SOAP-ENV:Envelope>
@@ -54,26 +79,21 @@ Soapaction: ""
 </StackTrace></detail></soap-env:Fault></soap-env:Body></soap-env:Envelope>
 E
         """
-        operationName = 'SessionCreateRQ'
-
-        msg = self.getInputMessageInstance(operationName)
+        loc = self.client_module.SessionCreateRQServiceLocator()
+        port = loc.getSessionCreatePortType(**self.getPortKWArgs())
+        
+        msg = self.client_module.GetSessionCreateInput()
         msg.POS = msg.new_POS()
         msg.POS.Source = msg.POS.new_Source()
         msg.POS.Source.set_attribute_PseudoCityCode("SF") 
 
-        self.failUnlessRaises(FaultException, self._ports[0].SessionCreateRQ, msg)
+        self.failUnlessRaises(FaultException, port.SessionCreateRQ, msg)
         #response = self._ports[0].SessionCreateRQ(msg)
         #response.Success
         #response.Warnings
         #response.ConversationId 
         #response.Errors
         
-
-def makeTestSuite():
-    suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(ServiceTest, "test_", suiteClass=ServiceTestSuite))
-    return suite
-
 
 if __name__ == "__main__" :
     unittest.TestProgram(defaultTest="makeTestSuite")
