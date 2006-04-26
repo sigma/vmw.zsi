@@ -274,10 +274,17 @@ class ServiceTestCase(unittest.TestCase):
         ServiceTestCase._process = LaunchContainer(TOPDIR + '/' + expath)
                     
     def CleanUp(cls):
+        """call this when dispatch server is no longer needed,
+        maybe another needs to be started.  Assumption that
+        a single "Suite" uses the same server, once all the
+        tests are run in that suite do a cleanup.
+        """
         if cls._process is None:
             return
-        os.kill(cls._process.pid, signal.SIGKILL)    
+        os.kill(cls._process.pid, signal.SIGKILL)
+        cls._process = None
     CleanUp = classmethod(CleanUp)
+         
          
 class ServiceTestSuite(unittest.TestSuite):
     """A test suite is a composite test consisting of a number of TestCases.

@@ -16,7 +16,7 @@
 ##########################################################################
 [configuration]
 tracefile = True
-debug = True
+debug = False
 skip = False
 
 [dispatch]
@@ -106,7 +106,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_ZipCodeResolver test_MapPoint test_OpcDaGateway test_Sabre
+tests =  test_ZipCodeResolver test_MapPoint test_OpcDaGateway test_Sabre test_Echo
 
 [doc_literal_broke]
 document = True
@@ -154,6 +154,9 @@ literal = True
 document = False
 literal = False
 
+[test_Echo]
+document = True
+literal = True
 
 
 ##########################################################################
