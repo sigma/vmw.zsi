@@ -14,29 +14,45 @@ from ZSI.parse import ParsedSoap
 Unittest for Bug Report 
 [ ] 
 
-WSDL:  
+XSD: test_Attributes.xsd  
 """
 
-CONFIG_FILE = 'config.txt'
-sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(AttributeTestCase, 'test_dispatch'))
+    return suite
 
-class AttributeTest(unittest.TestCase):
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(AttributeTestCase, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(AttributeTestCase, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(AttributeTestCase, 'test_'))
+    return suite
+
+
+class AttributeTestCase(ServiceTestCase):
     name = "test_Attributes"
-    done = False
+    types_file_name = "test_Attributes_xsd_services_types.py"
 
-    def setUp(self):
-        if AttributeTest.done: return
-        AttributeTest.done = True
-        wsdl = os.path.abspath('test_Attributes.xsd').strip()
-        fin,fout = os.popen4('cd stubs; wsdl2py.py -x -b -f %s' %wsdl)
-        # TODO: wait for wsdl2py.py to finish.
-        for i in fout: print i
-        import test_Attributes_xsd_services_types
- 
-    def tearDown(self):
-        pass
+    def __init__(self, methodName):
+        ServiceTestCase.__init__(self, methodName)
+        self.wsdl2py_args.append('-b')
+        self.wsdl2py_args.append('-x')
 
-    def test_attribute1(self):
+    def test_local_attribute1(self):
         """
         """
         myDouble = 4.5
@@ -82,7 +98,6 @@ class AttributeTest(unittest.TestCase):
         sw.serialize(pyobj)
         soap = str(sw)
  
-        print soap
         ps = ParsedSoap(soap)
         pyobj2 = ps.Parse(pyobj.typecode)
 
@@ -140,7 +155,7 @@ class AttributeTest(unittest.TestCase):
         #test = pyobj2.get_attribute_myGMonthDay()
         #self.failUnlessEqual(myGDateTime[1:3], test[1:3])
 
-    def test_empty_attribute(self):
+    def test_local_empty_attribute(self):
         # [ 1452752 ] attribute with empty value doesn't appear in parsed object
         myString = ""
         pyobj = GED("urn:example", "Test1").pyclass()
@@ -158,12 +173,6 @@ class AttributeTest(unittest.TestCase):
         self.failUnlessEqual(myString, str(test))
 
 
-def makeTestSuite():
-    suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(AttributeTest, "test_", suiteClass=ServiceTestSuite))
-    return suite
-
-
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="all")
 

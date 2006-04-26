@@ -9,41 +9,59 @@ from ZSI import FaultException
 """
 Unittest 
 
-WSDL:  
+WSDL:  ../../samples/Echo/Echo.wsdl
 """
 
-CONFIG_FILE = 'config.txt'
-SERVICE_NAME = 'EchoServer'
-PORT_NAME = 'EchoServer'
-
-sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
-
-class EchoTest(unittest.TestCase):
-    name = "test_Echo"
-    done = False
-
-    def setUp(self):
-        if EchoTest.done: return
-        EchoTest.done = True
-        wsdl = os.path.abspath('../../samples/Echo/Echo.wsdl').strip()
-        fin,fout = os.popen4('cd stubs; wsdl2py.py -f %s' %wsdl)
-        # TODO: wait for wsdl2py.py to finish.
-        for i in fout: print i
- 
-    def tearDown(self):
-        pass
-
-    def test_Echo(self):
-        from EchoServer_services import EchoServerLocator, EchoRequest, EchoResponse
-        port = EchoServerLocator().getEchoServer()
-    
-
-def makeTestSuite():
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
     suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(EchoTest, "test_", suiteClass=ServiceTestSuite))
+    suite.addTest(unittest.makeSuite(EchoTestCase, 'test_dispatch'))
+    return suite
+
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(EchoTestCase, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(EchoTestCase, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(EchoTestCase, 'test_'))
     return suite
 
 
+class EchoTestCase(ServiceTestCase):
+    name = "test_Echo"
+    client_file_name = "EchoServer_services.py"
+    types_file_name  = "EchoServer_services_types.py"
+    server_file_name = "EchoServer_services_server.py"
+
+    def __init__(self, methodName):
+        ServiceTestCase.__init__(self, methodName)
+        self.wsdl2py_args.append('-b')
+
+    def test_local_Echo(self):
+        msg = self.client_module.EchoRequest()
+        rsp = self.client_module.EchoResponse()
+
+    def test_dispatch_Echo(self):
+        loc = self.client_module.EchoServerLocator()
+        port = loc.getEchoServer(**self.getPortKWArgs())
+        
+        msg = self.client_module.EchoRequest()
+        msg.EchoIn = 'bla bla bla'
+        rsp = port.Echo(msg)
+        self.failUnless(rsp.EchoResult == msg.EchoIn, "Bad Echo")
+
+
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="all")
 

@@ -16,26 +16,42 @@ Unittest for Bug Report
 WSDL:  
 """
 
-CONFIG_FILE = 'config.txt'
-sys.path.append('%s/%s' %(os.getcwd(), 'stubs'))
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ChoiceTestCase, 'test_dispatch'))
+    return suite
 
-class ChoiceTest(unittest.TestCase):
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ChoiceTestCase, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ChoiceTestCase, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(ChoiceTestCase, 'test_'))
+    return suite
+
+
+class ChoiceTestCase(ServiceTestCase):
     name = "test_Choice"
-    done = False
-
-    def setUp(self):
-        if ChoiceTest.done: return
-        ChoiceTest.done = True
-        wsdl = os.path.abspath('test_Choice.xsd').strip()
-        fin,fout = os.popen4('cd stubs; wsdl2py.py -x -b -f %s' %wsdl)
-        # TODO: wait for wsdl2py.py to finish.
-        for i in fout: print i
-        import test_Choice_xsd_services_types
+    types_file_name = "test_Choice_xsd_services_types.py"
  
-    def tearDown(self):
-        pass
-
-    def test_choice_default_facets_legal1(self):
+    def __init__(self, methodName):
+        ServiceTestCase.__init__(self, methodName)
+        self.wsdl2py_args.append('-b')
+        self.wsdl2py_args.append('-x')
+ 
+    def test_local_choice_default_facets_legal1(self):
         """<choice minOccurs=1 maxOccurs=1>
         """
         pyobj = GED("urn:example", "Easy").pyclass()
@@ -44,7 +60,7 @@ class ChoiceTest(unittest.TestCase):
         sw.serialize(pyobj)
         print str(sw)
 
-    def test_choice_maxOccurs_unbounded(self):
+    def test_local_choice_maxOccurs_unbounded(self):
         """<choice minOccurs=1 maxOccurs=unbounded>
         """
         pyobj = GED("urn:example", "Hard").pyclass()
@@ -59,13 +75,6 @@ class ChoiceTest(unittest.TestCase):
         print str(sw)
 
 
-
-def makeTestSuite():
-    suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(ChoiceTest, "test_", suiteClass=ServiceTestSuite))
-    return suite
-
-
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    unittest.TestProgram(defaultTest="all")
 

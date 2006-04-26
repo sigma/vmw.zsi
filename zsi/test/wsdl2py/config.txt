@@ -24,6 +24,7 @@ host = localhost
 port = 9080
 path = test
 test_WhiteMesa = servers/WhiteMesa.py
+test_Echo = servers/EchoServer.py 
 
 
 ##########################################################################
@@ -49,16 +50,6 @@ test_WhiteMesa = servers/WhiteMesa.py
 #  [doc_literal_broke_interop] -- these are broke BP-1.0 compliant doc/literal services.
 #
 ##########################################################################
-
-########################## SIMPLE ########################################
-# Just basic unittest, they will be run without any additional configuration.
-# Variables:
-#   tests -- whitespace separated list of test modules that 
-#            must define a makeTestSuite function that returns a test suite.
-#
-##########################################################################
-[simple]
-tests = test_Echo test_Choice test_Attributes
 
 
 ########################## RPC/ENCODED ###################################
@@ -185,6 +176,8 @@ test_OpcDaGateway = http://tswinc.us/XMLDADemo/ts_sim/OpcDaGateway.asmx?WSDL
 test_MapPoint = http://staging.mappoint.net/standard-30/mappoint.wsdl
 test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
 
-
+test_Echo = ../../samples/Echo/Echo.wsdl
+test_Choice = test_Choice.xsd
+test_Attributes = test_Attributes.xsd
 
 
