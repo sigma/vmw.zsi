@@ -5,6 +5,7 @@
 # See Copyright for copyright notice!
 ###########################################################################
 import exceptions, sys, optparse, os, warnings
+from operator import xor
 import ZSI
 from ConfigParser import ConfigParser
 from ZSI.generate.wsdl2python import WriteServiceModule, ServiceDescription
@@ -13,7 +14,7 @@ from ZSI.wstools.logging import setBasicLoggerDEBUG
 from ZSI.generate import containers, utility
 from ZSI.generate.utility import NCName_to_ClassName as NC_to_CN, TextProtect
 
-"""
+DESC = """
 wsdl2py
 
 A utility for automatically generating client interface code from a wsdl
@@ -68,7 +69,8 @@ def main():
     """ From a wsdl definition create a wsdl object and run the wsdl2python 
         generator.  
     """
-    op = optparse.OptionParser()
+    op = optparse.OptionParser(usage="usage: %prog [options]",
+                 description=DESC)
     
     # Basic options
     op.add_option("-f", "--file",
@@ -121,21 +123,30 @@ def main():
                   
     (options, args) = op.parse_args()
 
-    location = options.file or options.url
+    if not xor(options.file is None, options.url is None):
+        print 'Must specify either --file or --url option'
+        sys.exit(os.EX_USAGE)
+    
+    location = options.file            
+    if options.url is not None:
+        location = options.url
+    
     if options.schema is True:
         reader = XMLSchema.SchemaReader(base_url=location)
     else:
         reader = WSDLTools.WSDLReader()
 
+    load = reader.loadFromFile
+    if options.url is not None:
+        load = reader.loadFromURL
+
     wsdl = None
-    if options.file is not None:
-	try:
-            wsdl = reader.loadFromFile(location)
-	except Exception, e:
-	    print "Error loading %s: \n\t%s" % (location, e)
-	    sys.exit(0)
-    elif options.url is not None:
-        wsdl = reader.loadFromURL(location)
+    try:
+        wsdl = load(location)
+    except Exception, e:
+        print "Error loading %s: \n\t%s" % (location, e)
+        # exit code UNIX specific, Windows?
+        sys.exit(os.EX_NOINPUT)
 
     if options.simple_naming:
         # Use a different client suffix
@@ -154,7 +165,6 @@ def main():
         from ZSI.generate.containers import ServiceContainerBase
         ServiceContainerBase.clientClassSuffix = options.clientClassSuffix
 
-    assert wsdl is not None, 'Must specify WSDL either with --file or --url'
     if options.schema is True:
         wsdl = formatSchemaObject(location, wsdl)
 
