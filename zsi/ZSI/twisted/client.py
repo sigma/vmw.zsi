@@ -79,8 +79,8 @@ class ClientDataHandler:
         if len(soapdata) == 0:
             raise TypeError('Received empty response')
 
-        log.msg("_" * 33, time.ctime(time.time()), 
-                  "RESPONSE: \n%s" %soapdata, debug=True)
+#        log.msg("_" * 33, time.ctime(time.time()), 
+#                  "RESPONSE: \n%s" %soapdata, debug=True)
 
         ps = ParsedSoap(soapdata, readerclass=cls.readerClass)
         if ps.IsAFault() is True:
@@ -103,7 +103,6 @@ class ClientDataHandler:
         sw = SoapWriter(nsdict=nsdict, header=header,
                         outputclass=cls.writerClass)
         sw.serialize(obj, tc)
-
         return sw
     
     
@@ -162,7 +161,6 @@ class DefaultClientHandlerChain:
         
     @staticmethod
     def parseResponse(ps, replytype):
-        print "parse " *20
         return ps.Parse(replytype)
         
     def processResponse(self, arg, replytype, **kw):
@@ -224,11 +222,20 @@ class Binding:
     factory = DefaultClientHandlerChainFactory
     defer = False
 
-    def __init__(self, url=None, nsdict=None, contextFactory=None, **kw):
+    def __init__(self, url=None, nsdict=None, contextFactory=None, 
+                 tracefile=None, **kw):
+        """Initialize.
+        Keyword arguments include:
+            url -- URL of resource, POST is path 
+            nsdict -- namespace entries to add
+            contextFactory -- security contexts
+            tracefile -- file to dump packet traces
+        """
         self.url = url
         self.nsdict = nsdict or {}
         self.contextFactory = contextFactory
         self.http_headers  = {'content-type': 'text/xml',}
+        self.trace = tracefile
 
     def addHTTPHeader(self, key, value):
         self.http_headers[key] = value
@@ -236,7 +243,8 @@ class Binding:
     def getHTTPHeaders(self):
         return self.http_headers
         
-    def Send(self, url, opname, pyobj, nsdict={}, soapaction=None, chain=None, **kw):
+    def Send(self, url, opname, pyobj, nsdict={}, soapaction=None, chain=None, 
+             **kw):
         """Returns a ProcessingChain which needs to be passed to Receive if 
         Send is being called consecutively.
         """
@@ -255,7 +263,11 @@ class Binding:
         chain = self.factory.newInstance()
         soapdata = chain.processRequest(pyobj, nsdict=nsdict, 
                                         soapaction=soapaction, **kw)
-        
+            
+        if self.trace:
+            print >>self.trace, "_" * 33, time.ctime(time.time()), "REQUEST:"
+            print >>self.trace, soapdata
+
         f = getPage(str(url), contextFactory=self.contextFactory, 
                     postdata=soapdata, agent=self.agent, 
                     method='POST', headers=self.getHTTPHeaders(), 
@@ -286,8 +298,15 @@ class Binding:
         """        
         chain = chain or self.chain
         d = chain.flow.deferred
+        if self.trace:
+            def trace(soapdata):
+                print >>self.trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
+                print >>self.trace, soapdata
+                return soapdata
+            
+            d.addCallback(trace)
+            
         chain.processResponse(d, replytype, **kw)
-        
         if self.defer:
             return d
 
@@ -315,4 +334,11 @@ class Binding:
         
         return pyobj
 
-
+def trace():
+        if trace:
+            print >>trace, "_" * 33, time.ctime(time.time()), "RESPONSE:"
+            for i in (self.reply_code, self.reply_msg,):
+                print >>trace, str(i)
+            print >>trace, "-------"
+            print >>trace, str(self.reply_headers)
+            print >>trace, self.data

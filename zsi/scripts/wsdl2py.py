@@ -41,7 +41,11 @@ def SetPyclassMetaclass(option, opt, value, parser, *args, **kwargs):
     		'from %(module)s import %(metaclass)s' %kwargs
     		)
 
-
+def SetUpTwistedClient(option, opt, value, parser, *args, **kwargs):
+    from ZSI.generate.containers import ServiceHeaderContainer
+    ServiceHeaderContainer.imports.remove('from ZSI import client')
+    ServiceHeaderContainer.imports.append('from ZSI.twisted import client')
+    
 
 def formatSchemaObject(fname, schemaObj):
     """ In the case of a 'schema only' generation (-s) this creates
@@ -97,6 +101,13 @@ def main():
                   callback_kwargs={'module':'ZSI.generate.pyclass', 
                   	'metaclass':'pyclass_type'},
                   help="add convenience functions for complexTypes, including Getters, Setters, factory methods, and properties (via metaclass). *** DONT USE WITH --simple-naming ***")
+    
+    # Use Twisted
+    op.add_option("-w", "--twisted",
+                  action="callback", callback=SetUpTwistedClient, 
+                  callback_kwargs={'module':'ZSI.generate.pyclass', 
+                      'metaclass':'pyclass_type'},
+                  help="generate a twisted.web client, dependencies python>=2.4, Twisted>=2.0.0, TwistedWeb>=0.5.0")
     
     # Extended generation options
     op.add_option("-e", "--extended",

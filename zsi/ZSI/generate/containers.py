@@ -596,10 +596,6 @@ class ServiceOperationContainer(ServiceContainerBase):
             if self.outputSimpleType:
                 response.append('%sreturn %s(response)' %(ID2, self.outputName))
             else: 
-                rCheck = 'if isinstance(response, %s.typecode.pyclass) is False:' %self.outputName
-                response.append('%s%s' %(ID2, rCheck))
-                response.append('%sraise TypeError, "%%s incorrect response type" %% (%s)' %(ID3, 'response.__class__'))
-
                 if self.do_extended:
                     partsList = self.getOperation().getOutputMessage().parts.values()
                     subNames = GetPartsSubNames(partsList, self._wsdl)
