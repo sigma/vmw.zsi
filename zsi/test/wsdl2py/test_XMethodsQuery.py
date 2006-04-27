@@ -5,7 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 
 """
 Unittest for contacting the XMethodsQuery Web service.
@@ -87,4 +87,4 @@ class XMethodsQueryTest(ServiceTestCase):
 
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    main()

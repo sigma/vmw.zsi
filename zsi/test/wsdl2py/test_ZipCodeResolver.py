@@ -5,7 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 
 """
 Unittest for contacting the ZipCodeResolver Web service.
@@ -97,5 +97,5 @@ class ZipCodeResolverTest(ServiceTestCase):
 
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="all")
+    main()
 

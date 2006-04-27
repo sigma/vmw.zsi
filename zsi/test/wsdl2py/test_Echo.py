@@ -4,7 +4,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import os, sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 from ZSI import FaultException
 """
 Unittest 
@@ -63,5 +63,5 @@ class EchoTestCase(ServiceTestCase):
 
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="all")
+    main()
 

@@ -4,7 +4,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import os, sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 from ZSI import FaultException
 from ZSI.TC import _get_global_element_declaration as GED
 from ZSI.writer import SoapWriter
@@ -76,5 +76,5 @@ class ChoiceTestCase(ServiceTestCase):
 
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="all")
+    main()
 

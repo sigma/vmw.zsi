@@ -5,7 +5,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite, TestException
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite, TestException
 
 """
 Unittest for contacting the WhiteMesa web service for rpc/literal tests.
@@ -70,4 +70,4 @@ class WhiteMesaTest(ServiceTestCase):
     
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="all")
+    main()

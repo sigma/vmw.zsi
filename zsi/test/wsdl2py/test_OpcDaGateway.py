@@ -4,7 +4,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 import ZSI
 from ZSI import FaultException
 """
@@ -150,5 +150,5 @@ class OPCServiceTest(ServiceTestCase):
 
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="all")
+    main()
 

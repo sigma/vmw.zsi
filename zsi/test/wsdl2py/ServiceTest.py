@@ -41,6 +41,7 @@ CONFIG_PARSER.read(CONFIG_FILE)
 
 DEBUG = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug')
 SKIP = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'skip')
+TWISTED = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'twisted')
 
 if DEBUG:
     from ZSI.wstools.logging import setBasicLoggerDEBUG
@@ -51,8 +52,23 @@ ENVIRON = copy.copy(os.environ)
 ENVIRON['PYTHONPATH'] = ENVIRON.get('PYTHONPATH', '') + ':' + MODULEDIR
 
 
+def _SimpleMain():
+    """Gets tests to run from configuration file.
+    """
+    unittest.TestProgram(defaultTest="all")
+main = _SimpleMain
 
-def LaunchContainer(cmd):
+
+def _TwistedMain():
+    """Gets tests to run from configuration file.
+    """
+    from twisted.internet import reactor
+    reactor.callWhenRunning(_TwistedTestProgram, defaultTest="all")
+    reactor.run(installSignalHandlers=0)
+if TWISTED: main = _TwistedMain
+
+
+def _LaunchContainer(cmd):
     '''
     Parameters:
         cmd -- executable, sets up a ServiceContainer or ?
@@ -62,6 +78,20 @@ def LaunchContainer(cmd):
     process = subprocess.Popen([cmd, port], env=ENVIRON)
     time.sleep(1)
     return process
+
+
+class _TwistedTestProgram(unittest.TestProgram):
+
+    def runTests(self):
+        from twisted.internet import reactor
+        if self.testRunner is None:
+            self.testRunner = unittest.TextTestRunner(verbosity=self.verbosity)
+
+        result = self.testRunner.run(self.test)
+        reactor.stop()
+        return result.wasSuccessful()
+
+
 
 class ConfigException(Exception):
     """Exception thrown when configuration settings arent correct.
@@ -118,6 +148,10 @@ class ServiceTestCase(unittest.TestCase):
         self.portkwargs = {}
         self.client_module = self.types_module = self.server_module = None
         self.done = False
+
+        if TWISTED:
+            self.wsdl2py_args.append('--twisted')
+
         unittest.TestCase.__init__(self, methodName)
 
     def getPortKWArgs(self):
@@ -271,7 +305,7 @@ class ServiceTestCase(unittest.TestCase):
            ServiceTestCase.CleanUp()
         
         ServiceTestCase._lastToDispatch = expath
-        ServiceTestCase._process = LaunchContainer(TOPDIR + '/' + expath)
+        ServiceTestCase._process = _LaunchContainer(TOPDIR + '/' + expath)
                     
     def CleanUp(cls):
         """call this when dispatch server is no longer needed,

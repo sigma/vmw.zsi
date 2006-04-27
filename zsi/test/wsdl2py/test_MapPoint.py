@@ -4,7 +4,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 """
 Unittest for contacting the Map Point Service.  
 
@@ -61,5 +61,5 @@ class MapPointTest(ServiceTestCase):
         
 
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="all")
+    main()
 

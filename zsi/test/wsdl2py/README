@@ -90,6 +90,7 @@ Configuration:
     "tracefile" -- show XML of individual messages as serialized/parsed.
     "debug" -- turn on verbose debugging information.
     "skip" -- skip generation (wsdl2py.py and wsdl2dispatch.py)
+    "twisted" -- use twisted.web.client
 
 	[dispatch]
 	The "configuration" section for dispatch tests.

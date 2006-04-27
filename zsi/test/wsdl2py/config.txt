@@ -7,22 +7,26 @@
 #	  tracefile -- trace soap messages
 #     debug -- turn on debugging
 #     skip -- skip generation steps, code generated don't generate again
+#     twisted -- Use twisted web client
 #
 #  [dispatch] -- configuration for test_dispatch* tests
 #     host -- address of local container
 #     port -- port of local container
 #     path -- path of service
+#     twisted -- Use twisted web resource
 #
 ##########################################################################
 [configuration]
 tracefile = True
 debug = False
 skip = False
+twisted = True
 
 [dispatch]
 host = localhost
 port = 9080
 path = test
+twisted = False
 test_WhiteMesa = servers/WhiteMesa.py
 test_Echo = servers/EchoServer.py 
 

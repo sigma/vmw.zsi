@@ -4,7 +4,7 @@
 # See Copyright for copyright notice!
 ###########################################################################
 import unittest, warnings
-from ServiceTest import CONFIG_PARSER, DOCUMENT, LITERAL, BROKE, TESTS
+from ServiceTest import main, CONFIG_PARSER, DOCUMENT, LITERAL, BROKE, TESTS
 
 
 # General targets
@@ -93,12 +93,8 @@ def _makeTestSuite(test, document=None, literal=None, broke=None):
             suite.addTest(s)
     return suite
 
-    
-def main():
-    """Gets tests to run from configuration file.
-    """
-    unittest.TestProgram(defaultTest="all")
-
-if __name__ == "__main__" : main()
+   
+if __name__ == "__main__": 
+    main()
     
 
