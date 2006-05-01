@@ -1506,7 +1506,7 @@ class TypecodeContainerBase(TypesContainerBase):
                 elif content is not None and content.isLocal() and content.isSimple():
                     # Local Simple Type
                     tc.name = c.getAttribute('name')
-                    tc.klass = 'self.__class__.%s%s' % (element_class_name(tc.name))
+                    tc.klass = 'self.__class__.%s' % (element_class_name(tc.name))
                     tc.setStyleElementReference()
                     self.localTypes.append(c)
                 else:
@@ -2273,6 +2273,9 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         self.mgContent = ()
         self.attrComponents = self._setAttributes(tp.getAttributeContent())
         
+        # Save reference to type for debugging
+        self._tp = tp
+        
         if empty:
             return
         
@@ -2289,20 +2292,24 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         # sequence, all or choice
         #self.mgContent = model.content
         self.mgContent = model
-
-        
         
     def _setContent(self):
-        definition = [
-            '%sclass %s(ZSI.TCcompound.ComplexType, TypeDefinition):'
-            % (ID1, self.getClassName()),
-            '%s%s' % (ID2, self.schemaTag()),
-            '%s%s' % (ID2, self.typeTag()),
-            '%s%s' % (ID2, self.pnameConstructor()),
-            #'%s'   % self.getElements(),
-            '%s%s' % (ID3, self.nsuriLogic()),
-            '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
-            ]
+        try:
+            definition = [
+                '%sclass %s(ZSI.TCcompound.ComplexType, TypeDefinition):'
+                % (ID1, self.getClassName()),
+                '%s%s' % (ID2, self.schemaTag()),
+                '%s%s' % (ID2, self.typeTag()),
+                '%s%s' % (ID2, self.pnameConstructor()),
+                #'%s'   % self.getElements(),
+                '%s%s' % (ID3, self.nsuriLogic()),
+                '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
+                ]
+        except Exception, ex:
+            args = ["Failure processing %s" %self._tp.getItemTrace()]
+            args += ex.args
+            ex.args = tuple(args)
+            raise
 
         definition.append('%s%s = attributes or {}' %(ID3, 
                            self.attribute_typecode))
