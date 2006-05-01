@@ -20,7 +20,7 @@
 tracefile = True
 debug = False
 skip = False
-twisted = True
+twisted = False
 
 [dispatch]
 host = localhost
@@ -72,7 +72,7 @@ tests = test_XMethodsQuery
 document = False
 literal = False
 broke = True
-tests = test_AmazonWebService test_GlobalWeather_gw  test_ThreatService test_GlobalWeather_si
+tests = test_GlobalWeather_gw  test_ThreatService test_GlobalWeather_si
 
 
 ########################## RPC/LITERAL ###################################
@@ -168,7 +168,7 @@ literal = True
 # 
 ##########################################################################
 [WSDL]
-test_AmazonWebService = http://soap.amazon.com/schemas/AmazonWebServices.wsdl
+test_AWSECommerceService = http://webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl
 test_FreeDBService = http://soap.systinet.net:6080/FreeDB/
 test_GlobalWeather_gw = http://live.capescience.com/wsdl/GlobalWeather.wsdl
 test_GlobalWeather_si = http://live.capescience.com/wsdl/GlobalWeather.wsdl
@@ -182,6 +182,7 @@ test_WhiteMesa = http://www.whitemesa.net/wsdl/test-rpc-lit.wsdl
 test_OpcDaGateway = http://tswinc.us/XMLDADemo/ts_sim/OpcDaGateway.asmx?WSDL
 test_MapPoint = http://staging.mappoint.net/standard-30/mappoint.wsdl
 test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
+test_BFGraphLib = http://bfo.co.uk/products/graph/docs/bfograph-2.1.wsdl
 
 test_Echo = ../../samples/Echo/Echo.wsdl
 test_Choice = test_Choice.xsd
