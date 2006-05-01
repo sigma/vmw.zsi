@@ -73,11 +73,34 @@ class CanonicalizeFromTestCase(unittest.TestCase):
         self.assertEqual(d1, C14N_EXCL3_DIGEST)
         self.assertEqual(d1, d2)
 
+    def xcheck_c14n_exc4(self):
+        RCVDIGEST = "jhTbi7gWlY9oLqsRr+EZ0bokRFA="
+        CALDIGEST = "IkMyI4zCDlK41qE7sZxvkFHJioU="
+
+        d1 = base64.encodestring(sha.sha(WRONG).digest()).strip()
+        d2 = base64.encodestring(sha.sha(CORRECT).digest()).strip()
+
+        ps = ParsedSoap(XML_INST4)
+        el = filter(lambda el: _get_element_nsuri_name(el) == (WSA200403.ADDRESS, "MessageID"), 
+                      ps.header_elements)[0]
+
+        s = StringIO()
+        Canonicalize(el, s, unsuppressedPrefixes=[])
+        cxml = s.getvalue()
+        print "-- "*20
+        print cxml
+        print "-- "*20
+        d3 = base64.encodestring(sha.sha(cxml).digest()).strip()
+
+        self.assertEqual(d1, RCVDIGEST)
+        self.assertEqual(d2, CALDIGEST)
+        self.assertEqual(d3, CALDIGEST)
+
 
 def makeTestSuite():
     suite = unittest.TestSuite()
     #suite.addTest(unittest.makeSuite(CanonicalizeFromTestCase, "check"))
-    suite.addTest(unittest.makeSuite(CanonicalizeFromTestCase, "check"))
+    suite.addTest(unittest.makeSuite(CanonicalizeFromTestCase, "xcheck"))
     return suite
 
 
@@ -311,6 +334,26 @@ xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-ut
 xmlns="http://schemas.xmlsoap.org/ws/2004/04/trust"><wsa:EndpointReference 
 xmlns:ns1="http://www.globus.org/08/2004/delegationService"><wsa:Address>http://131.243.2.147:8888/wsrf/services/DelegationService</wsa:Address><wsa:ReferenceProperties><ns1:DelegationKey>8adaa710-ba01-11da-bc99-cbed73daa755</ns1:DelegationKey></wsa:ReferenceProperties></wsa:EndpointReference></RequestSecurityTokenResponse></soapenv:Body></soapenv:Envelope>"""
 
+
+
+CORRECT = """<ns1:MessageID xmlns:ns1="http://schemas.xmlsoap.org/ws/2004/03/addressing" xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns2:Id="10102">uuid:1143760705.98</ns1:MessageID>"""
+
+WRONG = """<ns1:MessageID xmlns:ns1="http://schemas.xmlsoap.org/ws/2004/03/addressing" xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" ns2:Id="10102">uuid:1143760705.98</ns1:MessageID>"""
+
+XML_INST4 = """<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ZSI="http://www.zolera.com/schemas/ZSI/"><SOAP-ENV:Header xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:ns1="http://schemas.xmlsoap.org/ws/2004/03/addressing"><ns1:MessageID xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns2:Id="10102">uuid:1143760705.98</ns1:MessageID><ns1:Action xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns2:Id="10103">http://counter.com/CounterPortType/createCounterRequest</ns1:Action><ns1:To xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns2:Id="10104">http://131.243.2.159:9080/wsrf/services/SecureCounterService</ns1:To><ns1:From xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns2:Id="10105"><ns1:Address>http://schemas.xmlsoap.org/ws/2004/03/addressing/role/anonymous</ns1:Address></ns1:From><ns2:Security xmlns:ns3="http://www.w3.org/2000/09/xmldsig#" xmlns:ns4="http://schemas.xmlsoap.org/ws/2004/04/sc"><ns3:Signature><ns3:SignedInfo xsi:type="ns3:SignedInfoType"><ns3:CanonicalizationMethod xsi:type="ns3:CanonicalizationMethodType" Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ns3:CanonicalizationMethod><ns3:SignatureMethod xsi:type="ns3:SignatureMethodType" Algorithm="http://www.globus.org/2002/04/xmlenc#gssapi-sign"></ns3:SignatureMethod><ns3:Reference xsi:type="ns3:ReferenceType" URI="#10102"><ns3:DigestMethod xsi:type="ns3:DigestMethodType" Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ns3:DigestMethod><ns3:DigestValue xsi:type="ns3:DigestValueType">
+        IkMyI4zCDlK41qE7sZxvkFHJioU=
+        </ns3:DigestValue></ns3:Reference><ns3:Reference xsi:type="ns3:ReferenceType" URI="#10103"><ns3:DigestMethod xsi:type="ns3:DigestMethodType" Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ns3:DigestMethod><ns3:DigestValue xsi:type="ns3:DigestValueType">
+        DyEF6Pa7w3SSEVJ98LIoX2LW85k=
+        </ns3:DigestValue></ns3:Reference><ns3:Reference xsi:type="ns3:ReferenceType" URI="#10104"><ns3:DigestMethod xsi:type="ns3:DigestMethodType" Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ns3:DigestMethod><ns3:DigestValue xsi:type="ns3:DigestValueType">
+        p/2PhmYP+/1UPcpwsRcdlvLmOAg=
+        </ns3:DigestValue></ns3:Reference><ns3:Reference xsi:type="ns3:ReferenceType" URI="#10105"><ns3:DigestMethod xsi:type="ns3:DigestMethodType" Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ns3:DigestMethod><ns3:DigestValue xsi:type="ns3:DigestValueType">
+        KFLeYjf5ohGUIoPoZV/oew9SuUM=
+        </ns3:DigestValue></ns3:Reference><ns3:Reference xsi:type="ns3:ReferenceType" URI="#10106"><ns3:DigestMethod xsi:type="ns3:DigestMethodType" Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ns3:DigestMethod><ns3:DigestValue xsi:type="ns3:DigestValueType">
+        7Gg0SC1wltHVAwiOfdgZsGM9W5g=
+        </ns3:DigestValue></ns3:Reference></ns3:SignedInfo><ns3:SignatureValue xsi:type="ns3:SignatureValueType">
+        AAAAAAAAAAEAAAdrBxzrHLZG4NglRglL9F3rKQu0658=
+        </ns3:SignatureValue><ns3:KeyInfo xsi:type="ns3:KeyInfoType"><ns2:SecurityTokenReference><ns2:Reference URI="#CertId-10107" ValueType="http://www.globus.org/ws/2004/09/security/sc#GSSAPI_CONTEXT_TOKEN"></ns2:Reference></ns2:SecurityTokenReference></ns3:KeyInfo></ns3:Signature><ns4:SecurityContextToken xmlns:ns5="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns5:Id="CertId-10107"><ns4:Identifier xsi:type="xsd:anyURI">1000</ns4:Identifier></ns4:SecurityContextToken></ns2:Security></SOAP-ENV:Header><SOAP-ENV:Body xmlns:ns1="http://counter.com"><ns1:createCounter xmlns:ns2="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns2:Id="10106"></ns1:createCounter></SOAP-ENV:Body></SOAP-ENV:Envelope>"""
 
 def main():
     unittest.main(defaultTest="makeTestSuite")

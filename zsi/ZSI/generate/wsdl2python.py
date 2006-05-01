@@ -462,6 +462,9 @@ class ElementWriter(SchemaItemWriter):
         else:
             raise Wsdl2PythonError, "Unknown element declaration: %s" %item.getItemTrace()
 
+        self.logger.debug('ElementWriter setUp container "%r", Schema Item "%s"' %(
+            self.content, item.getItemTrace()))
+        
         self.content.setUp(item)
 
 
@@ -507,8 +510,18 @@ class TypeWriter(SchemaItemWriter):
             else:
                 raise Wsdl2PythonError,\
                     'unknown complex type definition: %s' %item.getItemTrace()
-                    
-            self.content.setUp(item, **kw)
+
+            self.logger.debug('TypeWriter setUp container "%r", Schema Item "%s"' %(
+                self.content, item.getItemTrace()))
+            
+            try:
+                self.content.setUp(item, **kw)
+            except Exception, ex:
+                args = ['Failure in setUp: %s' %item.getItemTrace()]
+                args += ex.args
+                ex.args = tuple(args)
+                raise
+            
             return
 
         raise TypeError,\

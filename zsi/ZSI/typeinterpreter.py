@@ -95,10 +95,10 @@ class BaseTypeInterpreter:
     def _get_soapenc_typecode(self, msg_type):
         if msg_type == 'Array':
             return TCcompound.Array
-        if msg_type == 'base64':
-            return TC.Base64String
-        else:
-            raise NamespaceException
+        if msg_type == 'Struct':
+            return TCcompound.Struct
+
+        return self._get_xsd_typecode(msg_type)
 
     def get_typeclass(self, msg_type, targetNamespace):
         prefix, name = SplitQName(msg_type)

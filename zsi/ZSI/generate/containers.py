@@ -109,8 +109,13 @@ def FromMessageGetSimpleElementDeclaration(message):
 
 class AttributeMixIn:
     '''for containers that can declare attributes.
+    Class Attributes:
+        attribute_typecode -- typecode attribute name typecode dict
+        built_in_refs -- attribute references that point to built-in
+            types.  Skip resolving them into attribute declarations.
     '''
     attribute_typecode = 'self.attribute_typecode_dict'
+    built_in_refs = [(SOAP.ENC, 'arrayType'),]
     
     def _setAttributes(self, attributes):
         '''parameters
@@ -172,7 +177,14 @@ class AttributeMixIn:
                         attributes += (ga,)
                 continue
             elif a.isReference():
-                ga = a.getAttributeDeclaration()
+                try:
+                    ga = a.getAttributeDeclaration()
+                except XMLSchema.SchemaError:
+                    key = a.getAttribute('ref')
+                    self.logger.debug('No schema item for attribute ref (%s, %s)' %key)
+                    if key in self.built_in_refs: continue
+                    raise
+                        
                 tp = None
                 if ga is not None:
                     tp = ga.getTypeDefinition('type')           
@@ -379,10 +391,11 @@ class ServiceLocatorContainer(ServiceContainerBase):
         locator = ['# Locator', 'class %s:' %self.locatorName, ]
         self.portMethods = []
         for p in self.portInfo:
-            ptName = p[0]
-            bName  = p[1]
+            ptName = NC_to_CN(p[0])
+            bName  = NC_to_CN(p[1])
             sAdd   = p[2]
             method = 'get%s' %ptName
+            
             pI = [
                 '%s%s_address = "%s"' % (ID1, ptName, sAdd),
                 '%sdef get%sAddress(self):' % (ID1, ptName),
@@ -720,7 +733,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
 
         methods = [
             '# Methods',
-            'class %s%s:' % (self.bName, self.clientClassSuffix),
+            'class %s%s:' % (NC_to_CN(self.bName), self.clientClassSuffix),
             '%sdef __init__(self, url, %s):' % (ID1, ctorArgs),
             '%skw.setdefault("readerclass", %s)' % (ID2, self.readerclass),
             '%skw.setdefault("writerclass", %s)' % (ID2, self.writerclass),
@@ -1996,6 +2009,9 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
     type = DEC
 
     def setUp(self, element):
+        # Save for debugging
+        self._element = element
+        
         self.name = element.getAttribute('name')
         self.ns = element.getTargetNamespace()
 
@@ -2003,23 +2019,28 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
         self.sKlass = tp.getAttribute('name')
         self.sKlassNS = tp.getTargetNamespace()
 
-
     def _setContent(self):
         '''GED defines element name, so also define typecode aname
         '''
-        element = [
-            '%sclass %s(ElementDeclaration):' % (ID1, self.getClassName()),
-            '%s%s' % (ID2, self.literalTag()),
-            '%s%s' % (ID2, self.schemaTag()),
-            '%s%s' % (ID2, self.simpleConstructor()),
-            '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
-            '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
-            '%s'   % self.getBasesLogic(ID3),
-            '%s%s.%s.__init__(self, **kw)' \
-            % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
-            '%sif self.pyclass is not None: self.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
-            ]
-
+        try:
+            element = [
+                '%sclass %s(ElementDeclaration):' % (ID1, self.getClassName()),
+                '%s%s' % (ID2, self.literalTag()),
+                '%s%s' % (ID2, self.schemaTag()),
+                '%s%s' % (ID2, self.simpleConstructor()),
+                '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
+                '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
+                '%s'   % self.getBasesLogic(ID3),
+                '%s%s.%s.__init__(self, **kw)' \
+                % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
+                '%sif self.pyclass is not None: self.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
+                ]
+        except Exception, ex:
+            args = ['Failure processing: %s' %self._element.getItemTrace()]
+            args += ex.args
+            ex.args = tuple(args)
+            raise
+        
         self.writeArray(element)
 
 
@@ -2073,6 +2094,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
                 
         if base == (SOAP.ENC,'Array'):
             # SOAP-ENC:Array expecting arrayType attribute reference
+            self.logger.debug("Derivation of soapenc:Array")
             self._is_array = True
             self._kw_array = {'atype':None, 'id3':ID3, 'ofwhat':None}
             self.sKlass = BTI.get_typeclass(base[1], base[0])
@@ -2106,6 +2128,9 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
                 if self._kw_array['ofwhat'] is None:
                     raise ContainerError, 'For Array could not resolve ofwhat typecode(%s,%s): %s'\
                         %(namespace, ncname, derivation.getItemTrace())
+                        
+                self.logger.debug('Attribute soapenc:arrayType="%s"' %
+                                  str(self._kw_array['ofwhat']))
        
         elif isinstance(base, XMLSchema.XMLSchemaComponent):
             self.sKlass = base.getAttribute('name')
