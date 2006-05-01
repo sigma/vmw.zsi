@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 ############################################################################
-# David W. Robertson, LBNL
+# Joshua R. Boverhof
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys, unittest
-from ServiceTest import ServiceTestCase, ServiceTestSuite
+from ServiceTest import main, ServiceTestCase, ServiceTestSuite
 
 
 """
@@ -14,35 +14,55 @@ Unittest for contacting the threatService Web service.
 WSDL:  http://www.boyzoid.com/threat.cfc?wsdl
 """
 
-CONFIG_FILE = 'config.txt'
-CONFIG_SECTION = 'complex_types'
-SERVICE_NAME = 'threatService'
-
-PORT_NAME = 'threat'
-
-
-class threatServiceTest(ServiceTestCase):
-    """Test case for threatService Web service
-    """
-    name = "test_ThreatService"
-
-    def setUp(self):
-        ServiceTestCase.setSection(self,self.name)
-        ServiceTestCase.setUp(self)
-        
-    def test_threatLevel(self):
-        operationName = 'threatLevel'
-        request = self.getInputMessageInstance(operationName)
-        response = self.RPC(operationName, request)
-        
-
-
-
-def makeTestSuite():
+# General targets
+def dispatch():
+    """Run all dispatch tests"""
     suite = ServiceTestSuite()
-    suite.addTest(unittest.makeSuite(threatServiceTest, 'test_'))
+    suite.addTest(unittest.makeSuite(HomelandTestCase, 'test_dispatch'))
+    return suite
+
+def local():
+    """Run all local tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(HomelandTestCase, 'test_local'))
+    return suite
+
+def net():
+    """Run all network tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(HomelandTestCase, 'test_net'))
+    return suite
+    
+def all():
+    """Run all tests"""
+    suite = ServiceTestSuite()
+    suite.addTest(unittest.makeSuite(HomelandTestCase, 'test_'))
     return suite
 
 
+class HomelandTestCase(ServiceTestCase):
+    """Test case for ZipCodeResolver Web service
+    """
+    name = "test_ThreatService"
+    client_file_name = "Current_Homeland_Security_Threat_Level_services.py"
+    types_file_name = "Current_Homeland_Security_Threat_Level_services_types.py"
+    server_file_name = None
+
+    def __init__(self, methodName):
+        ServiceTestCase.__init__(self, methodName)
+        self.wsdl2py_args.append('-b')
+    
+    def test_net_threatLevel(self):
+        loc = self.client_module.Current_Homeland_Security_Threat_LevelLocator()
+        port = loc.getthreat(**self.getPortKWArgs())
+
+        msg = self.client_module.threatLevelRequest()
+        rsp = port.threatLevel(msg)
+        for item in rsp.ThreatLevelReturn.Item:
+            item.Key
+            item.Value
+        
+    
+
 if __name__ == "__main__" :
-    unittest.TestProgram(defaultTest="makeTestSuite")
+    main()

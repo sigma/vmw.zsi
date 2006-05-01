@@ -17,7 +17,7 @@
 #
 ##########################################################################
 [configuration]
-tracefile = True
+tracefile = False
 debug = False
 skip = False
 twisted = False
@@ -66,13 +66,13 @@ test_Echo = servers/EchoServer.py
 document = False
 literal = False
 broke = False
-tests = test_XMethodsQuery
+tests = test_XMethodsQuery test_ThreatService
 
 [rpc_encoded_broke]
 document = False
 literal = False
 broke = True
-tests = test_GlobalWeather_gw  test_ThreatService test_GlobalWeather_si
+tests = 
 
 
 ########################## RPC/LITERAL ###################################
@@ -126,66 +126,25 @@ tests =
 
 
 ##########################################################################
-# For each test case tell whether it is rpc/encoded or doc/literal
-# Here it is indexed by unittest,   
-#
-##########################################################################
-[test_Sabre]
-document = True
-literal = True
-
-[test_FreeDBService]
-document = True
-literal = True
-
-[test_OpcDaGateway]
-document = True
-literal = True
-
-[test_MapPoint]
-document = True
-literal = True
-
-[test_ZipCodeResolver]
-document = True
-literal = True
-
-[test_WhiteMesa]
-document = False
-literal = True
-
-[test_XMethodsQuery]
-document = False
-literal = False
-
-[test_Echo]
-document = True
-literal = True
-
-
-##########################################################################
 # SECTION [WSDL] - test name(equivalent to module name) and URL.
 # 
 ##########################################################################
 [WSDL]
 test_AWSECommerceService = http://webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl
-test_FreeDBService = http://soap.systinet.net:6080/FreeDB/
-test_GlobalWeather_gw = http://live.capescience.com/wsdl/GlobalWeather.wsdl
-test_GlobalWeather_si = http://live.capescience.com/wsdl/GlobalWeather.wsdl
 test_TemperatureService = http://www.xmethods.net/sd/2001/TemperatureService.wsdl
 test_WorldTimeService = http://ws.digiposs.com/WorldTime.jws?wsdl
-test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
-test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
+test_BFGraphLib = http://bfo.co.uk/products/graph/docs/bfograph-2.1.wsdl
+
 test_XMethodsQuery = http://www.xmethods.net/wsdl/query.wsdl
 test_ZipCodeResolver = http://webservices.eraserver.net/zipcoderesolver/zipcoderesolver.asmx?WSDL
 test_WhiteMesa = http://www.whitemesa.net/wsdl/test-rpc-lit.wsdl
 test_OpcDaGateway = http://tswinc.us/XMLDADemo/ts_sim/OpcDaGateway.asmx?WSDL
 test_MapPoint = http://staging.mappoint.net/standard-30/mappoint.wsdl
 test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
-test_BFGraphLib = http://bfo.co.uk/products/graph/docs/bfograph-2.1.wsdl
 
 test_Echo = ../../samples/Echo/Echo.wsdl
 test_Choice = test_Choice.xsd
 test_Attributes = test_Attributes.xsd
 
-
+test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
+test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
