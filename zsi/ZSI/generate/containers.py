@@ -1402,21 +1402,32 @@ class TypecodeContainerBase(TypesContainerBase):
         
         #TODO: too much slop permitted here, impossible
         # to tell what is going on.
-        if type(self.mgContent) is not tuple:
-            mg = self.mgContent
+        
+        if type(content) is not tuple:
+            mg = content
             if not mg.isModelGroup():
-                mg = mg.content
+                raise Wsdl2PythonErr("Expecting ModelGroup")
+                
+            #if not mg.isModelGroup():
+            #    mg = mg.content
                 
             self.logger.debug("ModelGroup(%r) contents(%r): %s" %
                   (mg, mg.content, self._item.getItemTrace()))
             
             #content = mg.content
-            if mg.isAll():
+            if mg.isDefinition():
+                raise RuntimeError("Not supporting modelGroup definition")
+            elif mg.isReference():
+                raise RuntimeError("Not supporting modelGroup reference")
+            elif mg.isAll():
                 flat = mg.content
                 content = [] 
-            elif mg.isModelGroup() and mg.isDefinition():
-                mg = mg.content
+            elif mg.isSequence():
                 content = mg.content
+            elif mg.isChoice():
+                content = mg.content
+            else:
+                raise RuntimeError("Unknown schema item")
                 
         idx = 0
         content = list(content)
@@ -1449,7 +1460,7 @@ class TypecodeContainerBase(TypesContainerBase):
         #    because cannot follow references, but not currently
         #    a big concern. 
         
-        self.logger.debug("flat: %r" %flat)
+        self.logger.debug("flat: %r" %list(flat))
         for c in flat:
             tc = TcListComponentContainer()
             # TODO: Remove _getOccurs

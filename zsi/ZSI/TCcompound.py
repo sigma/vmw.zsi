@@ -156,13 +156,20 @@ class ComplexType(TypeCode):
         # Clone list of kids (we null it out as we process)
         c, crange = c[:], range(len(c))
         # Loop over all items we're expecting
-        self.logger.debug("OFWHAT: %s",str(self.ofwhat))
+        debug = self.logger.debugOn()
+        if debug:
+            self.logger.debug("OFWHAT: %s",str(self.ofwhat))
+            
         any = None
         for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
             # Loop over all available kids
-            self.logger.debug("WHAT: (%s,%s)", what.nspname, what.pname)
+            if debug: 
+                self.logger.debug("WHAT: (%s,%s)", what.nspname, what.pname)
+                
             for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
-                self.logger.debug("C_ELT: (%s,%s)", c_elt.namespaceURI, c_elt.tagName)
+                if debug:
+                    self.logger.debug("C_ELT: (%s,%s)", c_elt.namespaceURI, 
+                                      c_elt.tagName)
                 if what.name_match(c_elt):
                     # Parse value, and mark this one done. 
                     try:
@@ -183,7 +190,9 @@ class ComplexType(TypeCode):
                     c[j] = None
                     break
                 else:
-                    self.logger.debug("==> DIDNT FIND: element(%s,%s)",what.nspname,what.pname)
+                    if debug:
+                        self.logger.debug("==> DIDNT FIND: element(%s,%s)",
+                                          what.nspname, what.pname)
 
                 # No match; if it was supposed to be here, that's an error.
                 if self.inorder is True and i == j:
@@ -249,7 +258,10 @@ class ComplexType(TypeCode):
             sw.AddCallback(self.cb, elt, sw, pyobj)
 
     def cb(self, elt, sw, pyobj, name=None, **kw):
-        self.logger.debug("SERIALIZE OFWHAT: %s",str(self.ofwhat))
+        debug = self.logger.debugOn()
+        if debug:
+            self.logger.debug("SERIALIZE OFWHAT: %s",str(self.ofwhat))
+            
         if pyobj is None:
             if self.nillable is True:
                 elem = elt.createAppendElement(self.nspname, self.pname)
@@ -264,7 +276,10 @@ class ComplexType(TypeCode):
         objid = _get_idstr(pyobj)
         #n = name or self.pname or ('E' + objid)
         n = name or self.pname
-        self.logger.debug("TAG: (%s, %s)", str(self.nspname), n)
+        
+        if debug:
+            self.logger.debug("TAG: (%s, %s)", str(self.nspname), n)
+            
         if n is not None:
             elem = elt.createAppendElement(self.nspname, n)
             self.set_attributes(elem, pyobj)
@@ -278,13 +293,17 @@ class ComplexType(TypeCode):
                    if hasattr(textContent, 'typecode'):
                        textContent.typecode.serialize_text_node(elem, sw, textContent)
                    elif type(textContent) in _stringtypes:
-                       self.logger.debug("mixed text content:\n\t%s", textContent)
+                       if debug:
+                           self.logger.debug("mixed text content:\n\t%s", 
+                                             textContent)
                        elem.createAppendTextNode(textContent)
                    else:
                        raise EvaluateException('mixed test content in element (%s,%s) must be a string type' %(
                            self.nspname,self.pname), sw.Backtrace(elt))
                else:
-                   self.logger.debug("mixed NO text content in %s", self.mixed_aname)
+                   if debug:
+                       self.logger.debug("mixed NO text content in %s", 
+                                         self.mixed_aname)
         else:
             #For information items w/o tagNames 
             #  ie. model groups,SOAP-ENC:Header
@@ -306,16 +325,21 @@ class ComplexType(TypeCode):
                 raise TypeError("Classless struct didn't get dictionary")
 
         indx, lenofwhat = 0, len(self.ofwhat)
-        self.logger.debug('element declaration (%s,%s)', self.nspname, self.pname)
-        if self.type:
-            self.logger.debug('xsi:type definition (%s,%s)', self.type[0], self.type[1])
-        else:
-            self.logger.warning('NO xsi:type')
+        if debug:
+            self.logger.debug('element declaration (%s,%s)', self.nspname, 
+                              self.pname)
+            if self.type:
+                self.logger.debug('xsi:type definition (%s,%s)', self.type[0], 
+                                  self.type[1])
+            else:
+                self.logger.warning('NO xsi:type')
 
         while indx < lenofwhat:
             occurs = 0
             what = self.ofwhat[indx]
-            self.logger.debug('serialize what -- %s', what.__class__.__name__)
+            if debug:
+                self.logger.debug('serialize what -- %s', 
+                                  what.__class__.__name__)
 
             # No way to order <any> instances, so just grab any unmatched
             # anames and serialize them.  Only support one <any> in all content.
@@ -540,6 +564,9 @@ class Array(TypeCode):
         return v
 
     def serialize(self, elt, sw, pyobj, name=None, childnames=None, **kw):
+        if self.logger.debugOn():
+            self.logger.debug("TCcompound.Array serialize: %r" %pyobj)
+        
         if self.mutable is False and sw.Known(pyobj): return
         objid = _get_idstr(pyobj)
         n = name or self.pname or ('E' + objid)

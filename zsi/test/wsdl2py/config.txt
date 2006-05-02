@@ -17,10 +17,10 @@
 #
 ##########################################################################
 [configuration]
-tracefile = False
-debug = False
+tracefile = True
+debug = True
 skip = False
-twisted = False
+twisted = True
 
 [dispatch]
 host = localhost
