@@ -1087,7 +1087,7 @@ class TypecodeContainerBase(TypesContainerBase):
     metaclass = None
 
     def __init__(self, do_extended=False, extPyClasses=None):
-        TypesContainerBase.__init__(self)
+        TypesContainerBase.__init__(self)    
         self.name = None
 
         # attrs for model groups and others with elements, tclists, etc...
@@ -1095,7 +1095,6 @@ class TypecodeContainerBase(TypesContainerBase):
         self.mgContent = None
         self.contentFlattened = False
         self.elementAttrs = []
-        self.elementsSet = False
         self.tcListElements = []
         self.tcListSet = False
 
@@ -1105,15 +1104,13 @@ class TypecodeContainerBase(TypesContainerBase):
         self.parentClass = None
 
         # used when processing attribute content
-
         self.mixed = False
         self.extraFlags = ''
-
         self.attrComponents = None
 
         # Used if an external pyclass was specified for this type.
         self.do_extended = do_extended
-        if extPyClasses == None:
+        if extPyClasses is None:
             self.extPyClasses = {}
         else:
             self.extPyClasses = extPyClasses
@@ -1229,7 +1226,8 @@ class TypecodeContainerBase(TypesContainerBase):
         definition.append('%(ID5)s# pyclass' %kw)
 
         # JRB HACK need to call _setElements via getElements
-        self.getElements()
+        self._setUpElements()
+        
         # JRB HACK need to indent additional one level
         for el in self.elementAttrs:
             kw['element'] = el
@@ -1288,13 +1286,20 @@ class TypecodeContainerBase(TypesContainerBase):
         else:
             return 'def __init__(self, pname, **kw):'
 
-    def _setElements(self):
+
+    def _setUpElements(self):
         """This method ONLY sets up the instance attributes.
         Dependency instance attribute:
             mgContent -- expected to be either a complex definition
                 with model group content, a model group, or model group 
                 content.  TODO: should only support the first two.
         """
+
+        if hasattr(self, '_done'):
+            #return '\n'.join(self.elementAttrs)
+            return
+        
+        self._done = True
         flattened = []
         content = self.mgContent
         if type(self.mgContent) is not tuple:
@@ -1377,13 +1382,8 @@ class TypecodeContainerBase(TypesContainerBase):
             
             raise ContainerError, 'unexpected item: %s' % c.getItemTrace()
 
-    def getElements(self):
-        if not self.elementsSet:
-#            self._flattenContent()
-            self._setElements()
-            self.elementsSet = True
-
-        return '\n'.join(self.elementAttrs)
+        #return '\n'.join(self.elementAttrs)
+        return
 
     def _setTypecodeList(self):
         """generates ofwhat content, minOccurs/maxOccurs facet generation.
