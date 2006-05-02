@@ -8,6 +8,7 @@
 #     debug -- turn on debugging
 #     skip -- skip generation steps, code generated don't generate again
 #     twisted -- Use twisted web client
+#     output -- file name where output will be stored, if unspecified test output goes to stdout
 #
 #  [dispatch] -- configuration for test_dispatch* tests
 #     host -- address of local container
@@ -17,10 +18,11 @@
 #
 ##########################################################################
 [configuration]
-tracefile = True
-debug = True
+tracefile = False
+debug = False
 skip = False
-twisted = True
+twisted = False
+output =
 
 [dispatch]
 host = localhost

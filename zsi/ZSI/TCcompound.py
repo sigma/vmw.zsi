@@ -12,6 +12,7 @@ from ZSI.TC import _get_element_nsuri_name, \
     Nilled
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 from ZSI.wstools.Utility import SplitQName
+from ZSI.wstools.logging import getLogger as _GetLogger
 import re, types
 
 _find_arrayoffset = lambda E: E.getAttributeNS(SOAP.ENC, "offset")
@@ -68,9 +69,11 @@ def _get_any_instances(ofwhat, d):
 
 
 class ComplexType(TypeCode):
-    '''Represents an element of complexType, potentially containing other elements.
+    '''Represents an element of complexType, potentially containing other 
+    elements.
     '''
-
+    logger = _GetLogger('ZSI.TCcompound.ComplexType')
+    
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
     mutable=True, hasextras=0, mixed=False, mixed_aname='_text', **kw):
         '''pyclass -- the Python class to hold the fields
@@ -115,6 +118,10 @@ class ComplexType(TypeCode):
         return checktype
 
     def parse(self, elt, ps):
+        debug = self.logger.debugOn()
+        if debug: 
+            self.logger.debug('parse')
+        
         self.checkname(elt, ps)
         if self.type and \
         self.checktype(elt, ps) not in [ self.type, (None,None) ]:
@@ -156,19 +163,19 @@ class ComplexType(TypeCode):
         # Clone list of kids (we null it out as we process)
         c, crange = c[:], range(len(c))
         # Loop over all items we're expecting
-        debug = self.logger.debugOn()
+        
         if debug:
-            self.logger.debug("OFWHAT: %s",str(self.ofwhat))
+            self.logger.debug("ofwhat: %s",str(self.ofwhat))
             
         any = None
         for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
             # Loop over all available kids
             if debug: 
-                self.logger.debug("WHAT: (%s,%s)", what.nspname, what.pname)
+                self.logger.debug("what: (%s,%s)", what.nspname, what.pname)
                 
             for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
                 if debug:
-                    self.logger.debug("C_ELT: (%s,%s)", c_elt.namespaceURI, 
+                    self.logger.debug("child node: (%s,%s)", c_elt.namespaceURI, 
                                       c_elt.tagName)
                 if what.name_match(c_elt):
                     # Parse value, and mark this one done. 
@@ -191,7 +198,7 @@ class ComplexType(TypeCode):
                     break
                 else:
                     if debug:
-                        self.logger.debug("==> DIDNT FIND: element(%s,%s)",
+                        self.logger.debug("no element (%s,%s)",
                                           what.nspname, what.pname)
 
                 # No match; if it was supposed to be here, that's an error.
@@ -260,7 +267,7 @@ class ComplexType(TypeCode):
     def cb(self, elt, sw, pyobj, name=None, **kw):
         debug = self.logger.debugOn()
         if debug:
-            self.logger.debug("SERIALIZE OFWHAT: %s",str(self.ofwhat))
+            self.logger.debug("cb: %s" %str(self.ofwhat))
             
         if pyobj is None:
             if self.nillable is True:
@@ -278,7 +285,7 @@ class ComplexType(TypeCode):
         n = name or self.pname
         
         if debug:
-            self.logger.debug("TAG: (%s, %s)", str(self.nspname), n)
+            self.logger.debug("element: (%s, %s)", str(self.nspname), n)
             
         if n is not None:
             elem = elt.createAppendElement(self.nspname, n)
@@ -432,7 +439,8 @@ class Struct(ComplexType):
         <xs:attributeGroup ref="tns:commonAttributes"/>
       </xs:complexType> 
     '''
-
+    logger = _GetLogger('ZSI.TCcompound.Struct')
+    
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
         mutable=True, hasextras=0, **kw):
         '''pyclass -- the Python class to hold the fields
@@ -466,7 +474,8 @@ class Array(TypeCode):
         mutable -- object could change between multiple serializations
         undeclared -- do not serialize/parse arrayType attribute.
     '''
-
+    logger = _GetLogger('ZSI.TCcompound.Array')
+    
     def __init__(self, atype, ofwhat, pname=None, dimensions=1, fill=None,
     sparse=False, mutable=False, size=None, nooffset=0, undeclared=False,
     childnames=None, **kw):
@@ -564,8 +573,9 @@ class Array(TypeCode):
         return v
 
     def serialize(self, elt, sw, pyobj, name=None, childnames=None, **kw):
-        if self.logger.debugOn():
-            self.logger.debug("TCcompound.Array serialize: %r" %pyobj)
+        debug = self.logger.debugOn()
+        if debug:
+            self.logger.debug("serialize: %r" %pyobj)
         
         if self.mutable is False and sw.Known(pyobj): return
         objid = _get_idstr(pyobj)
@@ -607,6 +617,8 @@ class Array(TypeCode):
                 '%s:%s' %(el.getPrefix(self.atype[0]), self.atype[1])
             )
 
+        if debug:
+            self.logger.debug("ofwhat: %r" %self.ofwhat)
 
         d = {}
         kn = childnames or self.childnames

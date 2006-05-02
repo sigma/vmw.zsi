@@ -42,6 +42,7 @@ CONFIG_PARSER.read(CONFIG_FILE)
 DEBUG = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug')
 SKIP = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'skip')
 TWISTED = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'twisted')
+OUTPUT = CONFIG_PARSER.get(SECTION_CONFIGURATION, 'output') or sys.stdout
 
 if DEBUG:
     from ZSI.wstools.logging import setBasicLoggerDEBUG
@@ -116,6 +117,7 @@ class ServiceTestCase(unittest.TestCase):
     -- tests that use the a spawned local container
     
     class attributes: Edit/Override these in the inheriting class as needed
+        out -- file descriptor to write output to
         name -- configuration item, must be set in class.
         url_section -- configuration section, maps a test module 
            name to an URL.
@@ -123,6 +125,7 @@ class ServiceTestCase(unittest.TestCase):
         types_file_name --
         server_file_name --
     """
+    out = OUTPUT
     name = None
     url_section = 'WSDL'
     client_file_name = None
@@ -153,6 +156,62 @@ class ServiceTestCase(unittest.TestCase):
             self.wsdl2py_args.append('--twisted')
 
         unittest.TestCase.__init__(self, methodName)
+
+    write = lambda self, arg: self.out.write(arg)
+
+    __exc_info = unittest.TestCase._TestCase__exc_info
+
+    def __call__(self, *args, **kwds):
+        self.run(*args, **kwds)
+
+    def run(self, result=None):
+        if result is None: result = self.defaultTestResult()
+        result.startTest(self)
+        testMethod = getattr(self, self.methodName)
+        try:
+            try:
+                self.setUp()
+            except KeyboardInterrupt:
+                raise
+            except:
+                result.addError(self, self.__exc_info())
+                return
+
+            ok = False
+            try:
+                t1 = time.time()
+                pyobj = testMethod()
+                t2 = time.time()
+                ok = True
+            except self.failureException:
+                result.addFailure(self, self.__exc_info())
+            except KeyboardInterrupt:
+                raise
+            except:
+                result.addError(self, self.__exc_info())
+
+            try:
+                self.tearDown()
+            except KeyboardInterrupt:
+                raise
+            except:
+                result.addError(self, self.__exc_info())
+                ok = False
+            if ok: 
+                result.addSuccess(self)
+                print>>self
+                print>>self, "|"+"-"*60
+                print>>self, "|  TestCase: %s" %self.methodName
+                print>>self, "|"+"-"*20
+                print>>self, "|  run time:   %s ms" %((t2-t1)*1000)
+                print>>self, "|  return  :   %s" %pyobj
+                print>>self, "|"+"-"*60
+
+        finally:
+            result.stopTest(self)
+
+
+
 
     def getPortKWArgs(self):
         kw = {}
