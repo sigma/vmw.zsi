@@ -119,7 +119,7 @@ class AttributeMixIn:
     
     def _setAttributes(self, attributes):
         '''parameters
-        attributes -- a flattened list of all attributes, 
+        attributes -- a flat list of all attributes, 
         from this list all items in attribute_typecode_dict will
         be generated into attrComponents.
         
@@ -1294,13 +1294,13 @@ class TypecodeContainerBase(TypesContainerBase):
                 with model group content, a model group, or model group 
                 content.  TODO: should only support the first two.
         """
-
+        self.logger.debug("_setUpElements: %s" %self._item.getItemTrace())
         if hasattr(self, '_done'):
             #return '\n'.join(self.elementAttrs)
             return
         
         self._done = True
-        flattened = []
+        flat = []
         content = self.mgContent
         if type(self.mgContent) is not tuple:
             mg = self.mgContent
@@ -1309,7 +1309,7 @@ class TypecodeContainerBase(TypesContainerBase):
                 
             content = mg.content
             if mg.isAll():
-                flattend = content
+                flat = content
                 content = [] 
             elif mg.isModelGroup() and mg.isDefinition():
                 mg = mg.content
@@ -1320,7 +1320,7 @@ class TypecodeContainerBase(TypesContainerBase):
         while idx < len(content):
             c = orig = content[idx]
             if c.isElement():
-                flattened.append(c)
+                flat.append(c)
                 idx += 1
                 continue
             
@@ -1341,7 +1341,7 @@ class TypecodeContainerBase(TypesContainerBase):
             
             raise ContainerError, 'unexpected schema item: %s' %c.getItemTrace()
                 
-        for c in flattened:
+        for c in flat:
             if c.isDeclaration() and c.isElement():
                 defaultValue = "None"
                 parent = c
@@ -1394,16 +1394,25 @@ class TypecodeContainerBase(TypesContainerBase):
             localTypes -- produce local class definitions later
             tcListElements -- elements, local/global 
         """
-        flattened = []
+        self.logger.debug("_setTypecodeList(%r): %s" %
+                          (self.mgContent, self._item.getItemTrace()))
+        
+        flat = []
         content = self.mgContent
+        
+        #TODO: too much slop permitted here, impossible
+        # to tell what is going on.
         if type(self.mgContent) is not tuple:
             mg = self.mgContent
-            if not mg.isModelGroup(): 
+            if not mg.isModelGroup():
                 mg = mg.content
                 
-            content = mg.content
+            self.logger.debug("ModelGroup(%r) contents(%r): %s" %
+                  (mg, mg.content, self._item.getItemTrace()))
+            
+            #content = mg.content
             if mg.isAll():
-                flattend = content
+                flat = mg.content
                 content = [] 
             elif mg.isModelGroup() and mg.isDefinition():
                 mg = mg.content
@@ -1411,10 +1420,11 @@ class TypecodeContainerBase(TypesContainerBase):
                 
         idx = 0
         content = list(content)
+        self.logger.debug("content: %r" %content)
         while idx < len(content):
             c = orig = content[idx]
             if c.isElement():
-                flattened.append(c)
+                flat.append(c)
                 idx += 1
                 continue
             
@@ -1439,7 +1449,8 @@ class TypecodeContainerBase(TypesContainerBase):
         #    because cannot follow references, but not currently
         #    a big concern. 
         
-        for c in flattened:
+        self.logger.debug("flat: %r" %flat)
+        for c in flat:
             tc = TcListComponentContainer()
             # TODO: Remove _getOccurs
             min,max,nil = self._getOccurs(c)
@@ -1624,6 +1635,9 @@ class MessageTypecodeContainer(TypecodeContainerBase):
         return minOccurs,maxOccurs,nillable
 
     def _setTypecodeList(self):
+        self.logger.debug("MessageTypecodeContainer._setTypecodeList: %s" %
+            str(self.mgContent))
+        
         assert type(self.mgContent) is tuple,\
             'expecting tuple for mgContent not: %s' %type(self.mgContent)
 
@@ -1802,6 +1816,7 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
     type = DEC
 
     def setUp(self, tp):
+        self._item = tp
         try:
             self.name = tp.getAttribute('name')
             self.ns = tp.getTargetNamespace()
@@ -1865,6 +1880,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
         self.writeArray(element)
 
     def setUp(self, tp):
+        self._item = tp
         assert tp.isElement() is True and tp.content is not None and \
             tp.content.isLocal() is True and tp.content.isSimple() is True ,\
             'expecting local simple type: %s' %tp.getItemTrace()
@@ -1918,6 +1934,7 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         'group', 'all', 'choice', 'sequence', 'attribute', 'attributeGroup',\
         'anyAttribute', 'any']}
         '''
+        self._item = tp
         # JRB HACK SUPPORTING element/no content.
         assert tp.isElement() is True and \
             (tp.content is None or (tp.content.isComplex() is True and tp.content.isLocal() is True)),\
@@ -2010,7 +2027,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
 
     def setUp(self, element):
         # Save for debugging
-        self._element = element
+        self._item = element
         
         self.name = element.getAttribute('name')
         self.ns = element.getTargetNamespace()
@@ -2036,7 +2053,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
                 '%sif self.pyclass is not None: self.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
                 ]
         except Exception, ex:
-            args = ['Failure processing: %s' %self._element.getItemTrace()]
+            args = ['Failure processing: %s' %self._item.getItemTrace()]
             args += ex.args
             ex.args = tuple(args)
             raise
@@ -2058,6 +2075,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             extension
             extType -- used in figuring attrs for extensions
         '''
+        self._item = tp
         assert tp.content.isComplex() is True and \
             (tp.content.content.isRestriction() or tp.content.content.isExtension() is True),\
             'expecting complexContent/[extension,restriction]'
@@ -2292,6 +2310,8 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
            tp -- type definition
            empty -- no model group, just use as a dummy holder.
         '''
+        self._item = tp
+        
         self.name = tp.getAttribute('name')
         self.ns = tp.getTargetNamespace()
         self.mixed = tp.isMixed()
@@ -2299,7 +2319,7 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         self.attrComponents = self._setAttributes(tp.getAttributeContent())
         
         # Save reference to type for debugging
-        self._tp = tp
+        self._item = tp
         
         if empty:
             return
@@ -2331,7 +2351,7 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
                 '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
                 ]
         except Exception, ex:
-            args = ["Failure processing %s" %self._tp.getItemTrace()]
+            args = ["Failure processing %s" %self._item.getItemTrace()]
             args += ex.args
             ex.args = tuple(args)
             raise
@@ -2415,6 +2435,8 @@ class RestrictionContainer(SimpleTypeContainer):
     '''
 
     def setUp(self, tp):
+        self._item = tp
+        
         assert tp.isSimple() is True and tp.isDefinition() is True and \
             tp.content.isRestriction() is True,\
             'expecting simpleType restriction, not: %s' %tp.getItemTrace()
@@ -2512,6 +2534,8 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
     def setUp(self, tp):
         '''tp -- complexType/simpleContent/[Exention,Restriction]
         '''
+        self._item = tp
+        
         assert tp.isComplex() is True and tp.content.isSimple() is True,\
             'expecting complexType/simpleContent not: %s' %tp.content.getItemTrace()
 
@@ -2610,6 +2634,8 @@ class UnionContainer(SimpleTypeContainer):
         self.memberTypes = None
 
     def setUp(self, tp):
+        self._item = tp
+        
         if tp.content.isUnion() is False:
             raise ContainerError, 'content must be a Union: %s' %tp.getItemTrace()
         self.name = tp.getAttribute('name')
@@ -2638,6 +2664,8 @@ class ListContainer(SimpleTypeContainer):
     type = DEF
 
     def setUp(self, tp):
+        self._item = tp
+        
         if tp.content.isList() is False:
             raise ContainerError, 'content must be a List: %s' %tp.getItemTrace()
         self.name = tp.getAttribute('name')
