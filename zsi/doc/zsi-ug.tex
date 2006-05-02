@@ -2,14 +2,12 @@
 \def\ZSI{\module{ZSI}}
 \documentclass{manual}
 \title{ZSI: The Zolera Soap Infrastructure \\
-       Developer's Guide}
-\author{Rich Salz,\\
-        Christopher Blunck}
+       User's Guide}
+\author{}
 \authoraddress{
-\email{rsalz@datapower.com\\
-blunck@python.org}
+  \email{}
 }
-\date{March 19, 2003}% edited date, not printed date
+\date{May 2, 2006}% edited date, not printed date
 \input{version}
 
 % tell latex2html to load the verbatim package so we get \verbatiminput
@@ -91,25 +89,6 @@ The \ZSI{} homepage is at \url{http://pywebsvcs.sf.net/}.
 
 \tableofcontents{}
 
-\input{c01-intro}
-\input{c02-samples}
-\input{c03-except}
-\input{c04-utils}
-\input{c05-parse}
-\input{c06-tc}
-\input{c07-writer}
-\input{c08-fault}
-\input{c09-resolve}
-\input{c10-dispatch}
-\input{c11-wsdl}
 
-\chapter{ZSI Schema}
-
-The \ZSI{} schema defines two sets of elements.  One is used to enhance
-the SOAP Fault \code{detail} element, and to report header errors.
-The other is used to define a header element containing a name and
-password, for a class of basic authentication.
-
-\verbatiminput{zsixsd.tex}
 
 \end{document}
