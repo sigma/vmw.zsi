@@ -256,7 +256,7 @@ class ComplexType(TypeCode):
 
     def serialize(self, elt, sw, pyobj, inline=False, name=None, **kw):
         if inline or self.inline:
-            self.cb(elt, sw, pyobj, **kw)
+            self.cb(elt, sw, pyobj, name=name, **kw)
         else:
             objid = _get_idstr(pyobj)
             n = name or self.pname or ('E' + objid)
@@ -592,7 +592,7 @@ class Array(TypeCode):
 
         # soap href attribute
         unique = self.unique or kw.get('unique', False)
-        if unique is False and sw.Known(orig or pyobj):
+        if unique is False and sw.Known(pyobj):
             self.set_attribute_href(el, objid)
             return None
 
@@ -602,7 +602,7 @@ class Array(TypeCode):
 
         # soap id attribute
         if self.unique is False:
-            self.set_attribute_id(el, _get_idstr(pyobj))
+            self.set_attribute_id(el, objid)
 
         offset = 0
         if self.sparse is False and self.nooffset is False:
@@ -626,6 +626,7 @@ class Array(TypeCode):
             d['name'] = kn
         elif not self.ofwhat.aname:
             d['name'] = 'element'
+            
         if self.sparse is False:
             for e in pyobj[offset:]: self.ofwhat.serialize(el, sw, e, **d)
         else:
