@@ -9,7 +9,7 @@
 
 import os
 from ZSI import _get_idstr
-from ZSI.wstools.Utility import Base
+from ZSI.wstools.logging import getLogger as _GetLogger
 from ZSI.wstools import WSDLTools
 from ZSI.wstools.WSDLTools import SoapAddressBinding,\
     SoapBodyBinding, SoapBinding,MimeContentBinding,\
@@ -45,7 +45,7 @@ classes:
 
 """
 
-class WriteServiceModule(Base):
+class WriteServiceModule:
     """top level driver class invoked by wsd2py
     class variables:
         client_module_suffix -- suffix of client module.
@@ -54,10 +54,10 @@ class WriteServiceModule(Base):
     client_module_suffix = '_services'
     messages_module_suffix = '_messages'
     types_module_suffix = '_services_types'
- 
+    logger = _GetLogger("WriteServiceModule")
+    
     def __init__(self, wsdl, addressing=False, notification=False,
                  do_extended=False, extPyClasses=None, configParser = None):
-        Base.__init__(self)
         self._wsdl = wsdl
         self._addressing = addressing
         self._notification = notification
@@ -227,12 +227,12 @@ class WriteServiceModule(Base):
             sd.write(fd)
 
             
-class ServiceDescription(Base):
+class ServiceDescription:
     """client interface - locator, port, etc classes"""
     separate_messages = False
+    logger = _GetLogger("ServiceDescription")
 
     def __init__(self, addressing=False, do_extended=False, wsdl=None):
-        Base.__init__(self)
         self.typesModuleName = None
         self.messagesModuleName = None
         self.wsAddressing = addressing
@@ -319,7 +319,9 @@ class ServiceDescription(Base):
                 print >>fd, m
 
 
-class MessageWriter(Base):
+class MessageWriter:
+    logger = _GetLogger("MessageWriter")
+
     def __init__(self, do_extended=False):
         """Representation of a WSDL Message and associated WSDL Binding.
         operation --
@@ -329,7 +331,6 @@ class MessageWriter(Base):
         literal --
         simple --
         """
-        Base.__init__(self)
         self.content = None
         self.do_extended = do_extended
        
@@ -361,11 +362,12 @@ class MessageWriter(Base):
         self.content.setUp(port, soc, input)
 
 
-class SchemaDescription(Base):
+class SchemaDescription:
     """generates classes for defs and decs in the schema instance.
     """
+    logger = _GetLogger("SchemaDescription")
+
     def __init__(self, do_extended=False, extPyClasses=None):
-        Base.__init__(self)
         self.classHead = NamespaceClassHeaderContainer()
         self.classFoot = NamespaceClassFooterContainer()
         self.items = []
@@ -412,10 +414,11 @@ class SchemaDescription(Base):
             print >>fd, t
         print >>fd, self.classFoot
 
-class SchemaItemWriter(Base):
+class SchemaItemWriter:
     """contains/generates a single declaration"""
+    logger = _GetLogger("SchemaItemWriter")
+
     def __init__(self, do_extended=False, extPyClasses=None):
-        Base.__init__(self)
         self.content = None
         self.do_extended=do_extended
         self.extPyClasses=extPyClasses
@@ -433,6 +436,7 @@ class SchemaItemWriter(Base):
 
 class ElementWriter(SchemaItemWriter):
     """contains/generates a single declaration"""
+    logger = _GetLogger("ElementWriter")
 
     def fromSchemaItem(self, item):
         """set up global elements.
@@ -470,6 +474,7 @@ class ElementWriter(SchemaItemWriter):
 
 class TypeWriter(SchemaItemWriter):
     """contains/generates a single definition"""
+    logger = _GetLogger("TypeWriter")
         
     def fromSchemaItem(self, item):
         if item.isDefinition() is False or item.isLocal() is True:

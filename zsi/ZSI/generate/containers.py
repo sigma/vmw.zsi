@@ -15,7 +15,7 @@ import ZSI
 from ZSI.TC import _is_xsd_or_soap_ns
 from ZSI.wstools import XMLSchema, WSDLTools
 from ZSI.wstools.Namespaces import SCHEMA, SOAP, WSDL
-from ZSI.wstools.Utility import Base
+from ZSI.wstools.logging import getLogger as _GetLogger
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.generate import WSISpec, WSInteropError, Wsdl2PythonError,\
     WsdlGeneratorError
@@ -234,15 +234,15 @@ class ContainerError(Exception):
     pass
 
 
-class ContainerBase(Base):
+class ContainerBase:
     '''Base class for all Containers.
         func_aname -- function that takes name, and returns aname.
     '''
     func_aname = TextProtectAttributeName
     func_aname = staticmethod(func_aname)
+    logger = _GetLogger("ContainerBase")
 
     def __init__(self):
-        Base.__init__(self)
         self.content = StringWriter('\n')
         self.__setup   = False
         self.ns    = None
@@ -300,8 +300,7 @@ class ContainerBase(Base):
 
 class ServiceContainerBase(ContainerBase):
     clientClassSuffix = "SOAP"
-    def __init__(self):
-        ContainerBase.__init__(self)
+    logger = _GetLogger("ServiceContainerBase")
     
     
 class ServiceHeaderContainer(ServiceContainerBase):
@@ -310,6 +309,7 @@ class ServiceHeaderContainer(ServiceContainerBase):
               'from ZSI import client',
               'import ZSI'
               ]
+    logger = _GetLogger("ServiceHeaderContainer")
                
     def __init__(self, do_extended=False):
         ServiceContainerBase.__init__(self)
@@ -347,6 +347,8 @@ class ServiceHeaderContainer(ServiceContainerBase):
 
 
 class ServiceLocatorContainer(ServiceContainerBase):
+    logger = _GetLogger("ServiceLocatorContainer")
+
     def __init__(self):
         ServiceContainerBase.__init__(self)
         self.serviceName = None
@@ -412,6 +414,7 @@ class ServiceLocatorContainer(ServiceContainerBase):
 
 
 class ServiceOperationContainer(ServiceContainerBase):
+    logger = _GetLogger("ServiceOperationContainer")
 
     def __init__(self, useWSA=False, do_extended=False):
         '''Parameters:
@@ -637,6 +640,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
     readerclass = None
     writerclass = None
     operationclass = ServiceOperationContainer
+    logger = _GetLogger("ServiceOperationsClassContainer")
     
     def __init__(self, useWSA=False, do_extended=False, wsdl=None):
         '''Parameters:
@@ -750,6 +754,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
 
 
 class MessageContainerInterface:
+    logger = _GetLogger("MessageContainerInterface")
     
     def setUp(self, port, soc, input):
         '''sets the attribute _simple which represents a 
@@ -763,6 +768,7 @@ class MessageContainerInterface:
 
 
 class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, MessageContainerInterface):
+    logger = _GetLogger("ServiceDocumentLiteralMessageContainer")
 
     def __init__(self, do_extended=False):
 
@@ -844,6 +850,8 @@ class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, MessageContai
 
 
 class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerInterface):
+    logger = _GetLogger("ServiceRPCEncodedMessageContainer")
+
     def setUp(self, port, soc, input):
         '''
         Instance Data: 
@@ -935,6 +943,8 @@ class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerIn
 
 
 class ServiceRPCLiteralMessageContainer(ServiceContainerBase, MessageContainerInterface):
+    logger = _GetLogger("ServiceRPCLiteralMessageContainer")
+
     def setUp(self, port, soc, input):
         '''
         Instance Data: 
@@ -1015,16 +1025,8 @@ class ServiceRPCLiteralMessageContainer(ServiceContainerBase, MessageContainerIn
  
         self.writeArray(map(lambda l: l %fdict, message))
         
-        
-
-
 
 TypesContainerBase = ContainerBase
-#class TypesContainerBase(ContainerBase):
-#    '''base class for containers of type file components
-#    '''
-#    def __init__(self):
-#        ContainerBase.__init__(self)
 
 
 class TypesHeaderContainer(TypesContainerBase):
@@ -1035,18 +1037,17 @@ class TypesHeaderContainer(TypesContainerBase):
         'import ZSI.TCcompound',
         'from ZSI.TC import ElementDeclaration,TypeDefinition',
     ]
+    logger = _GetLogger("TypesHeaderContainer")
 
     def _setContent(self):
         self.writeArray(TypesHeaderContainer.imports)
 
 
 NamespaceClassContainerBase = TypesContainerBase
-#class NamespaceClassContainerBase(TypesContainerBase):
-#    def __init__(self):
-#        TypesContainerBase.__init__(self)
-        
+ 
 
 class NamespaceClassHeaderContainer(NamespaceClassContainerBase):
+    logger = _GetLogger("NamespaceClassHeaderContainer")
 
     def _setContent(self):
 
@@ -1062,6 +1063,7 @@ class NamespaceClassHeaderContainer(NamespaceClassContainerBase):
         self.writeArray(head)
 
 class NamespaceClassFooterContainer(NamespaceClassContainerBase):
+    logger = _GetLogger("NamespaceClassFooterContainer")
 
     def _setContent(self):
 
@@ -1085,6 +1087,7 @@ class TypecodeContainerBase(TypesContainerBase):
     mixed_content_aname = 'text'
     attributes_aname = 'attrs'
     metaclass = None
+    logger = _GetLogger("TypecodeContainerBase")
 
     def __init__(self, do_extended=False, extPyClasses=None):
         TypesContainerBase.__init__(self)    
@@ -1634,6 +1637,8 @@ class MessageTypecodeContainer(TypecodeContainerBase):
     '''Used for RPC style messages, where we have 
     serveral parts serialized within a rpc wrapper name.
     '''
+    logger = _GetLogger("MessageTypecodeContainer")
+
     def __init__(self, parts=None):
         TypecodeContainerBase.__init__(self)
         self.mgContent = parts
@@ -1646,7 +1651,7 @@ class MessageTypecodeContainer(TypecodeContainerBase):
         return minOccurs,maxOccurs,nillable
 
     def _setTypecodeList(self):
-        self.logger.debug("MessageTypecodeContainer._setTypecodeList: %s" %
+        self.logger.debug("_setTypecodeList: %s" %
             str(self.mgContent))
         
         assert type(self.mgContent) is tuple,\
@@ -1701,6 +1706,7 @@ class TcListComponentContainer(ContainerBase):
     
     TODO: Change this inheritance scheme.
     '''
+    logger = _GetLogger("TcListComponentContainer")
     
     def __init__(self, qualified=True):
         '''
@@ -1793,6 +1799,8 @@ class TcListComponentContainer(ContainerBase):
 class RPCMessageTcListComponentContainer(TcListComponentContainer):
     '''Container for rpc/literal rpc/encoded message typecode.
     '''
+    logger = _GetLogger("RPCMessageTcListComponentContainer")
+
     def __init__(self, qualified=True, encoded=None):
         '''
         encoded -- encoded namespaceURI, if None treat as rpc/literal.
@@ -1823,8 +1831,8 @@ class RPCMessageTcListComponentContainer(TcListComponentContainer):
 
 
 class ElementSimpleTypeContainer(TypecodeContainerBase):
-
     type = DEC
+    logger = _GetLogger("ElementSimpleTypeContainer")
 
     def setUp(self, tp):
         self._item = tp
@@ -1875,6 +1883,8 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
     '''local simpleType container
     '''
     type = DEC 
+    logger = _GetLogger("ElementLocalSimpleTypeContainer")
+
     def _setContent(self):
 
         element = [
@@ -1938,6 +1948,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
 class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
 
     type = DEC
+    logger = _GetLogger("ElementLocalComplexTypeContainer")
 
     def setUp(self, tp):
         '''
@@ -2035,6 +2046,7 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
 class ElementGlobalDefContainer(TypecodeContainerBase):
 
     type = DEC
+    logger = _GetLogger("ElementGlobalDefContainer")
 
     def setUp(self, element):
         # Save for debugging
@@ -2076,6 +2088,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
     '''Represents ComplexType with ComplexContent.
     '''
     type = DEF
+    logger = _GetLogger("ComplexTypeComplexContentContainer")
 
     def __init__(self, do_extended=False):
         TypecodeContainerBase.__init__(self, do_extended=do_extended)
@@ -2313,6 +2326,7 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
     '''Represents a global complexType definition.
     '''
     type = DEF
+    logger = _GetLogger("ComplexTypeContainer")
 
     def setUp(self, tp, empty=False):
         '''Problematic, loose all model group information.
@@ -2403,6 +2417,7 @@ class ComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         
 class SimpleTypeContainer(TypecodeContainerBase):
     type = DEF
+    logger = _GetLogger("SimpleTypeContainer")
 
     def __init__(self):
         '''
@@ -2444,6 +2459,7 @@ class RestrictionContainer(SimpleTypeContainer):
     '''
        simpleType/restriction
     '''
+    logger = _GetLogger("RestrictionContainer")
 
     def setUp(self, tp):
         self._item = tp
@@ -2541,6 +2557,7 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
     '''Represents a ComplexType with simpleContent.
     '''
     type = DEF
+    logger = _GetLogger("ComplexTypeSimpleContentContainer")
 
     def setUp(self, tp):
         '''tp -- complexType/simpleContent/[Exention,Restriction]
@@ -2639,6 +2656,7 @@ class UnionContainer(SimpleTypeContainer):
     '''SimpleType Union
     '''
     type = DEF
+    logger = _GetLogger("UnionContainer")
 
     def __init__(self):
         SimpleTypeContainer.__init__(self)
@@ -2673,6 +2691,7 @@ class ListContainer(SimpleTypeContainer):
     '''SimpleType List
     '''
     type = DEF
+    logger = _GetLogger("ListContainer")
 
     def setUp(self, tp):
         self._item = tp
