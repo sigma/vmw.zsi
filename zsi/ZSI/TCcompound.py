@@ -33,27 +33,18 @@ def _check_typecode_list(ofwhat, tcname):
             raise TypeError(tcname + ' element ' + str(o) + ' has no name')
 
 def _is_derived_type(v, what):
-    if isinstance(v, what.__class__):
+    typecode = getattr(v, 'typecode', None)
+    if typecode is not None and isinstance(typecode, what.__class__):
         return True
     return False
  
 def _get_what(v):
-    if isinstance(v,TypeCode) is True:
-        return v
-    elif hasattr(v,'typecode') and isinstance(v,TypeCode):
+    typecode = getattr(v,'typecode', None)
+    if isinstance(typecode, TypeCode):
         return typecode
+
     raise EvaluateException, 'instance is not self-describing'
 
-
-def _set_element_from_type(v, what):
-    if _is_derived_type(v,what):
-        v.nspname = what.nspname
-        v.pname = what.pname
-        v.aname = what.aname
-        v.minOccurs = what.minOccurs
-        v.maxOccurs = what.maxOccurs
-    else:
-        raise EvaluateException, ''
 
 def _get_any_instances(ofwhat, d):
     '''Run thru list ofwhat.anames and find unmatched keys in value
@@ -364,7 +355,18 @@ class ComplexType(TypeCode):
             whatTC = what
             if _is_derived_type(v, whatTC):
                 what = _get_what(v)
-                _set_element_from_type(what, whatTC)
+
+                if debug:
+                    self.logger.debug('use derived(%s) from %s' %(what.__class__, 
+                        whatTC.__class__))
+
+                #TODO: rather than set these attributes, just use the whatTC
+                # for this info.
+                what.nspname = whatTC.nspname
+                what.pname = whatTC.pname
+                what.aname = whatTC.aname
+                what.minOccurs = whatTC.minOccurs
+                what.maxOccurs = whatTC.maxOccurs
 
             if whatTC.maxOccurs > 1 and v is not None:
                 if type(v) not in _seqtypes:
