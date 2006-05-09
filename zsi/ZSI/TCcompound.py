@@ -102,22 +102,23 @@ class ComplexType(TypeCode):
                         str(type(self.pyclass)))
             _check_typecode_list(self.ofwhat, 'ComplexType')
 
-    def checktype(self, elt, ps):
-        """If not exact type, check derived types.
-        """
-        checktype = TypeCode.checktype(self, elt, ps)
-        return checktype
-
     def parse(self, elt, ps):
         debug = self.logger.debugOn()
-        if debug: 
-            self.logger.debug('parse')
+        debug and self.logger.debug('parse')
         
-        self.checkname(elt, ps)
-        if self.type and \
-        self.checktype(elt, ps) not in [ self.type, (None,None) ]:
-            raise EvaluateException('ComplexType for %s has wrong type(%s), looking for %s' %(
-                self.pname, self.checktype(elt,ps), self.type), ps.Backtrace(elt))
+        xtype = self.checkname(elt, ps)
+        if self.type and xtype not in [ self.type, (None,None) ]:
+            if not isinstance(self, TypeDefinition):
+                raise EvaluateException(\
+                    'ComplexType for %s has wrong type(%s), looking for %s' %
+                        (self.pname, self.checktype(elt,ps), self.type), 
+                                        ps.Backtrace(elt))
+            else:
+                #TODO: mabye change MRO to handle this 
+                debug and self.logger.debug('delegate to substitute type')
+                what = TypeDefinition.getSubstituteType(self, elt, ps)
+                return what.parse(elt, ps)
+            
         href = _find_href(elt)
         if href:
             if _children(elt):
@@ -353,12 +354,15 @@ class ComplexType(TypeCode):
             # Default to typecode, if self-describing instance, and check 
             # to make sure it is derived from what.
             whatTC = what
-            if _is_derived_type(v, whatTC):
+            if _is_derived_type(v, whatTC) and v.typecode is not what:
                 what = _get_what(v)
+                if isinstance(what, ElementDeclaration):
+                    raise TypeError('At %s: failed to serialize (%s, %s) substitute type is a GED (%s,%s)' %
+                                    (sw.Backtrace(elt), whatTC.nspname, whatTC.pname, what.nspname, what.pname,))
 
                 if debug:
-                    self.logger.debug('use derived(%s) from %s' %(what.__class__, 
-                        whatTC.__class__))
+                    self.logger.debug('use derived(%s) from %s' %
+                                      (what.__class__, whatTC.__class__))
 
                 #TODO: rather than set these attributes, just use the whatTC
                 # for this info.

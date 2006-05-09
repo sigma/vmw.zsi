@@ -149,7 +149,34 @@ class TypeDefinition:
     '''
     __metaclass__ = SchemaInstanceType
 
+    def getSubstituteType(self, elt, ps):
+        '''if xsi:type does not match the instance type attr,
+        check to see if it is a derived type substitution.
+        
+        DONT Return the element's type.
+        
+        Parameters:
+            elt -- the DOM element being parsed
+            ps -- the ParsedSoap object.
+        '''
+        pyclass = SchemaInstanceType.getTypeDefinition(*self.type)
+        if pyclass is None:
+            raise EvaluateException(
+                    'No Type registed for xsi:type=(%s, %s)' %
+                    (self.type[0], self.type[1]), ps.Backtrace(elt))
+            
+        typeName = _find_type(elt)
+        prefix,typeName = SplitQName(typeName)
+        uri = ps.GetElementNSdict(elt).get(prefix)
+        subclass = SchemaInstanceType.getTypeDefinition(uri, typeName)
+        if not issubclass(subclass, pyclass):
+            raise TypeError(
+                    'Substitute Type (%s, %s) is not derived from %s' %
+                    (self.type[0], self.type[1], pyclass), ps.Backtrace(elt))
 
+        return subclass((self.nspname, self.pname))
+    
+    
 #class Nilled:
 #    '''Just a placeholder for nilled elements.
 #    '''

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+      targetNamespace="urn:test"
+      xmlns="urn:test"
+      xmlns:typens="urn:test">
+
+ <!-- base actor type with no special options -->
+ <xs:complexType name="BaseActor">
+   <xs:sequence>
+     <xs:element name="gui" type="xs:string"/>
+   </xs:sequence>
+ </xs:complexType>
+
+ <xs:complexType name="IfElseActor">
+   <xs:complexContent>
+     <xs:extension base="typens:BaseActor">
+   <xs:sequence>
+     <xs:element name="parameter" type="xs:string"/>
+   </xs:sequence>
+     </xs:extension>
+   </xs:complexContent>
+ </xs:complexType>
+
+ <xs:complexType name="test">
+   <xs:sequence>
+     <xs:element name="actor" type="typens:BaseActor"/>
+   </xs:sequence>
+ </xs:complexType>
+
+ <xs:element name="test" type="typens:test"/>
+ <xs:element name="IfElseActor" type="typens:IfElseActor"/>
+ <xs:element name="BaseActor" type="typens:BaseActor"/>
+
+</xs:schema>
