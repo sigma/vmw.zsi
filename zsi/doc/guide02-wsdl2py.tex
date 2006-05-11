@@ -1,4 +1,4 @@
-\chapter{WSDL Support}
+\chapter{The wsdl2py Tool: WSDL/XMLSchema python code generator}
 
 The \ZSI~and \module{ZSI.wstools} modules provide client tools for
 using WSDL 1.1
@@ -254,11 +254,3 @@ message.
 If the user wishes to set authorization headers in a request, using the 
 previous example, it would be accomplished like this:
 
-\begin{verbatim}
-def main():
-    loc = TerraServiceLocator()
-    portType = loc.getTerraServiceSoap(
-        tracefile=sys.stdout,
-        auth=(soap.ZSI.AUTH.httpbasic, 'logname', 'password'))
-    # ...
-\end{verbatim}
