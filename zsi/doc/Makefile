@@ -2,27 +2,28 @@
 
 # put the path to where the Python source was untar'd here (not where it
 # is installed)
-PYSRCDIR=	/usr/lib/python2.4
-MKHOWTO=	PATH=$$PATH:$(PYSRCDIR)/doc/tools mkhowto
+PYSRCDIR=	/Library/Frameworks/Python.framework/Versions/2.4
+MKHOWTO=	PATH=$$PATH:$(HOME)/Desktop/Python/PythonDocTools/tools/ mkhowto
 #PAPER=		a4
 PAPER=		letter
 
 M_CHAPTERS=	c01-intro.tex c02-samples.tex \
 		c03-except.tex c04-utils.tex c05-parse.tex c06-tc.tex \
 		c07-writer.tex c08-fault.tex c09-resolve.tex \
-		c10-dispatch.tex c11-wsdl.tex
+		c10-dispatch.tex 
 	
-G_CHAPTERS = 
+G_CHAPTERS=	guide01-intro.tex guide02-wsdl2py.tex
 
 M=		zsi
-G=		zsi-ug
+G=		guide
 
-SOURCES=	$M.tex $G.tex version.tex $(M_CHAPTERS) $(G_CHAPTERS) zsixsd.tex
+SOURCES=	$M.tex version.tex $(M_CHAPTERS) 
+GSOURCES=	$G.tex version.tex $(G_CHAPTERS)
 
 
 all:	ps pdf html
 pdf:	$M.pdf $G.pdf
-ps:		$M.ps $G.ps
+ps:	$M.ps $G.ps
 html:	$M.html $G.html
 .PHONY: all pdf ps html
 
@@ -31,7 +32,7 @@ $M.ps: $(SOURCES)
 	dvips -N0 -t $(PAPER) -o $@ $M.dvi
 	rm $M.dvi
 
-$G.ps: $(SOURCES)
+$G.ps: $(GSOURCES)
 	$(MKHOWTO) --dvi $G.tex
 	dvips -N0 -t $(PAPER) -o $@ $G.dvi
 	rm $G.dvi
@@ -39,7 +40,7 @@ $G.ps: $(SOURCES)
 $M.pdf: $(SOURCES)
 	$(MKHOWTO) --pdf $M.tex
 
-$G.pdf: $(SOURCES)
+$G.pdf: $(GSOURCES)
 	$(MKHOWTO) --pdf $G.tex
 
 $M.html: $(SOURCES)
@@ -47,13 +48,13 @@ $M.html: $(SOURCES)
 	mv $M/$M.html $M/$M.css .
 	rm -rf $M zsi.l2h
 
-$G.html: $(SOURCES)
+$G.html: $(GSOURCES)
 	$(MKHOWTO) --html --split=1 $G.tex
 	mv $G/$G.html $G/$G.css .
 	rm -rf $G zsi.l2h
 
-zsixsd.tex: zsi.xsd
-	sed -e '1,/-->/d' zsi.xsd | expand >$@
+#zsixsd.tex: zsi.xsd
+#	sed -e '1,/-->/d' zsi.xsd | expand >$@
 
 clean:
 	rm -f *.aux *.idx *.ilg *.ind *.log *.toc *.bkm *.syn *.pla *.how
