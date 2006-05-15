@@ -75,9 +75,13 @@ class DTTestCase(ServiceTestCase):
         pyobj = GED('urn:test', 'test').pyclass()
         # derived type
         pyobj.Actor = sub = GTD('urn:test', 'IfElseActor')(None).pyclass()
-        
+        klass = 'myclass'
+        name = 'whatever'
+ 
         sub.Gui = 'foo'
         sub.Parameter = 'bar'
+        sub.set_attribute_class(klass)
+        sub.set_attribute_name(name)
         
         sw = SoapWriter()
         sw.serialize(pyobj)
@@ -86,7 +90,9 @@ class DTTestCase(ServiceTestCase):
         ps = ParsedSoap(xml)
         pyobj2 = ps.Parse(pyobj.typecode)
         sub2 = pyobj2.Actor
-        
+        self.failUnless(sub.get_attribute_class() == klass, 'bad attribute class')
+        self.failUnless(sub.get_attribute_name() == name, 'bad attribute name')
+                
         # check parsed out correct type
         self.failUnless(isinstance(sub2.typecode, sub.typecode.__class__), 
             'local element actor "%s" must be an instance of "%s"'%

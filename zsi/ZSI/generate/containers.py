@@ -2254,7 +2254,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             ]
                 
         definition.append(
-            '%(ID3)s%(atc)s = attributes or {}' %{
+            '%(ID3)sattributes = %(atc)s = attributes or {}' %{
                 'ID3':ID3, 'atc':self.attribute_typecode}
         )
 
@@ -2307,7 +2307,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
         
         if self.extension:
             definition.append(\
-                '%s%s.%s.__init__(self, pname, ofwhat=TClist, extend=True, **kw)'%(
+                '%s%s.%s.__init__(self, pname, ofwhat=TClist, extend=True, attributes=attributes, **kw)'%(
                     ID3, prefix, typeClassName),
             )
             definition.insert(1, '%s#complexType/complexContent extension' %(ID2))
