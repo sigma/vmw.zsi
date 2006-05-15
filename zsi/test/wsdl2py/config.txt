@@ -147,6 +147,7 @@ test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateR
 test_Echo = ../../samples/Echo/Echo.wsdl
 test_Choice = test_Choice.xsd
 test_Attributes = test_Attributes.xsd
+test_DerivedTypes = test_DerivedTypes.xsd
 
 test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
 test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
