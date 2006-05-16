@@ -7,18 +7,29 @@
  <!-- base actor type with no special options -->
  <xs:complexType name="BaseActor">
    <xs:sequence>
-     <xs:element name="gui" type="xs:string"/>
+     <xs:element name="element1" type="xs:string"/>
    </xs:sequence>
-   <xs:attribute name="class" type="xs:string"/>
+   <xs:attribute name="attr1" type="xs:string"/>
  </xs:complexType>
 
- <xs:complexType name="IfElseActor">
+ <xs:complexType name="MiddleActor">
    <xs:complexContent>
      <xs:extension base="typens:BaseActor">
          <xs:sequence>
-           <xs:element name="parameter" type="xs:string"/>
+           <xs:element name="element2" type="xs:string"/>
          </xs:sequence>
-         <xs:attribute name="name" type="xs:string"/>
+         <xs:attribute name="attr2" type="xs:string"/>
+     </xs:extension>
+   </xs:complexContent>
+ </xs:complexType>
+
+ <xs:complexType name="TopActor">
+   <xs:complexContent>
+     <xs:extension base="typens:MiddleActor">
+         <xs:sequence>
+           <xs:element name="element3" type="xs:string"/>
+         </xs:sequence>
+         <xs:attribute name="attr3" type="xs:string"/>
      </xs:extension>
    </xs:complexContent>
  </xs:complexType>
@@ -30,7 +41,8 @@
  </xs:complexType>
 
  <xs:element name="test" type="typens:test"/>
- <xs:element name="IfElseActor" type="typens:IfElseActor"/>
+ <xs:element name="TopActor" type="typens:TopActor"/>
+ <xs:element name="MiddleActor" type="typens:MiddleActor"/>
  <xs:element name="BaseActor" type="typens:BaseActor"/>
 
 </xs:schema>

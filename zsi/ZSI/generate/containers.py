@@ -2271,13 +2271,16 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
                 '%s#complexType/complexContent restrict anyType' %(
                                ID2)
             )
-            definition.append('%sif extend: TClist += ofwhat'%(ID3))
-            definition.append('%sif restrict: TClist = ofwhat' %(ID3))
-            if len(self.attrComponents) > 0:
-                definition.append('%selse:' %(ID3))
-                for l in self.attrComponents: 
-                    definition.append('%s%s'%(ID4, l))
-
+        
+        # derived type support
+        definition.append('%sif extend: TClist += ofwhat'%(ID3))
+        definition.append('%sif restrict: TClist = ofwhat' %(ID3))
+        if len(self.attrComponents) > 0:
+            definition.append('%selse:' %(ID3))
+            for l in self.attrComponents: 
+                definition.append('%s%s'%(ID4, l))
+                
+        if isAnyType:
             definition.append(\
                 '%sZSI.TC.ComplexType.__init__(self, None, TClist, pname=pname, **kw)' %(
                     ID3),
