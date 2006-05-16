@@ -71,32 +71,43 @@ class DTTestCase(ServiceTestCase):
         
         
     def test_local_type_substitution(self):
-        self.types_module
-        pyobj = GED('urn:test', 'test').pyclass()
-        # derived type
-        pyobj.Actor = sub = GTD('urn:test', 'IfElseActor')(None).pyclass()
+        """Parse known instance, serialize an equivalent, Parse it back. """
         klass = 'myclass'
         name = 'whatever'
- 
-        sub.Gui = 'foo'
-        sub.Parameter = 'bar'
-        sub.set_attribute_class(klass)
-        sub.set_attribute_name(name)
+        self.types_module
+        pyobj = GED('urn:test', 'test').pyclass()
+
+        # [ 1489129 ] Unexpected subsitution error message
+        #  try to parse before type ever initialized
+        ps = ParsedSoap(MSG)
+        pyobj0 = ps.Parse(pyobj.typecode)
+        sub0 = pyobj0.Actor
+        self.failUnless(sub0.get_attribute_class() == klass, 'bad attribute class')
+        self.failUnless(sub0.get_attribute_name() == name, 'bad attribute name')
+
+        # [ 1489090 ] Derived type attributes don't populate the attr dictionary
+        # 
+        pyobj.Actor = sub1 = GTD('urn:test', 'IfElseActor')(None).pyclass()
+        sub1.Gui = 'foo'
+        sub1.Parameter = 'bar'
+        sub1.set_attribute_class(klass)
+        sub1.set_attribute_name(name)
         
         sw = SoapWriter()
         sw.serialize(pyobj)
         xml = str(sw)
-        
+        print xml        
         ps = ParsedSoap(xml)
         pyobj2 = ps.Parse(pyobj.typecode)
         sub2 = pyobj2.Actor
-        self.failUnless(sub.get_attribute_class() == klass, 'bad attribute class')
-        self.failUnless(sub.get_attribute_name() == name, 'bad attribute name')
+
+        self.failUnless(sub2.get_attribute_class() == klass, 'bad attribute class')
+        self.failUnless(sub2.get_attribute_name() == name, 'bad attribute name')
                 
         # check parsed out correct type
-        self.failUnless(isinstance(sub2.typecode, sub.typecode.__class__), 
+        self.failUnless(isinstance(sub2.typecode, sub1.typecode.__class__), 
             'local element actor "%s" must be an instance of "%s"'%
-                (sub2.typecode, sub.typecode.__class__))
+                (sub2.typecode, sub1.typecode.__class__))
         
         # check local element is derived from base
         base = GTD('urn:test', 'BaseActor')
@@ -104,6 +115,9 @@ class DTTestCase(ServiceTestCase):
             'local element actor must be a derived type of "%s"'%
                 base)
         
+
+MSG = """<SOAP-ENV:Envelope xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ZSI="http://www.zolera.com/schemas/ZSI/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Header></SOAP-ENV:Header><SOAP-ENV:Body xmlns:ns1="urn:test"><ns1:test><actor class="myclass" name="whatever" xsi:type="ns1:IfElseActor"><gui xsi:type="xsd:string">foo</gui><parameter xsi:type="xsd:string">bar</parameter></actor></ns1:test></SOAP-ENV:Body></SOAP-ENV:Envelope>"""
+
 
 if __name__ == "__main__" :
     main()
