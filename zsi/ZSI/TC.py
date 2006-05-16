@@ -169,7 +169,7 @@ class TypeDefinition:
         prefix,typeName = SplitQName(typeName)
         uri = ps.GetElementNSdict(elt).get(prefix)
         subclass = SchemaInstanceType.getTypeDefinition(uri, typeName)
-        if not issubclass(subclass, pyclass):
+        if not issubclass(subclass, pyclass) and subclass(None) and not issubclass(subclass, pyclass):
             raise TypeError(
                     'Substitute Type (%s, %s) is not derived from %s' %
                     (self.type[0], self.type[1], pyclass), ps.Backtrace(elt))
