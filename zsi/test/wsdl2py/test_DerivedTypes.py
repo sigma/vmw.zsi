@@ -5,7 +5,7 @@
 ###########################################################################
 import os, sys, unittest
 from ServiceTest import main, ServiceTestCase, ServiceTestSuite
-from ZSI import FaultException
+from ZSI import EvaluateException, FaultException
 from ZSI.writer import SoapWriter
 from ZSI.parse import ParsedSoap
 from ZSI.TC import _get_type_definition as GTD
@@ -127,6 +127,16 @@ class DTTestCase(ServiceTestCase):
             'local element actor must be a derived type of "%s"'%
                 base)
 
+    def test_local_parse_missing_type_substitution(self):
+        """attempt to substitute an unregistered/unknown type """
+        attr1 = 'myclass'
+        attr2 = 'whatever'
+        self.types_module
+        pyobj = GED('urn:test', 'test').pyclass()
+
+        ps = ParsedSoap(NO_SUB_MSG)
+        self.failUnlessRaises(EvaluateException, ps.Parse, pyobj.typecode)
+
     def test_local_type_substitution1(self):
         """test extension.   Parse known instance, serialize an equivalent, Parse it back. """
         attr1 = 'myclass'
@@ -175,6 +185,7 @@ class DTTestCase(ServiceTestCase):
 
 MSG1 = """<SOAP-ENV:Envelope xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ZSI="http://www.zolera.com/schemas/ZSI/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Header></SOAP-ENV:Header><SOAP-ENV:Body xmlns:ns1="urn:test"><ns1:test><actor attr1="myclass" attr2="whatever" xsi:type="ns1:MiddleActor"><element1 xsi:type="xsd:string">foo</element1><element2 xsi:type="xsd:string">bar</element2></actor></ns1:test></SOAP-ENV:Body></SOAP-ENV:Envelope>"""
 
+NO_SUB_MSG = """<SOAP-ENV:Envelope xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ZSI="http://www.zolera.com/schemas/ZSI/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SOAP-ENV:Header></SOAP-ENV:Header><SOAP-ENV:Body xmlns:ns1="urn:test"><ns1:test><actor attr1="myclass" attr2="whatever" xsi:type="ns1:Bogus"><element1 xsi:type="xsd:string">foo</element1><element2 xsi:type="xsd:string">bar</element2></actor></ns1:test></SOAP-ENV:Body></SOAP-ENV:Envelope>"""
 
 if __name__ == "__main__" :
     main()

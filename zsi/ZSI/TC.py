@@ -169,6 +169,11 @@ class TypeDefinition:
         prefix,typeName = SplitQName(typeName)
         uri = ps.GetElementNSdict(elt).get(prefix)
         subclass = SchemaInstanceType.getTypeDefinition(uri, typeName)
+        if subclass is None:
+            raise EvaluateException(
+                    'No registered xsi:type=(%s, %s), substitute for xsi:type=(%s, %s)' %
+                    (uri, typeName, self.type[0], self.type[1]), ps.Backtrace(elt))
+                    
         if not issubclass(subclass, pyclass) and subclass(None) and not issubclass(subclass, pyclass):
             raise TypeError(
                     'Substitute Type (%s, %s) is not derived from %s' %
