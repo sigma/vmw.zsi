@@ -32,19 +32,32 @@ def _check_typecode_list(ofwhat, tcname):
         if o.pname is None and not isinstance(o, AnyElement):
             raise TypeError(tcname + ' element ' + str(o) + ' has no name')
 
-def _is_derived_type(v, what):
-    typecode = getattr(v, 'typecode', None)
-    if typecode is not None and isinstance(typecode, what.__class__):
-        return True
-    return False
- 
-def _get_what(v):
-    typecode = getattr(v,'typecode', None)
-    if isinstance(typecode, TypeCode):
+
+def _get_type_or_substitute(typecode, pyobj, sw, elt):
+    '''return typecode or substitute type (must be derived type).
+    For serialization only.
+    '''
+    sub = getattr(pyobj,'typecode', typecode)
+    if sub is typecode:
         return typecode
-
-    raise EvaluateException, 'instance is not self-describing'
-
+        
+    if isinstance(sub, ElementDeclaration):
+        raise TypeError(\
+            'failed to serialize (%s, %s) illegal sub GED (%s,%s): %s' %
+             (typecode.nspname, typecode.pname, sub.nspname, sub.pname,
+              sw.Backtrace(elt),))
+        
+    if not isinstance(sub, typecode.__class__):
+        raise TypeError(\
+            'failed to serialize substitute %s for %s,  not derivation: %s' %
+             (sub, typecode, sw.Backtrace(elt),))
+        
+    sub.nspname = typecode.nspname
+    sub.pname = typecode.pname
+    sub.aname = typecode.aname
+    sub.minOccurs = 1
+    sub.maxOccurs = 1
+    return sub
 
 def _get_any_instances(ofwhat, d):
     '''Run thru list ofwhat.anames and find unmatched keys in value
@@ -354,24 +367,6 @@ class ComplexType(TypeCode):
             # Default to typecode, if self-describing instance, and check 
             # to make sure it is derived from what.
             whatTC = what
-            if _is_derived_type(v, whatTC) and v.typecode is not what:
-                what = _get_what(v)
-                if isinstance(what, ElementDeclaration):
-                    raise TypeError('At %s: failed to serialize (%s, %s) substitute type is a GED (%s,%s)' %
-                                    (sw.Backtrace(elt), whatTC.nspname, whatTC.pname, what.nspname, what.pname,))
-
-                if debug:
-                    self.logger.debug('use derived(%s) from %s' %
-                                      (what.__class__, whatTC.__class__))
-
-                #TODO: rather than set these attributes, just use the whatTC
-                # for this info.
-                what.nspname = whatTC.nspname
-                what.pname = whatTC.pname
-                what.aname = whatTC.aname
-                what.minOccurs = whatTC.minOccurs
-                what.maxOccurs = whatTC.maxOccurs
-
             if whatTC.maxOccurs > 1 and v is not None:
                 if type(v) not in _seqtypes:
                     raise EvaluateException('pyobj (%s,%s), aname "%s": maxOccurs %s, expecting a %s' %(
@@ -384,6 +379,11 @@ class ComplexType(TypeCode):
                         raise EvaluateException('occurances (%d) exceeded maxOccurs(%d) for <%s>' %(
                                 occurs, whatTC.maxOccurs, what.pname), 
                                 sw.Backtrace(elt))
+                        
+                    what = _get_type_or_substitute(whatTC, v2, sw, elt)
+                    if debug and what is not whatTC:
+                        self.logger.debug('substitute derived type: %s' %
+                                          what.__class__)
                     try:
                         what.serialize(elem, sw, v2, **kw)
                     except Exception, e:
@@ -391,11 +391,18 @@ class ComplexType(TypeCode):
                             (n, whatTC.aname or '?', e.__class__.__name__, str(e)))
 
                 if occurs < whatTC.minOccurs:
-                    raise EvaluateException('occurances(%d) less than minOccurs(%d) for <%s>' %(
-                            occurs, whatTC.minOccurs, what.pname), sw.Backtrace(elt))
+                    raise EvaluateException(\
+                        'occurances(%d) less than minOccurs(%d) for <%s>' %
+                        (occurs, whatTC.minOccurs, what.pname), sw.Backtrace(elt))
+                    
                 continue
 
             if v is not None or what.nillable is True:
+                what = _get_type_or_substitute(whatTC, v, sw, elt)
+                if debug and what is not whatTC:
+                    self.logger.debug('substitute derived type: %s' %
+                                      what.__class__)
+                
                 try:
                     what.serialize(elem, sw, v, **kw)
                 except Exception, e:
