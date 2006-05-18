@@ -40,7 +40,14 @@
    </xs:sequence>
  </xs:complexType>
 
+ <xs:complexType name="test2">
+   <xs:sequence>
+     <xs:element name="actor" type="typens:BaseActor" maxOccurs="unbounded"/>
+   </xs:sequence>
+ </xs:complexType>
+
  <xs:element name="test" type="typens:test"/>
+ <xs:element name="test2" type="typens:test2"/>
  <xs:element name="TopActor" type="typens:TopActor"/>
  <xs:element name="MiddleActor" type="typens:MiddleActor"/>
  <xs:element name="BaseActor" type="typens:BaseActor"/>
