@@ -34,30 +34,37 @@ def _check_typecode_list(ofwhat, tcname):
 
 
 def _get_type_or_substitute(typecode, pyobj, sw, elt):
-    '''return typecode or substitute type (must be derived type).
-    For serialization only.
+    '''return typecode or substitute type for wildcard or
+    derived type.  For serialization only.
     '''
     sub = getattr(pyobj,'typecode', typecode)
     if sub is typecode:
         return typecode
-        
+
+    # Element WildCard
+    if isinstance(typecode, AnyElement):
+        return sub
+ 
+    # Global Element Declaration
     if isinstance(sub, ElementDeclaration):
         raise TypeError(\
             'failed to serialize (%s, %s) illegal sub GED (%s,%s): %s' %
              (typecode.nspname, typecode.pname, sub.nspname, sub.pname,
               sw.Backtrace(elt),))
-        
-    if not isinstance(sub, typecode.__class__):
+
+    # Local Element
+    if not isinstance(typecode, AnyType) and not isinstance(sub, typecode.__class__):
         raise TypeError(\
             'failed to serialize substitute %s for %s,  not derivation: %s' %
              (sub, typecode, sw.Backtrace(elt),))
-        
+
     sub.nspname = typecode.nspname
     sub.pname = typecode.pname
     sub.aname = typecode.aname
     sub.minOccurs = 1
     sub.maxOccurs = 1
     return sub
+
 
 def _get_any_instances(ofwhat, d):
     '''Run thru list ofwhat.anames and find unmatched keys in value
