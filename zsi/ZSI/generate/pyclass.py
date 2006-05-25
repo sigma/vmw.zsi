@@ -150,7 +150,7 @@ class pyclass_type(type):
 
         if what.maxOccurs > 1:
             def set(self, value):
-                if (value is not None or hasattr(value, '__iter__')):
+                if not (value is None or hasattr(value, '__iter__')):
                     value = [value]
                 setattr(self, what.aname, value)
         else:
