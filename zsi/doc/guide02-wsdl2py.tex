@@ -144,31 +144,25 @@ invocation according to any predefined hierarchical structure.
 This section covers wsdl2py, the second way ZSI provides to access WSDL
 services.  Given the path to a WSDL service, two files are generated, a 
 'service' file and a 'types' file, that one can then use to access the
-service.  For example, to generate code to access the TerraServer database,
-the script can be called as follows:
+service.  As an example, we will use the search service provided by Wolfram
+Research Inc.\copyright{}, \url{http://webservices.wolfram.com/wolframsearch/}, 
+which provides a service for searching the popular MathWorld site, 
+\url{http://mathworld.wolfram.com/}, among others.
 
 \begin{verbatim}
-wsdl2py http://terraservice.net/TerraService.asmx?WSDL
+wsdl2py.py --complexType --url=http://webservices.wolfram.com/services/SearchServices/WolframSearch2.wsdl
 \end{verbatim}
 
-To generate the 'service' file, wsdl2py uses the \class{WriteServiceModule}
-class in \module{ZSI.wsdl2python}.
-\class{WriteServiceModule} transforms the definitions in a WSDL instance
-to remote proxy interfaces in the 'service' file.
-To generate the 'types' file, wsdl2py transforms the XML Schema instances in
-the WSDL types section to type codes that describe
-the data.
-
-The \class{WSDL} (see section 11.4) class and \module{ZSI.wstools.XMLSchema}
-module provide API's into the
-definitions, which \class{ModuleWriter} and its underlying generator classes
-use to interpret WSDL and XML Schema into class definitions.
+Run the above command to generate the service and type files.  The wsdl2py uses
+the {\it name} attribute of the {\it wsdl:service} element to name the resulting files.
+In this example, the service name is {\it WolframSearchService}.  Therefore the files
+{\it WolframSearchService_services.py} and {\it WolframSearchService_services_types.py}
+should of been generated.
 
 The 'service' file contains locator, portType, and message classes.  
-A locator instance is used to
-get an instance of a portType class, which is a remote proxy object.
-Message instances are sent and received through the methods of the
-portType instance.
+A locator instance is used to get an instance of a portType class, 
+which is a remote proxy object. Message instances are sent and received 
+through the methods of the portType instance.
 
 The 'types' file contains class representations of the definitions and
 declarations defined by all schema instances imported by the WSDL definition.
@@ -177,80 +171,116 @@ handled.
 
 \subsection{Example Use of Generated Code}
 
-The following shows how to call a proxy method for
-ConvertPlaceToLonLatPt, a method provided by a service
-named TerraService. It assumes that wsdl2py has already been called.
-In this case, the 'services' and 'types' files generated would
-be named TerraService_services.py and TerraService_services_types.py,
-respectively.
+The following shows how to call a proxy method for {\it WolframSearch}.  It
+assumes wsdl2py has already been ran as shown in the section above.  The example
+will be explained in greater detail below.
 
 \begin{verbatim}
-from TerraService_services import *
+# import the generated class stubs
+from WolframSearchService_services import *
 
-import sys
+# get a port proxy instance
+loc = WolframSearchServiceLocator()
+port = loc.getWolframSearchmyPortType()
 
-def main():
-    loc = TerraServiceLocator()
+# create a new request
+req = WolframSearchRequest()
+req.Options = req.new_Options()
+req.Options.Query = 'newton'
 
-       # prints messages sent and received if tracefile is set
-    kw = { 'tracefile' : sys.stdout }
-    portType = loc.getTerraServiceSoap(**kw)
+# call the remote method
+resp = port.WolframSearch(req)
 
-    # --------------------------------
-    # From "TerraService_services.py"
-    #
-    #  ConvertPlaceToLonLatPtSoapIn = ns0.ConvertPlaceToLonLatPt_Dec().pyclass
-
-    # --------------------------------
-    # From "TerraService_services_types.py"
-    #
-    #  class ConvertPlaceToLonLatPt_Dec(ZSI.TCcompound.Struct, ElementDeclaration):
-    #      ...
-    #      class Holder(SetAddByAname):
-    #          typecode = self
-    #          def __init__(self):
-    #              # pyclass
-    #              self._place = None
-    #
-    class Holder: pass
-    request = ConvertPlaceToLonLatPtSoapIn()
-    request._place = Holder()
-    request._place._City = 'Oak Harbor'
-    request._place._State = 'Washington'
-    request._place._Country = 'United States'
-
-    response = portType.ConvertPlaceToLonLatPt(request)
-    print "Latitude = %s" % response._ConvertPlaceToLonLatPtResult._Lat
-    print "Longitude = %s" % response._ConvertPlaceToLonLatPtResult._Lon
-...
-
+# print results
+print 'Search Time:', resp.Result.SearchTime
+print 'Total Matches:', resp.Result.TotalMatches
+for hit in resp.Result.Matches.Item:
+    print '--', hit.Title
 \end{verbatim}
 
-One needs to look at the associated WSDL file to see how
-to use the classes and methods in the generated code.
-In this example, \class{TerraServiceLocator}
-is a class with the name of the WSDL service, plus 'Locator'.  It contains the
-information necessary to contact the service, using
-\method{getTerraServiceSoap(**kw)}.
+Now each section of the code above will be explained.
 
-That method's name is generated by 'get' plus the name of the WSDL portType
-for the service.  It returns a class which
-encapsulates the information in the portType, and contains the proxies
-for the methods associated with it.
+\begin{verbatim}
+from WolframSearchService_services import *
+\end{verbatim}
 
-\method{ConvertPlaceToLonLatPtSoapInWrapper()}'s
-name is generated using
-the name of the WSDL input message for the ConvertPlaceToLonLatPt
-WSDL operation, plus 'Wrapper'.  The actual call to the service is a method of
-the class encapsulating the portType, with the same name as the WSDL operation.
+We are primarily interested in the service locator that is imported.  The 
+binding proxy and classes for all the messages are additionally imported.
+Look at the {\it WolframSearchService_services.py} file for more information.
 
-The name of the response field is '_' plus the name of the
-WSDL element (or one contained by the element) returned by the call.
-Parameters that are input and output are subfields of
-the request object and the response field, respectively. 
-Their names can be determined by looking at the part sub-element of a
-message.
+\begin{verbatim}
+loc = WolframSearchServiceLocator()
+port = loc.getWolframSearchmyPortType()
+\end{verbatim}
 
-If the user wishes to set authorization headers in a request, using the 
-previous example, it would be accomplished like this:
+Using an instance of the locator, we fetch an instance of the port proxy
+which is used for invoking the remote methods provided by the service.  In
+this case the default {\it location} specified in the {\it wsdlsoap:address}
+element is used.  You can optionally pass a url to the port getter method to
+specify an alternate location to be used.  The {\it portType} - {\it name} 
+attribute is used to determine the method name to fetch a port proxy instance.
+In this example, the port name is {\it WolframSearchmyPortType}, hence the 
+method of the locator for fetching the proxy is {\it getWolframSearchmyPortType}.
 
+\begin{verbatim}
+req = WolframSearchRequest()
+req.Options = req.new_Options()
+req.Options.Query = 'newton'
+\end{verbatim}
+
+The first step in calling {\it WolframSearch} is to create a request object
+corresponding to the input message of the method.  In this case, the name of
+the message is {\it WolframSearchRequest}.  A class representing this message
+was imported from the service module.
+
+Once a request object is created we need to populate the instance with the
+information we want to use in our request.  This is where the {\tt --complexType}
+option we passed to wsdl2py will come in handy.  This caused the creation of 
+functions for getting and setting elements and attributes of the type, class 
+properties for each element, and convenience functions for creating new instances
+of elements of complex types.  The following explains these in more detail.
+
+\begin{description}
+\item[get/setters] The \var{req} variable has getter and setter methods for the
+elements of the type it represents.  {\it WolframSearchRequest's} message type
+has only one element, {\it Options}.  Therefore, \var{req} has functions
+{\it get_element__Options} and {\it set_element__Options}.
+
+\item[properties] Python 2.2 introduced the concept of class properties.  This
+allows a class attribute to transparently call getter and setter methods.  In the
+example, {\it req.Options} is a class property which respectively calls 
+{\it get_element__Options} and {\it set_element__Options} when requested 
+and assigned.
+
+\item[complex type creator methods] The \var{req} object has one element in this
+example, Options, which is a complex type.  Classes representing all complex types
+in this wsdl were generated by wsdl2py and are located in the types module.  There
+are many ways to fetch these classes, but since we know the type of \var{Options}
+a convenience function is added to \var{req} to create a new instance of this type,
+{\tt new_Options}.  Simple types can simply be assigned to the corresponding python
+simple types (eg. {\tt req.Options.Query = 'newton'}).
+\end{description}
+
+\begin{verbatim}
+resp = port.WolframSearch(req)
+\end{verbatim}
+
+Once the request instance is populated, calling the remote service is easy.  Using
+the port proxy we call the method we are interested in.  An instance of the python
+class representing the return type is returned by this call.  The \var{resp} object
+can be used to introspect the result of the remote call.
+
+\begin{verbatim}
+resp = port.WolframSearch(req)
+\end{verbatim}
+
+Here we see that the response message, \var{resp}, represents type {\it WolframSearchReturn}.
+This object has one element, {\it Result} which contains the search results for our
+search of the keyword, {\tt newton}.
+
+\begin{verbatim}
+print 'Search Time:', resp.Result.SearchTime
+...
+\end{verbatim}
+
+Refer to the wsdl for {\it WolframSearchService} for more details on the returned information.
