@@ -153,11 +153,11 @@ which provides a service for searching the popular MathWorld site,
 wsdl2py.py --complexType --url=http://webservices.wolfram.com/services/SearchServices/WolframSearch2.wsdl
 \end{verbatim}
 
-Run the above command to generate the service and type files.  The wsdl2py uses
+Run the above command to generate the service and type files.  wsdl2py uses
 the {\it name} attribute of the {\it wsdl:service} element to name the resulting files.
 In this example, the service name is {\it WolframSearchService}.  Therefore the files
 {\it WolframSearchService_services.py} and {\it WolframSearchService_services_types.py}
-should of been generated.
+should be generated.
 
 The 'service' file contains locator, portType, and message classes.  
 A locator instance is used to get an instance of a portType class, 
@@ -172,7 +172,7 @@ handled.
 \subsection{Example Use of Generated Code}
 
 The following shows how to call a proxy method for {\it WolframSearch}.  It
-assumes wsdl2py has already been ran as shown in the section above.  The example
+assumes wsdl2py has already been run as shown in the section above.  The example
 will be explained in greater detail below.
 
 \begin{verbatim}
@@ -260,10 +260,6 @@ a convenience function is added to \var{req} to create a new instance of this ty
 {\tt new_Options}.  Simple types can simply be assigned to the corresponding python
 simple types (eg. {\tt req.Options.Query = 'newton'}).
 \end{description}
-
-\begin{verbatim}
-resp = port.WolframSearch(req)
-\end{verbatim}
 
 Once the request instance is populated, calling the remote service is easy.  Using
 the port proxy we call the method we are interested in.  An instance of the python
