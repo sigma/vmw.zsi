@@ -1914,7 +1914,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
         if content.isRestriction():
             try:
                  base = content.getTypeDefinition()
-            except SchemaError, ex:
+            except XMLSchema.SchemaError, ex:
                  base = None
 
             qName = content.getAttributeBase()
@@ -1928,7 +1928,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
         if content.isList():
             try:
                  base = content.getTypeDefinition()
-            except SchemaError, ex:
+            except XMLSchema.SchemaError, ex:
                  base = None
 
             if base is None:
@@ -2014,20 +2014,25 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         self.attrComponents = self._setAttributes(attributeContent)
         
     def _setContent(self):
-
-        element = [
-            '%sclass %s(ZSI.TCcompound.ComplexType, ElementDeclaration):' \
-            % (ID1,self.getClassName()),
-            '%s%s' % (ID2, self.schemaTag()),
-            '%s%s' % (ID2, self.literalTag()),
-            '%s%s' % (ID2, self.simpleConstructor()),
-            #'%s' % self.getElements(),
-            '%s%s' % (ID3, self.nsuriLogic()),
-            '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
-            '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
-            '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
-            ]
-            
+        try:
+            element = [
+                '%sclass %s(ZSI.TCcompound.ComplexType, ElementDeclaration):' \
+                % (ID1,self.getClassName()),
+                '%s%s' % (ID2, self.schemaTag()),
+                '%s%s' % (ID2, self.literalTag()),
+                '%s%s' % (ID2, self.simpleConstructor()),
+                #'%s' % self.getElements(),
+                '%s%s' % (ID3, self.nsuriLogic()),
+                '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
+                '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
+                '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
+                ]
+        except Exception, ex:
+            args = ['Failure processing an element w/local complexType: %s' %self._item.getItemTrace()]
+            args += ex.args
+            ex.args = tuple(args)
+            raise
+        
         element.append('%s%s = {}'%(ID3, self.attribute_typecode))
         element.append(\
             '%(ID3)sZSI.TCcompound.ComplexType.__init__(self, None, TClist, inorder=0, **kw)' %KW
@@ -2078,7 +2083,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
                 '%sif self.pyclass is not None: self.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
                 ]
         except Exception, ex:
-            args = ['Failure processing: %s' %self._item.getItemTrace()]
+            args = ['Failure processing an element w/global definition: %s' %self._item.getItemTrace()]
             args += ex.args
             ex.args = tuple(args)
             raise
@@ -2485,7 +2490,7 @@ class RestrictionContainer(SimpleTypeContainer):
         if base is not None:
             try:
                 item = tp.content.getTypeDefinition('base')
-            except SchemaError, ex:
+            except XMLSchema.SchemaError, ex:
                 pass
 
             if item is None:
@@ -2501,7 +2506,7 @@ class RestrictionContainer(SimpleTypeContainer):
             if sc.content.isRestriction() is True:
                 try:
                     item = tp.content.getTypeDefinition('base')
-                except SchemaError, ex:
+                except XMLSchema.SchemaError, ex:
                     pass
 
                 if item is None:

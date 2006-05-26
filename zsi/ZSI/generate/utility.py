@@ -14,6 +14,7 @@ from ZSI import EvaluateException
 from ZSI.TCcompound import Struct
 from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
 from ZSI.wstools.Utility import SplitQName
+from ZSI.wstools.Namespaces import SCHEMA
 
 NCName_to_ModuleName = lambda name: re.sub('\.', '_', TextProtect(name))
 NCName_to_ClassName = lambda name: re.sub('\.', '_', TextProtect(name))
@@ -49,13 +50,27 @@ class NamespaceAliasDict:
     def getModuleName(cls, ns):
         if cls.alias_dict.has_key(ns):
             return cls.alias_dict[ns][0]
-        raise WsdlGeneratorError, 'could not retrieve mod name for %s' %ns
+                                 
+        msg = 'failed to find import for schema "%s"'%ns +\
+        'possibly missing @schemaLocation attribute.'
+        if ns in SCHEMA.XSD_LIST:
+            msg = 'missing built-in typecode for schema "%s"' %ns
+            
+        raise WsdlGeneratorError, msg
+                                 
     getModuleName = classmethod(getModuleName)
         
     def getAlias(cls, ns):
         if cls.alias_dict.has_key(ns):
             return cls.alias_dict[ns][1]
-        raise WsdlGeneratorError, 'could not retrieve alias for %s\t%s' %(ns,cls.alias_dict)
+                                 
+        msg = 'failed to find import for schema "%s"'%ns +\
+        'possibly missing @schemaLocation attribute.'
+        if ns in SCHEMA.XSD_LIST:
+            msg = 'missing built-in typecode for schema "%s"' %ns
+            
+        raise WsdlGeneratorError, msg
+    
     getAlias = classmethod(getAlias)
 
     def getNSList(cls):
