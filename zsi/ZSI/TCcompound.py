@@ -88,7 +88,7 @@ class ComplexType(TypeCode):
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
     mutable=True, hasextras=0, mixed=False, mixed_aname='_text', **kw):
         '''pyclass -- the Python class to hold the fields
-        ofwhat -- a list of fields to be in the struct
+        ofwhat -- a list of fields to be in the complexType
         hasextras -- ignore extra input fields
         inorder -- fields must be in exact order or not
         inline -- don't href/id when serializing
@@ -148,16 +148,16 @@ class ComplexType(TypeCode):
         c = _child_elements(elt)
         count = len(c)
         if self.nilled(elt, ps): return Nilled
-        repeatable_args = False
-        for tc in self.ofwhat:
-            if tc.maxOccurs > 1:
-                repeatable_args = True
-                break
-
-        if not repeatable_args:
-            if count > len(self.ofwhat) and not self.hasextras:
-                raise EvaluateException('Too many sub-elements (%d>%d)' %(
-                    count,len(self.ofwhat)), ps.Backtrace(elt))
+#        repeatable_args = False
+#        for tc in self.ofwhat:
+#            if tc.maxOccurs > 1:
+#                repeatable_args = True
+#                break
+#
+#        if not repeatable_args:
+#            if count > len(self.ofwhat) and not self.hasextras:
+#                raise EvaluateException('Too many sub-elements (%d>%d)' %(
+#                    count,len(self.ofwhat)), ps.Backtrace(elt))
 
         # Create the object.
         v = {}
@@ -215,7 +215,7 @@ class ComplexType(TypeCode):
 
                 # No match; if it was supposed to be here, that's an error.
                 if self.inorder is True and i == j:
-                    raise EvaluateException('Out of order struct',
+                    raise EvaluateException('Out of order complexType',
                             ps.Backtrace(c_elt))
             else:
                 # only supporting 1 <any> declaration in content.
@@ -225,7 +225,7 @@ class ComplexType(TypeCode):
                     v[what.aname] = what.default
                 elif what.minOccurs > 0 and not v.has_key(what.aname):
                     raise EvaluateException('Element "' + what.aname + \
-                        '" missing from struct', ps.Backtrace(elt))
+                        '" missing from complexType', ps.Backtrace(elt))
 
         # Look for wildcards and unprocessed children
         # XXX Stick all this stuff in "any", hope for no collisions
@@ -658,6 +658,7 @@ class Array(TypeCode):
 
                 self.ofwhat.serialize(el, sw, v, **d)
                 position += 1
+
 
 
 if __name__ == '__main__': print _copyright
