@@ -1,28 +1,5 @@
 \chapter{The wsdl2py Tool: WSDL/XMLSchema python code generator}
 
-The \ZSI~and \module{ZSI.wstools} modules provide client tools for
-using WSDL 1.1
-(see \citetitle[http://www.w3.org/TR/wsdl]{WSDL 1.1 specification}).
-
-ZSI provides two ways of accessing a WSDL service.  The first
-provides an easy-to-use interface,
-but requires setting all type codes manually.  It is easier
-to use with simple services than with those specifying many
-complex types.
-The second method requires the use of a more complex
-interface, but automatically generates type codes and classes
-that correspond to XML Schema types, as well as client stub code.
-Both use a \class{WSDL} instance internally to send and receive
-messages (see section 11.4 for more information on the \class{WSDL}
-class).
-
-The first way of accessing a service is through the \class{ServiceProxy} class.
-Once the proxy has been created, each remote operation is exposed
-as a method on the object.
-The user must handle the generation of type codes.
-Note that while \class{ServiceProxy} is part of \ZSI{}, it must be
-explicitly imported.
-
 The second method uses wsdl2py.  Handling XML Schema
 (see \citetitle[http://www.w3.org/XML/Schema]{XML Schema specification}) 
 is one of the more difficult aspects
@@ -32,44 +9,127 @@ details.  It generates a module with stub code for the client interface,
 and a module that encapsulates the handling of XML Schema, automatically
 generating type codes.
 
-\section{WSDLReader}
+\section{wsdl2py}
 
-The \class{WSDLReader} class in \module{ZSI.wstools.WSDLTools} provides
-methods for loading WSDL service descriptions from URLs, XML files
-or XML string data, and creating a \class{WSDL} object.
-It is used by \class{ServiceProxy} and \class{WriteServiceModule}.
+\subsection{Command Line Flags}
 
-\class{WSDL} instances represent WSDL service descriptions and provide 
-a low-level object model for building and working with those descriptions.
+\begin{description}
+\item[-h, ---help] Display the help message and available command line
+flags that can be passed to wsdl2py.
+\item[-f FILE, ---file=FILE] Create bindings for the WSDL which is located at
+the local file path.
+\item[-u URL, ---url=URL] Create bindings for the remote WSDL which is located
+at the provided URL.
+\item[-x, ---schema] Just process a schema (xsd) file and generate the types
+mapping file.
+\item[-d, ---debug] Output verbose debugging messages during code generation.
+\item[-a, ---address] WS-Addressing support.  The WS-Addressing schema must be
+included in the corresponding WSDL.
+\item[-b, ---complexType (more in subsection~\ref{subsection:complexType})]
+Generate convenience functions for complexTypes.  This includes getters,
+setters, factory methods, and properties.  ** Do NOT use with --simple-naming **
+\item[-w, ---twisted] Generate a twisted.web client.  Dependencies: 
+python\verb!>=!2.4, Twisted\verb!>=!2.0.0, TwistedWeb\verb!>=!0.5.0
+\end{description}
 
-The WSDL reader is implemented as a 
-separate class to make it easy to create custom readers that implement 
-caching policies or other optimizations.
+NOTE: All the following options are considered to be unstable and/or not under
+active development.
+\begin{description}
+\item[-e, ---extended] Do extended code generation.
+\item[-z ANAME, ---aname=ANAME] Use a custom function, ANAME, for attribute name
+creation.
+\item[-t TYPES, ---types=TYPES] Dump the generated type mappings to a file
+named, ``TYPES.py''.
+\item[-s, ---simple-naming] Simplify the generated naming.
+\item[-c CLIENTCLASSSUFFIX, ---clientClassSuffix=CLIENTCLASSSUFFIX] The suffic
+to use for service client class. (default ``SOAP'')
+\item[-m PYCLASSMAPMODULE, ---pyclassMapModule=PYCLASSMAPMODULE] Use the
+existing existing type mapping file to determine the ``pyclass'' objects to be
+used.  The module should contain an attribute, ``mapping'', which is a
+dictionary of form, {schemaTypeName: (moduleName.py, className)}.
+\end{description}
 
+\subsection{The {\it complexType} option explained}
+\label{subsection:complexType}
 
-\begin{classdesc}{WSDLReader}{}
+The {\it complexType} flag provides many conveniences to the programmer
+pertaining to all aspects of dealing with complex types through the use of 
+metaclasses. This option is the preferred way of generating client bindings and
+types with the {\it wsdl2py} command.  The naming conventions used for all the
+generated convenince functions make use of the typecode's {\it aname} attribute.
+ By default wsdl2py appends an ``\verb!_!'' to the name of a complex type and
+ its elements.  For example, a complex type named ``\verb!employee!'' would have
+ aname, ``\verb!_employee!''.
 
-The following methods are available:
+For the descriptions below we will use the following complex types for
+reference.  The scenario assumes one is making a remote call to operation, {\it
+WolframSearch}, which takes a request of element, {\it WolframSearch} as shown
+below. {\small Note: some elements have been cropped from {\it WolframSearchOptions}}
+\begin{verbatim}
+<xsd:complexType name='WolframSearchOptions'>
+  <xsd:sequence>
+    <xsd:element name='Query' minOccurs='0' maxOccurs='1' type='xsd:string'/>
+    <xsd:element name='Limit' minOccurs='0' maxOccurs='1' type='xsd:int'/>
+  </xsd:sequence>
+</xsd:complexType>
+<xsd:element name='WolframSearch'>
+  <xsd:complexType>
+    <xsd:sequence>
+      <xsd:element name='Options' minOccurs='0' maxOccurs='1' type='ns1:WolframSearchOptions'/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:element>
+\end{verbatim}
 
-\begin{methoddesc}{loadFromStream}{file}
-Return a \class{WSDL} instance representing the service description 
-contained in \var{file}. The \var{file} argument must be a file-like 
-object.
-\end{methoddesc}
+\begin{verbatim}
+# Create a request object to operation WolframSearch
+#   to be used as an example below
+from WolframSearchService_services import *
 
-\begin{methoddesc}{loadFromString}{data}
-Returns a \class{WSDL} instance loaded from the XML string \var{data}.
-\end{methoddesc}
+port = WolframSearchServiceLocator().getWolframSearchmyPortType()
+wsreq = WolframSearchRequest()
+\end{verbatim}
 
-\begin{methoddesc}{loadFromFile}{filename}
-Returns a \class{WSDL} instance loaded from the file named by \var{filename}.
-\end{methoddesc}
+\begin{description}
+\item[Getters/Setters] A getter and setter function is defined for each element
+of a complex type.  The functions are named \verb!get_element_ANAME! and
+\verb!set_element_ANAME! respectively.  In this example, variable \var{wsreq}
+has functions named \verb!get_element__Options! and \verb!set_element__Options!.
 
-\begin{methoddesc}{loadFromURL}{url}
-Returns a \class{WSDL} instance loaded from the given \var{url}.
-\end{methoddesc}
+\item[Factory Methods] If an element of a complex type is a complex type itself,
+then a conveniece factory method is created to get an instance of that types
+holder class.  The factory method is named, \verb!newANAME!, so \var{wsreq} has
+a factory method, \verb!new_Options!.
 
-\end{classdesc}
+\item[Properties]
+\citetitle[http://www.python.org/download/releases/2.2/descrintro/#property]{Python class properties}
+are created for each element of the complex type.  They are mapped to the
+corresponding getter and setter for that element.  To avoid name collisions the
+properties are named, \verb!PNAME!, where the first letter of the type's pname
+attribute is capitalized.  In our running example, \var{wsreq} has class
+property, \verb!Options!, which calls functions \verb!get_element__Options! and
+\verb!set_element__Options! under the hood.
+
+\end{description}
+
+\begin{verbatim}
+# sample usage of the generated code
+
+# get an instance of a Options holder class using factory method
+opts = wsreq.new_Options()
+
+# assign values using the properties or methods
+opts.Query = 'Newton'
+opts.set_element__Limit(10)
+
+wsreq.Options = opts
+
+# ready call the remote operation
+wsresp = port.WolframSearch(wsreq)
+
+# returned WolframSearchResponse type holder also has conveniences
+print 'SearchTime:', wsresp.Result.SearchTime
+\end{verbatim}
 
 \section{ServiceProxy}
 
