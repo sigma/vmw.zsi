@@ -57,20 +57,21 @@ pertaining to all aspects of dealing with complex types through the use of
 metaclasses. This option is the preferred way of generating client bindings and
 types with the {\it wsdl2py} command.  The naming conventions used for all the
 generated convenince functions make use of the typecode's {\it aname} attribute.
- By default wsdl2py appends an ``\verb!_!'' to the name of a complex type and
+ By default wsdl2py appends an ``\verb!_!'' to the aname of a complex type and
  its elements.  For example, a complex type named ``\verb!employee!'' would have
  aname, ``\verb!_employee!''.
 
 For the descriptions below we will use the following complex types for
 reference.  The scenario assumes one is making a remote call to operation, {\it
 WolframSearch}, which takes a request of element, {\it WolframSearch} as shown
-below. {\small Note: some elements have been cropped from {\it WolframSearchOptions}}
+below. {\small Note: {\it WolframSearchOptions} has been modified for this example.}
 \begin{verbatim}
 <xsd:complexType name='WolframSearchOptions'>
   <xsd:sequence>
     <xsd:element name='Query' minOccurs='0' maxOccurs='1' type='xsd:string'/>
     <xsd:element name='Limit' minOccurs='0' maxOccurs='1' type='xsd:int'/>
   </xsd:sequence>
+  <xsd:attribute name='timeout' type='xsd:double' />
 </xsd:complexType>
 <xsd:element name='WolframSearch'>
   <xsd:complexType>
@@ -95,6 +96,10 @@ wsreq = WolframSearchRequest()
 of a complex type.  The functions are named \verb!get_element_ANAME! and
 \verb!set_element_ANAME! respectively.  In this example, variable \var{wsreq}
 has functions named \verb!get_element__Options! and \verb!set_element__Options!.
+ In addition to elements, getters and setters are generated for the attributes
+ of a complex type.  For attributes, just the name of the attribute is used in
+ determining the method names, so get_attribute_NAME and set_attribute_NAME are
+ created.
 
 \item[Factory Methods] If an element of a complex type is a complex type itself,
 then a conveniece factory method is created to get an instance of that types
@@ -117,12 +122,22 @@ property, \verb!Options!, which calls functions \verb!get_element__Options! and
 
 # get an instance of a Options holder class using factory method
 opts = wsreq.new_Options()
+wsreq.Options = opts
 
 # assign values using the properties or methods
 opts.Query = 'Newton'
 opts.set_element__Limit(10)
 
-wsreq.Options = opts
+# don't forget the attribute
+opts.set_attribute_timeout(1.0)
+
+# At this point the serialized wsreq object would resemble this:
+# <WolframSearch>
+#   <Options timeout="1.0" xsi:type="tns:WolframSearchOptions">
+#     <Query xsi:type="xsd:string">Newton</Query>
+#     <Limit xsi:type="xsd:double">10.0</Limit>
+#   </Options>
+# </WolframSearch>
 
 # ready call the remote operation
 wsresp = port.WolframSearch(wsreq)
@@ -282,44 +297,24 @@ attribute is used to determine the method name to fetch a port proxy instance.
 In this example, the port name is {\it WolframSearchmyPortType}, hence the 
 method of the locator for fetching the proxy is {\it getWolframSearchmyPortType}.
 
+The first step in calling {\it WolframSearch} is to create a request object
+corresponding to the input message of the method.  In this case, the name of
+the message is {\it WolframSearchRequest}.  A class representing this message
+was imported from the service module.
+
 \begin{verbatim}
 req = WolframSearchRequest()
 req.Options = req.new_Options()
 req.Options.Query = 'newton'
 \end{verbatim}
 
-The first step in calling {\it WolframSearch} is to create a request object
-corresponding to the input message of the method.  In this case, the name of
-the message is {\it WolframSearchRequest}.  A class representing this message
-was imported from the service module.
-
 Once a request object is created we need to populate the instance with the
 information we want to use in our request.  This is where the {\tt --complexType}
 option we passed to wsdl2py will come in handy.  This caused the creation of 
 functions for getting and setting elements and attributes of the type, class 
 properties for each element, and convenience functions for creating new instances
-of elements of complex types.  The following explains these in more detail.
-
-\begin{description}
-\item[get/setters] The \var{req} variable has getter and setter methods for the
-elements of the type it represents.  {\it WolframSearchRequest's} message type
-has only one element, {\it Options}.  Therefore, \var{req} has functions
-{\it get_element__Options} and {\it set_element__Options}.
-
-\item[properties] Python 2.2 introduced the concept of class properties.  This
-allows a class attribute to transparently call getter and setter methods.  In the
-example, {\it req.Options} is a class property which respectively calls 
-{\it get_element__Options} and {\it set_element__Options} when requested 
-and assigned.
-
-\item[complex type creator methods] The \var{req} object has one element in this
-example, Options, which is a complex type.  Classes representing all complex types
-in this wsdl were generated by wsdl2py and are located in the types module.  There
-are many ways to fetch these classes, but since we know the type of \var{Options}
-a convenience function is added to \var{req} to create a new instance of this type,
-{\tt new_Options}.  Simple types can simply be assigned to the corresponding python
-simple types (eg. {\tt req.Options.Query = 'newton'}).
-\end{description}
+of elements of complex types.  This functionality is explained in detail in 
+subsection~\ref{subsection:complexType}.
 
 Once the request instance is populated, calling the remote service is easy.  Using
 the port proxy we call the method we are interested in.  An instance of the python
