@@ -1,18 +1,15 @@
-\chapter{The wsdl2py Tool: WSDL/XMLSchema python code generator}
+\chapter{WSDL/XMLSchema python code generation}
 
-The second method uses wsdl2py.  Handling XML Schema
-(see \citetitle[http://www.w3.org/XML/Schema]{XML Schema specification}) 
-is one of the more difficult aspects
-of using WSDL.  The class \class{WriteServiceModule}, which wsdl2py
-uses, helps to hides these
-details.  It generates a module with stub code for the client interface,
-and a module that encapsulates the handling of XML Schema, automatically
-generating type codes.
+Handling XML Schema (see \citetitle[http://www.w3.org/XML/Schema]{XML Schema specification}) 
+is one of the more difficult aspects of using WSDL.  
+Using wsdl2py generates a module with stub code for the client interface,
+and a "types" module that contains typecode representations of the XML Schema types and elements.  The generated typecodes are registered in a global schema instance, and once the "types" module is imported by an application all the global elements declarations and type definitions are available everywhere (see section ??).  
 
 \section{wsdl2py}
 
 \subsection{Command Line Flags}
 
+\subsubsection{General Flags}
 \begin{description}
 \item[-h, ---help] Display the help message and available command line
 flags that can be passed to wsdl2py.
@@ -23,17 +20,24 @@ at the provided URL.
 \item[-x, ---schema] Just process a schema (xsd) file and generate the types
 mapping file.
 \item[-d, ---debug] Output verbose debugging messages during code generation.
-\item[-a, ---address] WS-Addressing support.  The WS-Addressing schema must be
-included in the corresponding WSDL.
-\item[-b, ---complexType (more in subsection~\ref{subsection:complexType})]
+\end{description}
+
+\subsubsection{Typecode Extensions (Stable) }
+\begin{description}
+\item[-b, ---complexType (more in subsection~\label{subsubsection:complexType})]
 Generate convenience functions for complexTypes.  This includes getters,
 setters, factory methods, and properties.  ** Do NOT use with --simple-naming **
+\end{description}
+
+\subsubsection{Development Extensions (Unstable) }
+\begin{description}
+\item[-a, ---address] WS-Addressing support.  The WS-Addressing schema must be
+included in the corresponding WSDL.
 \item[-w, ---twisted] Generate a twisted.web client.  Dependencies: 
 python\verb!>=!2.4, Twisted\verb!>=!2.0.0, TwistedWeb\verb!>=!0.5.0
 \end{description}
 
-NOTE: All the following options are considered to be unstable and/or not under
-active development.
+\subsubsection{Customizations (Unstable) }
 \begin{description}
 \item[-e, ---extended] Do extended code generation.
 \item[-z ANAME, ---aname=ANAME] Use a custom function, ANAME, for attribute name
@@ -49,9 +53,42 @@ used.  The module should contain an attribute, ``mapping'', which is a
 dictionary of form, {schemaTypeName: (moduleName.py, className)}.
 \end{description}
 
-\subsection{The {\it complexType} option explained}
-\label{subsection:complexType}
+\subsection{Basics of Code Generation}
+\label{subsection:Basics of Code Generation}
 
+\subsubsection{client stub module}
+Using only the {\it General Flags} options one can generate a 
+{\bfseries client stub module} from a WSDL description, consisting of
+representations of the WSDL information items {\it service}, {\it binding}, 
+{\it portType}, and {\it message}.
+
+
+These four items are represented by three abstractions, consisting of a
+{\it \bfseries Locator} class, {\it \bfseries PortType} class, and several 
+{\it \bfseries Message} classes. The {\it \bfseries Locator} will have two methods for each {\it service port} declared in
+the WSDL definition.  One method returns the address specified in the {\it binding}, and the other is a factory method for returning a {\it \bfseries PortType}
+instance.  Each {\it \bfseries Message} class represents the aspects of the {\it binding}
+at the operation level and below, and any type information specified by {\it message part} items.
+
+\subsubsection{types module}
+The {\bfseries types module} is generated with the {\bfseries client module} but
+it can be created independently.  This is especially useful for dealing with
+schema definitions that aren't specified inside of a WSDL document.  
+
+The module level class defintions each represent a unique namespace, they are
+simply wrappers for the contents of individual namespaces.  The inner classes
+are the typecode representations of global {\it type definitions} (suffix {\it \bfseries _Def}), 
+and {\it element declarations} (suffix {\it \bfseries _Dec}).
+
+The majority of users will not need to directly use the items in the 
+{\it \bfseries types module}, for more information see 
+\label{section:Advanced Usage Patterns}.
+
+
+\subsection{Typecode Extensions}
+
+\subsubsection{complexType}
+\label{subsubsection:complexType}
 The {\it complexType} flag provides many conveniences to the programmer
 pertaining to all aspects of dealing with complex types through the use of 
 metaclasses. This option is the preferred way of generating client bindings and
@@ -145,74 +182,6 @@ wsresp = port.WolframSearch(wsreq)
 # returned WolframSearchResponse type holder also has conveniences
 print 'SearchTime:', wsresp.Result.SearchTime
 \end{verbatim}
-
-\section{ServiceProxy}
-
-The \class{ServiceProxy} class provides calls to
-web services. A WSDL description must be available for the 
-service.  \class{ServiceProxy} uses \class{WSDLReader} internally to load 
-a \class{WSDL} instance.
-
-The user may build up a type codes module for use by \class{ServiceProxy}.
-
-\begin{classdesc}{ServiceProxy}{wsdl,\optional{, service\optional{, port}}}
-
-The \var{wsdl} argument may be either the URL of the service description 
-or an existing \class{WSDL} instance. The optional \var{service} and 
-\var{port} name the service and port within the WSDL description that 
-should be used. If not specified, the first defined service and port 
-will be used.
-
-The following keyword arguments may be used:
-
-\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
-    SOAP \code{Envelope}}
-\lineiii{\code{tracefile}}{\code{None}}{An object with a \code{write}
-    method, where packet traces will be recorded.}
-\end{tableiii}
-
-A \class{ServiceProxy} instance, once instantiated, exposes callable 
-methods that reflect the methods of the remote web service it 
-represents. These methods may be called like normal methods, using 
-*either* positional or keyword arguments (but not both).
-
-The methods can be called with either positional or keyword arguments;
-the argument types must be compatible with the types specified in the
-WSDL description.
-
-When a method of a \class{ServiceProxy} is called with positional 
-arguments, the arguments are mapped to the SOAP request based on 
-the parameter order defined in the WSDL description. If keyword 
-arguments are passed, the arguments will be mapped based on their 
-names.
-
-\end{classdesc}
-
-\subsection{Example}
-
-The following example, using ServiceProxy,  shows a simple language
-translation service that makes
-use of the complex type structures defined in the module BabelTypes:
-
-\begin{verbatim}
-from ZSI import ServiceProxy
-import BabelTypes
-
-service = ServiceProxy('http://www.xmethods.net/sd/BabelFishService.wsdl',
-		       typesmodule=BabelTypes)
-value = service.BabelFish('en_de', 'This is a test!')
-\end{verbatim}
-
-The return value from a proxy method depends on the SOAP signature. If the 
-remote service returns a single value, that value will be returned. If the 
-remote service returns multiple ``out'' parameters, the return value of the 
-proxy method will be a dictionary containing the out parameters indexed by 
-name.  Because \class{ServiceProxy} makes use of the ZSI serialization / 
-deserialization engine, complex return types are supported.  This means 
-that an aggregation of primitives can be returned from or passed to a service
-invocation according to any predefined hierarchical structure.
-
 
 \section{Code Generation from WSDL and XML Schema}
 
@@ -314,7 +283,7 @@ option we passed to wsdl2py will come in handy.  This caused the creation of
 functions for getting and setting elements and attributes of the type, class 
 properties for each element, and convenience functions for creating new instances
 of elements of complex types.  This functionality is explained in detail in 
-subsection~\ref{subsection:complexType}.
+subsection~\ref{subsubsection:complexType}.
 
 Once the request instance is populated, calling the remote service is easy.  Using
 the port proxy we call the method we are interested in.  An instance of the python
@@ -335,3 +304,9 @@ print 'Search Time:', resp.Result.SearchTime
 \end{verbatim}
 
 Refer to the wsdl for {\it WolframSearchService} for more details on the returned information.
+
+
+\section{Advanced Usage Patterns}
+Not done.
+
+
