@@ -1,6 +1,6 @@
 # $Id$
 
-__all__ = ['wsdl2python', 'utility', 'containers']
+__all__ = ['wsdl2python', 'utility', 'containers', 'commands']
 
 class WsdlGeneratorError(Exception):
     pass
