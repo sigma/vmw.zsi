@@ -21,7 +21,7 @@ To run only "local" tests:
 To run only "network" tests:
     %./runTests.py net
 
-To run only tests against the wsdl2dispatch.py tool:
+To run only tests against the wsdl2dispatch tool:
     %./runTests.py dispatch
 
 
@@ -89,7 +89,7 @@ Configuration:
     
     "tracefile" -- show XML of individual messages as serialized/parsed.
     "debug" -- turn on verbose debugging information.
-    "skip" -- skip generation (wsdl2py.py and wsdl2dispatch.py)
+    "skip" -- skip generation (wsdl2py and wsdl2dispatch)
     "twisted" -- use twisted.web.client
 
 	[dispatch]

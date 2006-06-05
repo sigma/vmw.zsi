@@ -76,7 +76,7 @@ def wsdl2py(args=None):
     # Basic options
     op.add_option("-f", "--file",
                   action="store", dest="file", default=None, type="string",
-                  help="file to load wsdl from")
+                  help="FILE to load wsdl from")
     op.add_option("-u", "--url",
                   action="store", dest="url", default=None, type="string",
                   help="URL to load wsdl from")
@@ -117,8 +117,8 @@ def wsdl2py(args=None):
                   action="store", dest="types", default=None, type="string",
                   help="file to load types from")
     op.add_option("-o", "--output-dir",
-                  action="store", dest="output_directory", default=".", type="string",
-                  help="file to load types from")
+                  action="store", dest="output_dir", default=".", type="string",
+                  help="Write generated files to OUTPUT_DIR")
     op.add_option("-s", "--simple-naming",
                   action="store_true", dest="simple_naming", default=False,
                   help="Simplify generated naming.")
@@ -202,17 +202,17 @@ def wsdl2py(args=None):
     if options.types != None:
         wsm.setTypesModuleName(options.types)
     if options.schema is False:
-         fd = open(os.path.join(options.output_directory, '%s.py' %wsm.getClientModuleName()), 'w+')
+         fd = open(os.path.join(options.output_dir, '%s.py' %wsm.getClientModuleName()), 'w+')
          # simple naming writes the messages to a separate file
          if not options.simple_naming:
              wsm.writeClient(fd)
          else: # provide a separate file to store messages to.
-             msg_fd = open(os.path.join(options.output_directory, '%s.py' %wsm.getMessagesModuleName()), 'w+')
+             msg_fd = open(os.path.join(options.output_dir, '%s.py' %wsm.getMessagesModuleName()), 'w+')
              wsm.writeClient(fd, msg_fd=msg_fd)
              msg_fd.close()
          fd.close()
 
-    fd = open( os.path.join(options.output_directory, '%s.py' %wsm.getTypesModuleName()), 'w+')
+    fd = open( os.path.join(options.output_dir, '%s.py' %wsm.getTypesModuleName()), 'w+')
     wsm.writeTypes(fd)
     fd.close()
 
@@ -243,9 +243,9 @@ def wsdl2dispatch(args=None):
                   help="debug output")
     op.add_option("-t", "--types",
                   action="store", dest="types", default=None, type="string",
-                  help="file to load types from")
+                  help="Write generated files to OUTPUT_DIR")
     op.add_option("-o", "--output-dir",
-                  action="store", dest="output_directory", default=".", type="string",
+                  action="store", dest="output_dir", default=".", type="string",
                   help="file to load types from")
     op.add_option("-s", "--simple-naming",
                   action="store_true", dest="simple_naming", default=False,
@@ -285,6 +285,6 @@ def wsdl2dispatch(args=None):
             ss = ServiceDescription(do_extended=options.extended)
 
     ss.fromWSDL(wsdl)
-    fd = open( os.path.join(options.output_directory, ss.getServiceModuleName()+'.py'), 'w+')
+    fd = open( os.path.join(options.output_dir, ss.getServiceModuleName()+'.py'), 'w+')
     ss.write(fd)
     fd.close()

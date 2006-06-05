@@ -20,6 +20,7 @@ at the provided URL.
 \item[-x, ---schema] Just process a schema (xsd) file and generate the types
 mapping file.
 \item[-d, ---debug] Output verbose debugging messages during code generation.
+\item[-o OUTPUT_DIR, ---output-dir=OUTPUT_DIR] Write generated files to OUTPUT_DIR.
 \end{description}
 
 \subsubsection{Typecode Extensions (Stable) }
@@ -194,7 +195,7 @@ which provides a service for searching the popular MathWorld site,
 \url{http://mathworld.wolfram.com/}, among others.
 
 \begin{verbatim}
-wsdl2py.py --complexType --url=http://webservices.wolfram.com/services/SearchServices/WolframSearch2.wsdl
+wsdl2py --complexType --url=http://webservices.wolfram.com/services/SearchServices/WolframSearch2.wsdl
 \end{verbatim}
 
 Run the above command to generate the service and type files.  wsdl2py uses

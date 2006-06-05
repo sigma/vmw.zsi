@@ -238,7 +238,7 @@ class ServiceTestCase(unittest.TestCase):
         
     _wsdl = {}
     def _generate(self):
-        """call the wsdl2py.py and wsdl2dispatch.py scripts and
+        """call the wsdl2py and wsdl2dispatch scripts and
         automatically add the "-f" or "-u" argument.  Other args
         can be appended via the "wsdl2py_args" and "wsdl2dispatch_args"
         instance attributes.
@@ -266,7 +266,7 @@ class ServiceTestCase(unittest.TestCase):
             
         try:
             # Client Stubs
-            wsdl2py = ['wsdl2py.py'] + args + self.wsdl2py_args
+            wsdl2py = ['wsdl2py'] + args + self.wsdl2py_args
             try:
                 exit = subprocess.call(wsdl2py)
             except OSError, ex:
@@ -280,7 +280,7 @@ class ServiceTestCase(unittest.TestCase):
             
             # Service Stubs
             if '-x' not in self.wsdl2py_args:
-                wsdl2dispatch = (['wsdl2dispatch.py'] + args + 
+                wsdl2dispatch = (['wsdl2dispatch'] + args + 
                         self.wsdl2dispatch_args)
                 try:
                     exit = subprocess.call(wsdl2dispatch)

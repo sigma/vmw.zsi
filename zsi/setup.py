@@ -47,7 +47,7 @@ if hasSetuptools:
 
 # non-setuptools
 else:
-	additional_params['scripts'] = ["scripts/wsdl2py.py", "scripts/wsdl2dispatch.py"]
+	additional_params['scripts'] = ["scripts/wsdl2py", "scripts/wsdl2dispatch"]
 
 setup(
     name="ZSI",
