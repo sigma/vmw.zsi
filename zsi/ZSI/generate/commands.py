@@ -217,7 +217,7 @@ def wsdl2py(args=None):
     fd.close()
 
 
-def wsdl2dispatch():
+def wsdl2dispatch(args=None):
     """
     wsdl2dispatch
     
@@ -250,7 +250,11 @@ def wsdl2dispatch():
     op.add_option("-s", "--simple-naming",
                   action="store_true", dest="simple_naming", default=False,
                   help="Simplify generated naming.")
-    (options, args) = op.parse_args()
+    
+    if args is None:
+        (options, args) = op.parse_args()
+    else:
+        (options, args) = op.parse_args(args)
 
     if options.simple_naming:
         ServiceDescription.server_module_suffix = '_interface'
