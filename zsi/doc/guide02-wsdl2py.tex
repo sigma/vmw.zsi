@@ -1,7 +1,8 @@
 \chapter{WSDL/XMLSchema python code generation}
 
 Handling XML Schema (see \citetitle[http://www.w3.org/XML/Schema]{XML Schema specification}) 
-is one of the more difficult aspects of using WSDL.  
+is one of the more difficult aspects of using WSDL (see
+\citetitle[http://www.w3.org/TR/wsdl]{The Web Services Description Language}.  
 Using wsdl2py generates a module with stub code for the client interface,
 and a "types" module that contains typecode representations of the XML Schema types and elements.  The generated typecodes are registered in a global schema instance, and once the "types" module is imported by an application all the global elements declarations and type definitions are available everywhere (see section ??).  
 
@@ -81,53 +82,76 @@ simply wrappers for the contents of individual namespaces.  The inner classes
 are the typecode representations of global {\it type definitions} (suffix {\it \bfseries _Def}), 
 and {\it element declarations} (suffix {\it \bfseries _Dec}).
 
-The majority of users will not need to directly use the items in the 
-{\it \bfseries types module}, for more information see 
-\label{section:Advanced Usage Patterns}.
+\subsubsection{understanding the generated typecodes}
+The generated inner typecode classes come in two flavors, as mentioned above. 
+{\it element declarations} can be serialized into XML, generally {\it type
+definitions} cannot. In very simple terms, the {\it name} attribute of an {\it element declaration} is serialized into an XML tag, but {\it type
+definitions} lack this information so they cannot be directly serialized into an
+XML instance.  Most {\it element declaration}s declare a {\it type} attribute,
+this must reference a {\it type definition}.  Considering the above scenario, a
+generated {\it TypeCode} class representing an {\it element declaration} will
+subclass the generated {\it TypeCode} class representing the {\it type 
+definition}.
 
+\paragraph{pyclass}
+All instances of generated {\it TypeCode} classes will have a {\it pyclass}
+attribute, instances of the {\it pyclass} can be created to store the data
+representing an {\it element declaration}.  The {\it pyclass} itself has a {\it
+typecode} attribute, which is a reference to the {\it
+TypeCode} instance describing the data, thus making {\it pyclass} instances 
+self-describing. 
+When parsing an XML instance the data will be marshalled into a {\it pyclass}
+instance.
+
+\paragraph{aname}
+The {\it aname} is a {\it TypeCode} instance attribute, its value is a string representing the
+attribute name used to reference data representing an element declaration. The set 
+of {\it XMLSchema} element names is {\it NCName}, this is a superset of ordinary
+ identifiers in {\it python}.
+
+\citetitle[http://www.w3.org/TR/REC-xml-names/]{Namespaces in XML}
+
+\begin{verbatim}
+From Namespaces in XML
+	NCName	 ::=	(Letter | '_') (NCNameChar)*
+	NCNameChar	 ::=	Letter | Digit | '.' | '-' | '_' | CombiningChar | Extender
+
+From Python Reference Manual (2.3 Identifiers and keywords)
+	identifier	::=	(letter|"_") (letter | digit | "_")*
+
+Default set of anames
+	ANAME	::=	("_") (letter | digit | "_")*
+\end{verbatim}
+
+\paragraph{transform} {\it NCName} into an {\it ANAME}
+\begin{enumerate}
+\item preprend "_"
+\item character not in set (letter \verb!|! digit \verb!|! "_") change to "_"
+\end{enumerate}
+
+\paragraph{Attribute Declarations: attrs_aname}
+The {\it attrs_aname} is a {\it TypeCode} instance attribute, its value is a string representing the
+attribute name used to reference a dictionary, containing data representing
+attribute declarations.  The keys of this dictionary are the
+\verb!(namespace,name)! tuples, the value of each key represents the value of
+the attribute.
+
+
+\paragraph{Mixed Text Content: mixed_aname}
 
 \subsection{Typecode Extensions}
 
-\subsubsection{complexType}
+\subsubsection{--complexType}
 \label{subsubsection:complexType}
-The {\it complexType} flag provides many conveniences to the programmer
-pertaining to all aspects of dealing with complex types through the use of 
-metaclasses. This option is the preferred way of generating client bindings and
-types with the {\it wsdl2py} command.  The naming conventions used for all the
-generated convenince functions make use of the typecode's {\it aname} attribute.
- By default wsdl2py appends an ``\verb!_!'' to the aname of a complex type and
- its elements.  For example, a complex type named ``\verb!employee!'' would have
- aname, ``\verb!_employee!''.
+The {\it complexType} flag provides many conveniences to the programmer. This 
+option is tested and reliable, and highly recommended by the authors.  
 
-For the descriptions below we will use the following complex types for
-reference.  The scenario assumes one is making a remote call to operation, {\it
-WolframSearch}, which takes a request of element, {\it WolframSearch} as shown
-below. {\small Note: {\it WolframSearchOptions} has been modified for this example.}
-\begin{verbatim}
-<xsd:complexType name='WolframSearchOptions'>
-  <xsd:sequence>
-    <xsd:element name='Query' minOccurs='0' maxOccurs='1' type='xsd:string'/>
-    <xsd:element name='Limit' minOccurs='0' maxOccurs='1' type='xsd:int'/>
-  </xsd:sequence>
-  <xsd:attribute name='timeout' type='xsd:double' />
-</xsd:complexType>
-<xsd:element name='WolframSearch'>
-  <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name='Options' minOccurs='0' maxOccurs='1' type='ns1:WolframSearchOptions'/>
-    </xsd:sequence>
-  </xsd:complexType>
-</xsd:element>
-\end{verbatim}
-
-\begin{verbatim}
-# Create a request object to operation WolframSearch
-#   to be used as an example below
-from WolframSearchService_services import *
-
-port = WolframSearchServiceLocator().getWolframSearchmyPortType()
-wsreq = WolframSearchRequest()
-\end{verbatim}
+\paragraph{low-level description}
+When enabled the \verb!__metaclass__! attribute will be set on all generated 
+{\it pyclass}es.  The metaclass will introspect the {\it typecode} attribute of 
+{\it pyclass}, and create a set of helper methods for each element
+and attribute declared in the {\it complexType} definition.  This option simply
+adds wrappers for dealing with content, it doesn't modify the generation scheme.
 
 \begin{description}
 \item[Getters/Setters] A getter and setter function is defined for each element
@@ -154,6 +178,34 @@ property, \verb!Options!, which calls functions \verb!get_element__Options! and
 \verb!set_element__Options! under the hood.
 
 \end{description}
+
+\begin{verbatim}
+<xsd:complexType name='WolframSearchOptions'>
+  <xsd:sequence>
+    <xsd:element name='Query' minOccurs='0' maxOccurs='1' type='xsd:string'/>
+    <xsd:element name='Limit' minOccurs='0' maxOccurs='1' type='xsd:int'/>
+  </xsd:sequence>
+  <xsd:attribute name='timeout' type='xsd:double' />
+</xsd:complexType>
+<xsd:element name='WolframSearch'>
+  <xsd:complexType>
+    <xsd:sequence>
+      <xsd:element name='Options' minOccurs='0' maxOccurs='1' type='ns1:WolframSearchOptions'/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:element>
+\end{verbatim}
+
+\begin{verbatim}
+# Create a request object to operation WolframSearch
+#   to be used as an example below
+from WolframSearchService_services import *
+
+port = WolframSearchServiceLocator().getWolframSearchmyPortType()
+wsreq = WolframSearchRequest()
+\end{verbatim}
+
+
 
 \begin{verbatim}
 # sample usage of the generated code
