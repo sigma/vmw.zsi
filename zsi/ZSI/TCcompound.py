@@ -336,10 +336,14 @@ class ComplexType(TypeCode):
         elif n is not None:
             self.set_attribute_id(elem, objid)
 
-        if self.pyclass:
+        if self.pyclass and type(self.pyclass) is type:
+            f = lambda attr: getattr(pyobj, attr, None)
+        elif self.pyclass:
             d = pyobj.__dict__
+            f = lambda attr: d.get(attr)
         else:
             d = pyobj
+            f = lambda attr: pyobj.get(attr)
             if TypeCode.typechecks and type(d) != types.DictType:
                 raise TypeError("Classless struct didn't get dictionary")
 
@@ -366,7 +370,7 @@ class ComplexType(TypeCode):
 
             # Regular handling of declared elements
             aname = what.aname
-            v = d.get(aname)
+            v = f(aname)
             indx += 1
             if what.minOccurs == 0 and v is None: 
                 continue
