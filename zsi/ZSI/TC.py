@@ -36,8 +36,8 @@ def _get_xsitype(pyclass):
 
     return (None,None)
 
-def _get_type_definition(namespaceURI, name):
-    return SchemaInstanceType.getTypeDefinition(namespaceURI, name)
+def _get_type_definition(namespaceURI, name, **kw):
+    return SchemaInstanceType.getTypeDefinition(namespaceURI, name, **kw)
 
 def _get_global_element_declaration(namespaceURI, name, **kw):
     return SchemaInstanceType.getElementDeclaration(namespaceURI, name, **kw)
@@ -47,6 +47,7 @@ def _get_substitute_element(elt, what):
 
 def _has_type_definition(namespaceURI, name):
     return SchemaInstanceType.getTypeDefinition(namespaceURI, name) is not None
+
 
 
 class SchemaInstanceType(type):
@@ -94,7 +95,7 @@ class SchemaInstanceType(type):
 
         raise TypeError, 'SchemaInstanceType must be an ElementDeclaration or TypeDefinition '
 
-    def getTypeDefinition(cls, namespaceURI, name):
+    def getTypeDefinition(cls, namespaceURI, name, lazy=False):
         '''Grab a type definition, returns a typecode class definition
         because the facets (name, minOccurs, maxOccurs) must be provided.
  
@@ -102,10 +103,13 @@ class SchemaInstanceType(type):
            namespaceURI -- 
            name -- 
         '''
-        return cls.types.get((namespaceURI, name), None)
+        klass = cls.types.get((namespaceURI, name), None)
+        if lazy and klass is not None:
+            return _Mirage(klass)
+        return klass
     getTypeDefinition = classmethod(getTypeDefinition)
 
-    def getElementDeclaration(cls, namespaceURI, name, isref=False):
+    def getElementDeclaration(cls, namespaceURI, name, isref=False, lazy=False):
         '''Grab an element declaration, returns a typecode instance
         representation or a typecode class definition.  An element 
         reference has its own facets, and is local so it will not be
@@ -118,7 +122,10 @@ class SchemaInstanceType(type):
         '''
         key = (namespaceURI, name)
         if isref:
-            return cls.elements.get(key,None)
+            klass = cls.elements.get(key,None)
+            if klass is not None and lazy is True:
+                return _Mirage(klass)
+            return klass
  
         typecode = cls.element_typecode_cache.get(key, None)
         if typecode is None:
@@ -139,7 +146,7 @@ class ElementDeclaration:
     literal = NCName
     '''
     __metaclass__ = SchemaInstanceType
-
+    
 
 class TypeDefinition:
     '''Typecodes subclass to represent a Global Type Definition by
@@ -148,7 +155,7 @@ class TypeDefinition:
     type = (namespaceURI, NCName)
     '''
     __metaclass__ = SchemaInstanceType
-
+    
     def getSubstituteType(self, elt, ps):
         '''if xsi:type does not match the instance type attr,
         check to see if it is a derived type substitution.
@@ -205,7 +212,8 @@ class TypeCode:
     '''
     tag = None
     type = (None,None)
-    typechecks = True
+    #typechecks = True
+    typechecks = False
     attribute_typecode_dict = None
     logger = _GetLogger('ZSI.TC.TypeCode')
 
@@ -1988,6 +1996,55 @@ class List(SimpleType):
         el.createAppendTextNode(textNode)
 
 
+class _Mirage:
+    '''Used with SchemaInstanceType for lazy evaluation, eval during serialize or 
+    parse as needed.  Mirage is callable, TypeCodes are not.  When called it returns the
+    typecode.
+    '''
+    def __init__(self, klass):
+        self.pyclass = True
+        self.klass = klass
+        if issubclass(klass, ElementDeclaration):
+            self.__call__ = self._hide_element
+            
+    def _hide_type(self, pname, aname, minOccurs=0, maxOccurs=1, nillable=False, **kw):
+        self.__call__ = self._reveal_type
+        
+        # store all attributes, make some visable for pyclass_type
+        self.__kw = kw
+        self.minOccurs,self.maxOccurs,self.nillable = minOccurs,maxOccurs,nillable
+        self.nspname,self.pname,self.aname = None,pname,aname
+        if type(self.pname) in (tuple,list):
+            self.nspname,self.pname = pname
+        
+        return self
+        
+    def _hide_element(self, minOccurs=0, maxOccurs=1, nillable=False, **kw):
+        self.__call__ = self._reveal_element
+        
+        # store all attributes, make some visable for pyclass_type
+        self.__kw = kw
+        self.nspname = self.klass.schema
+        self.pname = self.klass.literal
+        #TODO: Fix hack
+        self.aname = '_%s' %self.pname
+        self.minOccurs,self.maxOccurs,self.nillable = minOccurs,maxOccurs,nillable
+        
+        return self
+    
+    def _reveal_type(self, *args, **kw):
+        return self.klass(pname=self.pname, 
+                            aname=self.aname, minOccurs=self.minOccurs, 
+                            maxOccurs=self.maxOccurs, nillable=self.nillable, 
+                            **self.__kw)
+        
+    def _reveal_element(self, *args, **kw):
+        return self.klass(minOccurs=self.minOccurs, 
+                            maxOccurs=self.maxOccurs, nillable=self.nillable, 
+                            **self.__kw)
+    __call__ = _hide_type
+
+
 class _GetPyobjWrapper:
     '''Get a python object that wraps data and typecode.  Used by
     <any> parse routine, so that typecode information discovered
@@ -2036,6 +2093,7 @@ from TCnumbers import *
 from TCtimes import *
 from TCcompound import *
 from TCapache import *
+    
 
 f = lambda x: type(x) == types.ClassType and issubclass(x, TypeCode) and getattr(x, 'type', None) is not None
 TYPES = filter(f, map(lambda y:eval(y),dir()))

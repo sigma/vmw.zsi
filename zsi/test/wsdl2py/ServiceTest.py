@@ -42,6 +42,7 @@ CONFIG_PARSER.read(CONFIG_FILE)
 DEBUG = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'debug')
 SKIP = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'skip')
 TWISTED = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'twisted')
+LAZY = CONFIG_PARSER.getboolean(SECTION_CONFIGURATION, 'lazy')
 OUTPUT = CONFIG_PARSER.get(SECTION_CONFIGURATION, 'output') or sys.stdout
 
 if DEBUG:
@@ -154,6 +155,9 @@ class ServiceTestCase(unittest.TestCase):
 
         if TWISTED:
             self.wsdl2py_args.append('--twisted')
+
+        if LAZY:
+            self.wsdl2py_args.append('--lazy')
 
         unittest.TestCase.__init__(self, methodName)
 
@@ -271,6 +275,7 @@ class ServiceTestCase(unittest.TestCase):
                 exit = subprocess.call(wsdl2py)
             except OSError, ex:
                 warnings.warn("TODO: Not sure what is going on here?")
+                exit = -1
             
             #TODO: returncode WINDOWS?
             self.failUnless(os.WIFEXITED(exit), 

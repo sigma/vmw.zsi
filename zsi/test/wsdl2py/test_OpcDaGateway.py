@@ -66,7 +66,8 @@ class OPCServiceTest(ServiceTestCase):
         import time
         pyobj = self.client_module.ReadSoapOut()
         pyobj.RItemList = pyobj.new_RItemList()
-        item = pyobj.RItemList.Items = pyobj.RItemList.new_Items()
+        item = pyobj.RItemList.new_Items()
+        pyobj.RItemList.Items = [item,]
         item.typecode.ofwhat[1].processContents = 'lax'
         item.Value = 123
         s = str(ZSI.SoapWriter().serialize(pyobj))

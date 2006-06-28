@@ -36,6 +36,11 @@ def SetUpTwistedClient(option, opt, value, parser, *args, **kwargs):
     ServiceHeaderContainer.imports.remove('from ZSI import client')
     ServiceHeaderContainer.imports.append('from ZSI.twisted import client')
     
+    
+def SetUpLazyEvaluation(option, opt, value, parser, *args, **kwargs):
+    from ZSI.generate.containers import TypecodeContainerBase
+    TypecodeContainerBase.lazy = True
+    
 
 def formatSchemaObject(fname, schemaObj):
     """ In the case of a 'schema only' generation (-s) this creates
@@ -98,6 +103,12 @@ def wsdl2py(args=None):
                   callback_kwargs={'module':'ZSI.generate.pyclass', 
                       'metaclass':'pyclass_type'},
                   help="add convenience functions for complexTypes, including Getters, Setters, factory methods, and properties (via metaclass). *** DONT USE WITH --simple-naming ***")
+    
+    # Lazy Evaluation of Typecodes (done at serialization/parsing when needed).
+    op.add_option("-l", "--lazy",
+                  action="callback", callback=SetUpLazyEvaluation, 
+                  callback_kwargs={},
+                  help="EXPERIMENTAL: recursion error solution, lazy evalution of typecodes")
     
     # Use Twisted
     op.add_option("-w", "--twisted",

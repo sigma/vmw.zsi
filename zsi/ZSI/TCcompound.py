@@ -77,6 +77,8 @@ def _get_any_instances(ofwhat, d):
             continue
         any_keys.append(aname)
     return any_keys
+        
+
 
 
 class ComplexType(TypeCode):
@@ -181,6 +183,10 @@ class ComplexType(TypeCode):
             
         any = None
         for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
+            
+            # retrieve typecode if it is hidden
+            if callable(what): what = what()
+            
             # Loop over all available kids
             if debug: 
                 self.logger.debug("what: (%s,%s)", what.nspname, what.pname)
@@ -360,6 +366,10 @@ class ComplexType(TypeCode):
         while indx < lenofwhat:
             occurs = 0
             what = self.ofwhat[indx]
+            
+            # retrieve typecode if hidden
+            if callable(what): what = what()
+            
             if debug:
                 self.logger.debug('serialize what -- %s', 
                                   what.__class__.__name__)

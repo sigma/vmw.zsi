@@ -1036,6 +1036,7 @@ class TypesHeaderContainer(TypesContainerBase):
         'import ZSI',
         'import ZSI.TCcompound',
         'from ZSI.TC import ElementDeclaration,TypeDefinition',
+        'from ZSI.TC import _get_type_definition as GTD, _get_global_element_declaration as GED',
     ]
     logger = _GetLogger("TypesHeaderContainer")
 
@@ -1087,6 +1088,7 @@ class TypecodeContainerBase(TypesContainerBase):
     mixed_content_aname = 'text'
     attributes_aname = 'attrs'
     metaclass = None
+    lazy = False
     logger = _GetLogger("TypecodeContainerBase")
 
     def __init__(self, do_extended=False, extPyClasses=None):
@@ -1111,12 +1113,14 @@ class TypecodeContainerBase(TypesContainerBase):
         self.extraFlags = ''
         self.attrComponents = None
 
+        # --> EXTENDED
         # Used if an external pyclass was specified for this type.
         self.do_extended = do_extended
         if extPyClasses is None:
             self.extPyClasses = {}
         else:
             self.extPyClasses = extPyClasses
+        # <--
 
     def getvalue(self):
         out = ContainerBase.getvalue(self)
@@ -1193,38 +1197,46 @@ class TypecodeContainerBase(TypesContainerBase):
 
         return self.mangle( classname )
 
+    # --> EXTENDED
     def hasExtPyClass(self):
         if self.name in self.extPyClasses:
             return True
         else:
             return False
+    # <--
 
     def getPyClass(self):
         '''Name of generated inner class that will be specified as pyclass.
         '''
+        # --> EXTENDED
         if self.hasExtPyClass():
             classInfo = self.extPyClasses[self.name]
             return ".".join(classInfo)
-        else:
-            return 'Holder'
+        # <-- 
+        
+        return 'Holder'
     
     def getPyClassDefinition(self):
         '''Return a list containing pyclass definition.
         '''
         kw = KW.copy()
+        
+        # --> EXTENDED
         if self.hasExtPyClass():
             classInfo = self.extPyClasses[self.name]
             kw['classInfo'] = classInfo[0]
             return ["%(ID3)simport %(classInfo)s" %kw ]
+        # <--
         
         kw['pyclass'] = self.getPyClass()
-        
         definition = []
         definition.append('%(ID3)sclass %(pyclass)s:' %kw)
         if self.metaclass is not None:
             kw['type'] = self.metaclass
             definition.append('%(ID4)s__metaclass__ = %(type)s' %kw)
         definition.append('%(ID4)stypecode = self' %kw)
+        
+        #TODO: Remove pyclass holder __init__ -->
         definition.append('%(ID4)sdef __init__(self):' %kw)
         definition.append('%(ID5)s# pyclass' %kw)
 
@@ -1236,8 +1248,9 @@ class TypecodeContainerBase(TypesContainerBase):
             kw['element'] = el
             definition.append('%(ID2)s%(element)s' %kw)
         definition.append('%(ID5)sreturn' %kw)
-
-        # JRB give pyclass a descriptive name
+        # <--
+        
+        # pyclass descriptive name
         if self.name is not None:
             kw['name'] = self.name
             definition.append(\
@@ -1291,7 +1304,9 @@ class TypecodeContainerBase(TypesContainerBase):
 
 
     def _setUpElements(self):
-        """This method ONLY sets up the instance attributes.
+        """TODO: Remove this method
+        
+        This method ONLY sets up the instance attributes.
         Dependency instance attribute:
             mgContent -- expected to be either a complex definition
                 with model group content, a model group, or model group 
@@ -1530,23 +1545,26 @@ class TypecodeContainerBase(TypesContainerBase):
                     if ns in SCHEMA.XSD_LIST:
                         tpc = BTI.get_typeclass(global_type[1],global_type[0])
                         tc.klass = tpc
-                    elif (self.ns,self.name) == global_type:
-                        # elif self._isRecursiveElement(c)
-                        # TODO: Remove this, it only works for 1 level.
-                        tc.setStyleRecursion()
+#                    elif (self.ns,self.name) == global_type:
+#                        # elif self._isRecursiveElement(c)
+#                        # TODO: Remove this, it only works for 1 level.
+#                        tc.setStyleRecursion()
                     else:
-                        tc.klass = '%s.%s' % (NAD.getAlias(ns),
-                            type_class_name(global_type[1]))
+                        tc.setGlobalType(*global_type)
+#                        tc.klass = '%s.%s' % (NAD.getAlias(ns),
+#                            type_class_name(global_type[1]))
                     del ns
                 elif content is not None and content.isLocal() and content.isComplex():
                     tc.name = c.getAttribute('name')
-                    tc.klass = 'self.__class__.%s' % (element_class_name(tc.name) )
+                    tc.klass = 'self.__class__.%s' % (element_class_name(tc.name))
+                    #TODO: Not an element reference, confusing nomenclature
                     tc.setStyleElementReference()
                     self.localTypes.append(c)
                 elif content is not None and content.isLocal() and content.isSimple():
                     # Local Simple Type
                     tc.name = c.getAttribute('name')
                     tc.klass = 'self.__class__.%s' % (element_class_name(tc.name))
+                    #TODO: Not an element reference, confusing nomenclature
                     tc.setStyleElementReference()
                     self.localTypes.append(c)
                 else:
@@ -1554,10 +1572,11 @@ class TypecodeContainerBase(TypesContainerBase):
 
             elif c.isReference():
                 # element references
-                ns = c.getAttribute('ref')[0]
-                tc.klass = '%s.%s' % (NAD.getAlias(ns),
-                                          element_class_name(c.getAttribute('ref')[1]) )
+                ref = c.getAttribute('ref')
+#                tc.klass = '%s.%s' % (NAD.getAlias(ref[0]),
+#                                          element_class_name(ref[1]) )
                 tc.setStyleElementReference()
+                tc.setGlobalType(*ref)
             else:
                 raise ContainerError, 'unexpected item: %s' % c.getItemTrace()
 
@@ -1723,6 +1742,7 @@ class TcListComponentContainer(ContainerBase):
         self.qualified = qualified
         self.name = None
         self.klass = None
+        self.global_type = None
         
         self.min = None
         self.max = None
@@ -1738,6 +1758,9 @@ class TcListComponentContainer(ContainerBase):
     def setProcessContents(self, processContents):
         self.processContents = processContents
 
+    def setGlobalType(self, namespace, name):
+        self.global_type = (namespace, name)
+        
     def setStyleElementDeclaration(self):
         '''set the element style.
             standard -- GED or local element
@@ -1758,9 +1781,7 @@ class TcListComponentContainer(ContainerBase):
         self.style = 'anyElement'
 
     def setStyleRecursion(self):
-        '''set the element style.
-            recursion -- do lazy evaluation of element/type because
-               the element contains an instance of itself.
+        '''TODO: Change name or remove. For Element Declarations? not recursion
         '''
         self.style = 'recursion'
 
@@ -1778,22 +1799,39 @@ class TcListComponentContainer(ContainerBase):
                % (self.processContents)
 
     def _getvalue(self):
+        kw = {'occurs':self._getOccurs(), 
+              'aname':self.getAttributeName(self.name),
+              'klass':self.klass,
+              'lazy':TypecodeContainerBase.lazy,
+              'typed':'typed=False',
+              'encoded':'encoded=kw.get("encoded")'}
+        
+        gt = self.global_type
+        if gt is not None:
+            kw['nsuri'],kw['type'] = gt
+            
         if self.style == 'standard':
-            pname = '"%s"' %self.name
+            kw['pname'] = '"%s"' %self.name
             if self.qualified is True:
-                pname = '(ns,"%s")' %self.name
-            return '%s(pname=%s, aname="%s", %s, encoded=kw.get("encoded"))' \
-                   % (self.klass, pname,
-                      self.getAttributeName(self.name), self._getOccurs())
-        elif self.style == 'ref':
-            return '%s(%s, encoded=kw.get("encoded"))' % (self.klass, self._getOccurs())
-        elif self.style == 'anyElement':
-            return 'ZSI.TC.AnyElement(aname="%s", %s, %s)' \
-                %(self.getAttributeName(self.name), self._getOccurs(), self._getProcessContents())
-        elif self.style == 'recursion':
-            return 'ZSI.TC.AnyElement(aname="%s", %s, %s)' \
-                % (self.getAttributeName(self.name), self._getOccurs(), self._getProcessContents())
+                kw['pname'] =  '(ns,"%s")' %self.name
+            if gt is None:
+                return '%(klass)s(pname=%(pname)s, aname="%(aname)s", %(occurs)s, %(typed)s, %(encoded)s)' %kw
+            return 'GTD("%(nsuri)s","%(type)s",lazy=%(lazy)s)(pname=%(pname)s, aname="%(aname)s", %(occurs)s, %(typed)s, %(encoded)s)' %kw
+        
+        if self.style == 'ref':
+            if gt is None:
+                return '%(klass)s(%(occurs)s, %(encoded)s)' %kw
+            return 'GED("%(nsuri)s","%(type)s",lazy=%(lazy)s, isref=True)(%(occurs)s, %(encoded)s)' %kw
+        
+        kw['process'] = self._getProcessContents()
+        if self.style == 'anyElement':
+            return 'ZSI.TC.AnyElement(aname="%(aname)s", %(occurs)s, %(process)s)' %kw
+                  
+        if self.style == 'recursion':
+            return 'ZSI.TC.AnyElement(aname="%(aname)s", %(occurs)s, %(process)s)' %kw
 
+        raise RuntimeError, 'Must set style for typecode list generation'
+    
     def __str__(self):
         return self._getvalue()
    
@@ -1819,7 +1857,7 @@ class RPCMessageTcListComponentContainer(TcListComponentContainer):
             pname = '"%s"' %self.name
             if self.qualified is True:
                 pname = '(ns,"%s")' %self.name
-            return '%s(pname=%s, aname="%s", encoded=%s, %s)' \
+            return '%s(pname=%s, aname="%s", typed=False, encoded=%s, %s)' \
                    %(self.klass, pname, self.getAttributeName(self.name), 
                      encoded, self._getOccurs())
         elif self.style == 'ref':

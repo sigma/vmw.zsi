@@ -5,7 +5,7 @@
 
 import time, urlparse, socket
 from ZSI import _seqtypes, EvaluateException, WSActionException
-from ZSI.TC import _get_global_element_declaration, _get_type_definition, \
+from ZSI.TC import _get_global_element_declaration as GED, _get_type_definition as GTD, \
      _has_type_definition, AnyElement, AnyType, TypeCode
 from ZSI.TCcompound import ComplexType
 from ZSI.wstools.Namespaces import WSA_LIST
@@ -13,6 +13,10 @@ from ZSI.wstools.Namespaces import WSA_LIST
 
 class Address(object):
     '''WS-Address
+
+    Implemented is dependent on the default "wsdl2py" convention of generating aname,
+    so the attributes representing element declaration names should be prefixed with
+    an underscore.
     '''
     def __init__(self, addressTo=None, wsAddressURI=None, action=None):
         self.wsAddressURI = wsAddressURI
@@ -107,7 +111,7 @@ class Address(object):
         try:
             for nsuri,elements in kw.items():
                 for el in elements:
-                    typecode = _get_global_element_declaration(nsuri, el)
+                    typecode = GED(nsuri, el)
                     if typecode is None:
                         raise WSActionException, 'Missing namespace, import "%s"' %nsuri
 
@@ -153,19 +157,19 @@ class Address(object):
 
         # Set Message Information Headers
         # MessageID
-        typecode = _get_global_element_declaration(namespaceURI, "MessageID")
+        typecode = GED(namespaceURI, "MessageID")
         pyobjs.append(typecode.pyclass(messageID))
 
         # Action
-        typecode = _get_global_element_declaration(namespaceURI, "Action")
+        typecode = GED(namespaceURI, "Action")
         pyobjs.append(typecode.pyclass(action))
 
         # To
-        typecode = _get_global_element_declaration(namespaceURI, "To")
+        typecode = GED(namespaceURI, "To")
         pyobjs.append(typecode.pyclass(addressTo))
 
         # From
-        typecode = _get_global_element_declaration(namespaceURI, "From")
+        typecode = GED(namespaceURI, "From")
         mihFrom = typecode.pyclass()
         mihFrom._Address = self.anonymousURI
         pyobjs.append(mihFrom)
@@ -175,32 +179,14 @@ class Address(object):
                 raise EvaluateException, 'endPointReference must have a typecode attribute'
 
             if isinstance(endPointReference.typecode, \
-                _get_type_definition(namespaceURI ,'EndpointReferenceType')) is False:
+                GTD(namespaceURI ,'EndpointReferenceType')) is False:
                 raise EvaluateException, 'endPointReference must be of type %s' \
-                    %_get_type_definition(namespaceURI ,'EndpointReferenceType')
+                    %GTD(namespaceURI ,'EndpointReferenceType')
 
-            find = lambda what: isinstance(what,tc)
-            ncname = 'ReferencePropertiesType'
-            tc = _get_type_definition(namespaceURI, ncname)
-            what = filter(find, endPointReference.typecode.ofwhat)
-            if len(what) != 1:
-                raise EvaluateException,\
-                    'EPR must contain one element of type (%s,%s)' %(namespaceURI,ncname)
-
-            what = what[0]
-            ReferenceProperties = getattr(endPointReference, what.aname)
-             
-            #Assuming maxOccurs=1 
-            tc = AnyElement
-            what = filter(find, what.ofwhat)
-            if len(what) != 1:
-                raise EvaluateException, 'EPR must contain one <any>'
-
-            what = what[0]
-            any = getattr(ReferenceProperties, what.aname)
-
-            if not (what.maxOccurs=='unbounded' and type(any) in _seqtypes):
-                raise EvaluateException, 'ReferenceProperties <any> assumed maxOccurs unbounded'
+            ReferenceProperties = endPointReference._ReferenceProperties
+            any = ReferenceProperties._any or []
+            #if not (what.maxOccurs=='unbounded' and type(any) in _seqtypes):
+            #    raise EvaluateException, 'ReferenceProperties <any> assumed maxOccurs unbounded'
 
             for v in any:
                 if not hasattr(v,'typecode'):
@@ -227,10 +213,10 @@ class Address(object):
              (namespaceURI, "RelatesTo", address.getMessageID()),
              (namespaceURI, "To", self.anonymousURI),):
 
-            typecode = _get_global_element_declaration(nsuri, name)
+            typecode = GED(nsuri, name)
             pyobjs.append(typecode.pyclass(value))
 
-        typecode = _get_global_element_declaration(nsuri, "From")
+        typecode = GED(nsuri, "From")
         pyobj = typecode.pyclass()
         pyobj._Address = self.From
         pyobjs.append(pyobj)

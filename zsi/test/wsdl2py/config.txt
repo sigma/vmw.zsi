@@ -8,6 +8,7 @@
 #     debug -- turn on debugging
 #     skip -- skip generation steps, code generated don't generate again
 #     twisted -- Use twisted web client
+#     lazy -- use lazy typecode evaluation
 #     output -- file name where output will be stored, if unspecified test output goes to stdout
 #
 #  [dispatch] -- configuration for test_dispatch* tests
@@ -22,7 +23,8 @@ tracefile = False
 debug = False
 skip = False
 twisted = False
-output =
+lazy = False
+output = 
 
 [dispatch]
 host = localhost

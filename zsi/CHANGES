@@ -1,13 +1,16 @@
 Change for xxx released xxx:
-    -   Added ZSI.twisted package w/client and server, requires Python 2.4
-    -   If Python >= 2.4, build/install ZSI.twisted package
     -   Make XMLSchema.py work in cases where threading isn't built in
     -   Add client-side Cookie Support (Jorgen Frojk Kjaersgaard)
-    -   Add Typecode.typed to control xsi:type data system-wide
     -   For cookies, getheaders() is Python 2.3; use getallmatchingheaders
     -   In SoapWriter, put nsdecls on body, not envelope
     -   Record facets (restrictions) in XMLSchema.py <vchen@datapower.com>
     -   Remove Send()'s kwargs out of _args list <efrain@bogotron.net>
+    -   Replace many/most id() with _get_idstr() to hide negative numbers
+
+Change for 2.0.0 released xxx:
+    -   Added ZSI.twisted package w/client and server, requires Python 2.4
+    -   If Python >= 2.4, build/install ZSI.twisted package
+    -   Add Typecode.typed to control xsi:type data system-wide
     -   Replace many/most id() with _get_idstr() to hide negative numbers
 
 Changes for 1.7 released 16-Feb-2005:

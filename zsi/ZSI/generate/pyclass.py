@@ -143,7 +143,6 @@ class pyclass_type(type):
         return type.__new__(cls,classname,bases,classdict)
 
     def __create_functions_from_what(what):
- 
         def get(self):
             return getattr(self, what.aname)
         get.im_func = 'get_element_%s' %what.aname
@@ -151,34 +150,54 @@ class pyclass_type(type):
         if what.maxOccurs > 1:
             def set(self, value):
                 if not (value is None or hasattr(value, '__iter__')):
-                    value = [value]
+                    raise TypeError, 'expecting an iterable instance'
                 setattr(self, what.aname, value)
         else:
             def set(self, value):
                 setattr(self, what.aname, value)
 
-        pyclass = what.pyclass
         if isinstance(what, TC.ComplexType) or isinstance(what, TC.Array):
+            
             def new_func(self):
                 '''returns a mutable type
                 '''
-                return pyclass()
+                return what.pyclass()
             new_func.__name__ = 'new%s' %what.aname
-        elif pyclass is None:
-            def new_func(self, value):
-                '''value -- initialize value
-                NOT IMPLEMENTED FOR %s, UNSUPPORTED TYPECODE.
-                ''' %what.__class__
-                raise NotImplementedError,\
-                    'no support built in for %s right now' %what.__class__
-                    
-            new_func = None
-        else:
+            
+        elif not callable(what):
+            
             def new_func(self, value):
                 '''value -- initialize value
                 returns an immutable type
                 '''
-                return pyclass(value)
+                return what.pyclass(value)
+            new_func.__name__ = 'new%s' %what.aname
+            
+        elif (issubclass(what.klass, TC.ComplexType) or 
+              issubclass(what.klass, TC.Array)):
+            
+            def new_func(self):
+                '''returns a mutable type
+                '''
+                return what().pyclass()
+            new_func.__name__ = 'new%s' %what.aname
+            
+#        elif what.pyclass is None:
+#            def new_func(self, value):
+#                '''value -- initialize value
+#                NOT IMPLEMENTED FOR %s, UNSUPPORTED TYPECODE.
+#                ''' %what.__class__
+#                raise NotImplementedError,\
+#                    'no support built in for %s right now' %what.__class__
+#                    
+#            new_func = None
+        else:
+            
+            def new_func(self, value):
+                '''value -- initialize value
+                returns an immutable type
+                '''
+                return what().pyclass(value)
             new_func.__name__ = 'new%s' %what.aname
 
         get.func_name = 'get_element_%s' %what.aname
