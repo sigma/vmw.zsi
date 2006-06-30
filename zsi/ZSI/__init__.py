@@ -295,6 +295,26 @@ def _get_idstr(pyobj):
     return 'o%x' % x
 
 
+def _get_postvalue_from_absoluteURI(url):
+    """Bug [ 1513000 ] POST Request-URI not limited to "abs_path"
+    Request-URI = "*" | absoluteURI | abs_path | authority
+    
+    Not a complete solution, but it seems to work with all known
+    implementations.  ValueError thrown if bad uri.
+    """
+    cache = _get_postvalue_from_absoluteURI.cache
+    path = cache.get(url, '')
+    if not path:
+        scheme,authpath = url.split('://')
+        s = authpath.split('/', 1)
+        if len(s) == 2: path = '/%s' %s[1]
+        if len(cache) > _get_postvalue_from_absoluteURI.MAXLEN:cache.clear()
+        cache[url] = path
+    return path
+_get_postvalue_from_absoluteURI.cache = {}
+_get_postvalue_from_absoluteURI.MAXLEN = 20
+
+
 ##
 ##  Exception classes.
 class ZSIException(Exception):

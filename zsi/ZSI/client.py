@@ -5,7 +5,7 @@
 
 from ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
     EvaluateException, FaultFromFaultMessage, _child_elements, _attrs,\
-    _get_idstr, FaultException, WSActionException
+    _get_idstr, _get_postvalue_from_absoluteURI, FaultException, WSActionException
 from ZSI.auth import AUTH
 from ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
     _get_type_definition
@@ -260,7 +260,8 @@ class Binding:
             print >>self.trace, "_" * 33, time.ctime(time.time()), "REQUEST:"
             print >>self.trace, soapdata
 
-        scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
+        #scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
+        path = _get_postvalue_from_absoluteURI(url)
         self.h.putrequest("POST", path)
         self.h.putheader("Content-length", "%d" % len(soapdata))
         self.h.putheader("Content-type", 'text/xml; charset=utf-8')

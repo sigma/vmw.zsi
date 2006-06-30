@@ -1999,16 +1999,38 @@ class List(SimpleType):
 class _Mirage:
     '''Used with SchemaInstanceType for lazy evaluation, eval during serialize or 
     parse as needed.  Mirage is callable, TypeCodes are not.  When called it returns the
-    typecode.
+    typecode.  Tightly coupled with generated code.
+    
+    NOTE: **Must Use ClassType** for intended MRO of __call__ since setting it in
+    an instance attribute rather than a class attribute (will not work for object).
     '''
     def __init__(self, klass):
-        self.pyclass = True
         self.klass = klass
+        self.__reveal = False
+        self.__cache = None
         if issubclass(klass, ElementDeclaration):
             self.__call__ = self._hide_element
             
-    def _hide_type(self, pname, aname, minOccurs=0, maxOccurs=1, nillable=False, **kw):
+    def __str__(self):
+        msg = "<Mirage id=%s, Local Element %s>"
+        if issubclass(self.klass, ElementDeclaration):
+            msg = "<Mirage id=%s, GED %s>"
+        return  msg %(id(self), self.klass)
+            
+#    def __getattr__(self, attr):
+#        '''try to look just like the typecode.
+#        '''
+#        if self.__reveal is False:
+#            if self.__cache is None: self.__call__()
+#            return getattr(self.__cache, attr)
+#            
+#        raise AttributeError('Missing attribute "%s", mirage must hide item before it can be revealed' %
+#                 attr)
+        
+    def _hide_type(self, pname, aname, minOccurs=0, maxOccurs=1, nillable=False, 
+                   **kw):
         self.__call__ = self._reveal_type
+        self.__reveal = True
         
         # store all attributes, make some visable for pyclass_type
         self.__kw = kw
@@ -2021,27 +2043,33 @@ class _Mirage:
         
     def _hide_element(self, minOccurs=0, maxOccurs=1, nillable=False, **kw):
         self.__call__ = self._reveal_element
+        self.__reveal = True
         
         # store all attributes, make some visable for pyclass_type
         self.__kw = kw
         self.nspname = self.klass.schema
         self.pname = self.klass.literal
         #TODO: Fix hack
-        self.aname = '_%s' %self.pname
+        #self.aname = '_%s' %self.pname
         self.minOccurs,self.maxOccurs,self.nillable = minOccurs,maxOccurs,nillable
         
         return self
     
-    def _reveal_type(self, *args, **kw):
-        return self.klass(pname=self.pname, 
+    def _reveal_type(self):
+        if self.__cache is None:
+            self.__cache = self.klass(pname=self.pname, 
                             aname=self.aname, minOccurs=self.minOccurs, 
                             maxOccurs=self.maxOccurs, nillable=self.nillable, 
                             **self.__kw)
+        return self.__cache
         
-    def _reveal_element(self, *args, **kw):
-        return self.klass(minOccurs=self.minOccurs, 
+    def _reveal_element(self):
+        if self.__cache is None:
+            self.__cache = self.klass(minOccurs=self.minOccurs, 
                             maxOccurs=self.maxOccurs, nillable=self.nillable, 
                             **self.__kw)
+        return self.__cache
+    
     __call__ = _hide_type
 
 

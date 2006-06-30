@@ -1780,10 +1780,10 @@ class TcListComponentContainer(ContainerBase):
         self.name = 'any'
         self.style = 'anyElement'
 
-    def setStyleRecursion(self):
-        '''TODO: Change name or remove. For Element Declarations? not recursion
-        '''
-        self.style = 'recursion'
+#    def setStyleRecursion(self):
+#        '''TODO: Remove.  good for 1 level 
+#        '''
+#        self.style = 'recursion'
 
     def unQualified(self):
         '''Do not qualify element.
@@ -1827,8 +1827,8 @@ class TcListComponentContainer(ContainerBase):
         if self.style == 'anyElement':
             return 'ZSI.TC.AnyElement(aname="%(aname)s", %(occurs)s, %(process)s)' %kw
                   
-        if self.style == 'recursion':
-            return 'ZSI.TC.AnyElement(aname="%(aname)s", %(occurs)s, %(process)s)' %kw
+#        if self.style == 'recursion':
+#            return 'ZSI.TC.AnyElement(aname="%(aname)s", %(occurs)s, %(process)s)' %kw
 
         raise RuntimeError, 'Must set style for typecode list generation'
     
@@ -1865,10 +1865,13 @@ class RPCMessageTcListComponentContainer(TcListComponentContainer):
         elif self.style == 'anyElement':
             return 'ZSI.TC.AnyElement(aname="%s", %s, %s)' \
                 %(self.getAttributeName(self.name), self._getOccurs(), self._getProcessContents())
-        elif self.style == 'recursion':
-            return 'ZSI.TC.AnyElement(aname="%s", %s, %s)' \
-                % (self.getAttributeName(self.name), self._getOccurs(), self._getProcessContents())
+#        elif self.style == 'recursion':
+#            return 'ZSI.TC.AnyElement(aname="%s", %s, %s)' \
+#                % (self.getAttributeName(self.name), self._getOccurs(), self._getProcessContents())
 
+        raise RuntimeError('Must set style(%s) for typecode list generation' %
+                           self.style)
+    
 
 class ElementSimpleTypeContainer(TypecodeContainerBase):
     type = DEC

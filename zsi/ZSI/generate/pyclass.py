@@ -41,7 +41,7 @@ del _x
 #    nil.typecode = typecode or cls.typecode
 #    return nil
 
-
+    
 class pyclass_type(type):
     """Stability: Unstable
 
@@ -49,6 +49,13 @@ class pyclass_type(type):
     be available in the classdict.  creates python properties for accessing
     and setting the elements specified in the ofwhat list, and factory methods
     for constructing the elements.
+    
+    Known Limitations:
+        1)Uses XML Schema element names directly to create method names, 
+           using characters in this set will cause Syntax Errors:
+        
+              (NCNAME)-(letter U digit U "_")
+    
     """
     def __new__(cls, classname, bases, classdict):
         """
@@ -143,26 +150,38 @@ class pyclass_type(type):
         return type.__new__(cls,classname,bases,classdict)
 
     def __create_functions_from_what(what):
-        def get(self):
-            return getattr(self, what.aname)
-        get.im_func = 'get_element_%s' %what.aname
-
-        if what.maxOccurs > 1:
-            def set(self, value):
-                if not (value is None or hasattr(value, '__iter__')):
-                    raise TypeError, 'expecting an iterable instance'
-                setattr(self, what.aname, value)
+        if not callable(what):
+            def get(self):
+                return getattr(self, what.aname)
+    
+            if what.maxOccurs > 1:
+                def set(self, value):
+                    if not (value is None or hasattr(value, '__iter__')):
+                        raise TypeError, 'expecting an iterable instance'
+                    setattr(self, what.aname, value)
+            else:
+                def set(self, value):
+                    setattr(self, what.aname, value)
         else:
-            def set(self, value):
-                setattr(self, what.aname, value)
+            def get(self):
+                return getattr(self, what().aname)
+    
+            if what.maxOccurs > 1:
+                def set(self, value):
+                    if not (value is None or hasattr(value, '__iter__')):
+                        raise TypeError, 'expecting an iterable instance'
+                    setattr(self, what().aname, value)
+            else:
+                def set(self, value):
+                    setattr(self, what().aname, value)
 
-        if isinstance(what, TC.ComplexType) or isinstance(what, TC.Array):
+        if (isinstance(what, TC.ComplexType) or 
+            isinstance(what, TC.Array)):
             
             def new_func(self):
                 '''returns a mutable type
                 '''
                 return what.pyclass()
-            new_func.__name__ = 'new%s' %what.aname
             
         elif not callable(what):
             
@@ -171,16 +190,6 @@ class pyclass_type(type):
                 returns an immutable type
                 '''
                 return what.pyclass(value)
-            new_func.__name__ = 'new%s' %what.aname
-            
-        elif (issubclass(what.klass, TC.ComplexType) or 
-              issubclass(what.klass, TC.Array)):
-            
-            def new_func(self):
-                '''returns a mutable type
-                '''
-                return what().pyclass()
-            new_func.__name__ = 'new%s' %what.aname
             
 #        elif what.pyclass is None:
 #            def new_func(self, value):
@@ -191,27 +200,43 @@ class pyclass_type(type):
 #                    'no support built in for %s right now' %what.__class__
 #                    
 #            new_func = None
+        elif (issubclass(what.klass, TC.ComplexType) or 
+              issubclass(what.klass, TC.Array)):
+            
+            def new_func(self):
+                '''returns a mutable type
+                '''
+                return what().pyclass()
+                
         else:
             
-            def new_func(self, value):
-                '''value -- initialize value
-                returns an immutable type
+            def new_func(self, value=None):
+                '''if simpleType provide initialization value, else
+                if complexType value should be left as None.
+                Parameters:
+                    value -- initialize value or None
+                    
+                returns a mutable instance (value is None) 
+                    or an immutable instance
                 '''
+                if value is None:
+                    return what().pyclass()
                 return what().pyclass(value)
-            new_func.__name__ = 'new%s' %what.aname
-
-        get.func_name = 'get_element_%s' %what.aname
-        set.func_name = 'set_element_%s' %what.aname
+            
+        #TODO: sub all illegal characters in set
+        #    (NCNAME)-(letter U digit U "_")
+        new_func.__name__ = 'new_%s' %what.pname
+        get.func_name = 'get_element_%s' %what.pname
+        set.func_name = 'set_element_%s' %what.pname
         return get,set,new_func
     __create_functions_from_what = staticmethod(__create_functions_from_what)
     
     def __create_attr_functions_from_what(key, what):
+        
         def get(self):
             '''returns attribute value for attribute %s, else None.
             ''' %str(key)
             return getattr(self, what.attrs_aname, {}).get(key, None)
-                
-        #get.im_func = 'get_element_%s' %what.aname
 
         def set(self, value):
             '''set value for attribute %s.
@@ -221,8 +246,8 @@ class pyclass_type(type):
                 setattr(self, what.attrs_aname, {})
             getattr(self, what.attrs_aname)[key] = value
         
-        # TODO: need to make sure these function names are legal.
-        
+        #TODO: sub all illegal characters in set
+        #    (NCNAME)-(letter U digit U "_")
         if type(key) in (tuple, list):
             get.__name__ = 'get_attribute_%s' %key[1]
             set.__name__ = 'set_attribute_%s' %key[1]
