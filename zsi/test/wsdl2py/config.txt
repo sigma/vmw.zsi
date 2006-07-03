@@ -114,7 +114,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_ZipCodeResolver test_MapPoint test_OpcDaGateway test_Sabre test_Echo
+tests =  test_ZipCodeResolver test_MapPoint test_OpcDaGateway test_Sabre test_Echo test_AWSECommerceService
 
 [doc_literal_broke]
 document = True
