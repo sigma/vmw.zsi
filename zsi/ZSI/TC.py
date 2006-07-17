@@ -709,7 +709,7 @@ class Any(TypeCode):
             ns,type = SOAP.ENC, elt.localName
         if not type or (ns,type) == (SOAP.ENC,'Array'):
             if self.aslist or _find_arraytype(elt):
-                return [ self.__class__(aslist=self.aslist).parse(e, ps)
+                return [ self.__class__(aslist=self.aslist, nillable=self.nillable).parse(e, ps)
                             for e in _child_elements(elt) ]
             if len(_child_elements(elt)) == 0:
                 raise EvaluateException("Any cannot parse untyped element",

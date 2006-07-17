@@ -388,10 +388,10 @@ from fault import Fault, \
     FaultFromActor, FaultFromException, FaultFromFaultMessage, \
     FaultFromNotUnderstood, FaultFromZSIException
 import TC
-TC.RegisterType(TC.String, minOccurs=0)
-TC.RegisterType(TC.URI, minOccurs=0)
-TC.RegisterType(TC.Base64String, minOccurs=0)
-TC.RegisterType(TC.HexBinaryString, minOccurs=0)
+TC.RegisterType(TC.String, minOccurs=0, nillable=False)
+TC.RegisterType(TC.URI, minOccurs=0, nillable=False)
+TC.RegisterType(TC.Base64String, minOccurs=0, nillable=False)
+TC.RegisterType(TC.HexBinaryString, minOccurs=0, nillable=False)
 
 #TC.RegisterType(TC.Integer)
 #TC.RegisterType(TC.Decimal)
@@ -400,18 +400,18 @@ for pyclass in (TC.IunsignedByte, TC.IunsignedShort, TC.IunsignedInt, TC.Iunsign
     TC.InonPositiveInteger, TC.InonNegativeInteger, TC.IpositiveInteger,
     TC.Iinteger, TC.FPfloat, TC.FPdouble, ):
 
-    TC.RegisterType(pyclass, minOccurs=0)
+    TC.RegisterType(pyclass, minOccurs=0, nillable=False)
 
-TC.RegisterType(TC.Boolean, minOccurs=0)
-TC.RegisterType(TC.Duration, minOccurs=0)
-TC.RegisterType(TC.gDateTime, minOccurs=0)
-TC.RegisterType(TC.gDate, minOccurs=0)
-TC.RegisterType(TC.gYearMonth, minOccurs=0)
-TC.RegisterType(TC.gYear, minOccurs=0)
-TC.RegisterType(TC.gMonthDay, minOccurs=0)
-TC.RegisterType(TC.gDay, minOccurs=0)
-TC.RegisterType(TC.gTime, minOccurs=0)
-TC.RegisterType(TC.Apache.Map, minOccurs=0)
+TC.RegisterType(TC.Boolean, minOccurs=0, nillable=False)
+TC.RegisterType(TC.Duration, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gDateTime, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gDate, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gYearMonth, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gYear, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gMonthDay, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gDay, minOccurs=0, nillable=False)
+TC.RegisterType(TC.gTime, minOccurs=0, nillable=False)
+TC.RegisterType(TC.Apache.Map, minOccurs=0, nillable=False)
 TC.RegisterAnyElement()
 
 try:
