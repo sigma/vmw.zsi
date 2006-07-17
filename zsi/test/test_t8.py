@@ -58,6 +58,17 @@ class t8TestCase(unittest.TestCase):
         self.assertEqual(tuple, type(parsed[3]))
         self.assertEqual(type(myFloat), type(parsed[4]))
 
+
+    def check_Any_nill(self):
+        result = ['23', {'a' : None, 'b': 5}]
+        soap = str(SoapWriter().serialize(result, TC.Any()))
+        print soap
+
+        ps = ParsedSoap(soap)
+        tc = TC.Any(nillable=True)
+        pyobj = ps.Parse(tc)
+
+
 def makeTestSuite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(t8TestCase, "check"))
