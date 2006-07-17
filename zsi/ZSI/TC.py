@@ -799,10 +799,13 @@ class Any(TypeCode):
                 serializer = gDateTime()
         if not serializer:
             # Last-chance; serialize instances as dictionary
-            if type(pyobj) != types.InstanceType:
+            if pyobj is None:
+                self.serialize_as_nil(elt.createAppendElement(self.nspname, n))
+            elif type(pyobj) != types.InstanceType:
                 raise EvaluateException('''Any can't serialize ''' + \
                         repr(pyobj))
-            self.serialize(elt, sw, pyobj.__dict__, **kw)
+            else:
+                self.serialize(elt, sw, pyobj.__dict__, **kw)
         else:
             # Try to make the element name self-describing
             tag = getattr(serializer, 'tag', None)

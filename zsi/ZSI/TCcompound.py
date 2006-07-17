@@ -47,6 +47,11 @@ def _get_type_or_substitute(typecode, pyobj, sw, elt):
  
     # Global Element Declaration
     if isinstance(sub, ElementDeclaration):
+        if (typecode.nspname,typecode.pname) == (sub.nspname,sub.pname):
+            raise TypeError(\
+                'bad usage, failed to serialize element reference (%s, %s), in: %s' %
+                 (typecode.nspname, typecode.pname, sw.Backtrace(elt),))
+
         raise TypeError(\
             'failed to serialize (%s, %s) illegal sub GED (%s,%s): %s' %
              (typecode.nspname, typecode.pname, sub.nspname, sub.pname,

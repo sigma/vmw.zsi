@@ -1883,10 +1883,22 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
             self.name = tp.getAttribute('name')
             self.ns = tp.getTargetNamespace()
             qName = tp.getAttribute('type')
-            self.sKlass = BTI.get_typeclass(qName[1], qName[0])
+        except Exception, ex:
+            raise Wsdl2PythonError('Error occured processing element: %s' %(
+                tp.getItemTrace()), *ex.args)
+
+        if qName is None:
+            raise Wsdl2PythonError('Missing QName for element type attribute: %s' %tp.getItemTrace())
+
+        tns,local = qName.getTargetNamespace(),qName.getName()
+        self.sKlass = BTI.get_typeclass(local, tns)
+        if self.sKlass is None:
+            raise Wsdl2PythonError('No built-in typecode for type definition("%s","%s"): %s' %(tns,local,tp.getItemTrace()))
+
+        try:
             self.pyclass = BTI.get_pythontype(None, None, typeclass=self.sKlass)
         except Exception, ex:
-            raise Wsdl2PythonError('Error occured processing type: %s' %(
+            raise Wsdl2PythonError('Error occured processing element: %s' %(
                 tp.getItemTrace()), *ex.args)
 
     def _setContent(self):
@@ -2535,8 +2547,12 @@ class RestrictionContainer(SimpleTypeContainer):
                 pass
 
             if item is None:
-                self.sKlass = BTI.get_typeclass(base[1], base[0])
-                return
+                self.sKlass = BTI.get_typeclass(base.getName(), base.getTargetNamespace())
+                if self.sKlass is not None: 
+                    return
+
+                raise Wsdl2PythonError('no built-in type nor schema instance type for base attribute("%s","%s"): %s' %(
+                    base.getTargetNamespace(), base.getName(), tp.getItemTrace()))
 
             raise Wsdl2PythonError, \
                 'Not Supporting simpleType/Restriction w/User-Defined Base: %s %s' %(tp.getItemTrace(),item.getItemTrace())
@@ -2553,7 +2569,7 @@ class RestrictionContainer(SimpleTypeContainer):
                 if item is None:
                     base = sc.content.getAttribute('base')
                     if base is not None:
-                        self.sKlass = BTI.get_typeclass(base[1], base[0])
+                        self.sKlass = BTI.get_typeclass(base.getTargetNamespace(), base.getName())
                         return
                     raise Wsdl2PythonError, \
                         'Not Supporting simpleType/Restriction w/User-Defined Base: '\
