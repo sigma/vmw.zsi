@@ -234,8 +234,6 @@ class TypeCode:
             attrs_aname -- This is variable name to dictionary of attributes
             encoded -- encoded namespaceURI (specify if use is encoded)
         '''
-        print 'TypeCode', pname
-        
         if type(pname) in _seqtypes:
             self.nspname, self.pname = pname
         else:
@@ -1622,7 +1620,6 @@ class AnyType(TypeCode):
     
     def __init__(self, pname=None, namespaces=['#all'],
     minOccurs=1, maxOccurs=1, strip=1, **kw):
-        print 'AnyType', pname
         TypeCode.__init__(self, pname=pname, minOccurs=minOccurs, maxOccurs=maxOccurs, **kw)
         self.namespaces = namespaces
 
