@@ -80,7 +80,7 @@ class DTTestCase(ServiceTestCase):
 
         # Test maxOccurs>1 for substitution 
         # 
-        pyobj.Actor = GTD('urn:test', 'TopActor')(None).pyclass()
+        pyobj.Actor = [GTD('urn:test', 'TopActor')(None).pyclass()]
         sub1 = pyobj.Actor[0]
         sub1.Element1 = 'one'
         sub1.Element2 = 'two'
