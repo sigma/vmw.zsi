@@ -3,7 +3,7 @@
    -- use with wsdl2py generated modules.
 '''
 
-import urlparse, types, os, sys, cStringIO as StringIO, thread
+import urlparse, types, os, sys, cStringIO as StringIO, thread,re
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ZSI import ParseException, FaultFromException, FaultFromZSIException, Fault
 from ZSI import _copyright, _seqtypes, _get_element_nsuri_name, resolvers
@@ -359,11 +359,25 @@ class SOAPRequestHandler(BaseSOAPRequestHandler):
     def do_GET(self):
         '''The GET command.
 	'''
-        if self.path.endswith("?wsdl") or self.path.endswith("?WSDL"):
+        if self.path.lower().endswith("?wsdl"):
             service_path = self.path[:-5]
             service = self.server.getNode(service_path)
             if hasattr(service, "_wsdl"):
-                self.send_xml(service._wsdl)
+                wsdl = service._wsdl
+                # update the soap:location tag in the wsdl to the actual server
+                #   location
+                # - default to 'http' as protocol, or use server-specified protocol
+                proto = 'http'
+                if hasattr(self.server,'proto'):
+                    proto = self.server.proto
+                serviceUrl = '%s://%s:%d%s' % (proto,
+                                                self.server.server_name,
+                                                self.server.server_port,
+                                                service_path)
+                soapAddress = '<soap:address location="%s"/>' % serviceUrl
+                wsdlre = re.compile('\<soap:address[^\>]*>',re.IGNORECASE)
+                wsdl = re.sub(wsdlre,soapAddress,wsdl)
+                self.send_xml(wsdl)
             else:
                 self.send_error(404, "WSDL not available for that service [%s]." % self.path)
         else:
