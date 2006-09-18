@@ -164,19 +164,18 @@ The following keyword arguments may be used:
 \lineiii{\code{auth}}{\code{(AUTH.none,)}}{A tuple with authentication
     information; the first value should be one of the constants
     from the \class{AUTH} class.}
-\lineiii{\code{host}}{\code{'localhost'}}{Host to connect to.}
-\lineiii{\code{ns}}{n/a}{Default namespace for the request.}
 \lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
     SOAP \code{Envelope}}
-\lineiii{\code{port}}{\code{80} or \code{443}}{Port to connect on.}
-\lineiii{\code{soapaction}}{\code{http://www.zolera.com}}{Value for the
+\lineiii{\code{soapaction}}{\code{''}}{Value for the
     \code{SOAPAction} HTTP header.}
 \lineiii{\code{readerclass}}{\code{None}}{Class used to create DOM-creating
-XML readers; see the description in the \class{ParsedSoap} class.
-\versionadded{1.2}}
-\lineiii{\code{ssl}}{\code{0}}{Use SSL if non-zero.}
+XML readers; see the description in the \class{ParsedSoap} class.}
+\lineiii{\code{writerclass}}{\code{None}}{ElementProxy Class used to create 
+XML writers; see the description in the \class{SoapWriter} class.}
 \lineiii{\code{tracefile}}{\code{None}}{An object with a \code{write}
     method, where packet traces will be recorded.}
+\lineiii{\code{transport}}{HTTPConnection/HTTPSConnection}{transport class}
+\lineiii{\code{transdict}}{\{\}}{keyword arguments for connection initialization}
 \lineiii{\code{url}}{n/a}{URL to post to.}
 \end{tableiii}
 

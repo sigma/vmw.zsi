@@ -198,16 +198,16 @@ It can be particularly useful when debugging unexpected SOAP faults.
 The first example provided below demonstrates how to use the \class{Binding}
 class to connect to a remote service and perform an operation.  It assumes
 that the simple server-side example shown above is installed on the webserver 
-running on the local host, and if the URL is \code{/cgi-bin/simple-test}:
+running on the local host, and if the path is \code{/cgi-bin/simple-test}:
 
 \begin{verbatim}
 from ZSI.client import Binding
 fp = open('debug.out', 'a')
-b = Binding(url='/cgi-bin/simple-test', tracefile=fp)
-fp.close()
+b = Binding(url='http://localhost/cgi-bin/simple-test', tracefile=fp)
 a = b.average(range(1,11))
 assert a == 5
 print b.hello()
+fp.close()
 \end{verbatim}
 
 \subsection{Complex Example}
