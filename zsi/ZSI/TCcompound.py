@@ -37,8 +37,8 @@ def _get_type_or_substitute(typecode, pyobj, sw, elt):
     '''return typecode or substitute type for wildcard or
     derived type.  For serialization only.
     '''
-    sub = getattr(pyobj,'typecode', typecode)
-    if sub is typecode:
+    sub = getattr(pyobj, 'typecode', typecode)
+    if sub is typecode or sub is None:
         return typecode
 
     # Element WildCard
