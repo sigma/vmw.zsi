@@ -61,7 +61,7 @@ class t8TestCase(unittest.TestCase):
 
     def check_Any_nill(self):
         result = ['23', {'a' : None, 'b': 5}]
-        soap = str(SoapWriter().serialize(result, TC.Any()))
+        soap = str(SoapWriter().serialize(result, TC.Any(nillable=True)))
         print soap
 
         ps = ParsedSoap(soap)

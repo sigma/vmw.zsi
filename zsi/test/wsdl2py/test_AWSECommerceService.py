@@ -85,11 +85,16 @@ class AmazonTestCase(ServiceTestCase):
         response.OperationRequest.RequestProcessingTime
         for its in response.Items:
             for it in its.Item:
-                it.ASIN
-                it.AssociateTag
-                it.ListItemId
-                it.OfferListingId
-                it.Quantity
+                it.ASIN; 
+                it.Accessories; 
+                it.AlternateVersions; 
+                it.BrowseNodes
+                it.Collections; it.CustomerReviews ;it.DetailPageURL
+                it.EditorialReviews; it.Errors; it.ImageSets; it.ItemAttributes
+                it.LargeImage; it.ListmaniaLists; it.MediumImage; it.MerchantItemAttributes
+                it.OfferSummary; it.Offers; it.ParentASIN; it.SalesRank; it.SearchInside
+                it.SimilarProducts; it.SmallImage; it.Subjects; it.Tracks;
+                it.VariationSummary; it.Variations
 
 
 if __name__ == "__main__" :

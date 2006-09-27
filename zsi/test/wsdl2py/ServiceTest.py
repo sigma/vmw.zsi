@@ -163,7 +163,10 @@ class ServiceTestCase(unittest.TestCase):
 
     write = lambda self, arg: self.out.write(arg)
 
-    __exc_info = unittest.TestCase._TestCase__exc_info
+    if sys.version_info[:2] >= (2,5):
+        _exc_info = unittest.TestCase._exc_info
+    else:
+        _exc_info = unittest.TestCase._TestCase__exc_info
 
     def __call__(self, *args, **kwds):
         self.run(*args, **kwds)
@@ -178,7 +181,7 @@ class ServiceTestCase(unittest.TestCase):
             except KeyboardInterrupt:
                 raise
             except:
-                result.addError(self, self.__exc_info())
+                result.addError(self, self._exc_info())
                 return
 
             ok = False
@@ -188,18 +191,18 @@ class ServiceTestCase(unittest.TestCase):
                 t2 = time.time()
                 ok = True
             except self.failureException:
-                result.addFailure(self, self.__exc_info())
+                result.addFailure(self, self._exc_info())
             except KeyboardInterrupt:
                 raise
             except:
-                result.addError(self, self.__exc_info())
+                result.addError(self, self._exc_info())
 
             try:
                 self.tearDown()
             except KeyboardInterrupt:
                 raise
             except:
-                result.addError(self, self.__exc_info())
+                result.addError(self, self._exc_info())
                 ok = False
             if ok: 
                 result.addSuccess(self)
