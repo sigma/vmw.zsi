@@ -34,20 +34,23 @@ _packages = [ "ZSI", "ZSI.generate", "ZSI.wstools"]
 if sys.version_info[0:2] >= (2, 4):
     _packages.append("ZSI.twisted")
     
-additional_params = {}
 
 # setuptools specific logic
+additional_params = {}
 if hasSetuptools:
-	additional_params['entry_points'] = {
-		'console_scripts': [
-			'wsdl2py = ZSI.generate.commands:wsdl2py',
-			'wsdl2dispatch = ZSI.generate.commands:wsdl2dispatch',
-		],
-	}
-
-# non-setuptools
+    additional_params['entry_points'] = {
+        'console_scripts': [
+            'wsdl2py = ZSI.generate.commands:wsdl2py',
+            'wsdl2dispatch = ZSI.generate.commands:wsdl2dispatch',
+        ],
+    }
+    additional_params['install_requires'] = [ "PyXML >= 0.8.3", ]
+    additional_params['setup_requires'] = [ "setuptools >= 0.6c3", ]
+    additional_params['dependency_links'] = [
+        "http://sourceforge.net/project/showfiles.php?group_id=6473&package_id=6541&release_id=286213",
+    ]
 else:
-	additional_params['scripts'] = ["scripts/wsdl2py", "scripts/wsdl2dispatch"]
+    additional_params['scripts'] = ["scripts/wsdl2py", "scripts/wsdl2dispatch"]
 
 setup(
     name="ZSI",
