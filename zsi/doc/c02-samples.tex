@@ -1,45 +1,77 @@
 \chapter{Examples}
 
-This chapter contains a number of examples to show off some of \ZSI{}'s
-features.
-It is broken down into client-side and server-side examples, and
+This chapter contains a number of examples to show off some of \ZSI{}'s 
+features.  It is broken down into client-side and server-side examples, and 
 explores different implementation options \ZSI{} provides.
 
 \section{Server Side Examples}
 \subsection{Simple example}
-Using the \module{ZSI.cgi} module, it is simple to expose Python
-functions as web services.
-Each function is invoked with all the input parameters specified in the
-client's SOAP request.
-Any value returned by the function will be serialized back to the client;
-multiple values can be returned by returning a tuple.
+Using the \module{ZSI.dispatch} module, it is simple to expose Python functions
+as web services.  Each function is invoked with all the input parameters
+specified in the client's SOAP request.  Any value returned by the function will
+be serialized back to the client; multiple values can be returned by returning a
+tuple.
 
 The following code shows some simple services:
 
 \begin{verbatim}
+#!/usr/local/bin/python2.4
+# SOAP Array
+
 def hello():
-    return "Hello, world"
+    return ["Hello, world"]
 
 def echo(*args):
     return args
 
-def average(*args):
+def sum(*args):
     sum = 0
     for i in args: sum += i
-    return sum / len(args)
+	return [sum]
+
+def average(*args):
+    return [sum(*args) / len(args)]
 
 from ZSI import dispatch
-dispatch.AsCGI()
+dispatch.AsCGI(rpc=True)
 \end{verbatim}
 
 Each function defines a SOAP request, so if this script is installed
 as a CGI script, a SOAP message can be posted to that script's URL with any of
 \code{hello}, \code{echo}, or \code{average} as the request element,
-and the value returned by the function will be sent back.
+and the value returned by the function will be sent back.  These functions
+expect and return SOAP-ENC:arrayType instances which are marshalled into python
+\class{list} instances, this script interoperates with the 
+\class{client.Binding}.  Please see Appendix A.
 
 The \ZSI{} CGI dispatcher catches exceptions and sends back a SOAP fault.
 For example, a fault will be sent if the  \code{hello} function is given any
 arguments, or if the \code{average} function is given a non-integer.
+
+\begin{verbatim}
+#!/usr/local/bin/python2.4
+# SOAP Struct
+
+def hello():
+    return {"value":"Hello, world"}
+
+def echo(**kw):
+    return kw
+
+def sum(**kw):
+    sum = 0
+    for i in kw.values(): sum += i
+	return {"value":sum}
+
+def average(**kw):
+	d = sum(**kw)
+    return d["value"] = d["value"]/len(kw)
+
+from ZSI import dispatch
+dispatch.AsCGI(rpc=True)
+\end{verbatim}
+
+
 
 \subsection{More complex example}
 

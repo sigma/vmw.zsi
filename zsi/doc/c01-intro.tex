@@ -6,13 +6,17 @@ provides an implementation of the SOAP specification, as described in
 In particular, \ZSI{} parses and generates SOAP messages, and
 converts between native Python datatypes and SOAP syntax.
 
-\module{ZSI} requires Python 2.0 or later and PyXML version 0.6.6 or later.
+\module{ZSI} requires Python 2.3 or later and PyXML version 0.8.3 or later.
 
 The \module{ZSI} project is maintained at SourceForge, at
 \url{http://pywebsvcs.sf.net}.
 \ZSI{} is discussed on the Python web services mailing list, visit
 \url{http://lists.sourceforge.net/lists/listinfo/pywebsvcs-talk}
 to subscribe.
+
+For those interested in using the \program{wsdl2py} tool see the \emph{Users
+Guide}, it contains a detailed example of how to use the code generation
+facilities in \module{ZSI}.
 
 For those interested in a high-level tutorial covering \ZSI{} and why
 Python was chosen, see the article
@@ -60,10 +64,12 @@ supported by \ZSI{} (other models are certainly possible):
 \end{enumerate}
 
 Note that \ZSI{} is ``transport neutral'', and provides only a simple
-I/O and dispatch framework; a more complete solution is the
-responsibility of the application using \ZSI{}.
-As usage patterns emerge, and common application frameworks are
-more understood, this may change.
+I/O and dispatch framework; a more complete solution is available through 
+the use of included WSDL tools (\program{wsdl2py}), but otherwise this is
+the responsibility of the application using \ZSI{}.  As usage patterns 
+emerge, and common application frameworks are more understood, this may 
+change.
+
 
 Within this document, \code{tns} is used as the prefix for the
 application's target namespace, and the term
@@ -71,18 +77,22 @@ application's target namespace, and the term
 
 \section{How to Read this Document}
 
-Readers only interested in developing the simplest SOAP applications,
-or spending the least amount of time on building a web services
-infrastructure, should read chapters 2, 3, and 10.
-Readers who are developing complex services, and who are familiar
-with XML Schema and/or WSDL, should read this manual in order.
-This will provide them with enough information to implement the
-processing model described above.
-They can skip probably skip chapters 2 and 10.
+Readers interested in using WSDL and clients to web services, and those
+intending on implementing web services based on existing WSDL should refer
+to the \emph{Users Guide}.  Others interested in developing the simplest SOAP
+applications, or spending the least amount of time on building a web services
+infrastructure should read chapters 2, 3, and 10 of this document. Readers who
+are developing complex services, and who are familiar with XML Schema and/or
+WSDL, should read this manual in order. This will provide them with enough
+information to implement the processing model described above.  They can skip
+probably skip chapters 2 and 10.
 
-This release of \ZSI{} adds the capability to 
-process WSDL definitions (described in
-\citetitle[http://www.w3.org/TR/wsdl]{The Web Services Description Language})
-and generate typecodes automatically.  See chapter 11
-for details.
+\ZSI{} has the capability to process WSDL definitions and XML Schema documents
+(described in \citetitle[http://www.w3.org/TR/wsdl]{The Web Services Description
+Language} and \citetitle[http://www.w3.org/XML/Schema]{XMLSchema 1.0})
+and generate typecodes automatically.  For more information see the \emph{Users
+Guide}.
+
+
+
 
