@@ -42,11 +42,15 @@ as a CGI script, a SOAP message can be posted to that script's URL with any of
 and the value returned by the function will be sent back.  These functions
 expect and return SOAP-ENC:arrayType instances which are marshalled into python
 \class{list} instances, this script interoperates with the 
-\class{client.Binding}.  Please see Appendix A.
+\class{client.Binding}.  For more information see \emph{Appendix A}.
 
 The \ZSI{} CGI dispatcher catches exceptions and sends back a SOAP fault.
 For example, a fault will be sent if the  \code{hello} function is given any
 arguments, or if the \code{average} function is given a non-integer.
+
+Here is another example but using SOAP-ENC:Struct instances which are marshalled
+into python \class{dict} instances, this script interoperates with the
+\class{client.NamedParamBinding}.  For more information see \emph{Appendix B}.
 
 \begin{verbatim}
 #!/usr/local/bin/python2.4
@@ -73,12 +77,12 @@ dispatch.AsCGI(rpc=True)
 
 
 
-\subsection{More complex example}
+\subsection{low level soap processing example}
 
-We will now show a more complete example of a robust web service.
-It takes as input a player name and array of integers, and returns
-the average.
-It is presented in sections, following the steps detailed above.
+We will now show a more complete example of a robust web service implemented at
+the SOAP layer. It takes as input a player name and array of integers, and returns
+the average.  It is presented in sections, following the steps detailed above. 
+A complete working example of this service is available in \emph{Appendix C}.
 
 The first section reads in a request, and parses the SOAP header.
 
@@ -86,45 +90,45 @@ The first section reads in a request, and parses the SOAP header.
 from ZSI import *
 import sys
 IN, OUT = sys.stdin, sys.stdout
-
 try:
     ps = ParsedSoap(IN)
 except ParseException, e:
-    FaultFromZSIException(e).AsSOAP(OUT)
+    OUT.write(FaultFromZSIException(e).AsSOAP())
     sys.exit(1)
 except Exception, e:
     # Faulted while processing; we assume it's in the header.
-    FaultFromException(e, 1).AsSOAP(OUT)
+    OUT.write(FaultFromException(e, 1).AsSOAP())
     sys.exit(1)
 
 # We are not prepared to handle any actors or mustUnderstand elements,
 # so we'll arbitrarily fault back with the first one we found.
 a = ps.WhatActorsArePresent()
 if len(a):
-    FaultFromActor(a[0]).AsSOAP(OUT)
+    OUT.write(FaultFromActor(a[0]).AsSOAP())
     sys.exit(1)
 mu = ps.WhatMustIUnderstand()
 if len(mu):
     uri, localname = mu[0]
-    FaultFromNotUnderstood(uri, localname).AsSOAP(OUT)
+    OUT.write(FaultFromNotUnderstood(uri, localname).AsSOAP())
     sys.exit(1)
 \end{verbatim}
 
 This section defines the mappings between Python objects and the SOAP
-data being transmitted.
-Recall that according to the SOAP specification, RPC input and output
-are modeled as a structure.
+data being transmitted.  Recall that according to the SOAP specification, RPC
+input and output are modeled as a structure.
 
 \begin{verbatim}
 class Player:
-    def __init__(self, name):
-        pass
+    def __init__(self, *args):
+        if not len(args): return
+        self.Name = args[0]
+        self.Scores = args[1:]
 Player.typecode = TC.Struct(Player, [
                                 TC.String('Name'),
-                                TC.Array('Integer', TC.Integer(), 'Scores'),
+                                TC.Array('Integer', TC.Integer(), 'Scores', undeclared=True),
                                 ], 'GetAverage')
 class Average:
-    def __init__(self, average):
+    def __init__(self, average=None):
         self.average = average
 Average.typecode = TC.Struct(Average, [
                                 TC.Integer('average'),
@@ -137,31 +141,25 @@ activity, and serializes the response.
 try:
     player = ps.Parse(Player.typecode)
 except EvaluateException, e:
-    FaultFromZSIException(e).AsSOAP(OUT)
+    OUT.write(FaultFromZSIException(e).AsSOAP())
     sys.exit(1)
 
 try:
     total = 0
     for value in player.Scores: total = total + value
     result = Average(total / len(player.Scores))
-    sw = SoapWriter(OUT)
+    sw = SoapWriter()
     sw.serialize(result, Average.typecode)
     sw.close()
+    OUT.write(str(sw))
 except Exception, e:
-    FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
+    OUT.write(FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP())
     sys.exit(1)
 \end{verbatim}
 
-In the \method{serialize()} call above, the second parameter is optional,
-since \code{result} is an instance of the 
-\class{Average} class, and the \code{Average.typecode} attribute is
-the typecode for class instances.
-In addition, since the \class{SoapWriter} destructor will call \method{close()}
-if necessary, sending a SOAP response can often be written like
-this one-liner:
-\begin{verbatim}
-SoapWriter(OUT).serialize(result)
-\end{verbatim}
+In the \method{serialize()} call above, the second parameter is optional, since
+\code{result} is an instance of the \class{Average} class, and the 
+\code{Average.typecode} attribute is the typecode for class instances.
 
 
 \subsection{A mod_python example}
