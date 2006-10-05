@@ -44,7 +44,8 @@ class _Caller:
     def __call__(self, *args):
         return self.binding.RPC(None, self.name, args, 
                                 encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
-                                requesttypecode=TC.Any(self.name, aslist=0))
+                                requesttypecode=TC.Any(self.name),
+                                replytype=TC.Any(self.name+"Response"),)
     
 
 class _NamedParamCaller:
