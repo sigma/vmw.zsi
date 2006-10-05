@@ -531,8 +531,12 @@ class TypeCode:
             name -- element tag
             objid -- ID type, unique id
         '''
+        if type(name) is tuple:
+            return name
+
+        ns = self.nspname
         n = name or self.pname or ('E' + objid)
-        return n
+        return ns,n
 
     def has_attributes(self):
         '''Return True if Attributes are declared outside
@@ -614,10 +618,10 @@ class SimpleType(TypeCode):
             pyobj -- processed content.
         '''
         objid = _get_idstr(pyobj)
-        n = name or self.pname or ('E' + objid)
+        ns,n = self.get_name(name, objid)
 
         # nillable
-        el = elt.createAppendElement(self.nspname, n)
+        el = elt.createAppendElement(ns, n)
         if self.nillable is True and pyobj is Nilled:
             self.serialize_as_nil(el)
             return None
@@ -749,15 +753,18 @@ class Any(TypeCode):
             return
 
         objid = _get_idstr(pyobj)
-        n = self.get_name(name, objid)
+        ns,n = self.get_name(name, objid)
 
-        kw['name'] = n
+        # setup key word dict
+        kw['name'] = (ns,n)
+        kw.setdefault('typed', self.typed)
+
         tc = type(pyobj)
         self.logger.debug('Any serialize -- %s', tc)
 
         if tc in _seqtypes:
             if self.asarray:
-                arrElt = elt.createAppendElement(self.nspname, n )
+                arrElt = elt.createAppendElement(ns, n)
                 arrElt.setAttributeNS(self.nspname, 'SOAP-ENC:arrayType', "xsd:anyType[" + str(len(pyobj)) + "]" )
                 a = self.__class__() # instead of = Any()
                                      # since this is also used by AnyLax()
@@ -769,16 +776,15 @@ class Any(TypeCode):
                     serializer.serialize(elt, sw, o, **kw)
             return
         elif tc == types.DictType:
-            el = elt.createAppendElement(self.nspname, n)
+            el = elt.createAppendElement(ns, n)
             parentNspname = self.nspname # temporarily clear nspname for dict elements
             self.nspname = None
             for o,m in pyobj.items():
-                subkw = dict(kw)
                 if type(o) != types.StringType and type(o) != types.UnicodeType:
                     raise Exception, 'Dictionary implementation requires keys to be of type string (or unicode).' %pyobj
-                subkw['name'] = o
-                subkw.setdefault('typed', True)
-                self.serialize(el, sw, m, **subkw)
+                kw['name'] = o
+                kw.setdefault('typed', True)
+                self.serialize(el, sw, m, **kw)
             # restore nspname
             self.nspname = parentNspname
             return
@@ -800,7 +806,7 @@ class Any(TypeCode):
         if not serializer:
             # Last-chance; serialize instances as dictionary
             if pyobj is None:
-                self.serialize_as_nil(elt.createAppendElement(self.nspname, n))
+                self.serialize_as_nil(elt.createAppendElement(ns, n))
             elif type(pyobj) != types.InstanceType:
                 raise EvaluateException('''Any can't serialize ''' + \
                         repr(pyobj))
@@ -810,19 +816,20 @@ class Any(TypeCode):
             # Try to make the element name self-describing
             tag = getattr(serializer, 'tag', None)
             if self.pname is not None:
-                serializer.nspname = self.nspname
-                serializer.pname = self.pname
+                #serializer.nspname = self.nspname
+                #serializer.pname = self.pname
                 if "typed" not in kw:
                     kw['typed'] = False
             elif tag:
                 if tag.find(':') == -1: tag = 'SOAP-ENC:' + tag
                 kw['name'] = tag
                 kw['typed'] = False
+
             serializer.unique = self.unique
             serializer.serialize(elt, sw, pyobj, **kw)
             # Reset TypeCode
-            serializer.nspname = None
-            serializer.pname = None
+            #serializer.nspname = None
+            #serializer.pname = None
 
 
 def RegisterType(C, clobber=0, *args, **keywords):
@@ -1462,9 +1469,10 @@ class XML(TypeCode):
             Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
                 comments=self.comments)
             return
+
         objid = _get_idstr(pyobj)
-        n = name or self.pname or ('E' + objid)
-        xmlelt = elt.createAppendElement(self.nspname, n)
+        ns,n = self.get_name(name, objid)
+        xmlelt = elt.createAppendElement(ns, n)
 
         if type(pyobj) in _stringtypes:
             self.set_attributes(xmlelt, pyobj)
@@ -1477,11 +1485,12 @@ class XML(TypeCode):
             sw.AddCallback(self.cb, pyobj, unsuppressedPrefixes)
 
     def cb(self, elt, sw, pyobj, unsuppressedPrefixes=[]):
-        if sw.Known(pyobj): return
-        objid = _get_idstr(pyobj)
-        n = self.pname or ('E' + objid)
+        if sw.Known(pyobj): 
+            return
 
-        xmlelt = elt.createAppendElement(self.nspname, n)
+        objid = _get_idstr(pyobj)
+        ns,n = self.get_name(name, objid)
+        xmlelt = elt.createAppendElement(ns, n)
         self.set_attribute_id(xmlelt, objid)
         xmlelt.setAttributeNS(SOAP.ENC, 'encodingStyle', '""')
         Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
@@ -1985,7 +1994,9 @@ class List(SimpleType):
         if type(pyobj) not in _seqtypes:
             raise EvaluateException, 'expecting a list'
 
-        el = elt.createAppendElement(self.nspname, self.pname)
+        objid = _get_idstr(pyobj)
+        ns,n = self.get_name(name, objid)
+        el = elt.createAppendElement(ns, n)
         if self.nillable is True and pyobj is None:
             self.serialize_as_nil(el)
             return None
