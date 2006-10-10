@@ -12,27 +12,8 @@ expected to return a \class{list} or \class{dict} of values, the response
 wrapper is by default set to the request wrapper name appended \emph{Response}.
 
 \section{CGI Script}
-\begin{verbatim}
-#!/usr/local/bin/python2.4
-# SOAP Array
 
-def hello():
-    return ["Hello, world"]
-
-def echo(*args):
-    return args
-
-def sum(*args):
-    sum = 0
-    for i in args: sum += i
-    return [sum]
-
-def average(*args):
-    return [sum(*args)[0] / len(args)]
-
-from ZSI import dispatch
-dispatch.AsCGI(rpc=True)
-\end{verbatim}
+\input{dispatch-rpc-hello-array}
 
 \section{client test script}
 \begin{verbatim}

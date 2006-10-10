@@ -14,27 +14,7 @@ tuple.
 
 The following code shows some simple services:
 
-\begin{verbatim}
-#!/usr/local/bin/python2.4
-# SOAP Array
-
-def hello():
-    return ["Hello, world"]
-
-def echo(*args):
-    return args
-
-def sum(*args):
-    sum = 0
-    for i in args: sum += i
-	return [sum]
-
-def average(*args):
-    return [sum(*args) / len(args)]
-
-from ZSI import dispatch
-dispatch.AsCGI(rpc=True)
-\end{verbatim}
+\input{dispatch-rpc-hello-array}
 
 Each function defines a SOAP request, so if this script is installed
 as a CGI script, a SOAP message can be posted to that script's URL with any of
@@ -52,30 +32,7 @@ Here is another example but using SOAP-ENC:Struct instances which are marshalled
 into python \class{dict} instances, this script interoperates with the
 \class{client.NamedParamBinding}.  For more information see \emph{Appendix B}.
 
-\begin{verbatim}
-#!/usr/local/bin/python2.4
-# SOAP Struct
-
-def hello():
-    return {"value":"Hello, world"}
-
-def echo(**kw):
-    return kw
-
-def sum(**kw):
-    sum = 0
-    for i in kw.values(): sum += i
-	return {"value":sum}
-
-def average(**kw):
-	d = sum(**kw)
-    return d["value"] = d["value"]/len(kw)
-
-from ZSI import dispatch
-dispatch.AsCGI(rpc=True)
-\end{verbatim}
-
-
+\input{dispatch-rpc-hello-struct}
 
 \subsection{low level soap processing example}
 
@@ -179,15 +136,20 @@ are implemented in the MyHandler module:
 
 \begin{verbatim}
 def hello():
-    return "Hello, world"
+    return {"value":"Hello, world"}
 
-def echo(*args):
-    return args
+def echo(**kw):
+    return kw
 
-def average(*args):
+def sum(**kw):
     sum = 0
-    for i in args: sum += i
-    return sum / len(args)
+    for i in kw.values(): sum += i
+	return {"value":sum}
+
+def average(**kw):
+	d = sum(**kw)
+    d["value"] = d["value"]/len(kw)
+	return d
 \end{verbatim}
 
 Dispatching from within mod_python is achieved by passing the aforementined
@@ -212,33 +174,22 @@ def handler(req):
 
 \subsection{Simple Example}
 \ZSI{} provides two ways for a client to interactive with a server:
-the \class{Binding} class and the \class{ServiceProxy} class.
-The first is useful when the operations to be invoked are not defined
-in WSDL or when only simple Python datatypes are used; the \class{ServiceProxy}
-class can be used to parse WSDL definitions in order
+the \class{Binding} or \class{NamedParamBinding} class and the
+\class{ServiceProxy} class.  The first is useful when the operations to be
+invoked are not defined in WSDL or when only simple Python datatypes are used;
+the \class{ServiceProxy} class can be used to parse WSDL definitions in order
 to determine how to serialize and parse the SOAP messages.
 
 During development, it is often useful to record ``packet traces'' of
-the SOAP messages being exchanged.
-Both the \class{Binding} and \class{ServiceProxy} classes provide a
-\code{tracefile} parameter to specify an output stream (such as a file)
-to capture messages.
-It can be particularly useful when debugging unexpected SOAP faults.
+the SOAP messages being exchanged.  Both the \class{Binding} and
+\class{ServiceProxy} classes provide a \code{tracefile} parameter to specify an
+output stream (such as a file) to capture messages.  It can be particularly
+useful when debugging unexpected SOAP faults.
 
-The first example provided below demonstrates how to use the \class{Binding}
-class to connect to a remote service and perform an operation.  It assumes
-that the simple server-side example shown above is installed on the webserver 
-running on the local host, and if the path is \code{/cgi-bin/simple-test}:
+The first example provided below demonstrates how to use the \class{NamedParamBinding}
+class to connect to a remote service and perform an operation.
 
-\begin{verbatim}
-from ZSI.client import Binding
-fp = open('debug.out', 'a')
-b = Binding(url='http://localhost/cgi-bin/simple-test', tracefile=fp)
-a = b.average(range(1,11))
-assert a == 5
-print b.hello()
-fp.close()
-\end{verbatim}
+\input{client-hello-struct}
 
 \subsection{Complex Example}
 If the operation invoked returns a ComplexType, typecode information must
