@@ -33,13 +33,12 @@ class t8TestCase(unittest.TestCase):
             self.assertEqual("", parsed)
 
     def check_builtins(self):
-        typecode = Any(type=True)
         myInt,myLong,myStr,myDate,myFloat = 123,2147483648,\
             u"hello", time.gmtime(), 1.0001
         orig = [myInt,myLong,myStr,myDate,myFloat]
 
         sw = SoapWriter()
-        sw.serialize(orig, typecode=Any())
+        sw.serialize(orig, typecode=Any(pname="builtins", aslist=True))
         print >>sys.stdout, sw
         
         ps = ParsedSoap(str(sw)) 
@@ -61,7 +60,7 @@ class t8TestCase(unittest.TestCase):
 
     def check_Any_nill(self):
         result = ['23', {'a' : None, 'b': 5}]
-        soap = str(SoapWriter().serialize(result, TC.Any(nillable=True)))
+        soap = str(SoapWriter().serialize(result, TC.Any(pname="NilRequest", nillable=True, aslist=True)))
         print soap
 
         ps = ParsedSoap(soap)
