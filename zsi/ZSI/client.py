@@ -4,15 +4,15 @@
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
 from ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
-    EvaluateException, FaultFromFaultMessage, _child_elements, _attrs,\
-    _get_idstr, _get_postvalue_from_absoluteURI, FaultException, WSActionException
+    EvaluateException, FaultFromFaultMessage, _child_elements, _attrs, _find_arraytype,\
+    _find_type, _get_idstr, _get_postvalue_from_absoluteURI, FaultException, WSActionException
 from ZSI.auth import AUTH
 from ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
     _get_type_definition
 from ZSI.TCcompound import Struct
 import base64, httplib, Cookie, types, time, urlparse
 from ZSI.address import Address
-
+from ZSI.wstools.logging import getLogger as _GetLogger
 _b64_encode = base64.encodestring
 
 class _AuthHeader:
@@ -28,11 +28,6 @@ _AuthHeader.typecode = Struct(_AuthHeader, ofwhat=(String((ZSI_SCHEMA_URI,'Name'
         typed=False)
   
 
-'<BasicAuth xmlns="' + ZSI_SCHEMA_URI + '''">
-    <Name>%s</Name><Password>%s</Password>
-</BasicAuth>'''
-
-
 class _Caller:
     '''Internal class used to give the user a callable object
     that calls back to the Binding object to make an RPC call.
@@ -43,9 +38,8 @@ class _Caller:
 
     def __call__(self, *args):
         return self.binding.RPC(None, self.name, args, 
-                                encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
-                                requesttypecode=TC.Any(self.name),
-                                replytype=TC.Any(self.name+"Response"),)
+                   encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
+                   replytype=TC.Any(self.name+"Response"))
     
 
 class _NamedParamCaller:
@@ -59,17 +53,18 @@ class _NamedParamCaller:
     def __call__(self, **params):
         # Pull out arguments that Send() uses
         kw = { }
-        for key in [ 'auth_header', 'nsdict', 'requestclass',
-                     'requesttypecode' 'soapaction' ]:
+        for key in [ 'auth_header', 'nsdict', 'requesttypecode' 'soapaction' ]:
             if params.has_key(key):
-                kw[kwy] = params[key]
+                kw[key] = params[key]
                 del params[key]
-        return self.binding.RPC(None, self.name, None, TC.Any(),
-                _args=params, encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
-                requesttypecode=TC.Any(self.name), **kw)
+        return self.binding.RPC(None, self.name, None, 
+                   encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
+                   _args=params, 
+                   replytype=TC.Any(self.name+"Response", aslist=False),
+                   **kw)
 
 
-class Binding:
+class _Binding:
     '''Object that represents a binding (connection) to a SOAP server.
     Once the binding is created, various ways of sending and
     receiving SOAP messages are available, including a "name overloading"
@@ -77,6 +72,7 @@ class Binding:
     '''
     defaultHttpTransport = httplib.HTTPConnection
     defaultHttpsTransport = httplib.HTTPSConnection
+    logger = _GetLogger('ZSI.client.Binding')
 
     def __init__(self, nsdict=None, transport=None, url=None, tracefile=None,
                  readerclass=None, writerclass=None, soapaction='', 
@@ -179,79 +175,95 @@ class Binding:
              endPointReference=None, **kw):
         '''Send a message.  If url is None, use the value from the
         constructor (else error). obj is the object (data) to send.
-        Data may be described with a requesttypecode keyword, or a
-        requestclass keyword; default is the class's typecode (if
-        there is one), else Any.
+        Data may be described with a requesttypecode keyword, the default 
+        is the class's typecode (if there is one), else Any.
 
-        Optional WS-Address Keywords
+        Try to serialize as a Struct, if this is not possible serialize an Array.  If 
+        data is a sequence of built-in python data types, it will be serialized as an
+        Array, unless requesttypecode is specified.
+
+        arguments:
+            url -- 
+            opname -- struct wrapper
+            obj -- python instance
+
+        key word arguments:
+            nsdict -- 
+            soapaction --
             wsaction -- WS-Address Action, goes in SOAP Header.
             endPointReference --  set by calling party, must be an 
                 EndPointReference type instance.
+            requesttypecode -- 
 
         '''
         url = url or self.url
-        # Get the TC for the obj.
-        if kw.has_key('requesttypecode'):
-            tc = kw['requesttypecode']
-        elif kw.has_key('requestclass'):
-            tc = kw['requestclass'].typecode
-        elif type(obj) == types.InstanceType:
-            tc = getattr(obj.__class__, 'typecode')
-            if tc is None: tc = TC.Any(opname, aslist=1)
-        else:
-            tc = TC.Any(opname, aslist=1)
-
         endPointReference = endPointReference or self.endPointReference
 
         # Serialize the object.
         d = {}
-
         d.update(self.nsdict)
         d.update(nsdict)
 
-        useWSAddress = self.wsAddressURI is not None
         sw = SoapWriter(nsdict=d, header=True, outputclass=self.writerclass, 
                  encodingStyle=kw.get('encodingStyle'),)
-        if kw.has_key('_args'):
+        
+        requesttypecode = kw.get('requesttypecode')
+        if kw.has_key('_args'): #NamedParamBinding
+            tc = requesttypecode or TC.Any(pname=opname, aslist=False)
             sw.serialize(kw['_args'], tc)
-        else:
-            sw.serialize(obj, tc)
+        elif not requesttypecode:
+            tc = getattr(obj, 'typecode', None) or TC.Any(pname=opname, aslist=False)
+            try:
+                if type(obj) in _seqtypes:
+                    obj = dict(map(lambda i: (i.typecode.pname,i), obj))
+            except AttributeError:
+                # can't do anything but serialize this in a SOAP:Array
+                tc = TC.Any(pname=opname, aslist=True)
+            else:
+                tc = TC.Any(pname=opname, aslist=False)
 
+            sw.serialize(obj, tc)
+        else:
+            sw.serialize(obj, requesttypecode)
+
+        # 
         # Determine the SOAP auth element.  SOAP:Header element
         if self.auth_style & AUTH.zsibasic:
             sw.serialize_header(_AuthHeader(self.auth_user, self.auth_pass),
                 _AuthHeader.typecode)
 
+        # 
         # Serialize WS-Address
-        if useWSAddress is True:
+        if self.wsAddressURI is not None:
             if self.soapaction and wsaction.strip('\'"') != self.soapaction:
                 raise WSActionException, 'soapAction(%s) and WS-Action(%s) must match'\
                     %(self.soapaction,wsaction)
+
             self.address = Address(url, self.wsAddressURI)
             self.address.setRequest(endPointReference, wsaction)
             self.address.serialize(sw)
 
+        # 
         # WS-Security Signature Handler
         if self.sig_handler is not None:
             self.sig_handler.sign(sw)
-        soapdata = str(sw)
 
         scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
-
-        # Determine transport from url if necessary
-        if self.transport == None and url is not None:
+        transport = self.transport
+        if transport is None and url is not None:
             if scheme == 'https':
-                self.transport = Binding.defaultHttpsTransport
+                transport = self.defaultHttpsTransport
             elif scheme == 'http':
-                self.transport = Binding.defaultHttpTransport
+                transport = self.defaultHttpTransport
             else:
                 raise RuntimeError, 'must specify transport or url startswith https/http'
 
         # Send the request.
-        if issubclass(self.transport, httplib.HTTPConnection) is False:
+        if issubclass(transport, httplib.HTTPConnection) is False:
             raise TypeError, 'transport must be a HTTPConnection'
 
-        self.h = self.transport(netloc, None, **self.transdict)
+        soapdata = str(sw)
+        self.h = transport(netloc, None, **self.transdict)
         self.h.connect()
         self.SendSOAPData(soapdata, url, soapaction, **kw)
 
@@ -414,7 +426,6 @@ class Binding:
                 receive.
         '''
         self.ReceiveSOAP(**kw)
-
         if self.ps.IsAFault():
             msg = FaultFromFaultMessage(self.ps)
             raise FaultException(msg)
@@ -431,6 +442,20 @@ class Binding:
     def __repr__(self):
         return "<%s instance %s>" % (self.__class__.__name__, _get_idstr(self))
 
+
+class Binding(_Binding):
+    '''
+    class attr:
+        gettypecode -- funcion that returns typecode from typesmodule,
+            can be set so can use whatever mapping you desire.
+    '''
+    gettypecode = staticmethod(lambda mod,e: getattr(mod, str(e.localName)).typecode)
+    logger = _GetLogger('ZSI.client.Binding')
+
+    def __init__(self, typesmodule=None, **kw):
+        self.typesmodule = typesmodule
+        _Binding.__init__(self, **kw)
+
     def __getattr__(self, name):
         '''Return a callable object that will invoke the RPC method
         named by the attribute.
@@ -440,11 +465,67 @@ class Binding:
             return getattr(self.__class__, name)
         return _Caller(self, name)
 
+    def __parse_child(self, node):
+        '''for rpc-style map each message part to a class in typesmodule
+        '''
+        try:
+            tc = self.gettypecode(self.typesmodule, node)
+        except:
+            self.logger.debug('didnt find typecode for "%s" in typesmodule: %s', 
+                node.localName, self.typesmodule)
+            tc = TC.Any(aslist=1)
+            return tc.parse(node, self.ps)
+
+        self.logger.debug('parse child with typecode : %s', tc)
+        try:
+            return tc.parse(node, self.ps)
+        except Exception:
+            self.logger.debug('parse failed try Any : %s', tc)
+
+        tc = TC.Any(aslist=1)
+        return tc.parse(node, self.ps)
+
+    def Receive(self, replytype, **kw):
+        '''Parse message, create Python object.
+
+        KeyWord data:
+            faults   -- list of WSDL operation.fault typecodes
+            wsaction -- If using WS-Address, must specify Action value we expect to
+                receive.
+        ''' 
+        self.ReceiveSOAP(**kw)
+        ps = self.ps
+        tp = _find_type(ps.body_root)
+        isarray = ((type(tp) in (tuple,list) and tp[1] == 'Array') or _find_arraytype(ps.body_root))
+        if self.typesmodule is None or isarray:
+            return _Binding.Receive(self, replytype, **kw)
+
+        if ps.IsAFault():
+            msg = FaultFromFaultMessage(ps)
+            raise FaultException(msg)
+
+        tc = replytype
+        if hasattr(replytype, 'typecode'):
+            tc = replytype.typecode
+
+        #Ignore response wrapper
+        reply = {}
+        for elt in _child_elements(ps.body_root):
+            name = str(elt.localName)
+            reply[name] = self.__parse_child(elt)
+
+        if self.address is not None:
+            self.address.checkResponse(ps, kw.get('wsaction'))
+
+        return reply
+        
+
 
 class NamedParamBinding(Binding):
     '''Like binding, except the argument list for invocation is
     named parameters.
     '''
+    logger = _GetLogger('ZSI.client.Binding')
 
     def __getattr__(self, name):
         '''Return a callable object that will invoke the RPC method

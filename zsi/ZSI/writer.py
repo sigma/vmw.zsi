@@ -79,8 +79,6 @@ class SoapWriter:
 
         helt = typecode.serialize(header, self, pyobj, **kw)
 
-    #def serialize(self, pyobj, typecode=None, root=None, header_pyobjs={}, 
-    #               header_typecodes=(), **kw):
     def serialize(self, pyobj, typecode=None, root=None, header_pyobjs=(), **kw):
         '''Serialize a Python object to the output stream.
            pyobj -- python instance to serialize in body.

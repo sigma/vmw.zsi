@@ -282,8 +282,8 @@ class ComplexType(TypeCode):
             self.cb(elt, sw, pyobj, name=name, **kw)
         else:
             objid = _get_idstr(pyobj)
-            n = name or self.pname or ('E' + objid)
-            el = elt.createAppendElement(None, n)
+            ns,n = self.get_name(name, objid)
+            el = elt.createAppendElement(ns, n)
             el.setAttributeNS(None, 'href', "#%s" %objid)
             sw.AddCallback(self.cb, elt, sw, pyobj)
 
@@ -291,10 +291,12 @@ class ComplexType(TypeCode):
         debug = self.logger.debugOn()
         if debug:
             self.logger.debug("cb: %s" %str(self.ofwhat))
-            
+
+        objid = _get_idstr(pyobj)
+        ns,n = self.get_name(name, objid)
         if pyobj is None:
             if self.nillable is True:
-                elem = elt.createAppendElement(self.nspname, self.pname)
+                elem = elt.createAppendElement(ns, n)
                 self.serialize_as_nil(elem)
                 return
             raise EvaluateException, 'element(%s,%s) is not nillable(%s)' %(
@@ -303,15 +305,11 @@ class ComplexType(TypeCode):
         if self.mutable is False and sw.Known(pyobj): 
             return
         
-        objid = _get_idstr(pyobj)
-        #n = name or self.pname or ('E' + objid)
-        n = name or self.pname
-        
         if debug:
-            self.logger.debug("element: (%s, %s)", str(self.nspname), n)
+            self.logger.debug("element: (%s, %s)", str(ns), n)
             
         if n is not None:
-            elem = elt.createAppendElement(self.nspname, n)
+            elem = elt.createAppendElement(ns, n)
             self.set_attributes(elem, pyobj)
             if kw.get('typed', self.typed) is True:
                 self.set_attribute_xsi_type(elem)
@@ -618,8 +616,8 @@ class Array(TypeCode):
         
         if self.mutable is False and sw.Known(pyobj): return
         objid = _get_idstr(pyobj)
-        n = name or self.pname or ('E' + objid)
-        el = elt.createAppendElement(self.nspname, n)
+        ns,n = self.get_name(name, objid)
+        el = elt.createAppendElement(ns, n)
 
         # nillable
         if self.nillable is True and pyobj is None:

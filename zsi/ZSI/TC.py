@@ -49,6 +49,13 @@ def _has_type_definition(namespaceURI, name):
     return SchemaInstanceType.getTypeDefinition(namespaceURI, name) is not None
 
 
+#
+# functions for retrieving schema items from 
+# the global schema instance.
+#
+GED = _get_global_element_declaration
+GTD = _get_type_definition
+
 
 class SchemaInstanceType(type):
     '''Register all types/elements, when hit already defined 
@@ -218,9 +225,8 @@ class TypeCode:
     logger = _GetLogger('ZSI.TC.TypeCode')
 
     def __init__(self, pname=None, aname=None, minOccurs=1,
-    maxOccurs=1, nillable=False, typed=True, unique=True, 
-    pyclass=None, attrs_aname='_attrs',
-    **kw):
+         maxOccurs=1, nillable=False, typed=True, unique=True, 
+         pyclass=None, attrs_aname='_attrs', **kw):
         '''Baseclass initialization.
         Instance data (and usually keyword arg)
             pname -- the parameter name (localname).
@@ -662,18 +668,20 @@ class Any(TypeCode):
     def __init__(self, pname=None, aslist=0, **kw):
         TypeCode.__init__(self, pname, **kw)
         self.aslist = aslist
+        self.kwargs = {'aslist':aslist}
+        self.kwargs.update(kw)
         # If not derived, and optional isn't set, make us optional
         # so that None can be parsed.
         if self.__class__ == Any and not kw.has_key('optional'):
             self.optional = 1
-        self.asarray = True
+
+        #self.asarray = True
         self.unique = False
 
     # input arg v should be a list of tuples (name, value).
     def listify(self, v):
         if self.aslist: return [ k for j,k in v ]
         else: return dict(v)
-        return v
 
     def parse_into_dict_or_list(self, elt, ps):
         c = _child_elements(elt)
@@ -691,7 +699,7 @@ class Any(TypeCode):
 
         for c_elt in c:
             # append (name,value) tuple to list
-            v.append( (str(c_elt.nodeName), self.parse(c_elt, ps) ) )
+            v.append( (str(c_elt.localName), self.__class__(**self.kwargs).parse(c_elt, ps) ) )
         return self.listify(v)
 
     def parse(self, elt, ps):
@@ -713,7 +721,7 @@ class Any(TypeCode):
             ns,type = SOAP.ENC, elt.localName
         if not type or (ns,type) == (SOAP.ENC,'Array'):
             if self.aslist or _find_arraytype(elt):
-                return [ self.__class__(aslist=self.aslist, nillable=self.nillable).parse(e, ps)
+                return [ self.__class__(**self.kwargs).parse(e, ps)
                             for e in _child_elements(elt) ]
             if len(_child_elements(elt)) == 0:
                 raise EvaluateException("Any cannot parse untyped element",
@@ -732,7 +740,8 @@ class Any(TypeCode):
         if tc == types.InstanceType:
             tc = pyobj.__class__
             if hasattr(pyobj, 'typecode'):
-                serializer = pyobj.typecode.serialmap.get(tc)
+                #serializer = pyobj.typecode.serialmap.get(tc)
+                serializer = pyobj.typecode
             else:
                 serializer = Any.serialmap.get(tc)
             if not serializer:
@@ -754,28 +763,29 @@ class Any(TypeCode):
 
         objid = _get_idstr(pyobj)
         ns,n = self.get_name(name, objid)
-
-        # setup key word dict
-        kw['name'] = (ns,n)
         kw.setdefault('typed', self.typed)
-
         tc = type(pyobj)
         self.logger.debug('Any serialize -- %s', tc)
-
         if tc in _seqtypes:
-            if self.asarray:
-                arrElt = elt.createAppendElement(ns, n)
-                arrElt.setAttributeNS(self.nspname, 'SOAP-ENC:arrayType', "xsd:anyType[" + str(len(pyobj)) + "]" )
-                a = self.__class__() # instead of = Any()
-                                     # since this is also used by AnyLax()
-                for e in pyobj:
-                    a.serialize(arrElt, sw, e, name='element')
-            else:
+            if self.aslist:
+                array = elt.createAppendElement(ns, n)
+                array.setAttributeType(SOAP.ENC, "Array")
+                array.setAttributeNS(self.nspname, 'SOAP-ENC:arrayType', 
+                    "xsd:anyType[" + str(len(pyobj)) + "]" )
                 for o in pyobj:
-                    serializer = self.__class__() # instead of =Any()
-                    serializer.serialize(elt, sw, o, **kw)
+                    #TODO maybe this should take **self.kwargs...
+                    serializer = getattr(o, 'typecode', self.__class__()) # also used by AnyLax()
+                    serializer.serialize(array, sw, o, name='element', **kw)
+            else:
+                struct = elt.createAppendElement(ns, n)
+                for o in pyobj:
+                    #TODO maybe this should take **self.kwargs...
+                    serializer = getattr(o, 'typecode', self.__class__()) # also used by AnyLax()
+                    serializer.serialize(struct, sw, o, **kw)
             return
-        elif tc == types.DictType:
+
+        kw['name'] = (ns,n)
+        if tc == types.DictType:
             el = elt.createAppendElement(ns, n)
             parentNspname = self.nspname # temporarily clear nspname for dict elements
             self.nspname = None
@@ -789,10 +799,11 @@ class Any(TypeCode):
             self.nspname = parentNspname
             return
                 
-        elif tc == types.InstanceType:
+        if tc == types.InstanceType:
             tc = pyobj.__class__
             if hasattr(pyobj, 'typecode'):
-                serializer = pyobj.typecode.serialmap.get(tc)
+                #serializer = pyobj.typecode.serialmap.get(tc)
+                serializer = pyobj.typecode
             else:
                 serializer = Any.serialmap.get(tc)
             if not serializer:
@@ -803,6 +814,7 @@ class Any(TypeCode):
             if not serializer and isinstance(pyobj, time.struct_time):
                 from ZSI.TCtimes import gDateTime
                 serializer = gDateTime()
+
         if not serializer:
             # Last-chance; serialize instances as dictionary
             if pyobj is None:
@@ -1555,7 +1567,7 @@ class AnyLax(AnyConcrete):
         previousName = ""
         currentElementList = None
         for ce in _child_elements(elt):
-            name = ce.nodeName
+            name = ce.localName
             if (name != previousName): # new name, so new group
                 if currentElementList != None: # store previous group if there is one
                     groupedElements.append( (previousName, currentElementList) )
