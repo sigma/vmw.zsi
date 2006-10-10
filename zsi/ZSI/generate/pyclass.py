@@ -175,7 +175,13 @@ class pyclass_type(type):
                 def set(self, value):
                     setattr(self, what().aname, value)
 
-        if (isinstance(what, TC.ComplexType) or 
+        # 
+        # new factory function
+        # if pyclass is None, skip
+        # 
+        if not callable(what) and getattr(what, 'pyclass', None) is None: 
+            new_func = None
+        elif (isinstance(what, TC.ComplexType) or 
             isinstance(what, TC.Array)):
             
             def new_func(self):
@@ -191,22 +197,15 @@ class pyclass_type(type):
                 '''
                 return what.pyclass(value)
             
-#        elif what.pyclass is None:
-#            def new_func(self, value):
-#                '''value -- initialize value
-#                NOT IMPLEMENTED FOR %s, UNSUPPORTED TYPECODE.
-#                ''' %what.__class__
-#                raise NotImplementedError,\
-#                    'no support built in for %s right now' %what.__class__
-#                    
-#            new_func = None
         elif (issubclass(what.klass, TC.ComplexType) or 
               issubclass(what.klass, TC.Array)):
             
             def new_func(self):
-                '''returns a mutable type
+                '''returns a mutable type or None (if no pyclass).
                 '''
-                return what().pyclass()
+                p = what().pyclass
+                if p is None: return
+                return p()
                 
         else:
             
@@ -217,15 +216,17 @@ class pyclass_type(type):
                     value -- initialize value or None
                     
                 returns a mutable instance (value is None) 
-                    or an immutable instance
+                    or an immutable instance or None (if no pyclass)
                 '''
-                if value is None:
-                    return what().pyclass()
-                return what().pyclass(value)
+                p = what().pyclass
+                if p is None: return
+                if value is None: return p()
+                return p(value)
             
         #TODO: sub all illegal characters in set
         #    (NCNAME)-(letter U digit U "_")
-        new_func.__name__ = 'new_%s' %what.pname
+        if new_func is not None:
+            new_func.__name__ = 'new_%s' %what.pname
         get.func_name = 'get_element_%s' %what.pname
         set.func_name = 'set_element_%s' %what.pname
         return get,set,new_func

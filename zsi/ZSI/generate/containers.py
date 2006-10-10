@@ -18,7 +18,7 @@ from ZSI.wstools.Namespaces import SCHEMA, SOAP, WSDL
 from ZSI.wstools.logging import getLogger as _GetLogger
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.generate import WSISpec, WSInteropError, Wsdl2PythonError,\
-    WsdlGeneratorError
+    WsdlGeneratorError, WSDLFormatError
 
 ID1 = '    '
 ID2 = 2*ID1
@@ -460,7 +460,11 @@ class ServiceOperationContainer(ServiceContainerBase):
             item -- WSDLTools BindingOperation instance.
         '''
         if not isinstance(item, WSDLTools.OperationBinding):
-            raise TypeError, 'expecting WSDLTools Operation instance'
+            raise TypeError, 'Expecting WSDLTools Operation instance'
+
+        if not item.input:
+            raise WSDLFormatError('No <input/> in <binding name="%s"><operation name="%s">' %(
+                item.getBinding().name, item.name))
         
         self.name = None
         self.port = None
@@ -474,32 +478,40 @@ class ServiceOperationContainer(ServiceContainerBase):
         self.port = port = item.getBinding().getPortType()
         self._wsdl = item.getWSDL()
         self.name = name = item.name
-        self.binding_operation = item
+        self.binding_operation = bop = item
         
         op = port.operations.get(name)
-        bop = item
-        if bop is None:
-            raise Wsdl2PythonError, 'no matching portType/Binding operation(%s)' %name
+        if op is None:
+            raise WSDLFormatError(
+                '<portType name="%s"/> no match for <binding name="%s"><operation name="%s">' %(
+                port.name, item.getBinding().name, item.name))
 
         soap_bop = bop.findBinding(WSDLTools.SoapOperationBinding)
-        assert soap_bop is not None, 'expecting SOAP Bindings only.'
+        if soap_bop is None: 
+            raise SOAPBindingError, 'expecting SOAP Bindings'
 
-        # set encodingStyle
-        if bop.input is not None:
-            sbody = bop.input.findBinding(WSDLTools.SoapBodyBinding)
-            self.encodingStyle = None
-            if sbody.use == 'encoded':
-                assert sbody.encodingStyle == SOAP.ENC,\
-                    'Supporting encodingStyle=%s, not %s'%(SOAP.ENC, sbody.encodingStyle)
-                self.encodingStyle = sbody.encodingStyle
+        self.soapaction = soap_bop.soapAction
+        sbody = bop.input.findBinding(WSDLTools.SoapBodyBinding)
+        if not sbody:
+            raise SOAPBindingError('Missing <binding name="%s"><operation name="%s"><input><soap:body>' %(
+                port.binding.name, bop.name))
 
-        self.soapaction=soap_bop.soapAction
-        if item.input:
-            self.inputName  = op.getInputMessage().name
-            self.inputSimpleType = \
-                FromMessageGetSimpleElementDeclaration(op.getInputMessage())
-            self.inputAction = op.getInputAction()
-        if item.output:
+        self.encodingStyle = None
+        if sbody.use == 'encoded':
+            assert sbody.encodingStyle == SOAP.ENC,\
+                'Supporting encodingStyle=%s, not %s'%(SOAP.ENC, sbody.encodingStyle)
+            self.encodingStyle = sbody.encodingStyle
+
+        self.inputName  = op.getInputMessage().name
+        self.inputSimpleType = \
+            FromMessageGetSimpleElementDeclaration(op.getInputMessage())
+        self.inputAction = op.getInputAction()
+
+        if bop.output is not None:
+            sbody = bop.output.findBinding(WSDLTools.SoapBodyBinding)
+            if not item.output:
+                raise WSDLFormatError, "Operation %s, no match for output binding"  %name
+
             self.outputName = op.getOutputMessage().name
             self.outputSimpleType = \
                 FromMessageGetSimpleElementDeclaration(op.getOutputMessage())

@@ -2,6 +2,10 @@
 
 __all__ = ['wsdl2python', 'utility', 'containers', 'commands']
 
+class WSDLFormatError(Exception):
+   '''Detected errors in the WSDL document.
+   '''
+
 class WsdlGeneratorError(Exception):
     pass
 
