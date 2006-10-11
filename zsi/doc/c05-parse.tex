@@ -12,7 +12,8 @@ semantics.
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{keepdom}}{\code{0}}{Do not release the DOM when this
+\lineiii{\code{envelope}}{\code{True}}{expect a SOAP Envelope}
+\lineiii{\code{keepdom}}{\code{False}}{Do not release the DOM when this
 object is destroyed. To access the DOM object, use the
 {\method{GetDomAndReader()}} method. The reader object is necessary to 
 properly free the DOM structure using {\method{reader.releaseNode(dom)}}.
@@ -22,7 +23,7 @@ XML readers; described below.
 \versionadded{1.2}}
 \lineiii{\code{resolver}}{\code{None}}{Value for the \code{resolver}
 attribute; see below.}
-\lineiii{\code{trailers}}{\code{0}}{Allow trailing data elements
+\lineiii{\code{trailers}}{\code{False}}{Allow trailing data elements
 to appear after the \code{Body}.}
 \end{tableiii}
 
