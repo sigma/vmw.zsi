@@ -191,13 +191,13 @@ class to connect to a remote service and perform an operation.
 
 \input{client-hello-struct}
 
-\subsection{Complex Example}
+\subsection{Complex Example: pickler.py}
 If the operation invoked returns a ComplexType, typecode information must
 be provided in order to tell \ZSI{} how to deserialize the response.
-Here is a sample server-side implementation:
+Here is a sample server-side implementation (for the complete example see
+\emph{Appendix D}):
 
 \begin{verbatim}
-# Complex type definition
 class Person:
   def __init__(self, name=None, age=0):
     self.name = name
@@ -221,39 +221,55 @@ def savePerson(person):
 \end{verbatim}
 
 In order for \ZSI{} to transparently deserialize the returned complex type into
-a \class{Person} instance, a module defining the class and its typecode must
-be appended to the \var{ZSI.Path} list.
-It is also possible to explicitly tell \ZSI{} what class and typecode to
-use by passing the class as a parameter to the
-\method{Binding.Receive()} method.
-The first method is often preferred, particularly for publically-distributed
-libraries.
+a \class{Person} instance, a module defining the class and its typecode can be
+passed into the \class{Binding}. It is also possible to explicitly tell \ZSI{} 
+what typecode to use by passing it as a parameter to the \method{Binding.Receive()} 
+method.  
 
 The following fragment shows both styles:
 
 \begin{verbatim}
+import sys
 from ZSI.client import Binding
-from ZSI import Path
-
-# Explicitly stating what to get back.
 from MyComplexTypes import Person
-a = apply(b.getPerson, 'christopher')
-person = b.Receive(Person)
 
-# Transparent deserialization
-import MyComplexTypes
-b = Binding(url='/cgi-bin/complex-test', typesmodule=MyComplexTypes)
-person = b.getPerson('christopher')
+b = Binding(url='http://localhost/test3/pickler.py', tracefile=sys.stdout)
+person = Person('christopher', 26)
+rsp = b.savePerson(person)
+
 \end{verbatim}
 
-Because the returned complex type is defined in a class registered in 
-\var{ZSI.Path}, transparent deserialization is possible.  When sending
+Because the returned complex type is defined in a class present in 
+\var{typesmodule}, transparent deserialization is possible.  When sending
 complex types to the server, it is not necessary to list the module
-in \var{ZSI.Path}:
+in \var{typesmodule}:
 
 \begin{verbatim}
-from ZSI.client import Binding
-b = Binding(url='/cgi-bin/complex-test')
-person = Person('christopher', 26)
-b.savePerson(person)
+import sys
+import MyComplexTypes
+from ZSI.client import NamedParamBinding as NPBinding, Binding
+from ZSI import TC
+
+kw = {'url':'http://localhost/test3/pickler.py', 'tracefile':sys.stdout}
+b = NPBinding(**kw)
+rsp = b.getPerson(name='christopher')
+assert type(rsp) is dict, 'expecting a dict'
+assert rsp['Person']['name'] == 'christopher', 'wrong person'
+
+b = NPBinding(typesmodule=MyComplexTypes, **kw)
+rsp = b.getPerson(name='christopher')
+assert isinstance(rsp['Person'], MyComplexTypes.Person), (
+    'expecting instance of %s' %MyComplexTypes.Person)
+
+b = Binding(typesmodule=MyComplexTypes, **kw)
+class Name(str):
+    typecode = TC.String("name")
+
+rsp = b.getPerson(Name('christopher'))
+assert isinstance(rsp['Person'], MyComplexTypes.Person), (
+    'expecting instance of %s' %MyComplexTypes.Person)
+
 \end{verbatim}
+
+
+
