@@ -842,7 +842,7 @@ class String(SimpleType):
     type = (SCHEMA.XSD3, 'string')
     logger = _GetLogger('ZSI.TC.String')
 
-    def __init__(self, pname=None, strip=1, **kw):
+    def __init__(self, pname=None, strip=True, **kw):
         TypeCode.__init__(self, pname, **kw)
         if kw.has_key('resolver'): self.resolver = kw['resolver']
         self.strip = strip
@@ -852,7 +852,7 @@ class String(SimpleType):
         '''
         if self.strip: text = text.strip()
         if self.pyclass is not None:
-            return self.pyclass(text)    
+            return self.pyclass(text)
         return text
 
     def get_formatted_content(self, pyobj):
@@ -1046,6 +1046,13 @@ class Enumeration(String):
             raise EvaluateException('Value not in enumeration list',
                     ps.Backtrace(elt))
         return val
+
+    def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
+        if pyobj not in self.choices:
+            raise EvaluateException('Value not in enumeration list',
+                    ps.Backtrace(elt))
+        String.serialize(self, elt, sw, pyobj, name=name, orig=orig, **kw)
+
 
 
 # This is outside the Integer class purely for code esthetics.

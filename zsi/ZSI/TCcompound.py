@@ -96,10 +96,9 @@ class ComplexType(TypeCode):
     logger = _GetLogger('ZSI.TCcompound.ComplexType')
     
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
-    mutable=True, hasextras=0, mixed=False, mixed_aname='_text', **kw):
+    mutable=True, mixed=False, mixed_aname='_text', **kw):
         '''pyclass -- the Python class to hold the fields
         ofwhat -- a list of fields to be in the complexType
-        hasextras -- ignore extra input fields
         inorder -- fields must be in exact order or not
         inline -- don't href/id when serializing
         mutable -- object could change between multiple serializations
@@ -117,7 +116,6 @@ class ComplexType(TypeCode):
             self.mixed_aname = mixed_aname
 
         if self.mutable is True: self.inline = True
-        self.hasextras = hasextras
         self.type = kw.get('type') or _get_xsitype(self)
         t = type(ofwhat)
         if t not in _seqtypes:
@@ -158,16 +156,6 @@ class ComplexType(TypeCode):
         c = _child_elements(elt)
         count = len(c)
         if self.nilled(elt, ps): return Nilled
-#        repeatable_args = False
-#        for tc in self.ofwhat:
-#            if tc.maxOccurs > 1:
-#                repeatable_args = True
-#                break
-#
-#        if not repeatable_args:
-#            if count > len(self.ofwhat) and not self.hasextras:
-#                raise EvaluateException('Too many sub-elements (%d>%d)' %(
-#                    count,len(self.ofwhat)), ps.Backtrace(elt))
 
         # Create the object.
         v = {}
@@ -268,11 +256,7 @@ class ComplexType(TypeCode):
         # type definition must be informed of element tag (nspname,pname),
         # element declaration is initialized with a tag.
         try:
-            if issubclass(self.pyclass, ElementDeclaration) is False and\
-               issubclass(self.pyclass, TypeDefinition) is True:
-                pyobj = self.pyclass((self.nspname,self.pname))
-            else:
-                pyobj = self.pyclass()
+            pyobj = self.pyclass()
         except Exception, e:
             raise TypeError("Constructing element (%s,%s) with pyclass(%s), %s" \
                 %(self.nspname, self.pname, self.pyclass.__name__, str(e)))
@@ -469,7 +453,7 @@ class ComplexType(TypeCode):
 
 class Struct(ComplexType):
     '''Struct is a complex type for accessors identified by name. 
-       Constraint: No element may be have the same name as any other,
+       Constraint: No element may have the same name as any other,
        nor may any element have a maxOccurs > 1.
        
       <xs:group name="Struct" >
@@ -486,17 +470,16 @@ class Struct(ComplexType):
     logger = _GetLogger('ZSI.TCcompound.Struct')
     
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
-        mutable=True, hasextras=0, **kw):
+        mutable=True, **kw):
         '''pyclass -- the Python class to hold the fields
         ofwhat -- a list of fields to be in the struct
-        hasextras -- ignore extra input fields
         inorder -- fields must be in exact order or not
         inline -- don't href/id when serializing
         mutable -- object could change between multiple serializations
         '''
         ComplexType.__init__(self, pyclass, ofwhat, pname=pname, 
             inorder=inorder, inline=inline, mutable=mutable, 
-            hasextras=hasextras, **kw
+            **kw
             )
         
         # Check Constraints
@@ -533,7 +516,7 @@ class Array(TypeCode):
             raise TypeError("Only single-dimensioned arrays supported")
         self.fill = fill
         self.sparse = sparse
-        if self.sparse: ofwhat.optional = 1
+        #if self.sparse: ofwhat.minOccurs = 0
         self.mutable = mutable
         self.size = size
         self.nooffset = nooffset

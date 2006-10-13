@@ -35,9 +35,11 @@ the tag, dictionary key, or instance attribute to set.
 The \code{nsdict} parameter to the \class{SoapWriter} construct can be used to
 specify prefix to namespace-URI mappings, these are otherwise handled automatically.
 
-\begin{classdesc}{TypeCode}{**keywords}
-The \code{pname} 
+\section{\class{TC.TypeCode}}
 
+The \class{TypeCode} class is the parent class of all typecodes.
+
+\begin{classdesc}{TypeCode}{**keywords}
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
@@ -150,7 +152,8 @@ integer for the first three, and raise a \exception{EvaluateException}
 for the fourth.
 
 \subsection{compound data} -- Struct or Array
-Compound data, such as a \code{struct}, may also be self-describing:
+Compound data, such as a \code{struct}, may also be self-describing (namespace
+are omitted for clarity):
 \begin{verbatim}
 <tns:foo>
     <tns:i xsi:type="SOAP-ENC:integer">12</tns:i>
@@ -161,8 +164,11 @@ Compound data, such as a \code{struct}, may also be self-describing:
 If this is parsed with a \class{TC.Any} typecode, either a Python \code{dict}
 is created or if \code{aslist} is True a \code{list}:
 \begin{verbatim}
+ps = ParsedSoap(xml, envelope=False)
+print ps.Parse(TC.Any())
 {   'name': u'Hello world',    'i': 12   }
 
+print ps.Parse(TC.Any(aslist=True))
 [ 12, u'Hello world' ]
 \end{verbatim}
 Note that one preserves order, while the other preserves the element names.
@@ -193,8 +199,18 @@ typecode capable of parsing elements of type \code{mytype}.
 This class would know that the \code{i} element is an integer,
 so that the explicit typing becomes optional, rather than required.
 
-The rest of this section describes how to add new
-types to the \ZSI{} typecode engine.
+\subsection{Adding new types} Most of the \class{TypeCodes} classes in
+\module{TC} are registered with \class{Any}, making an instance of itself
+available for dynamic typing.  New \class{TypeCode} classes can be created and
+registered with \class{Any} by using \function{RegisterType}.  In order to
+override an existing entry in the registry call \function{RegisterType} with
+\code{clobber=True}.  The serialization entries are mappings between builtin
+Python types and a \class{TypeCode} instance, it is not possible to have one
+Python type map to multiple typecodes.  The parsing entries are mappings
+between  \code{(namespaceURI,name)} tuples, representing the \code{xsi:type}
+attribute, and a \class{TypeCode} instance.  Thus, only one instance of a 
+\class{TypeCode} class can represent a XML Schema type.  So this mechanism is
+not appropriate for representing XML Schema element information.
 
 \begin{classdesc}{\emph{NEWTYPECODE}(TypeCode)}{...}
 The new typecode should be derived from the \class{TC.TypeCode} class, and
@@ -272,15 +288,21 @@ If the class is not registered, then instances of the class cannot be
 processed as dynamic types.
 This may be acceptable in some environments.
 
+\section{\class{TC.SimpleType}}
+Parent class of all simple types.
+
+\begin{memberdesc}{empty_content}
+This is a class attribute.
+Value returned when tag or node is present, is not nilled, and without text
+content.
+\end{memberdesc}
+
 \section{Strings}
 
-SOAP Strings are Python strings.
-If the value to be serialized is a Python sequence, then an \code{href}
-is generated, with the first element of the sequence used as the URI.
-This can be used, for example, when generating SOAP with attachments.
+SOAP/XMLSchema Strings are Python strings.
 
 \begin{classdesc}{String}{name\optional{, **keywords}}
-The parent type of all SOAP strings.
+The parent type of all strings.
 
 The following keyword arguments may be used:
 
@@ -288,17 +310,14 @@ The following keyword arguments may be used:
 \lineiii{\code{resolver}}{\code{None}}{A function that can resolve an
 absolute URI and return its content as a string, as described in the
 \class{ParsedSoap} description.}
-\lineiii{\code{strip}}{\code{1}}{If true, leading and trailing whitespace
+\lineiii{\code{strip}}{\code{True}}{If true, leading and trailing whitespace
 are stripped from the content.}
-\lineiii{\code{textprotect}}{\code{1}}{If true, less-than and ampersand
-characters are replaced with \code{\&lt;} and \code{\&amp;}, respectively.
-\versionadded{1.1}}
 \end{tableiii}
 \end{classdesc}
 
 \begin{classdesc}{Enumeration}{value_list, name\optional{, **keywords}}
 Like \class{TC.String}, but the value must be a member of
-the \code{value_list} sequence of text strings
+the \code{choices} sequence of text strings
 \end{classdesc}
 
 In addition to \class{TC.String},
@@ -374,9 +393,9 @@ XML readers; described in the \class{ParsedSoap} chapter.}
 
 \section{Integers}
 
-SOAP integers are Python integers.
+SOAP/XMLSchema integers are Python integers.
 
-\begin{classdesc}{Integer}{name\optional{, **keywords}}
+\begin{classdesc}{Integer}{\optional{**keywords}}
 The parent type of all integers.
 This class handles any of the several types (and ranges) of SOAP integers.
 
@@ -388,66 +407,66 @@ The following keyword arguments may be used:
 \end{tableiii}
 \end{classdesc}
 
-\begin{classdesc}{IEnumeration}{value_list, name\optional{, **keywords}}
+\begin{classdesc}{IEnumeration}{choices\optional{, **keywords}}
 Like \class{TC.Integer}, but the value must be a member of
-the \code{value_list} sequence.
+the \code{choices} sequence.
 \end{classdesc}
 
 A number of sub-classes are defined to handle smaller-ranged numbers.
 
-\begin{classdesc}{Ibyte}{name\optional{, **keywords}}
+\begin{classdesc}{Ibyte}{\optional{**keywords}}
 A signed eight-bit value.
 \end{classdesc}
 
-\begin{classdesc}{IunsignedByte}{name\optional{, **keywords}}
+\begin{classdesc}{IunsignedByte}{\optional{**keywords}}
 An unsigned eight-bit value.
 \end{classdesc}
 
-\begin{classdesc}{Ishort}{name\optional{, **keywords}}
+\begin{classdesc}{Ishort}{\optional{**keywords}}
 A signed 16-bit value.
 \end{classdesc}
 
-\begin{classdesc}{IunsignedShort}{name\optional{, **keywords}}
+\begin{classdesc}{IunsignedShort}{\optional{**keywords}}
 An unsigned 16-bit value.
 \end{classdesc}
 
-\begin{classdesc}{Iint}{name\optional{, **keywords}}
+\begin{classdesc}{Iint}{\optional{**keywords}}
 A signed 32-bit value.
 \end{classdesc}
 
-\begin{classdesc}{IunsignedInt}{name\optional{, **keywords}}
+\begin{classdesc}{IunsignedInt}{\optional{**keywords}}
 An unsigned 32-bit value.
 \end{classdesc}
 
-\begin{classdesc}{Ilong}{name\optional{, **keywords}}
+\begin{classdesc}{Ilong}{\optional{**keywords}}
 An signed 64-bit value.
 \end{classdesc}
 
-\begin{classdesc}{IunsignedLong}{name\optional{, **keywords}}
+\begin{classdesc}{IunsignedLong}{\optional{**keywords}}
 An unsigned 64-bit value.
 \end{classdesc}
 
-\begin{classdesc}{IpositiveInteger}{name\optional{, **keywords}}
+\begin{classdesc}{IpositiveInteger}{\optional{**keywords}}
 A value greater than zero.
 \end{classdesc}
 
-\begin{classdesc}{InegativeInteger}{name\optional{, **keywords}}
+\begin{classdesc}{InegativeInteger}{\optional{**keywords}}
 A value less than zero.
 \end{classdesc}
 
-\begin{classdesc}{InonPositiveInteger}{name\optional{, **keywords}}
+\begin{classdesc}{InonPositiveInteger}{\optional{**keywords}}
 A value less than or equal to zero.
 \end{classdesc}
 
-\begin{classdesc}{InonNegativeInteger}{name\optional{, **keywords}}
+\begin{classdesc}{InonNegativeInteger}{\optional{**keywords}}
 A value greater than or equal to zero.
 \end{classdesc}
 
 \section{Floating-point Numbers}
 
-SOAP floating point numbers are Python floats.
+SOAP/XMLSchema floating point numbers are Python floats.
 
-\begin{classdesc}{Decimal}{name\optional{, **keywords}}
+\begin{classdesc}{Decimal}{\optional{**keywords}}
 The parent type of all floating point numbers.
 This class handles any of the several types (and ranges) of SOAP
 floating point numbers.
@@ -515,43 +534,43 @@ In addition, badly-formed values may result in non-sensical serializations.
 When serializing, an integral or floating point number is taken as
 the number of seconds since the epoch, in UTC.
 
-\begin{classdesc}{Duration}{name\optional{, **keywords}}
+\begin{classdesc}{Duration}{\optional{**keywords}}
 A relative time period.
 Negative durations have all values less than zero; this makes
 it easy to add a duration to a Python time tuple.
 \end{classdesc}
 
-\begin{classdesc}{Gregorian}{name\optional{, **keywords}}
+\begin{classdesc}{Gregorian}{\optional{**keywords}}
 An absolute time period.
 This class should not be instantiated directly; use one of the \code{gXXX}
 classes instead.
 \end{classdesc}
 
-\begin{classdesc}{gDateTime}{name\optional{, **keywords}}
+\begin{classdesc}{gDateTime}{\optional{**keywords}}
 A date and time.
 \end{classdesc}
 
-\begin{classdesc}{gDate}{name\optional{, **keywords}}
+\begin{classdesc}{gDate}{\optional{**keywords}}
 A date.
 \end{classdesc}
 
-\begin{classdesc}{gYearMonth}{name\optional{, **keywords}}
+\begin{classdesc}{gYearMonth}{\optional{**keywords}}
 A year and month.
 \end{classdesc}
 
-\begin{classdesc}{gYear}{name\optional{, **keywords}}
+\begin{classdesc}{gYear}{\optional{**keywords}}
 A year.
 \end{classdesc}
 
-\begin{classdesc}{gMonthDay}{name\optional{, **keywords}}
+\begin{classdesc}{gMonthDay}{\optional{**keywords}}
 A month and day.
 \end{classdesc}
 
-\begin{classdesc}{gDay}{name\optional{, **keywords}}
+\begin{classdesc}{gDay}{\optional{**keywords}}
 A day.
 \end{classdesc}
 
-\begin{classdesc}{gTime}{name\optional{, **keywords}}
+\begin{classdesc}{gTime}{\optional{**keywords}}
 A time.
 \end{classdesc}
 
@@ -559,7 +578,7 @@ A time.
 
 SOAP Booleans are Python integers.
 
-\begin{classdesc}{Boolean}{name\optional{, **keywords}}
+\begin{classdesc}{Boolean}{\optional{**keywords}}
 When marshaling zero or the word ``false'' is returned as \code{0}
 and any non-zero value or the word ``true'' is returned as \code{1}.
 When serializing, the number \code{0} or \code{1} will be generated.
@@ -583,7 +602,7 @@ deep copy of the XML subtree will be made and returned as the value.
 Note that it is generally more efficient to keep the \class{ParsedSoap}
 object alive until the XML data is no longerneeded.
 
-\begin{classdesc}{XML}{name\optional{, **keywords}}
+\begin{classdesc}{XML}{\optional{**keywords}}
 This typecode represents a portion of an XML document embedded in a SOAP
 message.
 The value is the element node.
@@ -616,37 +635,31 @@ such as when using typecodes and document-style interfaces.)
 identifying the namespace prefixes that should be output.}
 \end{tableiii}
 
-\section{Struct}
+\section{ComplexType}
 
-SOAP structs are either Python dictionaries or
-instances of application-specified classes.
+Represents the XMLSchema ComplexType .
+\versionadded{2.0}
 
-\begin{classdesc}{Struct}{pyclass, typecode_seq, name\optional{, **keywords}}
+\begin{classdesc}{ComplexType}{pyclass, ofwhat\optional{, **keywords}}
 This class defines a compound data structure.
 If \code{pyclass} is \code{None}, then the data will be marshaled
-into a Python dictionary, and each item in the \code{typecode_seq} sequence
+into a Python dictionary, and each item in the \code{ofwhat} sequence
 specifies a (possible) dictionary entry.
-Otherwise, \code{pyclass} must be a Python class object whose constructor
-takes a single parameter, which will be the value of the \code{name}
-parameter given in the \class{TC.Struct} constructor.
-(This allows a single \code{pyclass} to be used for different typecodes.)
+Otherwise, \code{pyclass} must be a Python class object.
 The data is then marshaled into the object, and each item in the
-\code{typecode_seq}
+\code{ofwhat}
 sequence specifies an attribute of the instance to set.
 
-Note that each typecode in \code{typecode_seq} must have a name.
+Note that each typecode in \code{ofwhat} must have a name.
 
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{hasextras}}{\code{0}}{Ignore any extra elements that appear
-in the in the structure.
-If \code{inorder} is true, extras can only appear at the end.}
-\lineiii{\code{inorder}}{\code{0}}{Items within the structure must appear
-in the order specified in the \code{TCseq} sequence.}
-\lineiii{\code{inline}}{\code{0}}{The structure is single-reference,
+\lineiii{\code{inorder}}{\code{False}}{Items within the structure must appear
+in the order specified in the \code{ofwhat} sequence.}
+\lineiii{\code{inline}}{\code{False}}{The structure is single-reference,
 so ZSI does not have to use \code{href/id} encodings.}
-\lineiii{\code{mutable}}{\code{0}}{If an object is going to be serialized
+\lineiii{\code{mutable}}{\code{False}}{If an object is going to be serialized
 multiple times, and its state may be modified between serializations,
 then this keyword should be used, otherwise a single instance will be
 serialized, with multiple references to it.
@@ -659,11 +672,15 @@ namespace-qualified value of that attribute must match the value
 specified by this parameter.
 By default, type-checking is not done for structures; matching child element
 names is usually sufficient and senders rarely provide type information.}
+\lineiii{\code{mixed}}{\code{False}}{using a mixed content model, allow text and
+element content.}
+\lineiii{\code{mixed_aname}}{\code{'_text'}}{if mixed is True, text
+content is set in this attribute (key).}
 \end{tableiii}
 
 If the \code{typed} keyword is used, then its value is assigned to
-all typecodes in the \code{typecode_seq} parameter.
-If any of the typecodes in \code{typecode_seq} are repeatable, then the
+all typecodes in the \code{ofwhat} parameter.
+If any of the typecodes in \code{ofwhat} are repeatable, then the
 \code{inorder} keyword should not be used and the \code{hasextras} parameter
 \emph{must} be used.
 
@@ -688,24 +705,11 @@ foo.typecode = TC.Struct(foo,
 \end{verbatim}
 \end{classdesc}
 
-\section{Choice}
+\section{Struct}
 
-A choice is a Python two-element \samp{(name, value)} tuple, representing
-a union of different types.
-The first item is a string identifying the type, and the second is the
-actual data.
-
-\begin{classdesc}{Choice}{typecode_seq, name\optional{, **keywords}}
-When parsing, ZSI will look at the element name in the SOAP message, and
-determine which of the choices to create.
-
-When serializing Python objects to SOAP messages, \ZSI{} must be
-explicitly told which of the choices define the data.
-This is done by passing a two-element tuple.
-The first item is a string identifying the name of a typecode
-from the \code{typecode_seq} list of typecodes.
-The second is the object to be serialized.
-\end{classdesc}
+SOAP Struct is a complex type for accessors identified by name. No element may 
+have the same name as any other, nor may any element have a maxOccurs > 1. 
+SOAP Structs are either Python dictionaries or instances of application-specified classes.
 
 \section{Arrays}
 
@@ -718,9 +722,9 @@ used for the missing values.
 
 \strong{Currently only singly-dimensioned arrays are supported.}
 
-\begin{classdesc}{Array}{atype, ofwhat, name\optional{, **keywords}}
-The \code{atype} parameter is a text string representing the SOAP array type.
-the \code{ofwhat} parameter is a typecode describing the array elements.
+\begin{classdesc}{Array}{atype, ofwhat\optional{, **keywords}}
+The \code{atype} parameter is a \code{(URI,NCName)} tuple representing the SOAP
+array type. The \code{ofwhat} parameter is a typecode describing the array elements.
 \end{classdesc}
 
 The following keyword arguments may be used:
@@ -732,14 +736,16 @@ elements.}
 the array.}
 \lineiii{\code{fill}}{\code{None}}{The value to use when an array
 element is omitted.}
-\lineiii{\code{mutable}}{\code{0}}{Same as \class{TC.Struct}
-\versionadded{1.2}}
+\lineiii{\code{mutable}}{\code{False}}{If an object is going to be serialized
+multiple times, and its state may be modified between serializations,
+then this keyword should be used, otherwise a single instance will be
+serialized, with multiple references to it.}
 \lineiii{\code{nooffset}}{\code{0}}{Do not use the SOAP \code{offset}
 attribute so skip leading elements with the same value as \code{fill}.}
-\lineiii{\code{sparse}}{\code{0}}{The array is sparse.}
+\lineiii{\code{sparse}}{\code{False}}{The array is sparse.}
 \lineiii{\code{size}}{\code{None}}{An integer or list of integers that
 specifies the maximum array dimensions.}
-\lineiii{\code{undeclared}}{\code{0}}{The SOAP \samp{arrayType} attribute
+\lineiii{\code{undeclared}}{\code{False}}{The SOAP \samp{arrayType} attribute
 need not appear.}
 \end{tableiii}
 

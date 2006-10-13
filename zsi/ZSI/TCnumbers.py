@@ -126,6 +126,13 @@ class IEnumeration(Integer):
                     ps.Backtrace(elt))
         return val
 
+    def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
+        if pyobj not in self.choices:
+            raise EvaluateException('Value not in int enumeration list',
+                    ps.Backtrace(elt))
+        Integer.serialize(self, elt, sw, pyobj, name=name, orig=orig, **kw)
+
+
 class FPfloat(Decimal):
     '''IEEE 32bit floating point value.
     '''
@@ -166,5 +173,12 @@ class FPEnumeration(FPfloat):
                         '" not in enumeration list',
                     ps.Backtrace(elt))
         return val
+    
+    def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
+        if pyobj not in self.choices:
+            raise EvaluateException('Value not in int enumeration list',
+                    ps.Backtrace(elt))
+        Decimal.serialize(self, elt, sw, pyobj, name=name, orig=orig, **kw)
+    
 
 if __name__ == '__main__': print _copyright
