@@ -10,68 +10,55 @@ understood by \ZSI{}.
 All typecodes classes have the prefix \code{TC.}, to avoid name clashes.
 
 \ZSI{} provides fine-grain control over the names used when parsing and
-serializing XML into local Python objects, through the use of three
-attributes: the \code{pname}, the \code{aname}, and the \code{oname}
-(in approximate order of importance).  They specify the name expected on
-the XML element being parsed, the name to use for the analogous attribute
-in the local Python object, and the name to use for the output element
-when serializing.
+serializing XML into local Python objects, through the use of two
+attributes: the \code{pname}, the \code{aname}.  The \code{pname} specifies the
+name expected on the XML element being parsed and the name to use for the output element
+when serializing.  The \code{aname} is the name to use for the analogous
+attribute in the local Python object.
 
 The \code{pname} is the parameter name. It specifies the incoming
 XML element name and the default values for the Python attribute
-and serialized names.  All typecodes take name argument, known as
-\code{name}, for the \code{pname}.  This name can be specified as
-either a list or a string.  When specified as a list, it must have two
-elements which are interpreted as a ``(namespace-URI, localname)'' pair.
+and serialized names.  All typecodes take the \code{pname} argument.  This name can be
+specified as either a list or a string.  When specified as a list, it must have
+two elements which are interpreted as a ``(namespace-URI, localname)'' pair.
 If specified this way, both the namespace and the local element name
 must match for the parse to succeed.  For the Python attribute, and
-when generating output, only the ``localname'' is used.  (Because the
-output name is not namespace-qualified, it may be necessary to set the
-default namespace, such as through the \code{nsdict} parameter of the
-\class{SoapWriter} class.  When the name is specified as a string, it
-can be either a simple XML name (such as ``foo''), or a colon-separated
-XML qualified name (such as ``tns:foo'').  If a qualified name is used,
-the namespace prefix is ignore on input and for the Python attribute,
-but the full qualified name is used for output; this \emph{requires}
-the namespace prefix to be specified.
+when generating output, only the ``localname'' is used. If a namespace-URI is
+specified then the full qualified name is used for output, and it is required
+for input; this \emph{requires} the namespace prefix to be specified.
 
 The \code{aname} is the attribute name.  This parameter overrides
-any value implied by the \code{pname}.  Typecodes nested in a the
-\class{TC.Struct} or \class{TC.Choice} can use this parameter to specify
+any value implied by the \code{pname}.  Typecodes nested in a \class{TC.Struct}
+or \class{TC.ComplexType} can use this parameter to specify
 the tag, dictionary key, or instance attribute to set.
 
-The final name, \code{oname}, specifies the name to use for the XML element
-when serializing.  This is most useful when using the same typecode for
-both parsing and serializing operations.  It can be any string, and is
-output directly; a name like ``tns:foo'' implies that the \code{nsdict}
-parameter to the \class{SoapWriter} construct should have an entry for
-``tns,'' otherwise the resulting output will not be well-formed XML.
+The \code{nsdict} parameter to the \class{SoapWriter} construct can be used to
+specify prefix to namespace-URI mappings, these are otherwise handled automatically.
 
-\begin{classdesc}{TypeCode}{name, **keywords}
-The \code{name} parameter is the name of the object; this is only
-required when a typecode appears within a \class{TC.Struct} as it defines
-the attribute name used to hold the data, or within a \class{TC.Choice}
-as it determines the data type.
-(Since SOAP RPC models transfer as structures, this essentially means that
-a the \code{name} parameter can never be \code{None}.)
+\begin{classdesc}{TypeCode}{**keywords}
+The \code{pname} 
 
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{aname}}{\-}{See name discussion above.}
-\lineiii{\code{default}}{n/a}{Value if the element is not specified.}
-\lineiii{\code{optional}}{\code{0}}{The element is optional; see below.}
-\lineiii{\code{oname}}{\-}{See name discussion above.}
-\lineiii{\code{repeatable}}{\code{0}}{If multiple instances of this
-occur in a \class{TC.Struct}, collect the values into a list.
-\versionadded{1.2}}
-\lineiii{\code{typed}}{\code{1}}{Output type information (in the
-\code{xsi:type} attribute) when serializing. By special dispensation,
-typecodes within a \class{TC.Struct} object inherit this from the
-container.}
+\lineiii{\code{pname}}{\code{None}}{parameter name of the object}
+\lineiii{\code{aname}}{\code{None}}{attribute name of the object}
+\lineiii{\code{minOccurs}}{\code{1}}{schema facet minimum occurances}
+\lineiii{\code{maxOccurs}}{\code{1}}{schema facet maximum occurances}
+\lineiii{\code{nillable}}{\code{False}}{schema facet is this nillable (\code{xsi:nil="true"})}
+\lineiii{\code{typed}}{\code{True}}{Output type information (in the \code{xsi:type}
+attribute) when serializing. By special dispensation, typecodes within a
+\class{TC.Struct} object inherit this from the container.}
 \lineiii{\code{unique}}{\code{0}}{If true, the object is unique and will
 never be ``aliased'' with another object, so the \code{id} attribute
 need not be output.}
+
+\lineiii{\code{pyclass}}{\code{None}}{when parsing data, instances of this class
+can be created to store the data.  Default behavior is reflective of specific
+TypeCode classes.}
+\lineiii{\code{attrs_aname}}{\code{'_attrs'}}{attribute name of the object where
+attribute values are stored.  Used for serialization and parsing.}
+
 \end{tableiii}
 
 Optional elements are those which do not have to be an incoming
@@ -91,17 +78,26 @@ If true (the default) then all typecode constructors do more
 rigorous type-checking on their parameters.
 \end{memberdesc}
 
-\begin{memberdesc}{typed}
+\begin{memberdesc}{tag}
 This is a class attribute.
-This sets the default value for whether or not typecodes output
-typing (\code{xsi:type} attribute) information.
-The default is none-zero.
+Specifies the global element declaration this typecode represents, the value is
+a \samp{(namespace, name)} tuple.
+\end{memberdesc}
+
+\begin{memberdesc}{type}
+This is a class attribute.
+Specifies the global type definition this typecode represents, the value is
+a \samp{(namespace, name)} tuple.
+\end{memberdesc}
+
+\begin{memberdesc}{logger}
+This is a class attribute.
+logger instance for this class.
 \end{memberdesc}
 
 The following methods are useful for defining new typecode classes;
-see the section on dynamic typing for more details.
-In all of the following, the \code{ps} parameter is a \class{ParsedSoap}
-object.
+see the section on dynamic typing for more details.  In all of the following,
+the \code{ps} parameter is a \class{ParsedSoap} object.
 
 \begin{methoddesc}{checkname}{elt, ps}
 Checks if the name and type of the element \code{elt} are
@@ -117,16 +113,19 @@ directly, such as when resolving multi-reference data.
 \end{methoddesc}
 
 \begin{methoddesc}{nilled}{elt, ps}
-If the element \code{elt} has data, this returns \code{0}.
+If the element \code{elt} has data, this returns \code{False}.
 If it has no data, and the typecode is not optional, an
 \exception{EvaluateException} is raised; if it is optional,
-a \code{1} is returned.
+a \code{True} is returned.
 \end{methoddesc}
 
-\begin{methoddesc}{simple_value}{elt, ps}
+\begin{methoddesc}{simple_value}{elt, ps, mixed=False}
 Returns the text content of the element \code{elt}.
 If no value is present, or the element has non-text children, an
-\exception{EvaluateException} is raised.
+\exception{EvaluateException} is raised.  If \code{mixed} is \code{False} if
+child elements are discovered an \exception{EvaluateException} is raised, else
+join all text nodes and return the result.
+
 \end{methoddesc}
 
 \section{\class{TC.Any} --- the basis of dynamic typing}
@@ -136,9 +135,10 @@ completely self-describing to completely opaque, requiring an external
 schema. For example, the following are all possible ways of encoding an
 integer element \code{i} with a value of \code{12}:
 
+\subsection{simple data} -- requires type information
 \begin{verbatim}
 <tns:i xsi:type="SOAP-ENC:integer">12</tns:i>
-<tns:i xsi:type="xsi:nonNegativeInteger">12</tns:i>
+<tns:i xsi:type="xsd:nonNegativeInteger">12</tns:i>
 <SOAP-ENC:integer>12</SOAP-ENC:integer>
 <tns:i>12</tns:i>
 \end{verbatim}
@@ -146,19 +146,20 @@ integer element \code{i} with a value of \code{12}:
 The first three lines are examples of \emph{typed} elements.
 If \ZSI{} is asked to parse any of the above examples, and a
 \class{TC.Any} typecode is given, it will properly create a Python
-integer for the first three, and raise a \exception{ParseException}
+integer for the first three, and raise a \exception{EvaluateException}
 for the fourth.
 
+\subsection{compound data} -- Struct or Array
 Compound data, such as a \code{struct}, may also be self-describing:
 \begin{verbatim}
-<tns:foo xsi:type="tns:mytype">
+<tns:foo>
     <tns:i xsi:type="SOAP-ENC:integer">12</tns:i>
     <tns:name xsi:type="SOAP-ENC:string">Hello world</tns:name>
 </tns:foo>
 \end{verbatim}
 
-If this is parsed with a \class{TC.Any} typecode, either a Python dictionary
-or a sequence will be created:
+If this is parsed with a \class{TC.Any} typecode, either a Python \code{dict}
+is created or if \code{aslist} is True a \code{list}:
 \begin{verbatim}
 {   'name': u'Hello world',    'i': 12   }
 
@@ -166,6 +167,7 @@ or a sequence will be created:
 \end{verbatim}
 Note that one preserves order, while the other preserves the element names.
 
+\subsection{class description}
 \begin{classdesc}{Any}{name\optional{, **keywords}}
 Used for parsing incoming SOAP data (that is typed), and serializing
 outgoing Python data.
@@ -173,7 +175,7 @@ outgoing Python data.
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{aslist}}{\code{0}}{If true, then the data is (recursively)
+\lineiii{\code{aslist}}{\code{False}}{If true, then the data is (recursively)
 treated as a list of values.
 The default is a Python dictionary, which preserves parameter names but
 loses the ordering.
@@ -269,16 +271,6 @@ the \code{keyword} parameters are passed to the constructor.
 If the class is not registered, then instances of the class cannot be
 processed as dynamic types.
 This may be acceptable in some environments.
-
-\section{Void}
-
-A SOAP void is a Python \code{None}.
-
-\begin{classdesc}{Void}{name\optional{, **keywords}}
-A \code{Void} is an item without a value.
-It is of marginal utility, mainly useful for interoperability tests, and
-as an optional item within a \code{Struct}.
-\end{classdesc}
 
 \section{Strings}
 

@@ -177,8 +177,8 @@ _find_encstyle = lambda E: E.getAttributeNS(_SOAP.ENV, "encodingStyle")
 try:
     from xml.dom import EMPTY_NAMESPACE
     _empty_nsuri_list = [ EMPTY_NAMESPACE ]
-    if '' not in _empty_nsuri_list: __empty_nsuri_list.append('')
-    if None not in _empty_nsuri_list: __empty_nsuri_list.append(None)
+    #if '' not in _empty_nsuri_list: __empty_nsuri_list.append('')
+    #if None not in _empty_nsuri_list: __empty_nsuri_list.append(None)
 except:
     _empty_nsuri_list = [ None, '' ]
 def _find_attr(E, attr):
@@ -226,7 +226,7 @@ _find_type = lambda E: _find_xsi_attr(E, "type")
 _find_xmlns_prefix = lambda E, attr: E.getAttributeNS(_XMLNS.BASE, attr)
 _find_default_namespace = lambda E: E.getAttributeNS(_XMLNS.BASE, None)
 
-_textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
+#_textprotect = lambda s: s.replace('&', '&amp;').replace('<', '&lt;')
 
 _get_element_nsuri_name = lambda E: (E.namespaceURI, E.localName)
 

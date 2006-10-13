@@ -196,10 +196,6 @@ class TypeDefinition:
         return subclass((self.nspname, self.pname))
     
     
-#class Nilled:
-#    '''Just a placeholder for nilled elements.
-#    '''
-#    __init__ = None
 Nilled = None   
 
 class TypeCode:
@@ -216,11 +212,11 @@ class TypeCode:
             generated if/when needed
         seriallist -- list of Python types or user-defined classes
             that this typecode can serialize.
+        logger -- logger instance for this class.
     '''
     tag = None
     type = (None,None)
-    #typechecks = True
-    typechecks = False
+    typechecks = True
     attribute_typecode_dict = None
     logger = _GetLogger('ZSI.TC.TypeCode')
 
@@ -256,7 +252,6 @@ class TypeCode:
         self.unique = unique
         self.attrs_aname = attrs_aname
         self.pyclass = pyclass
-        #if kw.has_key('default'): self.default = kw['default']
 
         # Need this stuff for rpc/encoded.
         encoded = kw.get('encoded')
@@ -308,7 +303,7 @@ class TypeCode:
         href = _find_href(elt)
         if not href:
             if self.minOccurs is 0: return None
-            raise EvaluateException('Non-optional ' + tag + ' missing',
+            raise EvaluateException('Required' + tag + ' missing',
                     ps.Backtrace(elt))
         return ps.FindLocalHREF(href, elt, 0)
 
@@ -573,7 +568,7 @@ class SimpleType(TypeCode):
                 # No content, no HREF, and is NIL...
                 if self.nillable is True: 
                     return Nilled
-                raise EvaluateException('Non-optional string missing',
+                raise EvaluateException('Requiredstring missing',
                         ps.Backtrace(elt))
                         
             if href[0] != '#':
@@ -665,23 +660,17 @@ class Any(TypeCode):
     logger = _GetLogger('ZSI.TC.Any')
     parsemap, serialmap = {}, {}
 
-    def __init__(self, pname=None, aslist=0, **kw):
-        TypeCode.__init__(self, pname, **kw)
+    def __init__(self, pname=None, aslist=False, minOccurs=0, **kw):
+        TypeCode.__init__(self, pname, minOccurs=minOccurs, **kw)
         self.aslist = aslist
         self.kwargs = {'aslist':aslist}
         self.kwargs.update(kw)
-        # If not derived, and optional isn't set, make us optional
-        # so that None can be parsed.
-        if self.__class__ == Any and not kw.has_key('optional'):
-            self.optional = 1
-
-        #self.asarray = True
         self.unique = False
 
     # input arg v should be a list of tuples (name, value).
     def listify(self, v):
         if self.aslist: return [ k for j,k in v ]
-        else: return dict(v)
+        return dict(v)
 
     def parse_into_dict_or_list(self, elt, ps):
         c = _child_elements(elt)
@@ -698,8 +687,8 @@ class Any(TypeCode):
         if self.nilled(elt, ps): return Nilled
 
         for c_elt in c:
-            # append (name,value) tuple to list
-            v.append( (str(c_elt.localName), self.__class__(**self.kwargs).parse(c_elt, ps) ) )
+            v.append((str(c_elt.localName), self.__class__(**self.kwargs).parse(c_elt, ps)))
+
         return self.listify(v)
 
     def parse(self, elt, ps):
@@ -708,12 +697,12 @@ class Any(TypeCode):
         if len(_children(elt)) == 0:
             href = _find_href(elt)
             if not href:
-                if self.optional:
+                if self.minOccurs < 1:
                     if _is_xsd_or_soap_ns(ns):
                         parser = Any.parsemap.get((None,type))
                         if parser: return parser.parse(elt, ps)
                     return None
-                raise EvaluateException('Non-optional Any missing',
+                raise EvaluateException('Required Any missing',
                         ps.Backtrace(elt))
             elt = ps.FindLocalHREF(href, elt)
             (ns,type) = self.checktype(elt, ps)
@@ -774,13 +763,13 @@ class Any(TypeCode):
                     "xsd:anyType[" + str(len(pyobj)) + "]" )
                 for o in pyobj:
                     #TODO maybe this should take **self.kwargs...
-                    serializer = getattr(o, 'typecode', self.__class__()) # also used by AnyLax()
+                    serializer = getattr(o, 'typecode', self.__class__()) # also used by _AnyLax()
                     serializer.serialize(array, sw, o, name='element', **kw)
             else:
                 struct = elt.createAppendElement(ns, n)
                 for o in pyobj:
                     #TODO maybe this should take **self.kwargs...
-                    serializer = getattr(o, 'typecode', self.__class__()) # also used by AnyLax()
+                    serializer = getattr(o, 'typecode', self.__class__()) # also used by _AnyLax()
                     serializer.serialize(struct, sw, o, **kw)
             return
 
@@ -842,92 +831,6 @@ class Any(TypeCode):
             # Reset TypeCode
             #serializer.nspname = None
             #serializer.pname = None
-
-
-def RegisterType(C, clobber=0, *args, **keywords):
-    instance = apply(C, args, keywords)
-    for t in C.__dict__.get('parselist', []):
-        prev = Any.parsemap.get(t)
-        if prev:
-            if prev.__class__ == C: continue
-            if not clobber:
-                raise TypeError(
-                    str(C) + ' duplicating parse registration for ' + str(t))
-        Any.parsemap[t] = instance
-    for t in C.__dict__.get('seriallist', []):
-        ti = type(t)
-        if ti in [ types.TypeType, types.ClassType]:
-            key = t
-        elif ti in _stringtypes:
-            key = (types.ClassType, t)
-        else:
-            raise TypeError(str(t) + ' is not a class name')
-        prev = Any.serialmap.get(key)
-        if prev:
-            if prev.__class__ == C: continue
-            if not clobber:
-                raise TypeError(
-                    str(C) + ' duplicating serial registration for ' + str(t))
-        Any.serialmap[key] = instance
-
-def _DynamicImport(moduleName, className):
-    '''
-    Utility function for RegisterTypeWithSchemaAndClass
-    '''
-    mod = __import__(moduleName)
-    components = moduleName.split('.')
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return getattr(mod, className)
-
-def _RegisterTypeWithSchemaAndClass(importedSchemaTypes, schemaTypeName, classModuleName, className, generatedClassSuffix="_"):
-    '''
-    Used by RegisterGeneratedTypesWithMapping.
-    Helps register classes so they can be serialized and parsed as "any".
-    Register a type by providing its schema and class.  This allows
-       Any and AnyType to reconstruct objects made up of your own classes.
-       Note: The class module should be able to be imported (by being in your
-       pythonpath).  Your classes __init__ functions shoud have default arguments
-       for all extra parameters.
-    Example of use:
-        import SchemaToPyTypeMap # Mapping written by you.  Also used with wsdl2py -m
-             # mapping = {"SomeDescription" : ("Descriptions", "SomeDescription"),
-             #          #  schemaTypeName       :  moduleName    ,  className 
-        # The module on the next line is generated by wsdl2py
-        from EchoServer_services_types import urn_ZSI_examples as ExampleTypes
-
-        for key,value in SchemaToPyTypeMap.mapping.items():
-        ZSI.TC.RegisterTypeWithSchemaAndClass(importedSchemaTypes = ExampleTypes, schemaTypeName=key, classModuleName=value[0], className=value[1])
-
-
-    '''
-    # Doing this: (schemaTypeName="ExampleTypes", classModuleName="Description",
-    #               className="SomeDescription")
-    # sd_instance = ExampleTypes.SomeDescription_(pname="SomeDescription")
-    # Any.serialmap[Descriptions.SomeDescription] = sd_instance
-    # Any.parsemap[(None,'SomeDescription')] = sd_instance
-    classDef = _DynamicImport(classModuleName, className)
-    interfaceDef = getattr(importedSchemaTypes, schemaTypeName + generatedClassSuffix)
-
-    instance = interfaceDef(pname=className)
-    Any.serialmap[classDef] = instance
-    Any.parsemap[(None,schemaTypeName)] = instance
-
-def RegisterGeneratedTypesWithMapping(generatedTypes, mapping, generatedClassSuffix="_"):
-    """
-    Helps register your classes so they can be serialized and parsed as "any".
-        generatedTypes is a class containing typecode classes generated by zsi.
-        mapping is a dictionary that maps {schemaTypeName : moduleName,  className}
-            and is also used with wsdl2py -m
-
-    Example of use:
-        import SchemaToPyTypeMap      # See RegisterTypeWithSchemaAndClass for description
-        # The module on the next line is generated by wsdl2py and contains generated typecodes.
-        from EchoServer_services_types import urn_ZSI_examples as ExampleTypes
-        ZSI.TC.RegisterGeneratedTypesWithMapping(generatedTypes = ExampleTypes, mapping=SchemaToPyTypeMap.mapping)
-    """
-    for key,value in mapping.items():
-        _RegisterTypeWithSchemaAndClass(importedSchemaTypes = generatedTypes, schemaTypeName=key, classModuleName=value[0], className=value[1], generatedClassSuffix=generatedClassSuffix)
 
 
 class String(SimpleType):
@@ -1507,125 +1410,7 @@ class XML(TypeCode):
         xmlelt.setAttributeNS(SOAP.ENC, 'encodingStyle', '""')
         Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
             comments=self.comments)
-
-# Base class for AnyStrict and AnyLax
-class AnyConcrete(Any):
-    ''' Base class for handling unspecified types when using concrete schemas.
-    '''
-    logger = _GetLogger('ZSI.TC.AnyConcrete')
-    def __init__(self, pname=None, aslist=False, **kw):
-        TypeCode.__init__(self, pname, **kw)
-        self.aslist = aslist
-        self.asarray = False  # don't use arrayType
-        self.unique = True # don't print id
-        self.optional = kw.get('optional', True) # Any constructor is not called
-
-
-class AnyStrict(AnyConcrete):
-    ''' Handles an unspecified types when using a concrete schemas and
-          processContents = "strict".
-    '''
-    logger = _GetLogger('ZSI.TC.AnyStrict')
-    
-    def __init__(self, pname=None, aslist=False, **kw):
-        AnyConcrete.__init__(self, pname=pname, aslist=aslist, **kw)
-
-    def serialize(self, elt, sw, pyobj, name=None, **kw):
-        tc = type(pyobj)
-        if tc == types.DictType and not self.aslist:
-            raise EvaluateException, 'Serializing dictionaries not implemented when processContents=\"strict\".  Try as a list or use processContents=\"lax\".'
-        else:
-
-            AnyConcrete.serialize(self, elt=elt,sw=sw,pyobj=pyobj,name=name, **kw)
-
-class AnyLax(AnyConcrete):
-    ''' Handles unspecified types when using a concrete schemas and
-          processContents = "lax".
-    '''
-    logger = _GetLogger('ZSI.TC.AnyLax')
-    
-    def __init__(self, pname=None, aslist=False, **kw):
-        AnyConcrete.__init__(self, pname=pname, aslist=aslist, **kw)
-
-    def parse_into_dict_or_list(self, elt, ps):
-        c = _child_elements(elt)
-        count = len(c)
-        v = []
-        if count == 0:
-            href = _find_href(elt)
-            if not href: return {}
-            elt = ps.FindLocalHREF(href, elt)
-            self.checktype(elt, ps)
-            c = _child_elements(elt)
-            count = len(c)
-            if count == 0: return self.listify([])
-        if self.nilled(elt, ps): return Nilled
-
-        # group consecutive elements with the same name together
-        #   We treat consecutive elements with the same name as lists.
-        groupedElements = []  # tuples of (name, elementList)
-        previousName = ""
-        currentElementList = None
-        for ce in _child_elements(elt):
-            name = ce.localName
-            if (name != previousName): # new name, so new group
-                if currentElementList != None: # store previous group if there is one
-                    groupedElements.append( (previousName, currentElementList) )
-                currentElementList = list() 
-            currentElementList.append(ce) # append to list
-            previousName = name
-        # add the last group if necessary
-        if currentElementList != None: # store previous group if there is one
-            groupedElements.append( (previousName, currentElementList) )
-
-        # parse the groups of names 
-        if len(groupedElements) < 1: # should return earlier
-            return None 
-        # return a list if there is one name and multiple data
-        elif (len(groupedElements) == 1) and (len(groupedElements[0][0]) > 1):
-            self.aslist = 0
-        # else return a dictionary
-
-        for name,eltList in groupedElements:
-            lst = []
-            for elt in eltList:
-                #aslist = self.aslist 
-                lst.append( self.parse(elt, ps) )
-                #self.aslist = aslist # restore the aslist setting
-            if len(lst) > 1:  # consecutive elements with the same name means a list
-                v.append( (name, lst) )
-            elif len(lst) == 1: 
-                v.append( (name, lst[0]) )
-
-        return self.listify(v)
-
-    def checkname(self, elt, ps):
-        '''See if the name and type of the "elt" element is what we're
-        looking for.   Return the element's type.
-        Since this is AnyLax, it's ok if names don't resolve.
-        '''
-
-        parselist,errorlist = self.get_parse_and_errorlist()
-        ns, name = _get_element_nsuri_name(elt)
-        if ns == SOAP.ENC:
-            # Element is in SOAP namespace, so the name is a type.
-            if parselist and \
-            (None, name) not in parselist and (ns, name) not in parselist:
-                raise EvaluateException(
-                'Element mismatch (got %s wanted %s) (SOAP encoding namespace)' % \
-                        (name, errorlist), ps.Backtrace(elt))
-            return (ns, name)
-
-        # Not a type, check name matches.
-        if self.nspname and ns != self.nspname:
-            raise EvaluateException('Element NS mismatch (got %s wanted %s)' % \
-                (ns, self.nspname), ps.Backtrace(elt))
-
-        #if self.pname and name != self.pname:
-        #   this is ok since names don't need to be resolved with AnyLax
-
-        return self.checktype(elt, ps)
-
+        
 
 class AnyType(TypeCode):
     """XML Schema xsi:anyType type definition wildCard.
@@ -1641,7 +1426,8 @@ class AnyType(TypeCode):
     
     def __init__(self, pname=None, namespaces=['#all'],
     minOccurs=1, maxOccurs=1, strip=1, **kw):
-        TypeCode.__init__(self, pname=pname, minOccurs=minOccurs, maxOccurs=maxOccurs, **kw)
+        TypeCode.__init__(self, pname=pname, minOccurs=minOccurs, 
+              maxOccurs=maxOccurs, **kw)
         self.namespaces = namespaces
 
     def get_formatted_content(self, pyobj):
@@ -1664,28 +1450,31 @@ class AnyType(TypeCode):
     def serialize(self, elt, sw, pyobj, **kw):
         nsuri,typeName = _get_xsitype(pyobj)
         if self.all not in self.namespaces and nsuri not in self.namespaces:
-            raise EvaluateException, '<anyType> unsupported use of namespaces %s' %self.namespaces
-        what = pyobj
-        if hasattr(what, 'typecode'):
-            what = pyobj.typecode
-        elif not isinstance(what, TypeCode):
+            raise EvaluateException(
+                '<anyType> unsupported use of namespaces "%s"' %self.namespaces)
+        
+        what = getattr(pyobj, 'typecode', None)
+        if what is None:
             # TODO: resolve this, "strict" processing but no 
             # concrete schema makes little sense.
-            what = AnyStrict(pname=(self.nspname,self.pname), aslist=False)
+            #what = _AnyStrict(pname=(self.nspname,self.pname))
+            what = Any(pname=(self.nspname,self.pname), unique=True, 
+                       aslist=False)
             kw['typed'] = True
             what.serialize(elt, sw, pyobj, **kw)
             return
 
         # Namespace if element AnyType was namespaced.
-        if self.nspname != what.nspname:
-            what.nspname = self.nspname
+#        if self.nspname != what.nspname:
+#            what.nspname = self.nspname
+#
+#        if self.pname != what.pname:
+#            raise EvaluateException, \
+#                'element name of typecode(%s) must match element name of AnyType(%s)' \
+#                %(what.pname,self.pname)
 
-        if self.pname != what.pname:
-            raise EvaluateException, \
-                'element name of typecode(%s) must match element name of AnyType(%s)' \
-                %(what.pname,self.pname)
-
-        what.serialize(elt, sw, pyobj, **kw)
+        what.serialize(elt, sw, pyobj, 
+           name=(self.nspname or what.nspname, self.pname or what.pname), **kw)
 
     def parse(self, elt, ps):
         #element name must be declared ..
@@ -1700,7 +1489,7 @@ class AnyType(TypeCode):
         pyclass = _get_type_definition(namespaceURI, typeName)
         if not pyclass:
             if _is_xsd_or_soap_ns(namespaceURI):
-                pyclass = AnyStrict
+                pyclass = _AnyStrict
             elif (str(namespaceURI).lower()==str(Apache.Map.type[0]).lower())\
                 and (str(typeName).lower() ==str(Apache.Map.type[1]).lower()):
                 pyclass = Apache.Map
@@ -1720,20 +1509,18 @@ class AnyElement(AnyType):
             tag -- global element declaration
     """
     tag = (SCHEMA.XSD3, 'any')
-
+    logger = _GetLogger('ZSI.TC.AnyElement')
+    
     def __init__(self, namespaces=['#all'],pname=None, 
-    minOccurs=1, maxOccurs=1, strip=1, processContents='strict',**kw):
+        minOccurs=1, maxOccurs=1, strip=1, processContents='strict',
+        **kw):
+        
+        if processContents not in ('lax', 'skip', 'strict'):
+            raise ValueError('processContents(%s) must be lax, skip, or strict')
+            
         self.processContents = processContents
         AnyType.__init__(self, namespaces=namespaces,pname=pname,
             minOccurs=minOccurs, maxOccurs=maxOccurs, strip=strip, **kw)
-
-    def getProcessContents(self, processContents):
-        return self._processContents
-    def setProcessContents(self, processContents):
-        if processContents not in ('lax', 'skip', 'strict'):
-            raise EvaluateException, '<any> processContents(%s) is not understood.' %processContents
-        self._processContents = processContents
-    processContents = property(getProcessContents, setProcessContents, None, '<any> processContents')
        
     def serialize(self, elt, sw, pyobj, **kw):
         '''Must provice typecode to AnyElement for serialization, else
@@ -1741,33 +1528,26 @@ class AnyElement(AnyType):
         based on the data type of pyobj w/o reference to XML schema 
         instance.
         '''
-        what = None
-        if hasattr(pyobj, 'typecode'):
-            what = getattr(pyobj, 'typecode')
-            #May want to look thru containers and try to find a match
-        elif type(pyobj) == types.InstanceType:
+        if isinstance(pyobj, TypeCode):
+            raise TypeError, 'pyobj is a typecode instance.'
+        
+        what = getattr(pyobj, 'typecode', None)
+        if what is not None and type(pyobj) is types.InstanceType:
             tc = pyobj.__class__
             what = Any.serialmap.get(tc)
             if not what:
                 tc = (types.ClassType, pyobj.__class__.__name__)
                 what = Any.serialmap.get(tc)
-        if what == None:
-            if isinstance(pyobj, TypeCode):
-                raise EvaluateException, '<any> pyobj is a typecode instance.'
-            #elif type(pyobj) in (list,tuple,dict):
-            #    raise EvaluateException, '<any> can\'t serialize pyobj %s' \
-            #        %type(pyobj)
-            elif kw.has_key('pname'):
-                if self.processContents=='lax':
-                    what = AnyLax(pname=(kw.get('nspname'),kw['pname']))
-                else:
-                    what = AnyStrict(pname=(kw.get('nspname'),kw['pname']))
+        
+        # failed to find a registered type for class
+        if what is None:
+            #TODO: seems incomplete.  what about facets.
+            if self.processContents == 'strict':
+                what = _AnyStrict(pname=(self.nspname,self.pname))
             else:
-                if self.processContents=='lax':
-                    what = AnyLax()
-                else:
-                    what = AnyStrict()
-        self.logger.debug('AnyElement.serialize with %s', what.__class__.__name__)
+                what = _AnyLax(pname=(self.nspname,self.pname))
+                
+        self.logger.debug('serialize with %s', what.__class__.__name__)
         what.serialize(elt, sw, pyobj, **kw)
 
     def parse(self, elt, ps):
@@ -1778,53 +1558,51 @@ class AnyElement(AnyType):
            not found return DOM node.
         3) if 'strict' get declaration, or raise.
         '''
+        skip = self.processContents == 'skip'
         nspname,pname = _get_element_nsuri_name(elt)
         what = _get_global_element_declaration(nspname, pname)
-        if what is None:
-            # if self.processContents == 'strict': raise
-            # Allow use of "<any>" element declarations w/ local element declarations
-            prefix, typeName = SplitQName(_find_type(elt))
-            if typeName:
-                namespaceURI = _resolve_prefix(elt, prefix or 'xmlns')
-                # First look thru user defined namespaces, if don't find
-                # look for 'primitives'.
-                pyclass = _get_type_definition(namespaceURI, typeName)
-                if pyclass is None:
-                    if not _is_xsd_or_soap_ns(namespaceURI):
-                        raise EvaluateException('<any> cant find typecode for type (%s,%s)' %(
-                            namespaceURI,typeName), ps.Backtrace(elt))
-                    if self.getProcessContents=='lax':
-                        pyclass = AnyLax
-                    else:
-                        pyclass = AnyStrict
-
-                what = pyclass(pname=(nspname,pname))
-                pyobj = what.parse(elt, ps)
-                try:
-                    pyobj.typecode = what
-                except AttributeError, ex:
-                    # Assume this means builtin type.
-                    pyobj = Wrap(pyobj, what)
-            else:
-                if self.processContents == 'lax':
-                    what = AnyLax(pname=(nspname,pname))
-                else: # processContents == 'skip'
-                    # All else fails, not typed, attempt to use XML, String
-                    what = XML(pname=(nspname,pname), wrapped=False)
-                try:
-                    pyobj = what.parse(elt, ps)
-                except EvaluateException, ex:
-                    self.logger.error("Give up, parse (%s,%s) as a String", what.nspname, what.pname)
-                    # Try returning "elt"
-                    what = String(pname=(nspname,pname))
-                    pyobj = Wrap(what.parse(elt, ps), what)
-        else:
+        if not skip and what is not None:
             pyobj = what.parse(elt, ps)
             try:
                 pyobj.typecode = what
             except AttributeError, ex:
                 # Assume this means builtin type.
                 pyobj = _GetPyobjWrapper.Wrap(pyobj, what)
+            return pyobj
+        
+        # Allow use of "<any>" element declarations w/ local
+        # element declarations
+        prefix, typeName = SplitQName(_find_type(elt))
+        if not skip and typeName:
+            namespaceURI = _resolve_prefix(elt, prefix or 'xmlns')
+            # First look thru user defined namespaces, if don't find
+            # look for 'primitives'.
+            pyclass = _get_type_definition(namespaceURI, typeName) or Any
+            what = pyclass(pname=(nspname,pname))
+            pyobj = what.parse(elt, ps)
+            try:
+                pyobj.typecode = what
+            except AttributeError, ex:
+                # Assume this means builtin type.
+                pyobj = Wrap(pyobj, what)
+                
+            what.typed = True
+            return pyobj
+
+        if skip:
+            what = XML(pname=(nspname,pname), wrapped=False)
+        elif self.processContents == 'lax':
+            what = _AnyLax(pname=(nspname,pname))
+        else:
+            what = _AnyStrict(pname=(nspname,pname))
+
+        try:
+            pyobj = what.parse(elt, ps)
+        except EvaluateException, ex:
+            self.logger.error("Give up, parse (%s,%s) as a String", 
+                  what.nspname, what.pname)
+            what = String(pname=(nspname,pname), typed=False)
+            pyobj = Wrap(what.parse(elt, ps), what)
 
         return pyobj
 
@@ -1985,7 +1763,7 @@ class List(SimpleType):
                 # No content, no HREF, and is NIL...
                 if self.nillable is True: 
                     return Nilled
-                raise EvaluateException('Non-optional string missing',
+                raise EvaluateException('Required string missing',
                         ps.Backtrace(elt))
             if href[0] != '#':
                 return ps.ResolveHREF(href, self)
@@ -2022,6 +1800,115 @@ class List(SimpleType):
         el.createAppendTextNode(textNode)
 
 
+class _AnyStrict(Any):
+    ''' Handles an unspecified types when using a concrete schemas and
+          processContents = "strict".
+    '''
+    #WARNING: unstable
+    logger = _GetLogger('ZSI.TC._AnyStrict')
+    
+    def __init__(self, pname=None, aslist=False, **kw):
+        TypeCode.__init__(self, pname=pname, **kw)
+        self.aslist = aslist
+        self.unique = True
+        
+    def serialize(self, elt, sw, pyobj, name=None, **kw):
+        if not (type(pyobj) is dict and not self.aslist):
+            Any.serialize(self, elt=elt,sw=sw,pyobj=pyobj,name=name, **kw)
+            
+        raise EvaluateException(
+            'Serializing dictionaries not implemented when processContents=\"strict\".' +
+            'Try as a list or use processContents=\"lax\".'
+        )
+
+
+class _AnyLax(Any):
+    ''' Handles unspecified types when using a concrete schemas and
+          processContents = "lax".
+    '''
+    logger = _GetLogger('ZSI.TC._AnyLax')
+    
+    def __init__(self, pname=None, aslist=False, **kw):
+        TypeCode.__init__(self, pname=pname, **kw)
+        self.aslist = aslist
+        self.unique = True
+        
+    def parse_into_dict_or_list(self, elt, ps):
+        c = _child_elements(elt)
+        count = len(c)
+        v = []
+        if count == 0:
+            href = _find_href(elt)
+            if not href: return {}
+            elt = ps.FindLocalHREF(href, elt)
+            self.checktype(elt, ps)
+            c = _child_elements(elt)
+            count = len(c)
+            if count == 0: return self.listify([])
+        if self.nilled(elt, ps): return Nilled
+
+        # group consecutive elements with the same name together
+        #   We treat consecutive elements with the same name as lists.
+        groupedElements = []  # tuples of (name, elementList)
+        previousName = ""
+        currentElementList = None
+        for ce in _child_elements(elt):
+            name = ce.localName
+            if (name != previousName): # new name, so new group
+                if currentElementList != None: # store previous group if there is one
+                    groupedElements.append( (previousName, currentElementList) )
+                currentElementList = list() 
+            currentElementList.append(ce) # append to list
+            previousName = name
+        # add the last group if necessary
+        if currentElementList != None: # store previous group if there is one
+            groupedElements.append( (previousName, currentElementList) )
+
+        # parse the groups of names 
+        if len(groupedElements) < 1: # should return earlier
+            return None 
+        # return a list if there is one name and multiple data
+        elif (len(groupedElements) == 1) and (len(groupedElements[0][0]) > 1):
+            self.aslist = False
+        # else return a dictionary
+
+        for name,eltList in groupedElements:
+            lst = []
+            for elt in eltList:
+                #aslist = self.aslist 
+                lst.append( self.parse(elt, ps) )
+                #self.aslist = aslist # restore the aslist setting
+            if len(lst) > 1:  # consecutive elements with the same name means a list
+                v.append( (name, lst) )
+            elif len(lst) == 1: 
+                v.append( (name, lst[0]) )
+
+        return self.listify(v)
+
+    def checkname(self, elt, ps):
+        '''See if the name and type of the "elt" element is what we're
+        looking for.   Return the element's type.
+        Since this is _AnyLax, it's ok if names don't resolve.
+        '''
+
+        parselist,errorlist = self.get_parse_and_errorlist()
+        ns, name = _get_element_nsuri_name(elt)
+        if ns == SOAP.ENC:
+            if parselist and \
+            (None, name) not in parselist and (ns, name) not in parselist:
+                raise EvaluateException(
+                'Element mismatch (got %s wanted %s) (SOAP encoding namespace)' % \
+                        (name, errorlist), ps.Backtrace(elt))
+            return (ns, name)
+
+        # Not a type, check name matches.
+        if self.nspname and ns != self.nspname:
+            raise EvaluateException('Element NS mismatch (got %s wanted %s)' % \
+                (ns, self.nspname), ps.Backtrace(elt))
+
+        return self.checktype(elt, ps)
+
+
 class _Mirage:
     '''Used with SchemaInstanceType for lazy evaluation, eval during serialize or 
     parse as needed.  Mirage is callable, TypeCodes are not.  When called it returns the
@@ -2042,16 +1929,6 @@ class _Mirage:
         if issubclass(self.klass, ElementDeclaration):
             msg = "<Mirage id=%s, GED %s>"
         return  msg %(id(self), self.klass)
-            
-#    def __getattr__(self, attr):
-#        '''try to look just like the typecode.
-#        '''
-#        if self.__reveal is False:
-#            if self.__cache is None: self.__call__()
-#            return getattr(self.__cache, attr)
-#            
-#        raise AttributeError('Missing attribute "%s", mirage must hide item before it can be revealed' %
-#                 attr)
         
     def _hide_type(self, pname, aname, minOccurs=0, maxOccurs=1, nillable=False, 
                    **kw):
@@ -2106,21 +1983,36 @@ class _GetPyobjWrapper:
     and thus can be serialized.
     '''
     types_dict = {}
-    for builtin_type in [int,float,str,tuple,list,unicode]:
-        class Wrapper(builtin_type): pass
-        types_dict[builtin_type] = Wrapper
-
+    
+    def RegisterBuiltin(cls, arg):
+        '''register a builtin, create a new wrapper.
+        '''
+        if arg in cls.types_dict:
+            raise RuntimeError, '%s already registered' %arg
+        class _Wrapper(arg):
+            'Wrapper for builtin %s\n%s' %(arg, cls.__doc__)
+        _Wrapper.__name__ = '_%sWrapper' %arg
+        cls.types_dict[arg] = _Wrapper
+    RegisterBuiltin = classmethod(RegisterBuiltin)
+        
     def RegisterAnyElement(cls):
+        '''clobber all existing entries in Any serialmap, 
+        replace with Wrapper classes.
+        '''
         for k,v in cls.types_dict.items():
             what = Any.serialmap.get(k)
             if what is None: continue
-            if v in what.__class__.seriallist:
-                continue
+            if v in what.__class__.seriallist: continue
             what.__class__.seriallist.append(v)
             RegisterType(what.__class__, clobber=1)
     RegisterAnyElement = classmethod(RegisterAnyElement)
 
     def Wrap(cls, pyobj, what):
+        '''return a wrapper for pyobj, with typecode attribute set.
+        Parameters:
+            pyobj -- instance of builtin type (immutable)
+            what -- typecode describing the data
+        '''
         d = cls.types_dict
         if type(pyobj) is bool:  
             pyclass = d[int]
@@ -2128,7 +2020,8 @@ class _GetPyobjWrapper:
             pyclass = d[type(pyobj)]
         else:
             raise TypeError,\
-               'Expecting a built-in type in %s (got %s).' %(d.keys(),type(pyobj))
+               'Expecting a built-in type in %s (got %s).' %(
+                d.keys(),type(pyobj))
 
         newobj = pyclass(pyobj)
         newobj.typecode = what
@@ -2137,12 +2030,61 @@ class _GetPyobjWrapper:
 
 
 def Wrap(pyobj, what):
+    '''Wrap immutable instance so a typecode can be
+    set, making it self-describing ie. serializable.
+    '''
     return _GetPyobjWrapper.Wrap(pyobj, what)
 
+
+def RegisterBuiltin(arg):
+    '''Add a builtin to be registered, and register it
+    with the Any typecode.
+    '''
+    _GetPyobjWrapper.RegisterBuiltin(arg)
+    _GetPyobjWrapper.RegisterAnyElement()
+
+
 def RegisterAnyElement():
+    '''register all Wrapper classes with the Any typecode.
+    This allows instances returned by Any to be self-describing.
+    ie. serializable.  AnyElement falls back on Any to parse
+    anything it doesn't understand.
+    '''
     return _GetPyobjWrapper.RegisterAnyElement()
 
 
+def RegisterType(C, clobber=0, *args, **keywords):
+    instance = apply(C, args, keywords)
+    for t in C.__dict__.get('parselist', []):
+        prev = Any.parsemap.get(t)
+        if prev:
+            if prev.__class__ == C: continue
+            if not clobber:
+                raise TypeError(
+                    str(C) + ' duplicating parse registration for ' + str(t))
+        Any.parsemap[t] = instance
+    for t in C.__dict__.get('seriallist', []):
+        ti = type(t)
+        if ti in [ types.TypeType, types.ClassType]:
+            key = t
+        elif ti in _stringtypes:
+            key = (types.ClassType, t)
+        else:
+            raise TypeError(str(t) + ' is not a class name')
+        prev = Any.serialmap.get(key)
+        if prev:
+            if prev.__class__ == C: continue
+            if not clobber:
+                raise TypeError(
+                    str(C) + ' duplicating serial registration for ' + str(t))
+        Any.serialmap[key] = instance
+
+
+# Load up Wrappers for builtin types
+for i in [int,float,str,tuple,list,unicode]: 
+    _GetPyobjWrapper.RegisterBuiltin(i)
+    
+    
 from TCnumbers import *
 from TCtimes import *
 from TCcompound import *

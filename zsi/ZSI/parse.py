@@ -34,15 +34,15 @@ class ParsedSoap:
     '''
     defaultReaderClass = None
 
-    def __init__(self, input, readerclass=None, keepdom=0,
-    trailers=0, resolver=None,  envelope=True, **kw):
+    def __init__(self, input, readerclass=None, keepdom=False,
+    trailers=False, resolver=None,  envelope=True, **kw):
         '''Initialize.
         Keyword arguments:
             trailers -- allow trailer elments (default is zero)
             resolver -- function (bound method) to resolve URI's
             readerclass -- factory class to create a reader
             keepdom -- do not release the DOM
-            envelope -- do not loop for a SOAP envelope.
+            envelope -- look for a SOAP envelope.
         '''
 
         self.readerclass = readerclass

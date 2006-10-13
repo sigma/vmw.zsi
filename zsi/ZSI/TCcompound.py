@@ -5,7 +5,8 @@
 
 from ZSI import _copyright, _children, _child_elements, \
     _inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
-    _find_type, _find_xmlns_prefix, _get_idstr, EvaluateException
+    _find_type, _find_xmlns_prefix, _get_idstr, EvaluateException, \
+    ParseException
 from ZSI.TC import _get_element_nsuri_name, \
     _get_substitute_element, _get_type_definition, _get_xsitype, \
     TypeCode, Any, AnyElement, AnyType, ElementDeclaration, TypeDefinition, \
@@ -25,6 +26,8 @@ def _check_typecode_list(ofwhat, tcname):
     '''Check a list of typecodes for compliance with Struct
     requirements.'''
     for o in ofwhat:
+        if callable(o): #skip if _Mirage
+            continue
         if not isinstance(o, TypeCode):
             raise TypeError(
                 tcname + ' ofwhat outside the TypeCode hierarchy, ' +
@@ -408,11 +411,13 @@ class ComplexType(TypeCode):
                     if debug and what is not whatTC:
                         self.logger.debug('substitute derived type: %s' %
                                           what.__class__)
-                    try:
-                        what.serialize(elem, sw, v2, **kw)
-                    except Exception, e:
-                        raise EvaluateException('Serializing %s.%s, %s %s' %
-                            (n, whatTC.aname or '?', e.__class__.__name__, str(e)))
+                        
+                    what.serialize(elem, sw, v2, **kw)
+#                    try:
+#                        what.serialize(elem, sw, v2, **kw)
+#                    except Exception, e:
+#                        raise EvaluateException('Serializing %s.%s, %s %s' %
+#                            (n, whatTC.aname or '?', e.__class__.__name__, str(e)))
 
                 if occurs < whatTC.minOccurs:
                     raise EvaluateException(\
@@ -426,13 +431,15 @@ class ComplexType(TypeCode):
                 if debug and what is not whatTC:
                     self.logger.debug('substitute derived type: %s' %
                                       what.__class__)
-                
-                try:
-                    what.serialize(elem, sw, v, **kw)
-                except Exception, e:
-                    raise EvaluateException('Serializing %s.%s, %s %s' %
-                        (n, whatTC.aname or '?', e.__class__.__name__, str(e)),
-                        sw.Backtrace(elt))
+                what.serialize(elem, sw, v, **kw)
+#                try:
+#                    what.serialize(elem, sw, v, **kw)
+#                except (ParseException, EvaluateException), e:
+#                    raise
+#                except Exception, e:
+#                    raise EvaluateException('Serializing %s.%s, %s %s' %
+#                        (n, whatTC.aname or '?', e.__class__.__name__, str(e)),
+#                        sw.Backtrace(elt))
                 continue
 
             raise EvaluateException('Got None for nillable(%s), minOccurs(%d) element (%s,%s), %s' %
