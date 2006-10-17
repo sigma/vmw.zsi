@@ -26,7 +26,7 @@ class SoapWriter:
        Instance Data:
            memo -- memory for id/href 
            envelope -- add Envelope?
-           encoding -- 
+           encodingStyle -- 
            header -- add SOAP Header?
            outputclass -- ElementProxy class.
     '''
@@ -35,8 +35,7 @@ class SoapWriter:
     nsdict={}, outputclass=None, **kw):
         '''Initialize.
         '''
-        if outputclass is None:
-            outputclass=ElementProxy
+        outputclass = outputclass or ElementProxy
         if not issubclass(outputclass, MessageInterface):
             raise TypeError, 'outputclass must subclass MessageInterface'
 
@@ -54,13 +53,14 @@ class SoapWriter:
         return str(self.dom)
 
     def getSOAPHeader(self):
-        if self.header is True or self.header is False:
+        if self.header in (True, False):
             return None
         return self.header
 
     def serialize_header(self, pyobj, typecode=None, **kw):
         '''Serialize a Python object in SOAP-ENV:Header, make
-        sure everything in Header unique (no #href).
+        sure everything in Header unique (no #href).  Must call
+        serialize first to create a document.
 
         Parameters: 
             pyobjs -- instances to serialize in SOAP Header
@@ -71,11 +71,13 @@ class SoapWriter:
         #header = self.dom.getElement(soap_env, 'Header')
         header = self._header
         if header is None:
-            header = self._header = self.dom.createAppendElement(soap_env, 'Header')
+            header = self._header = self.dom.createAppendElement(soap_env, 
+                                                                 'Header')
 
         typecode = getattr(pyobj, 'typecode', typecode)
         if typecode is None:
-            raise RuntimeError, 'typecode is required to serialize pyobj in header'
+            raise RuntimeError(
+                   'typecode is required to serialize pyobj in header')
 
         helt = typecode.serialize(header, self, pyobj, **kw)
 
@@ -108,21 +110,18 @@ class SoapWriter:
             self.dom.createDocument(None,None)
 
         if typecode is None: typecode = pyobj.__class__.typecode
-        if TypeCode.typechecks and type(pyobj) == types.InstanceType and \
-        not hasattr(typecode, 'pyclass'):
-            pass
-            # XXX XML ...
-            #raise TypeError('Serializing Python object with other than Struct.')
         kw = kw.copy()
-        
-        # TODO: FIX THIS...
-        #if root in [ 0, 1 ]:
-        #    kw['attrtext'] = ' SOAP-ENC:root="%d"' % root
             
         if self.body is None:
-            typecode.serialize(self.dom, self, pyobj, **kw)
+            elt = typecode.serialize(self.dom, self, pyobj, **kw)
         else:
-            typecode.serialize(self.body, self, pyobj, **kw)
+            elt = typecode.serialize(self.body, self, pyobj, **kw)
+            
+        if root is not None:
+            if root not in [ 0, 1 ]:
+                raise ValueError, "SOAP-ENC root attribute not in [0,1]"
+            elt.setAttributeNS(SOAP.ENC, 'root', root)
+                        
         return self
 
     def writeNSdict(self, nsdict):

@@ -615,8 +615,15 @@ class SimpleType(TypeCode):
     def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
         '''Handles the start and end tags, and attributes.  callout
         to get_formatted_content to get the textNode value.
-            sw --
-            pyobj -- processed content.
+        Parameters:
+            elt -- ElementProxy/DOM element 
+            sw -- SoapWriter instance
+            pyobj -- processed content
+            
+        KeyWord Parameters:
+            name -- substitute name, (nspname,name) or name
+            orig --
+            
         '''
         objid = _get_idstr(pyobj)
         ns,n = self.get_name(name, objid)

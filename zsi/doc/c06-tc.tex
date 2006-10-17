@@ -92,6 +92,14 @@ Specifies the global type definition this typecode represents, the value is
 a \samp{(namespace, name)} tuple.
 \end{memberdesc}
 
+\begin{memberdesc}{attribute_typecode_dict}
+This is a class attribute.
+This is a dict of \samp{(URI, NCName)} tuple keys, the values of each is a 
+typecode.  This is how attribute declarations other than SOAP and XMLSchema
+attribute declarations (eg. \code{xsi:type}, \code{id}, \code{href}, etc) are
+represented.
+\end{memberdesc}
+
 \begin{memberdesc}{logger}
 This is a class attribute.
 logger instance for this class.

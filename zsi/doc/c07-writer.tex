@@ -14,36 +14,29 @@ The \class{SoapWriter} class reserves some namespace prefixes:
 \lineii{\code{xsi}}{\code{http://www.w3.org/2001/XMLSchema-instance}}
 \end{tableii}
 
-\begin{classdesc}{SoapWriter}{out\optional{, **keywords}}
-The \code{out} parameter is an object that has a \method{write()}
-method for generating the output.
-
+\begin{classdesc}{SoapWriter}{optional{**keywords}}
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{encoding}}{\code{SOAP-ENC} value}{If not \code{None}, then
+\lineiii{\code{encodingStyle}}{None}{If not \code{None}, then
 use the specified value as the value for the SOAP \code{encodingStyle}
 attribute.
 \versionadded{1.2}}
-\lineiii{\code{envelope}}{\code{1}}{Write the SOAP envelope elements.
+\lineiii{\code{envelope}}{\code{True}}{Create a SOAP Envelope
 \versionadded{1.2}}
 \lineiii{\code{nsdict}}{\code{\{\}}}{Dictionary of namespaces to declare
-in the SOAP \code{Body}.
-Note that earlier versions of ZSI put the declarations on the SOAP
-\code{Envelope}; they have been moved to the \code{Body} for greater
-interoperability.}
-\lineiii{\code{header}}{\code{None}}{A sequence of elements to output in
-the SOAP \code{Header}.
-It may also be a text string, in which case it is output as-is, and should
-therefore be XML text.}
+in the SOAP \code{Envelope}}
+\lineiii{\code{header}}{\code{True}}{create a SOAP \code{Header} element}
+\lineiii{\code{outputclass}}{\code{ElementProxy}}{wrapper around DOM or other 
+XML library.}
 \end{tableiii}
 \end{classdesc}
 
-Creating a \class{SoapWriter} object with a \class{StringIO} object for
-the \code{out} parameter and \code{envelope} set to false results in an
-object that can be used for serializing objects into a string.
+Creating a \class{SoapWriter} object with \code{envelope} set to \code{False}
+results in an object that can be used for serializing objects into a string.
 
-\begin{methoddesc}{serialize}{pyobj\optional{, typecode\optional{, root=None\optional{, **keywords}}}}
+\begin{methoddesc}{serialize}{pyobj\optional{, typecode=None\optional{,
+root=None\optional{, header_pyobjs=None\optional{, **keywords}}}}}
 This method serializes the \code{pyobj} Python object as directed
 by the \code{typecode} typecode object.
 If \code{typecode} is omitted, then \code{pyobj} should be a Python
@@ -58,14 +51,16 @@ Any other keyword parameters are passed to the typecode's \code{serialize}
 method.
 \end{methoddesc}
 
-\begin{methoddesc}{close}{\optional{trailer=None\optional{, nsdict=None}}}
-Close off the SOAP message, finishing all the pending serializations.
-If \code{trailer} is a string or list of elements, it is output after the
-close-tag for the \code{Body}.
-The \method{close()} method of the originally provided out object is NOT called.
-(If it were, and the original \code{out} object were a \class{StringIO}
-object, there would be no way to collect the data.)
-This method will be invoked automatically if the object is deleted.
+\begin{methoddesc}{close}{}
+Invokes all the callbacks, if any.  The \function{close} operations can only
+happen once, if invoked a second time it will just return. This method will be
+invoked automatically if the object is deleted.
+\end{methoddesc}
+
+
+\begin{methoddesc}{__str__}{}
+Invokes the \function{close} method, and returns a string representation of the
+serialized object.  Assumes that \function{serialize} has been invoked. 
 \end{methoddesc}
 
 The following methods are primarily useful for those writing new typecodes.
@@ -84,22 +79,13 @@ This is useful when repeatedly serializing a mutable object.
 \end{methoddesc}
 
 \begin{methoddesc}{Known}{obj}
-If \code{obj} has been seen before (based on its Python \code{id}),
-return \code{1}.
-Otherwise, remember \code{obj} and return \code{0}.
+If \code{obj} has been seen before (based on its Python \code{id}), return
+\code{1}.  Otherwise, remember \code{obj} and return \code{0}.
 \end{methoddesc}
 
 \begin{methoddesc}{ReservedNS}{prefix, uri}
-Returns true if the specified namespace \code{prefix} and
-\code{uri}
-collide with those used by the implementation.
-\end{methoddesc}
-
-\begin{methoddesc}{write}{arg}
-This is a convenience method that calls \method{self.out.write()}
-on \code{arg}, with the addition that if \code{arg} is a sequence,
-it iterates over the sequence, writing each item (that isn't \code{None})
-in turn.
+Returns true if the specified namespace \code{prefix} and \code{uri} collide
+with those used by the implementation.
 \end{methoddesc}
 
 \begin{methoddesc}{writeNSDict}{nsdict}
