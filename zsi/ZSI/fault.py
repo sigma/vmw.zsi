@@ -47,7 +47,9 @@ class ZSIHeaderDetail:
         self.any = detail
 
 ZSIHeaderDetail.typecode =\
-    Struct(ZSIHeaderDetail, [AnyElement(aname='any')], pname=(ZSI_SCHEMA_URI, 'detail'))
+    Struct(ZSIHeaderDetail, 
+           [AnyElement(aname='any', minOccurs=0, maxOccurs=UNBOUNDED)], 
+           pname=(ZSI_SCHEMA_URI, 'detail'))
 
 
 class ZSIFaultDetailTypeCode(ElementDeclaration, Struct):
@@ -132,8 +134,8 @@ class Fault(ZSIException):
                 actor=None, detail=None, headerdetail=None):
         if detail is not None and type(detail) not in _seqtypes:
             detail = (detail,)
-        #if headerdetail is not None and type(headerdetail) not in _seqtypes:
-        #    headerdetail = (headerdetail,)
+        if headerdetail is not None and type(headerdetail) not in _seqtypes:
+            headerdetail = (headerdetail,)
         self.code, self.string, self.actor, self.detail, self.headerdetail = \
                 code, string, actor, detail, headerdetail
         ZSIException.__init__(self, code, string, actor, detail, headerdetail)

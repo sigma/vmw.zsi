@@ -67,8 +67,7 @@ class _NamedParamCaller:
 class _Binding:
     '''Object that represents a binding (connection) to a SOAP server.
     Once the binding is created, various ways of sending and
-    receiving SOAP messages are available, including a "name overloading"
-    style.
+    receiving SOAP messages are available.
     '''
     defaultHttpTransport = httplib.HTTPConnection
     defaultHttpsTransport = httplib.HTTPSConnection
@@ -444,7 +443,9 @@ class _Binding:
 
 
 class Binding(_Binding):
-    '''
+    '''Object that represents a binding (connection) to a SOAP server.  
+    Can be used in the "name overloading" style.
+    
     class attr:
         gettypecode -- funcion that returns typecode from typesmodule,
             can be set so can use whatever mapping you desire.
@@ -522,7 +523,7 @@ class Binding(_Binding):
 
 
 class NamedParamBinding(Binding):
-    '''Like binding, except the argument list for invocation is
+    '''Like Binding, except the argument list for invocation is
     named parameters.
     '''
     logger = _GetLogger('ZSI.client.Binding')

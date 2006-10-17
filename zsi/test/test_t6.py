@@ -19,19 +19,19 @@ class t6TestCase(unittest.TestCase):
             cid = resolvers.MIMEResolver(m['content-type'], istr)
             xml = cid.GetSOAPPart()
             ps = ParsedSoap(xml, resolver=cid.Resolve)
-            #except ParseException, e:
-            #    FaultFromZSIException(e).AsSOAP(OUT)
-            #    self.fail()
+        except ParseException, e:
+            print >>OUT, FaultFromZSIException(e).AsSOAP()
+            self.fail()
         except Exception, e:
             # Faulted while processing; assume it's in the header.
-            FaultFromException(e, 1, sys.exc_info()[2]).AsSOAP(OUT) 
+            print >>OUT, FaultFromException(e, 1, sys.exc_info()[2]).AsSOAP() 
             self.fail()
 
         try:
             dict = ps.Parse(typecode)
         except Exception, e:
             # Faulted while processing; now it's the body
-            FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT)
+            print >>OUT, FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP()
             self.fail()
 
         self.failUnlessEqual(dict['stringtest'], strExtTest, 

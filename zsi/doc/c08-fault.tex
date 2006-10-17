@@ -62,13 +62,10 @@ A text string or sequence of elements containing holding the value of the
 A text string holding the value of the SOAP \code{faultstring} element.
 \end{memberdesc}
 
-\begin{methoddesc}{AsSOAP}{\optional{output\optional{, **kw}}}
+\begin{methoddesc}{AsSOAP}{\optional{, **kw}}
 This method serializes the \class{Fault} object into a SOAP message.
-If the \var{output} parameter is not specified or \constant{None}, the
-message is returned as a string.
-Any other keyword arguments are passed to the \class{SoapWriter} constructor.
-Otherwise \method{AsSOAP()} will call \code{\var{output}.write()} as needed
-to output the message.
+The message is returned as a string.
+Any keyword arguments are passed to the \class{SoapWriter} constructor.
 \versionadded{1.1; the old \method{AsSoap()} method is still available}
 \end{methoddesc}
 
@@ -83,8 +80,8 @@ This method returns a text string that can be included as the
 \end{methoddesc}
 
 \begin{methoddesc}{serialize}{sw}
-This method outputs the fault object onto the \var{sw} object,
-which must support a \method{write()} method.
+This method outputs the fault object onto the \var{sw} object, which is a
+\class{SoapWriter} instance.
 \end{methoddesc}
 
 Some convenience functions are available to create a \class{Fault}

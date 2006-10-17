@@ -33,28 +33,49 @@ that it can be used independently from an HTTP transport.
 
 \section{Dispatching}
 
-The \module{ZSI.dispatch} module allows you to expose Python functions as a
-web service.
-The module provides the infrastructure to parse the request, dispatch
-to the appropriate handler, and then serialize any return value
-back to the client.
-The value returned by the function will be serialized back to the client.
-To return multiple values, return a list.
+The \module{ZSI.dispatch} module allows you to expose Python functions as a web
+service.  The module provides the infrastructure to parse the request, dispatch
+to the appropriate handler, and then serialize any return value back to the
+client.  The value returned by the function will be serialized back to the
+client.  If an exception occurs, a SOAP fault will be sent back to the client.
 
-If an exception occurs, a SOAP fault will be sent back to the client.
+\subsection{Dispatch Behaviors} By default the callback is invoked with the
+pyobj representation of the body root element, and it is expected to return a
+self-describing request (w/typecode).  Parsing is done via a typecode from
+typesmodule, or Any.  Other keyword options are available in dispatch mechanisms
+(see below) that result in different behavior.
 
+\subsubsection{rpc} An rpc service will ignore the body root (RPC Wrapper) of
+the request, and parse all "parts" of message via individual typecodes.  The
+callback function is expected to return the parts of the message in a dict or a
+list.  The dispatch mechanism will try to serialize it as a Struct but if this
+is not possible it will be serialized as an Array. Parsing done via a typecode
+from typesmodule, or Any.  Not compatible with \var{docstyle}.
+
+\subsubsection{docstyle}  Callback is invoked with a ParsedSoap instance
+representing the request, and the return value is serialized with an XML
+typecode (DOM).  The result in wrapped as an rpc-style message, with 
+\emph{Response} appended to the request wrapper.  Not compatible with \var{rpc}.
+
+\subsection{Special Modules}  These are keyword options available to all
+dispatch mechansism (see below).
+
+\subsubsection{modules}{Dispatch is based solely on the name of the root element in the
+incoming SOAP request; the request URL is ignored.  These modules will be search
+for a matching function.  If no modules are specified, only the 
+\module{__main__} module will be searched.}
+
+\subsubsection{typesmodule}{Used for parsing.  This module should contain class 
+definitions with the \code{typecode} attribute set to a \class{TypeCode}
+instance.  By default, a class definition matching the root element name will be
+retrieved or the Any typecode will be used.  If using \emph{rpc}, each child of
+the root element will be used to retrieve a class definition of the same name.}
+
+\subsection{Dispatch Mechanisms}
 Three dispatch mechanisms are provided: one supports standard CGI
 scripts, one runs a dedicated server based on the
 \module{BaseHTTPServer} module, and the third uses the JonPY package,
 \url{http://jonpy.sourceforge.net}, to support FastCGI.
-
-\begin{methoddesc}{AsCGI}{\optional{module_list}}
-This method parses the CGI input and invokes a function that has the
-same name as the top-level SOAP request element.
-The optional \code{module_list} parameter can specify a list of modules
-(already imported) to search for functions.
-If no modules are specified, only the \module{__main__} module will be searched.
-\end{methoddesc}
 
 \begin{methoddesc}{AsServer}{\optional{**keywords}}
 This creates a \class{HTTPServer} object with a request handler that only
@@ -66,27 +87,83 @@ the request URL is ignored.
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{docstyle}}{\code{0}}{If true, then all methods are
-invoked with a single argument, the unparsed body of the SOAP message.}
+\lineiii{\code{port}}{\code{80}}{Port to listen on.}
+\lineiii{\code{addr}}{\code{''}}{Address to listen on.}
+\lineiii{\code{docstyle}}{\code{False}}{Exhibit the \emph{docstyle} behavior.}
+\lineiii{\code{rpc}}{\code{False}}{Exhibit the \emph{rpc} behavior.}
 \lineiii{\code{modules}}{\code{(__main__,)}}{List of modules containing
 functions that can be invoked.}
-\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the
-    SOAP \code{Envelope}}
-\lineiii{\code{port}}{\code{80}}{Port to listen on.}
+\lineiii{\code{typesmodule}}{\code{(__main__,)}}{This module is used for
+parsing, it contains class definitions that specify the \code{typecode}
+attribute.} 
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the SOAP
+\code{Envelope}}
 \end{tableiii}
 
 \end{methoddesc}
 
-\begin{methoddesc}{AsJonPy}{request=req\optional{, **keywords}}
+
+\begin{methoddesc}{AsCGI}{\optional{**keywords}}
+This method parses the CGI input and invokes a function that has the
+same name as the top-level SOAP request element.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{rpc}}{\code{False}}{Exhibit the \emph{rpc} behavior.}
+\lineiii{\code{modules}}{\code{(__main__,)}}{List of modules containing
+functions that can be invoked.}
+\lineiii{\code{typesmodule}}{\code{(__main__,)}}{This module is used for
+parsing, it contains class definitions that specify the \code{typecode}
+attribute.} 
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the SOAP
+\code{Envelope}}
+\end{tableiii}
+
+\end{methoddesc}
+
+
+
+\begin{methoddesc}{AsHandler}{request=None\optional{, **keywords}}
 
 This method is used within a JonPY handler to do dispatch.
 
 The following keyword arguments may be used:
 
 \begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
-\lineiii{\code{request}}{\code{(__main__,)}}{List of modules containing
+\lineiii{\code{request}}{\code{None}}{modpython HTTPRequest instance.}
+\lineiii{\code{modules}}{\code{(__main__,)}}{List of modules containing
 functions that can be invoked.}
+\lineiii{\code{docstyle}}{\code{False}}{Exhibit the \emph{docstyle} behavior.}
+\lineiii{\code{rpc}}{\code{False}}{Exhibit the \emph{rpc} behavior.}
+\lineiii{\code{typesmodule}}{\code{(__main__,)}}{This module is used for
+parsing, it contains class definitions that specify the \code{typecode}
+attribute.} 
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the SOAP
+\code{Envelope}}
 \end{tableiii}
+\end{methoddesc}
+
+
+\begin{methoddesc}{AsJonPy}{request=None\optional{, **keywords}}
+
+This method is used within a JonPY handler to do dispatch.
+
+The following keyword arguments may be used:
+
+\begin{tableiii}{l|c|p{30em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{request}}{\code{None}}{jonpy Request instance.}
+\lineiii{\code{modules}}{\code{(__main__,)}}{List of modules containing
+functions that can be invoked.}
+\lineiii{\code{docstyle}}{\code{False}}{Exhibit the \emph{docstyle} behavior.}
+\lineiii{\code{rpc}}{\code{False}}{Exhibit the \emph{rpc} behavior.}
+\lineiii{\code{typesmodule}}{\code{(__main__,)}}{This module is used for
+parsing, it contains class definitions that specify the \code{typecode}
+attribute.} 
+\lineiii{\code{nsdict}}{\code{\{\}}}{Namespace dictionary to send in the SOAP
+\code{Envelope}}
+\end{tableiii}
+
 
 The following code shows a sample use:
 
@@ -103,6 +180,8 @@ jon.fcgi.Server({jon.fcgi.FCGI_RESPONDER: Handler}).run()
 \end{verbatim}
 
 \end{methoddesc}
+
+\subsection{Other Dispatch Stuff}
 
 \begin{methoddesc}{GetClientBinding}{}
 More sophisticated scripts may want to use access the client binding object,
@@ -140,6 +219,7 @@ A dictionary of the environment variables.
 This is most useful when \method{AsCGI()} is used.
 \end{memberdesc}
 
+
 \section{The \module{client} module --- sending SOAP messages}
 
 \ZSI{} includes a module to connect to a SOAP server over HTTP, send requests,
@@ -149,7 +229,9 @@ modules.
 It must be explicitly imported, as in
 \samp{from ZSI.client import AUTH,Binding}.
 
-\begin{classdesc}{Binding}{\optional{**keywords}}
+\subsection{_Binding}  
+
+\begin{classdesc}{_Binding}{\optional{**keywords}}
 This class encapsulates a connection to a server, known as a \emph{binding}.
 A single binding may be used for multiple RPC calls.
 Between calls, modifiers may be used to change the URL being posted to,
@@ -177,18 +259,20 @@ XML writers; see the description in the \class{SoapWriter} class.}
 \lineiii{\code{transport}}{HTTPConnection/HTTPSConnection}{transport class}
 \lineiii{\code{transdict}}{\{\}}{keyword arguments for connection initialization}
 \lineiii{\code{url}}{n/a}{URL to post to.}
+\lineiii{\code{wsAddressURI}}{None}{URI, identifies the WS-Address specification
+to use.  By default it's not used.}
+\lineiii{\code{sig_handler}}{None}{XML Signature handler, must sign and verify.}
 \end{tableiii}
 
 If using SSL, the \code{cert_file} and \code{key_file} keyword parameters may
-also be used.
-For details see the documentation for the \module{httplib} module.
+also be used.  For details see the documentation for the \module{httplib}
+module.
 
 \end{classdesc}
 
-Once a \class{Binding} object has been created, the following modifiers are
-available.
-All of them return the binding object, so that multiple modifiers can
-be chained together.
+Once a \class{_Binding} object has been created, the following modifiers are
+available.  All of them return the binding object, so that multiple modifiers
+can be chained together.
 
 \begin{methoddesc}{AddHeader}{header, value}
 Output the specified \code{header} and \code{value} with the HTTP
@@ -317,15 +401,42 @@ The HTTP headers, as a \class{mimetools} object.
 A text string containing the HTTP reply text.
 \end{memberdesc}
 
-Finally, if an attribute is fetched other than one of those described
-above, it is taken to be the \code{opname} of a remote procedure,
-and a callable object is returned.
-This object dynamically parses its arguments, receives the reply, and
-parses that.
+\subsection{Binding}
+If an attribute is fetched other than one of those described in
+\class{_Binding}, it is taken to be the \code{opname} of a remote procedure, and
+a callable object is returned.  This object dynamically parses its arguments,
+receives the reply, and parses that.
 
-\begin{methoddesc}{opname}{args...}
-Using this shortcut requires that the \method{SetURL()} was invoked first.
-This method is then equivalent to:
-\samp{RPC(None, opname, tuple(args), TC.Any())}
+\begin{classdesc}{Binding}{\optional{**keywords}}
+For other keyword arguments see \class{_Binding}.
+\begin{tableiii}{l|c|p{20em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{typesmodule}}{\code{None}}{See explanation in Dispatching}
+\end{tableiii}
+\end{classdesc}
+
+\begin{methoddesc}{opname}{*args}
+Using this shortcut requires that the \var{url} attribute is set, either
+throught the constructor or \method{SetURL()}.
 \end{methoddesc}
+
+
+\subsection{NamedParamBinding}
+If an attribute is fetched other than one of those described
+in \class{_Binding}, it is taken to be the \code{opname} of a remote procedure, and a callable
+object is returned.  This object dynamically parses its arguments, receives the
+reply, and parses that.
+
+\begin{classdesc}{NamedParamBinding}{\optional{**keywords}}
+For other keyword arguments see \class{_Binding}.
+\begin{tableiii}{l|c|p{20em}}{textrm}{Keyword}{Default}{Description}
+\lineiii{\code{typesmodule}}{\code{None}}{See explanation in Dispatching}
+\end{tableiii}
+\end{classdesc}
+
+\begin{methoddesc}{opname}{**kwargs}
+Using this shortcut requires that the \var{url} attribute is set, either
+throught the constructor or \method{SetURL()}.
+\end{methoddesc}
+
+
 

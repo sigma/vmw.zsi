@@ -181,27 +181,6 @@ def _CGISendXML(text, code=200, **kw):
 def _CGISendFault(f, **kw):
     _CGISendXML(f.AsSOAP(), 500, **kw)
 
-def AsCGI(nsdict={}, typesmodule=None, rpc=None, modules=None):
-    '''Dispatch within a CGI script.
-    '''
-    if os.environ.get('REQUEST_METHOD') != 'POST':
-        _CGISendFault(Fault(Fault.Client, 'Must use POST'))
-        return
-    ct = os.environ['CONTENT_TYPE']
-    try:
-        if ct.startswith('multipart/'):
-            cid = resolvers.MIMEResolver(ct, sys.stdin)
-            xml = cid.GetSOAPPart()
-            ps = ParsedSoap(xml, resolver=cid.Resolve)
-        else:
-            length = int(os.environ['CONTENT_LENGTH'])
-            ps = ParsedSoap(sys.stdin.read(length))
-    except ParseException, e:
-        _CGISendFault(FaultFromZSIException(e))
-        return
-    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict,
-              typesmodule=typesmodule, rpc=rpc)
-
 
 class SOAPRequestHandler(BaseHTTPRequestHandler):
     '''SOAP handler.
@@ -247,9 +226,9 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
                   docstyle=self.server.docstyle, nsdict=self.server.nsdict,
                   typesmodule=self.server.typesmodule, rpc=self.server.rpc)
 
-def AsServer(port=80, modules=None, docstyle=0, nsdict={}, typesmodule=None,
-             rpc=None, **kw):
-    address = ('', port)
+def AsServer(port=80, modules=None, docstyle=False, nsdict={}, typesmodule=None,
+             rpc=False, addr=''):
+    address = (addr, port)
     httpd = HTTPServer(address, SOAPRequestHandler)
     httpd.modules = modules
     httpd.docstyle = docstyle
@@ -258,14 +237,34 @@ def AsServer(port=80, modules=None, docstyle=0, nsdict={}, typesmodule=None,
     httpd.rpc = rpc
     httpd.serve_forever()
 
-def AsHandler(request=None, modules=None, nsdict={}, rpc=None, **kw):
+def AsCGI(nsdict={}, typesmodule=None, rpc=False, modules=None):
+    '''Dispatch within a CGI script.
+    '''
+    if os.environ.get('REQUEST_METHOD') != 'POST':
+        _CGISendFault(Fault(Fault.Client, 'Must use POST'))
+        return
+    ct = os.environ['CONTENT_TYPE']
+    try:
+        if ct.startswith('multipart/'):
+            cid = resolvers.MIMEResolver(ct, sys.stdin)
+            xml = cid.GetSOAPPart()
+            ps = ParsedSoap(xml, resolver=cid.Resolve)
+        else:
+            length = int(os.environ['CONTENT_LENGTH'])
+            ps = ParsedSoap(sys.stdin.read(length))
+    except ParseException, e:
+        _CGISendFault(FaultFromZSIException(e))
+        return
+    _Dispatch(ps, modules, _CGISendXML, _CGISendFault, nsdict=nsdict,
+              typesmodule=typesmodule, rpc=rpc)
+
+def AsHandler(request=None, modules=None, **kw):
     '''Dispatch from within ModPython.'''
     ps = ParsedSoap(request)
     kw['request'] = request
-    _Dispatch(ps, modules, _ModPythonSendXML, _ModPythonSendFault,
-              nsdict=nsdict, rpc=rpc, **kw)
-
-def AsJonPy(nsdict={}, typesmodule=None, rpc=None, modules=None, request=None, **kw):
+    _Dispatch(ps, modules, _ModPythonSendXML, _ModPythonSendFault, **kw)
+    
+def AsJonPy(request=None, modules=None, **kw):
     '''Dispatch within a jonpy CGI/FastCGI script.
     '''
 
@@ -285,8 +284,7 @@ def AsJonPy(nsdict={}, typesmodule=None, rpc=None, modules=None, request=None, *
     except ParseException, e:
         _JonPySendFault(FaultFromZSIException(e), **kw)
         return
-    _Dispatch(ps, modules, _JonPySendXML, _JonPySendFault, nsdict=nsdict,
-              typesmodule=typesmodule, rpc=rpc, **kw)
+    _Dispatch(ps, modules, _JonPySendXML, _JonPySendFault, **kw)
 
 
 if __name__ == '__main__': print _copyright

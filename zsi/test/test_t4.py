@@ -27,23 +27,23 @@ class t4TestCase(unittest.TestCase):
             r = resolvers.NetworkResolver(['http:'])
             ps = ParsedSoap(IN, resolver=r.Resolve)
         except ParseException, e:
-            FaultFromZSIException(e).AsSOAP(OUT)
+            print >>OUT, FaultFromZSIException(e).AsSOAP()
             self.fail() 
         except Exception, e: 
             # Faulted while processing; assume it's in the header.  
-            FaultFromException(e, 1, sys.exc_info()[2]).AsSOAP(OUT) 
+            print >>OUT, FaultFromException(e, 1, sys.exc_info()[2]).AsSOAP() 
             self.fail() 
         print 'resolving' 
         typecode = TC.Struct(None, [ TC.XML('xmltest'), 
                            TC.String('stringtest', resolver=r.Opaque), ]) 
         try: 
             dict = ps.Parse(typecode) 
-        #except EvaluateException, e: 
-        #    FaultFromZSIException(e).AsSOAP(OUT) 
-        #    sys.exit(1) 
+        except EvaluateException, e: 
+            print >>OUT, FaultFromZSIException(e).AsSOAP() 
+            self.fail() 
         except Exception, e: 
             # Faulted while processing; now it's the body 
-            FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP(OUT) 
+            print >>OUT, FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP() 
             self.fail() 
         PrettyPrint(dict['xmltest']) 
         print '**', dict['stringtest'], '**'
