@@ -708,6 +708,9 @@ class Any(TypeCode):
                     if _is_xsd_or_soap_ns(ns):
                         parser = Any.parsemap.get((None,type))
                         if parser: return parser.parse(elt, ps)
+                    if ((ns,type) == (SOAP.ENC,'Array') or 
+                        (_find_arraytype(elt) or '').endswith('[0]')):
+                        return []
                     return None
                 raise EvaluateException('Required Any missing',
                         ps.Backtrace(elt))

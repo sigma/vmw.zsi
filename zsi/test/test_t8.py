@@ -12,6 +12,23 @@ NSDICT = {'tns':'xmlns:tns="urn:a"',
 class AnyTestCase(unittest.TestCase):
     "Test Any serialize and parse"
 
+    def check_empty_array(self):
+        """Empty Array returned as list()
+        """
+        data = []
+        s = str(SoapWriter().serialize(data,TC.Any(aslist=True)))
+        p = ParsedSoap(s).Parse(TC.Any())
+        self.failUnless(data==p, 'expecting "%s", got "%s"' %(data,p))
+
+    def check_empty_struct(self):
+        """Empty Struct is None, maybe dict() makes more sense, but this
+        is fairly hard to determine if not typed (which is the norm).
+        """
+        data = {}
+        s = str(SoapWriter().serialize(data,TC.Any()))
+        p = ParsedSoap(s).Parse(TC.Any())
+        self.failUnless(p==None, 'expecting "%s", got "%s"' %(None,p))
+
     def check_parse_empty_all(self):
         # None
         skip = [TC.FPEnumeration, TC.Enumeration, TC.IEnumeration, TC.List, TC.Integer]
