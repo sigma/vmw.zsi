@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import unittest, sys
-from ZSI import *
+import unittest, sys, types, time
+from ZSI import TC, SoapWriter, ParsedSoap, EvaluateException
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 
 NSDICT = {'tns':'xmlns:tns="urn:a"',
@@ -39,7 +39,7 @@ class AnyTestCase(unittest.TestCase):
             sw.serialize(None, typecode=tc, typed=True)
             soap = str(sw)
             ps = ParsedSoap(soap)
-            parsed = ps.Parse(Any())
+            parsed = ps.Parse(TC.Any())
             self.assertEqual(None, parsed)
 
     def check_parse_empty_string(self):
@@ -50,7 +50,7 @@ class AnyTestCase(unittest.TestCase):
             sw.serialize("", typecode=tc, typed=True)
             soap = str(sw)
             ps = ParsedSoap(soap)
-            parsed = ps.Parse(Any())
+            parsed = ps.Parse(TC.Any())
             self.assertEqual("", parsed)
 
     def check_builtins(self):
@@ -59,10 +59,10 @@ class AnyTestCase(unittest.TestCase):
         orig = [myInt,myLong,myStr,myDate,myFloat]
 
         sw = SoapWriter()
-        sw.serialize(orig, typecode=Any(pname="builtins", aslist=True))
+        sw.serialize(orig, typecode=TC.Any(pname="builtins", aslist=True))
         
         ps = ParsedSoap(str(sw)) 
-        parsed = ps.Parse(Any())
+        parsed = ps.Parse(TC.Any())
         self.assertEqual(len(orig), len(parsed))
 
         self.assertEqual(myInt, parsed[0])

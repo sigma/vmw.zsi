@@ -412,11 +412,22 @@ TC.RegisterType(TC.gMonthDay, minOccurs=0, nillable=False)
 TC.RegisterType(TC.gDay, minOccurs=0, nillable=False)
 TC.RegisterType(TC.gTime, minOccurs=0, nillable=False)
 TC.RegisterType(TC.Apache.Map, minOccurs=0, nillable=False)
-TC.RegisterAnyElement()
 
-try:
-    from ServiceProxy import *
-except:
-    pass
+##
+## Register Wrappers for builtin types.
+## TC.AnyElement wraps builtins so element name information can be saved
+##
+import schema
+for i in [int,float,str,tuple,list,unicode]:
+    schema._GetPyobjWrapper.RegisterBuiltin(i)
+
+## Load up Wrappers for builtin types
+schema.RegisterAnyElement()
+
+
+#try:
+#    from ServiceProxy import *
+#except:
+#    pass
 
 if __name__ == '__main__': print _copyright

@@ -5,8 +5,8 @@
 
 import time, urlparse, socket
 from ZSI import _seqtypes, EvaluateException, WSActionException
-from ZSI.TC import _get_global_element_declaration as GED, _get_type_definition as GTD, \
-     _has_type_definition, AnyElement, AnyType, TypeCode
+from TC import AnyElement, AnyType, TypeCode
+from schema import GED, GTD, _has_type_definition
 from ZSI.TCcompound import ComplexType
 from ZSI.wstools.Namespaces import WSA_LIST
 

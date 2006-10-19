@@ -1047,8 +1047,7 @@ class TypesHeaderContainer(TypesContainerBase):
     imports = [
         'import ZSI',
         'import ZSI.TCcompound',
-        'from ZSI.TC import ElementDeclaration,TypeDefinition',
-        'from ZSI.TC import _get_type_definition as GTD, _get_global_element_declaration as GED',
+        'from ZSI.schema import LocalElementDeclaration, ElementDeclaration, TypeDefinition, GTD, GED',
     ]
     logger = _GetLogger("TypesHeaderContainer")
 

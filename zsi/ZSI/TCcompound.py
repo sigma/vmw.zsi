@@ -7,10 +7,14 @@ from ZSI import _copyright, _children, _child_elements, \
     _inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
     _find_type, _find_xmlns_prefix, _get_idstr, EvaluateException, \
     ParseException
-from ZSI.TC import _get_element_nsuri_name, \
-    _get_substitute_element, _get_type_definition, _get_xsitype, \
-    TypeCode, Any, AnyElement, AnyType, ElementDeclaration, TypeDefinition, \
-    Nilled
+    
+from TC import _get_element_nsuri_name, \
+     _get_xsitype, TypeCode, Any, AnyElement, AnyType, \
+     Nilled, UNBOUNDED
+    
+from schema import ElementDeclaration, TypeDefinition, \
+    _get_substitute_element, _get_type_definition
+
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 from ZSI.wstools.Utility import SplitQName
 from ZSI.wstools.logging import getLogger as _GetLogger
@@ -236,7 +240,7 @@ class ComplexType(TypeCode):
             v[any.aname] = []
             for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
                 value = any.parse(c_elt, ps)
-                if any.maxOccurs == 'unbounded' or any.maxOccurs > 1:
+                if any.maxOccurs == UNBOUNDED or any.maxOccurs > 1:
                     v[any.aname].append(value)
                 else:
                     v[any.aname] = value
@@ -246,7 +250,7 @@ class ComplexType(TypeCode):
             # No such thing as nillable <any>
             if any.maxOccurs == 1 and occurs == 0:
                 v[any.aname] = None
-            elif occurs < any.minOccurs or (any.maxOccurs!='unbounded' and any.maxOccurs<occurs):
+            elif occurs < any.minOccurs or (any.maxOccurs!=UNBOUNDED and any.maxOccurs<occurs):
                 raise EvaluateException('occurances of <any> elements(#%d) bound by (%d,%s)' %(
                     occurs, any.minOccurs,str(any.maxOccurs)), ps.Backtrace(elt))
 
@@ -665,7 +669,6 @@ class Array(TypeCode):
 
                 self.ofwhat.serialize(el, sw, v, **d)
                 position += 1
-
 
 
 if __name__ == '__main__': print _copyright

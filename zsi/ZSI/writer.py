@@ -5,7 +5,6 @@
 
 from ZSI import _copyright, _get_idstr, ZSI_SCHEMA_URI
 from ZSI import _backtrace, _stringtypes, _seqtypes
-from ZSI.TC import AnyElement, TypeCode
 from ZSI.wstools.Utility import MessageInterface, ElementProxy
 from ZSI.wstools.Namespaces import XMLNS, SOAP, SCHEMA
 from ZSI.wstools.c14n import Canonicalize
