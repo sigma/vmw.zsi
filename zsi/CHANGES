@@ -6,9 +6,12 @@ Change for xxx released xxx:
     -   Record facets (restrictions) in XMLSchema.py <vchen@datapower.com>
     -   Remove Send()'s kwargs out of _args list <efrain@bogotron.net>
 
-Change for 2.0.0 released xxx:
+Change for 2.0.0rc3 released xxx:
     -   Removed "requestclass" keyword argument to Binding.Send
     -   simplified and retooled Binding/NamedParamBinding and dispatch.  
+    -   BUG [ 1525567 ] Amazon ECommerce Issues: local element declarations 
+        overriding global element declarations with the same name within the 
+        same namespace.
         
 Change for 2.0.0rc2 released 28-March-2006:
     -   Replace many/most id() with _get_idstr() to hide negative numbers

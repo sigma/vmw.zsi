@@ -114,13 +114,13 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_OpcDaGateway test_Sabre test_Echo
+tests =  test_MapPoint test_OpcDaGateway test_Sabre test_Echo test_AWSECommerceService
 
 [doc_literal_broke]
 document = True
 literal = True
 broke = True
-tests = test_AWSECommerceService
+tests = 
 
 [doc_literal_broke_interop]
 document = True

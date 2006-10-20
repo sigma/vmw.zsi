@@ -1888,8 +1888,49 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
     type = DEC
     logger = _GetLogger("ElementSimpleTypeContainer")
 
+    def _setContent(self):
+        aname = self.getAttributeName(self.name)
+        pyclass = self.pyclass
+
+        # bool cannot be subclassed
+        if pyclass == 'bool': pyclass = 'int'
+        kw = KW.copy()
+        kw.update(dict(aname=aname, ns=self.ns, name=self.name, 
+                       subclass=self.sKlass,literal=self.literalTag(),
+                       schema=self.schemaTag(), init=self.simpleConstructor(),
+                       klass=self.getClassName(), element="ElementDeclaration"))
+
+        if self.local:
+            kw['element'] = 'LocalElementDeclaration'
+        
+        element = map(lambda i: i %kw, [
+            '%(ID1)sclass %(klass)s(%(subclass)s, %(element)s):',
+            '%(ID2)s%(literal)s',
+            '%(ID2)s%(schema)s',
+            '%(ID2)s%(init)s',
+            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["aname"] = "%(aname)s"',
+            ]
+        )
+
+        # TODO: What about getPyClass and getPyClassDefinition?
+        #     I want to add pyclass metaclass here but this needs to be 
+        #     corrected first.
+        #
+        # anyType (?others) has no pyclass.
+        app = element.append
+        if pyclass is not None:
+            app('%sclass IHolder(%s): typecode=self' % (ID3, pyclass),)
+            app('%skw["pyclass"] = IHolder' %(ID3),)
+            app('%sIHolder.__name__ = "%s_immutable_holder"' %(ID3, aname),)
+
+        app('%s%s' % (ID3, self.simpleConstructor(self.sKlass)),)
+
+        self.writeArray(element)
+
     def setUp(self, tp):
         self._item = tp
+        self.local = tp.isLocal()
         try:
             self.name = tp.getAttribute('name')
             self.ns = tp.getTargetNamespace()
@@ -1912,38 +1953,6 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
             raise Wsdl2PythonError('Error occured processing element: %s' %(
                 tp.getItemTrace()), *ex.args)
 
-    def _setContent(self):
-        aname = self.getAttributeName(self.name)
-        pyclass = self.pyclass
-
-        # bool cannot be subclassed
-        if pyclass == 'bool': pyclass = 'int'
-
-        element = [
-            '%sclass %s(%s, ElementDeclaration):'\
-                % (ID1, self.getClassName(), self.sKlass),
-            '%s%s' % (ID2, self.literalTag()),
-            '%s%s' % (ID2, self.schemaTag()),
-            '%s%s' % (ID2, self.simpleConstructor()),
-            '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
-            '%skw["aname"] = "%s"' % (ID3, aname),
-        ]
-
-        # TODO: What about getPyClass and getPyClassDefinition?
-        #     I want to add pyclass metaclass here but this needs to be 
-        #     corrected first.
-        #
-        # anyType (?others) has no pyclass.
-        app = element.append
-        if pyclass is not None:
-            app('%sclass IHolder(%s): typecode=self' % (ID3, pyclass),)
-            app('%skw["pyclass"] = IHolder' %(ID3),)
-            app('%sIHolder.__name__ = "%s_immutable_holder"' %(ID3, aname),)
-
-        app('%s%s' % (ID3, self.simpleConstructor(self.sKlass)),)
-
-        self.writeArray(element)
-
 
 class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
     '''local simpleType container
@@ -1952,18 +1961,26 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
     logger = _GetLogger("ElementLocalSimpleTypeContainer")
 
     def _setContent(self):
+        kw = KW.copy()
+        kw.update(dict(aname=self.getAttributeName(self.name), ns=self.ns, name=self.name, 
+                       subclass=self.sKlass,literal=self.literalTag(),
+                       schema=self.schemaTag(), init=self.simpleConstructor(),
+                       klass=self.getClassName(), element="ElementDeclaration",
+                       baseinit=self.simpleConstructor(self.sKlass)))
 
-        element = [
-            '%sclass %s(%s, ElementDeclaration):' % (ID1, self.getClassName(),
-                                                     self.sKlass),
-            '%s%s' % (ID2, self.literalTag()),
-            '%s%s' % (ID2, self.schemaTag()),
-            '%s%s' % (ID2, self.simpleConstructor()),
-            '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
-            '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
-            '%s%s' % (ID3, self.simpleConstructor(self.sKlass)),
+        if self.local:
+            kw['element'] = 'LocalElementDeclaration'
+        
+        element = map(lambda i: i %kw, [
+            '%(ID1)sclass %(klass)s(%(subclass)s, %(element)s):',
+            '%(ID2)s%(literal)s',
+            '%(ID2)s%(schema)s',
+            '%(ID2)s%(init)s',
+            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["aname"] = "%(aname)s"',
+            '%(ID3)s%(baseinit)s',
             ]
-
+        )
         self.writeArray(element)
 
     def setUp(self, tp):
@@ -1972,6 +1989,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
             tp.content.isLocal() is True and tp.content.isSimple() is True ,\
             'expecting local simple type: %s' %tp.getItemTrace()
 
+        self.local = tp.isLocal()
         self.name = tp.getAttribute('name')
         self.ns = tp.getTargetNamespace()
         content = tp.content.content
@@ -2012,9 +2030,51 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
 
 
 class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
-
     type = DEC
     logger = _GetLogger("ElementLocalComplexTypeContainer")
+
+    def _setContent(self):
+        kw = KW.copy()
+        try:
+            kw.update(dict(klass=self.getClassName(),
+                       subclass='ZSI.TCcompound.ComplexType',
+                       element='ElementDeclaration',
+                       literal=self.literalTag(),
+                       schema=self.schemaTag(), 
+                       init=self.simpleConstructor(),
+                       ns=self.ns, name=self.name,
+                       aname=self.getAttributeName(self.name),  
+                       nsurilogic=self.nsuriLogic(),
+                       ofwhat=self.getTypecodeList(),
+                       atypecode=self.attribute_typecode,
+                       pyclass=self.getPyClass(),
+                       ))
+        except Exception, ex:
+            args = ['Failure processing an element w/local complexType: %s' %(
+                          self._item.getItemTrace())]
+            args += ex.args
+            ex.args = tuple(args)
+            raise
+
+        if self.local:
+            kw['element'] = 'LocalElementDeclaration'
+        
+        element = [
+            '%(ID1)sclass %(klass)s(%(subclass)s, %(element)s):',
+            '%(ID2)s%(literal)s',
+            '%(ID2)s%(schema)s',
+            '%(ID2)s%(init)s',
+            '%(ID3)s%(nsurilogic)s',
+            '%(ID3)sTClist = [%(ofwhat)s]',
+            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["aname"] = "%(aname)s"',
+            '%(ID3)s%(atypecode)s = {}',
+            '%(ID3)sZSI.TCcompound.ComplexType.__init__(self,None,TClist,inorder=0,**kw)',
+            ]
+        for l in self.attrComponents: element.append('%(ID3)s'+str(l))
+        element += self.getPyClassDefinition()
+        element.append('%(ID3)sself.pyclass = %(pyclass)s' %kw)  
+        self.writeArray(map(lambda l: l %kw, element))
 
     def setUp(self, tp):
         '''
@@ -2022,6 +2082,10 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
         'group', 'all', 'choice', 'sequence', 'attribute', 'attributeGroup',\
         'anyAttribute', 'any']}
         '''
+        # 
+        # TODO: Need a Recursive solution, this is incomplete will ignore many
+        #  extensions, restrictions, etc.
+        # 
         self._item = tp
         # JRB HACK SUPPORTING element/no content.
         assert tp.isElement() is True and \
@@ -2030,6 +2094,7 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
 
         self.name = tp.getAttribute('name')
         self.ns = tp.getTargetNamespace()
+        self.local = tp.isLocal()
 
         complex = tp.content
         # JRB HACK SUPPORTING element/no content.
@@ -2037,122 +2102,128 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
             self.mgContent = ()
             return
         
-        attributeContent = complex.getAttributeContent()
-
-        self.mgContent = None
+        #attributeContent = complex.getAttributeContent()
+        #self.mgContent = None
         if complex.content is None:
             self.mgContent = ()
-        elif complex.content.isSimple():
-            if complex.content.content.isExtension():
-                # TODO: Not really supported just passing thru
-                pass
-            elif complex.content.content.isRestriction():
-                # TODO: Not really supported just passing thru
-                pass
-            else:
-                raise ContainerError,\
-                   'not implemented local complexType/simpleContent: %s'\
-                   %tp.getItemTrace()
-        elif complex.content.isComplex() is True:
-            if complex.content.content is None:
-                self.mgContent = ()
-            elif complex.content.content.isExtension() is True and\
-                 complex.content.content.content is not None and\
-                 complex.content.content.content.isModelGroup() is True:
-                self.mgContent = complex.content.content.content.content
-                attributeContent = \
-                    complex.content.content.getAttributeContent()
-            elif complex.content.content.isRestriction() is True and\
-                 complex.content.content.content is not None and\
-                 complex.content.content.content.isModelGroup() is True:
-                self.mgContent = complex.content.content.content.content
-                attributeContent = \
-                    complex.content.content.getAttributeContent()
-        elif complex.content.isModelGroup() is True:
-            self.mgContent = complex.content.content
+            self.attrComponents = self._setAttributes(complex.getAttributeContent())
+            return 
 
-        if self.mgContent is None: 
+        is_simple = complex.content.isSimple()
+        if is_simple and complex.content.content.isExtension():
+            # TODO: Not really supported just passing thru
             self.mgContent = ()
-        assert type(self.mgContent) is tuple, 'XXX: %s' %self.mgContent.getItemTrace()
+            self.attrComponents = self._setAttributes(complex.getAttributeContent())
+            return
 
-        self.attrComponents = self._setAttributes(attributeContent)
-        
-    def _setContent(self):
-        try:
-            element = [
-                '%sclass %s(ZSI.TCcompound.ComplexType, ElementDeclaration):' \
-                % (ID1,self.getClassName()),
-                '%s%s' % (ID2, self.schemaTag()),
-                '%s%s' % (ID2, self.literalTag()),
-                '%s%s' % (ID2, self.simpleConstructor()),
-                #'%s' % self.getElements(),
-                '%s%s' % (ID3, self.nsuriLogic()),
-                '%sTClist = [%s]' % (ID3, self.getTypecodeList()),
-                '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
-                '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
-                ]
-        except Exception, ex:
-            args = ['Failure processing an element w/local complexType: %s' %self._item.getItemTrace()]
-            args += ex.args
-            ex.args = tuple(args)
-            raise
-        
-        element.append('%s%s = {}'%(ID3, self.attribute_typecode))
-        element.append(\
-            '%(ID3)sZSI.TCcompound.ComplexType.__init__(self, None, TClist, inorder=0, **kw)' %KW
-        )
-        for l in self.attrComponents: element.append('%s%s'%(ID3, l))
-                   
-        # pyclass class definition
-        element += self.getPyClassDefinition()
+        if is_simple and complex.content.content.isRestriction():
+            # TODO: Not really supported just passing thru
+            self.mgContent = ()
+            self.attrComponents = self._setAttributes(complex.getAttributeContent())
+            return
 
-        # set pyclass
-        kw = KW.copy()
-        kw['pyclass'] = self.getPyClass()
-        element.append('%(ID3)sself.pyclass = %(pyclass)s' %kw)  
+        if is_simple:
+            raise ContainerError, 'not implemented local complexType/simpleContent: %s'\
+               %tp.getItemTrace()
 
-        self.writeArray(element)
+        is_complex = complex.content.isComplex()
+        if is_complex and complex.content.content is None:
+            # TODO: Recursion...
+            self.mgContent = ()
+            self.attrComponents = self._setAttributes(complex.getAttributeContent())
+            return
+
+        if (is_complex and complex.content.content.isExtension() and 
+            complex.content.content.content is not None and
+            complex.content.content.content.isModelGroup()):
+
+            self.mgContent = complex.content.content.content.content
+            self.attrComponents = self._setAttributes(
+                    complex.content.content.getAttributeContent()
+                )
+            return
+
+        if (is_complex and complex.content.content.isRestriction() and
+            complex.content.content.content is not None and 
+            complex.content.content.content.isModelGroup()):
+
+            self.mgContent = complex.content.content.content.content
+            self.attrComponents = self._setAttributes(
+                    complex.content.content.getAttributeContent()
+                )
+            return
+
+        if is_complex:
+            self.mgContent = ()
+            self.attrComponents = self._setAttributes(complex.getAttributeContent())
+            return
+
+        if complex.content.isModelGroup():
+            self.mgContent = complex.content.content
+            self.attrComponents = self._setAttributes(complex.getAttributeContent())
+            return
+
+        # TODO: Scary Fallthru
+        self.mgContent = ()
+        self.attrComponents = self._setAttributes(complex.getAttributeContent())
         
-    
+        
 class ElementGlobalDefContainer(TypecodeContainerBase):
-
     type = DEC
     logger = _GetLogger("ElementGlobalDefContainer")
-
-    def setUp(self, element):
-        # Save for debugging
-        self._item = element
-        
-        self.name = element.getAttribute('name')
-        self.ns = element.getTargetNamespace()
-
-        tp = element.getTypeDefinition('type')
-        self.sKlass = tp.getAttribute('name')
-        self.sKlassNS = tp.getTargetNamespace()
 
     def _setContent(self):
         '''GED defines element name, so also define typecode aname
         '''
+        kw = KW.copy()
         try:
-            element = [
-                '%sclass %s(ElementDeclaration):' % (ID1, self.getClassName()),
-                '%s%s' % (ID2, self.literalTag()),
-                '%s%s' % (ID2, self.schemaTag()),
-                '%s%s' % (ID2, self.simpleConstructor()),
-                '%skw["pname"] = ("%s","%s")' % (ID3, self.ns, self.name),
-                '%skw["aname"] = "%s"' % (ID3, self.getAttributeName(self.name)),
-                '%s'   % self.getBasesLogic(ID3),
-                '%s%s.%s.__init__(self, **kw)' \
-                % (ID3, NAD.getAlias(self.sKlassNS), type_class_name(self.sKlass) ),
-                '%sif self.pyclass is not None: self.pyclass.__name__ = "%s_Holder"' %(ID3, self.getClassName()),
-                ]
+            kw.update(dict(klass=self.getClassName(),
+                       element='ElementDeclaration',
+                       literal=self.literalTag(),
+                       schema=self.schemaTag(), 
+                       init=self.simpleConstructor(),
+                       ns=self.ns, name=self.name,
+                       aname=self.getAttributeName(self.name),  
+                       baseslogic=self.getBasesLogic(ID3),
+                       #ofwhat=self.getTypecodeList(),
+                       #atypecode=self.attribute_typecode,
+                       #pyclass=self.getPyClass(),
+                       alias=NAD.getAlias(self.sKlassNS),
+                       subclass=type_class_name(self.sKlass),
+                       ))
         except Exception, ex:
-            args = ['Failure processing an element w/global definition: %s' %self._item.getItemTrace()]
+            args = ['Failure processing an element w/local complexType: %s' %(
+                          self._item.getItemTrace())]
             args += ex.args
             ex.args = tuple(args)
             raise
         
-        self.writeArray(element)
+        if self.local:
+            kw['element'] = 'LocalElementDeclaration'
+        
+        element = [
+            '%(ID1)sclass %(klass)s(%(element)s):',
+            '%(ID2)s%(literal)s',
+            '%(ID2)s%(schema)s',
+            '%(ID2)s%(init)s',
+            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["aname"] = "%(aname)s"',
+            '%(baseslogic)s',
+            '%(ID3)s%(alias)s.%(subclass)s.__init__(self, **kw)',
+            '%(ID3)sif self.pyclass is not None: self.pyclass.__name__ = "%(klass)s_Holder"',
+            ]
+
+        self.writeArray(map(lambda l: l %kw, element))
+
+    def setUp(self, element):
+        # Save for debugging
+        self._item = element
+        self.local = element.isLocal()
+        self.name = element.getAttribute('name')
+        self.ns = element.getTargetNamespace()
+        tp = element.getTypeDefinition('type')
+        self.sKlass = tp.getAttribute('name')
+        self.sKlassNS = tp.getTargetNamespace()
 
 
 class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
