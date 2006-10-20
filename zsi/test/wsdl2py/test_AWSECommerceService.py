@@ -42,7 +42,7 @@ def all():
 
 
 class AmazonTestCase(ServiceTestCase):
-    """Test case for ZipCodeResolver Web service
+    """Test case for Amazon ECommerce Web service
     """
     name = "test_AWSECommerceService"
     client_file_name = "AWSECommerceService_services.py"

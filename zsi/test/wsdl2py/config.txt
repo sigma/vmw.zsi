@@ -135,6 +135,7 @@ tests =
 ##########################################################################
 [WSDL]
 test_AWSECommerceService = http://webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl
+test_AmazonS3 = http://s3.amazonaws.com/doc/2006-03-01/AmazonS3.wsdl
 test_TemperatureService = http://www.xmethods.net/sd/2001/TemperatureService.wsdl
 test_WorldTimeService = http://ws.digiposs.com/WorldTime.jws?wsdl
 test_BFGraphLib = http://bfo.co.uk/products/graph/docs/bfograph-2.1.wsdl
