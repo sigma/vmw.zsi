@@ -154,3 +154,4 @@ test_DerivedTypes = test_DerivedTypes.xsd
 
 test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
 test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
+test_InfoBil = http://javatest2.infodata.se/webservices/services/Infobil?wsdl
