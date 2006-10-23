@@ -2793,7 +2793,9 @@ class ComplexTypeSimpleContentContainer(SimpleTypeContainer, AttributeMixIn):
         pt = self.getPythonType()
         if pt is not None:
             definition.append('%sclass %s(%s):' %(ID3,self.getPyClass(),pt))
-            definition.append('%s__metaclass__ = pyclass_type' %ID4)
+            if self.metaclass is not None:
+                definition.append('%s__metaclass__ = %s' %(ID4, self.metaclass))
+
             definition.append('%stypecode = self' %ID4)
         return definition
 

@@ -144,11 +144,11 @@ def _Dispatch(ps, modules, SendResponse, SendFault, nsdict={}, typesmodule=None,
         sw = SoapWriter(nsdict=nsdict)
         sw.serialize(result, tc)
         return SendResponse(str(sw), **kw)
+    except Fault, e:
+        return SendFault(e, **kw)
     except Exception, e:
         # Something went wrong, send a fault.
-        f = FaultFromException(e, 0, sys.exc_info()[2])
-        #return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
-        return SendFault(f, **kw)
+        return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
 
 
 def _ModPythonSendXML(text, code=200, **kw):
