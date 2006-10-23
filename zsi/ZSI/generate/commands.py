@@ -25,9 +25,12 @@ def SetDebugCallback(option, opt, value, parser, *args, **kwargs):
 
 def SetPyclassMetaclass(option, opt, value, parser, *args, **kwargs):
     """set up pyclass metaclass for complexTypes"""
-    from ZSI.generate.containers import TypecodeContainerBase, TypesHeaderContainer
+    from ZSI.generate.containers import ServiceHeaderContainer, TypecodeContainerBase, TypesHeaderContainer
     TypecodeContainerBase.metaclass = kwargs['metaclass']
     TypesHeaderContainer.imports.append(\
+            'from %(module)s import %(metaclass)s' %kwargs
+            )
+    ServiceHeaderContainer.imports.append(\
             'from %(module)s import %(metaclass)s' %kwargs
             )
 
