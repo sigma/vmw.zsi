@@ -399,6 +399,10 @@ class ServiceTestSuite(unittest.TestSuite):
     def __init__(self, tests=()):
         unittest.TestSuite.__init__(self, tests)
 
+    def __call__(self, result):
+        # for python2.4
+        return self.run(result)
+
     def addTest(self, test):
         unittest.TestSuite.addTest(self, test)
 
