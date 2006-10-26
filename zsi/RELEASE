@@ -34,7 +34,7 @@ information on getting and setting up those tools.
 
 7.  Tag the SVN repository.  Release tags are of the form::
 
-        "v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
+        "ZSI_v" MAJOR "_" MINOR [ "_" PATCHLEVEL ] [ modifier serial ]
 
     where the optional segment containing PATCHLEVEL is included only
     if PATCHLEVEL is non-zero.  The modifier segment has only been
@@ -45,21 +45,37 @@ information on getting and setting up those tools.
     You'll need to tag the ``wstools`` package separately, but using
     the same tag.
 
-8.  Export the tagged sources from CVS.  You'll need to run the
-    commands::
+    For example:
 
-        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG zsi
-        cd zsi/ZSI/
-        cvs -d cvs.sourceforge.net:/cvsroot/pywebsvcs export -r TAG wstools
+        svn co https://svn.sourceforge.net/svnroot/pywebsvcs
+        svn mkdir https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3
+        cd pywebsvcs
+        svn copy trunk/zsi tags/ZSI_v2_0_0RC3/zsi
+        svn copy trunk/wstools tags/ZSI_v2_0_0RC3/wstools
+        svn commit
+
+8.  Export the tagged sources from CVS.  You'll need to run the
+    command::
+
+        svn export https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/zsi
+
 
 9.  Build the release from the export.  Switch to the export directory
     (the one containing setup.py) and run **make kit**.
+
+    Create eggs for supported python versions:
+
+        python setup.py bdist_egg
+
 
 10.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
     0, copy doc/zsi.pdf to dist/zsi-$MAJOR.$MINOR.pdf, otherwise copy
     it to dist/zsi-$MAJOR.$MINOR.$PATCHLEVEL.pdf.  This will leave you
     with all the files you need to upload in a single directory
     (dist/).
+
+        cp doc/zsi.pdf  dist/zsi-2.0.pdf
+        cp doc/guide.pdf  dist/guide-zsi-2.0.pdf
 
 11. Using the constructed distribution (usually the .tar.gz version),
     build and test the software; they must all pass.  See `Running
