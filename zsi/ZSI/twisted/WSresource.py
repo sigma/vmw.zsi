@@ -314,8 +314,8 @@ class WSResource(twisted.web.resource.Resource, object):
         else:
             mimeType = "text/xml"
 
-        request.setHeader("Content-type", mimeType)
-        request.setHeader("Content-length", str(len(response)))
+        request.setHeader("Content-Type", mimeType)
+        request.setHeader("Content-Length", str(len(response)))
         request.write(response)
         request.finish()
         return NOT_DONE_YET

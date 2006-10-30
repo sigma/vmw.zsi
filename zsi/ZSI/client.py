@@ -275,8 +275,8 @@ class _Binding:
         #scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
         path = _get_postvalue_from_absoluteURI(url)
         self.h.putrequest("POST", path)
-        self.h.putheader("Content-length", "%d" % len(soapdata))
-        self.h.putheader("Content-type", 'text/xml; charset=utf-8')
+        self.h.putheader("Content-Length", "%d" % len(soapdata))
+        self.h.putheader("Content-Type", 'text/xml; charset=utf-8')
         self.__addcookies()
 
         for header,value in headers.items():
