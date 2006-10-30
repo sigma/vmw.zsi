@@ -59,8 +59,8 @@ _________________________________ Mon Jan  2 13:41:22 2006 REQUEST:
 _________________________________ Mon Jan  2 13:41:22 2006 RESPONSE:
 Server: Netscape-Enterprise/6.0
 Date: Mon, 02 Jan 2006 21:41:21 GMT
-Content-length: 1568
-Content-type: text/xml; charset="utf-8"
+Content-Length: 1568
+Content-Type: text/xml; charset="utf-8"
 Soapaction: ""
 
 <?xml version="1.0" encoding="UTF-8"?>
