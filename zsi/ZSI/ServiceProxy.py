@@ -70,11 +70,12 @@ class ServiceProxy:
         port = self._port
         binding = port.getBinding()
         portType = binding.getPortType()
-        for item in portType.operations:
-            callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
-            method = MethodProxy(self, callinfo)
-            setattr(self, item.name, method)
-            self._methods.setdefault(item.name, []).append(method)
+        for port in self._service.ports:
+            for item in port.getPortType().operations:
+                callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
+                method = MethodProxy(self, callinfo)
+                setattr(self, item.name, method)
+                self._methods.setdefault(item.name, []).append(method)
        
         # wsdl2py: deal with XML Schema
         if not os.path.isdir(cachedir): os.mkdir(cachedir)
