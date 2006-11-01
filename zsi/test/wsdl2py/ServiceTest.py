@@ -77,7 +77,11 @@ def _LaunchContainer(cmd):
     '''
     host = CONFIG_PARSER.get(SECTION_DISPATCH, 'host')
     port = CONFIG_PARSER.get(SECTION_DISPATCH, 'port')
-    process = subprocess.Popen([cmd, port], env=ENVIRON)
+    try:
+        process = subprocess.Popen(['python %s' %cmd, port], env=ENVIRON)
+    except:
+        print >>sys.stderr, 'error executing: %s' %cmd
+        raise
     time.sleep(1)
     return process
 
@@ -281,7 +285,8 @@ class ServiceTestCase(unittest.TestCase):
                 exit = -1
             
             #TODO: returncode WINDOWS?
-            self.failUnless(os.WIFEXITED(exit), 
+            WIF = hasattr(os, 'WIFEXITED')
+            if WIF: self.failUnless(os.WIFEXITED(exit), 
                 '"%s" exited with signal#: %d' %(wsdl2py, exit))
             self.failUnless(exit == 0, 
                 '"%s" exited with exit status: %d' %(wsdl2py, exit))
@@ -296,7 +301,7 @@ class ServiceTestCase(unittest.TestCase):
                     warnings.warn("TODO: Not sure what is going on here?")
             
                 #TODO: returncode WINDOWS?
-                self.failUnless(os.WIFEXITED(exit), 
+                if WIF: self.failUnless(os.WIFEXITED(exit), 
                     '"%s" exited with signal#: %d' %(wsdl2dispatch, exit))
                 self.failUnless(exit == 0, 
                     '"%s" exited with exit status: %d' %(wsdl2dispatch, exit))
@@ -372,8 +377,11 @@ class ServiceTestCase(unittest.TestCase):
            ServiceTestCase.CleanUp()
         
         ServiceTestCase._lastToDispatch = expath
-        ServiceTestCase._process = _LaunchContainer(TOPDIR + '/' + expath)
-                    
+        ServiceTestCase._process = \
+            _LaunchContainer(os.path.join(os.path.abspath(TOPDIR), 
+                                                          *expath.split('/')))
+       
+            
     def CleanUp(cls):
         """call this when dispatch server is no longer needed,
         maybe another needs to be started.  Assumption that

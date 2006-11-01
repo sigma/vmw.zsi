@@ -171,8 +171,9 @@ def wsdl2py(args=None):
     except Exception, e:
         print "Error loading %s: \n\t%s" % (location, e)
         # exit code UNIX specific, Windows?
-        sys.exit(os.EX_NOINPUT)
-
+        if hasattr(os, 'EX_NOINPUT'): sys.exit(os.EX_NOINPUT)
+        sys.exit("error loading %s" %location)
+        
     if options.simple_naming:
         # Use a different client suffix
         WriteServiceModule.client_module_suffix = "_client"
