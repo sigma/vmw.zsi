@@ -2,6 +2,9 @@ $Id$
 
 This file contains various python scripts for testing SOAPpy.
 
+Type "make" to run the tests. You can specify which Python interpreter
+to run the tests with, e.g. "make PYTHON=python2.5".
+
 All of the tests here work without generating errors EXCEPT:
 
 - SOAPtest.py  

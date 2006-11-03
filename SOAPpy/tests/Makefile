@@ -1,68 +1,69 @@
+PYTHON=python
 
 default: echoClient echoHeader largeDataTest Bug1001646 Bug916265 \
 	 card independent \
          testClient1 outside_services
 
 echoClient: 
-	python echoServer.py >& echoServer_echoClient.log &
+	$(PYTHON) echoServer.py >& echoServer_echoClient.log &
 	sleep 5s # wait for server to start up
-	python echoClient.py
+	$(PYTHON) echoClient.py
 
 echoHeader:
-	python echoServer.py >& echoServer_echoHeader.log &
+	$(PYTHON) echoServer.py >& echoServer_echoHeader.log &
 	sleep 5s # wait for server to start up
-	python echoHeader.py
+	$(PYTHON) echoHeader.py
 
 largeDataTest:
-	python echoServer.py >& echoServer_largeDataTest.log &
+	$(PYTHON) echoServer.py >& echoServer_largeDataTest.log &
 	sleep 5s # wait for server to start up
-	python largeDataTest.py
+	$(PYTHON) largeDataTest.py
 
 card:
-	python cardServer.py >& cardServer.log &
+	$(PYTHON) cardServer.py >& cardServer.log &
 	sleep 5s # wait for server to start up
-	python cardClient.py
+	$(PYTHON) cardClient.py
 
 esj:
-	python esj_test_server.py >& esj_test.log &
-	python esj_test_client.py
+	$(PYTHON) esj_test_server.py >& esj_test.log &
+	$(PYTHON) esj_test_client.py
 
 
 Bug1001646:
-	python echoServer.py >& echoServer_largeDataTest.log &
+	$(PYTHON) echoServer.py >& echoServer_largeDataTest.log &
 	sleep 5s # wait for server to start up
-	python Bug1001646.py
+	$(PYTHON) Bug1001646.py
 
 Bug916265:
-	python echoServer.py >& echoServer_Bug916265.log &
+	$(PYTHON) echoServer.py >& echoServer_Bug916265.log &
 	sleep 5s # wait for server to start up
-	python Bug916265.py
+	$(PYTHON) Bug916265.py
 
 outside_services:
-	python alanbushTest.py
-	python BabelfishWSDLTest.py
-	python GoogleTest.py
-	python quoteTest.py
-	python simpleWSDL.py
-	python testWSDL.py
+	$(PYTHON) alanbushTest.py
+	$(PYTHON) BabelfishWSDLTest.py
+	$(PYTHON) GoogleTest.py
+	$(PYTHON) quoteTest.py
+	$(PYTHON) simpleWSDL.py
+	$(PYTHON) testWSDL.py
 
 independent:
-	python speedTest.py
-	python Bug918216.py
-	python ComplexTypes.py
-	-python SOAPtest.py # one subtest will fail
-	python TCtest.py
-	python testleak.py
-	python translateTest.py
-	python weatherTest.py
-	python whoisTest.py
-	python xmethods.py
-	python ZeroLengthArray.py
+	$(PYTHON) speedTest.py
+	$(PYTHON) Bug918216.py
+	$(PYTHON) ComplexTypes.py
+	-$(PYTHON) SOAPtest.py # one subtest will fail
+	$(PYTHON) TCtest.py
+	$(PYTHON) testleak.py
+	$(PYTHON) translateTest.py
+	$(PYTHON) weatherTest.py
+	$(PYTHON) whoisTest.py
+	$(PYTHON) xmethods.py
+	$(PYTHON) ZeroLengthArray.py
 
 testClient1:
-	python testClient1.py
+	$(PYTHON) testClient1.py
 
 broken:
-	python newsTest.py
-	python excelTest.py
-	python storageTest.py
+	$(PYTHON) newsTest.py
+	$(PYTHON) excelTest.py
+	$(PYTHON) storageTest.py
