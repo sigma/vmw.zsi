@@ -1453,7 +1453,7 @@ class AnyElement(AnyType):
         try:
             pyobj = what.parse(elt, ps)
         except EvaluateException, ex:
-            self.logger.error("Give up, parse (%s,%s) as a String", 
+            self.logger.debug("Give up, parse (%s,%s) as a String", 
                   what.nspname, what.pname)
             what = String(pname=(nspname,pname), typed=False)
             pyobj = WrapImmutable(what.parse(elt, ps), what)

@@ -77,7 +77,7 @@ def _Dispatch(ps, modules, SendResponse, SendFault, nsdict={}, typesmodule=None,
                 return
 
             try:
-                result = handler(*arg)
+                result = handler(arg)
             except Exception,ex:
                 SendFault(FaultFromZSIException(ex), **kw)
 
