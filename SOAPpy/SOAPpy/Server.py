@@ -40,10 +40,10 @@
 ################################################################################
 """
 
+from __future__ import nested_scopes
+
 ident = '$Id$'
 from version import __version__
-
-from __future__ import nested_scopes
 
 #import xml.sax
 import re
