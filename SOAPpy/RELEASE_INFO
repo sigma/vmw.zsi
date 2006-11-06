@@ -265,8 +265,8 @@ VERSION 0.10.3
 --------------
 
 - Removed import of obsoleted ieee753.py.  Now use the fpconst module
-  proposed by PEP 754, available from 
-  <http://research.warnes.net/projects/RStatServer/fpconst/>
+  proposed by PEP 754, available from
+  <http://www.python.org/pypi/fpconst>
 
 - SOAPpy should no longer depend on pyXML.
 
