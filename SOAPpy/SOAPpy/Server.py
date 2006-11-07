@@ -46,7 +46,6 @@ ident = '$Id$'
 from version import __version__
 
 #import xml.sax
-import re
 import socket
 import sys
 import SocketServer

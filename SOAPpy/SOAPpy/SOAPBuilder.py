@@ -37,7 +37,6 @@ ident = '$Id$'
 from version import __version__
 
 import cgi
-import copy
 from wstools.XMLname import toXMLname, fromXMLname
 import fpconst
 

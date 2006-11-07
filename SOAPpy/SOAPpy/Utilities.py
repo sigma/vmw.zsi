@@ -36,8 +36,6 @@
 ident = '$Id$'
 from version import __version__
 
-import exceptions
-import copy
 import re
 import string
 import sys
