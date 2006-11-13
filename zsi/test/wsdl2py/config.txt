@@ -33,6 +33,9 @@ path = test
 twisted = False
 test_WhiteMesa = servers/WhiteMesa.py
 test_Echo = servers/EchoServer.py 
+test_SquareService = servers/SquareService.py
+test_DateService = servers/DateService.py
+test_FinancialService = servers/FinancialService.py
 
 
 ##########################################################################
@@ -89,7 +92,7 @@ tests =
 document = False
 literal = True
 broke = False
-tests = test_WhiteMesa
+tests = test_WhiteMesa test_SquareService test_DateService 
 
 [rpc_literal_broke]
 document = False
@@ -114,7 +117,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_OpcDaGateway test_Sabre test_Echo test_AWSECommerceService
+tests =  test_MapPoint test_OpcDaGateway test_Sabre test_Echo test_AWSECommerceService test_FinancialService
 
 [doc_literal_broke]
 document = True
@@ -151,6 +154,10 @@ test_Echo = ../../samples/Echo/Echo.wsdl
 test_Choice = test_Choice.xsd
 test_Attributes = test_Attributes.xsd
 test_DerivedTypes = test_DerivedTypes.xsd
+
+test_SquareService = SquareService.wsdl
+test_DateService = DateService.wsdl
+test_FinancialService = FinancialService.wsdl
 
 test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
 test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
