@@ -78,7 +78,7 @@ def _LaunchContainer(cmd):
     host = CONFIG_PARSER.get(SECTION_DISPATCH, 'host')
     port = CONFIG_PARSER.get(SECTION_DISPATCH, 'port')
     try:
-        process = subprocess.Popen(['python %s' %cmd, port], env=ENVIRON)
+        process = subprocess.Popen(['python', cmd, port], env=ENVIRON)
     except:
         print >>sys.stderr, 'error executing: %s' %cmd
         raise
