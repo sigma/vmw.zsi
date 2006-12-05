@@ -869,9 +869,9 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             if t[1] == "boolean":
                 d = d.strip().lower()
                 if d in ('0', 'false'):
-                    return 0
+                    return False
                 if d in ('1', 'true'):
-                    return 1
+                    return True
                 raise AttributeError, "invalid boolean value"
             if t[1] in ('double','float'):
                 l = self.floatlimits[t[1]]

@@ -706,6 +706,13 @@ class SOAPTestCase(unittest.TestCase):
             self.assertEquals(s.param2, None)
             self.assertEquals(s.param3, 7)
 
+    def testBoolean2(self):
+        x = True
+        y = buildSOAP(x)
+        z = parseSOAPRPC(y)
+        self.assertEquals(x, z)
+        self.assertEquals(type(z), bool)
+
     def testFault(self):
         my_xml5 = '''
 <SOAP-ENV:Envelope SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/1999/XMLSchema" xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance">
