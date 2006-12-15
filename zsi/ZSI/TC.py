@@ -21,6 +21,10 @@ import re, types, time, copy
 from base64 import decodestring as b64decode, encodestring as b64encode
 from urllib import unquote as urldecode, quote as urlencode
 from binascii import unhexlify as hexdecode, hexlify as hexencode
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
 
 _is_xsd_or_soap_ns = lambda ns: ns in [
