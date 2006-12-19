@@ -80,6 +80,13 @@ def _dict_to_tuple(d):
     '''Convert a dictionary to a time tuple.  Depends on key values in the
     regexp pattern!
     '''    
+    # TODO: Adding a ms field to struct_time tuples is problematic 
+    # since they don't have this field.  Should use datetime
+    # which has a microseconds field, else no ms..  When mapping struct_time 
+    # to gDateTime the last 3 fields are irrelevant, here using dummy values to make
+    # everything happy.
+    # 
+
     retval = _niltime[:]
     for k,i in ( ('Y', 0), ('M', 1), ('D', 2), ('h', 3), ('m', 4), ):
         v = d.get(k)

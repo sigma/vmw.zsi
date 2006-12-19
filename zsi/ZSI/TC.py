@@ -22,9 +22,9 @@ from base64 import decodestring as b64decode, encodestring as b64encode
 from urllib import unquote as urldecode, quote as urlencode
 from binascii import unhexlify as hexdecode, hexlify as hexencode
 try:
-    import cStringIO as StringIO
+    from cStringIO import StringIO
 except ImportError:
-    import StringIO
+    from StringIO import StringIO
 
 
 _is_xsd_or_soap_ns = lambda ns: ns in [
@@ -1587,7 +1587,7 @@ class List(SimpleType):
                         itemTypeCode =  pyclass(None)
 
                 if itemTypeCode is None:
-                    raise EvaluateException('Filed to locate %s' %self.itemTypeCode)
+                    raise EvaluateException('Failed to locate %s' %str(self.itemTypeCode))
 
             if hasattr(itemTypeCode, 'text_to_data') is False:
                 raise EvaluateException('TypeCode class %s missing text_to_data method' %itemTypeCode)
@@ -1600,7 +1600,8 @@ class List(SimpleType):
         list are space separated.
         '''
         v = []
-        for item in text.split(' '):
+        items = text.split()
+        for item in items:
             v.append(self.itemTypeCode.text_to_data(item, elt, ps))
 
         if self.pyclass is not None:
@@ -1616,9 +1617,7 @@ class List(SimpleType):
             href = _find_href(elt)
             if not href:
                 if self.nilled(elt, ps) is False:
-                    # No content, no HREF, not NIL:  empty string
-                    return ""
-                # No content, no HREF, and is NIL...
+                    return []
                 if self.nillable is True: 
                     return Nilled
                 raise EvaluateException('Required string missing',
@@ -1629,18 +1628,19 @@ class List(SimpleType):
             self.checktype(elt, ps)
 
         if self.nilled(elt, ps): return Nilled
-        if len(_children(elt)) == 0: return ''
+        if len(_children(elt)) == 0: return []
 
         v = self.simple_value(elt, ps)
         return self.text_to_data(v, elt, ps)
+
 
     def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
         '''elt -- the current DOMWrapper element 
            sw -- soapWriter object
            pyobj -- python object to serialize
         '''
-        if type(pyobj) not in _seqtypes:
-            raise EvaluateException, 'expecting a list'
+        if pyobj is not None and type(pyobj) not in _seqtypes:
+            raise EvaluateException, 'expecting a list or None'
 
         objid = _get_idstr(pyobj)
         ns,n = self.get_name(name, objid)
@@ -1650,12 +1650,12 @@ class List(SimpleType):
             return None
         
         tc = self.itemTypeCode
-        s = StringIO()
+        s = StringIO(); sep = ' '
         for item in pyobj:
             s.write(tc.get_formatted_content(item))
-            s.write(' ')
+            s.write(sep)
 
-        el.createAppendTextNode(textNode)
+        el.createAppendTextNode(s.getvalue())
 
 
 class _AnyStrict(Any):
