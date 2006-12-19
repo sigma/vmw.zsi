@@ -1486,7 +1486,7 @@ class Union(SimpleType):
         for nsuri,name in self.__class__.memberTypes:
             tcclass = GTD(nsuri,name)
             if tcclass is None:
-                tc = Any.parsemap.get((nsuri,name))
+                tc = Any.parsemap.get((nsuri,name)) or Any.parsemap.get((None, name))
                 typecode = tc.__class__(pname=(self.nspname,self.pname))
             else:
                 typecode = tcclass(pname=(self.nspname,self.pname))
