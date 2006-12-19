@@ -1538,7 +1538,7 @@ class Union(SimpleType):
             try:
                 content = typecode.get_formatted_content(copy.copy(pyobj))
                 break
-            except ParseException, ex:
+            except (ParseException, TypeError):
                 pass
 
             if indx > 0:
