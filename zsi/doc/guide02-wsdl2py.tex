@@ -1,10 +1,27 @@
-\chapter{WSDL/XMLSchema python code generation}
+\chapter{WSDL to Python Code}
 
-Handling XML Schema (see \citetitle[http://www.w3.org/XML/Schema]{XML Schema specification}) 
-is one of the more difficult aspects of using WSDL (see
-\citetitle[http://www.w3.org/TR/wsdl]{The Web Services Description Language}.  
-Using wsdl2py generates a module with stub code for the client interface,
-and a "types" module that contains typecode representations of the XML Schema types and elements.  The generated typecodes are registered in a global schema instance, and once the "types" module is imported by an application all the global elements declarations and type definitions are available everywhere (see section ??).  
+The \WPY script is the most used tool.  It will generate all the
+code needed to access a Web Service through an exposed WSDL document, usually
+this description is available at a URL which is provided to the script. 
+
+\WPY generates a "stub" module from the WSDL SOAP Bindings.  It contains various
+classes, including a \it{Locator} which represents the bindings to the actual
+Web Service, and several \it{port} classes that are used to remotely invoke 
+operations on the \WS, as well as various \it{Message} classes that
+represent the SOAP and XML Schema data types.  A \it{Message} instance is
+serialized as a XML instance.  A \it{Message} passed as an argument to a
+\it{port} method is then serialized into a SOAP Envelope and transported to the
+\WS, the client will then wait for an expected response, and finally the SOAP
+response is marshalled back into the \it{Message} returned to the user.
+
+A second module the "types", contains typecodes representing all the components
+of each schema specified by the target WSDL Document (not including built-in
+types).  Each schema component declared at the top-level, the immediate children
+of the \it{schema} tag, are global in scope and by importing the "types" module
+an application has access to the GEDs and global type definitions either
+directly by reference or through the convenience functions \code{GED} and
+\code{GTD}, respectively.  For more information on these functions please see 
+\ref{Advanced Usage Patterns}.
 
 \section{wsdl2py}
 
