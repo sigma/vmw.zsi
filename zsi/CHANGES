@@ -6,6 +6,11 @@ Change for xxx released xxx:
     -   Record facets (restrictions) in XMLSchema.py <vchen@datapower.com>
     -   Remove Send()'s kwargs out of _args list <efrain@bogotron.net>
 
+Change for 2.0.0 released xxx:
+    -   no more wsdl2dispatch, wsdl2py does it all
+    -   simplified and consolidated various wsdl2py script options
+    -   wsdl2py added some soapheader support to client code. 
+
 Change for 2.0.0rc3 released xxx:
     -   Updated ZSI developers guide
     -   Added ZSI wsdl2py users guide

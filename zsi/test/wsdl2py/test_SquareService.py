@@ -48,9 +48,9 @@ class Test(ServiceTestCase):
     """Test case for Holger's SquareService
     """
     name = "test_SquareService"
-    client_file_name = "SquareService_services.py"
-    types_file_name = "SquareService_services_types.py"
-    server_file_name = "SquareService_services_server.py"
+    client_file_name = "SquareService_client.py"
+    types_file_name = "SquareService_types.py"
+    server_file_name = "SquareService_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

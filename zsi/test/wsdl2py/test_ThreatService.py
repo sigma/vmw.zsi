@@ -44,8 +44,8 @@ class HomelandTestCase(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
     name = "test_ThreatService"
-    client_file_name = "Current_Homeland_Security_Threat_Level_services.py"
-    types_file_name = "Current_Homeland_Security_Threat_Level_services_types.py"
+    client_file_name = "Current_Homeland_Security_Threat_Level_client.py"
+    types_file_name = "Current_Homeland_Security_Threat_Level_types.py"
     server_file_name = None
 
     def __init__(self, methodName):

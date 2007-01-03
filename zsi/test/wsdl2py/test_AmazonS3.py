@@ -45,9 +45,9 @@ class AmazonTestCase(ServiceTestCase):
     """Test case for AmazonS3 web service
     """
     name = "test_AmazonS3"
-    client_file_name = "AmazonS3_services.py"
-    types_file_name  = "AmazonS3_services_types.py"
-    server_file_name = "AmazonS3_services_server.py"
+    client_file_name = "AmazonS3_client.py"
+    types_file_name  = "AmazonS3_types.py"
+    server_file_name = "AmazonS3_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

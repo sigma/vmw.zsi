@@ -44,9 +44,9 @@ class ServiceTest(ServiceTestCase):
     
     """
     name = "test_Sabre"
-    client_file_name = "SessionCreateRQService_services.py"
-    types_file_name = "SessionCreateRQService_services_types.py"
-    server_file_name = "SessionCreateRQService_services_server.py"
+    client_file_name = "SessionCreateRQService_client.py"
+    types_file_name = "SessionCreateRQService_types.py"
+    server_file_name = "SessionCreateRQService_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

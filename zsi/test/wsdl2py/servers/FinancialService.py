@@ -4,7 +4,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys
-from FinancialService_services_server import *
+from FinancialService_server import *
 from ZSI.ServiceContainer import AsServer
 
 class Service(FinancialService):

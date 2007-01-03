@@ -40,9 +40,9 @@ def all():
 
 class TestCase(ServiceTestCase):
     name = "test_InfoBil"
-    client_file_name = "InfoBilServiceService_services.py"
-    types_file_name  = "InfoBilServiceService_services_types.py"
-    server_file_name = "InfoBilServiceService_services_server.py"
+    client_file_name = "InfoBilServiceService_client.py"
+    types_file_name  = "InfoBilServiceService_types.py"
+    server_file_name = "InfoBilServiceService_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

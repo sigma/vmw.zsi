@@ -46,9 +46,9 @@ class Test(ServiceTestCase):
     """Test case for Holger's DateService
     """
     name = "test_DateService"
-    client_file_name = "DateService_services.py"
-    types_file_name = "DateService_services_types.py"
-    server_file_name = "DateService_services_server.py"
+    client_file_name = "DateService_client.py"
+    types_file_name = "DateService_types.py"
+    server_file_name = "DateService_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

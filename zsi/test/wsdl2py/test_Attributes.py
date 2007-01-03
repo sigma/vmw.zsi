@@ -45,7 +45,7 @@ def all():
 
 class AttributeTestCase(ServiceTestCase):
     name = "test_Attributes"
-    types_file_name = "test_Attributes_xsd_services_types.py"
+    types_file_name = "test_Attributes_xsd_types.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

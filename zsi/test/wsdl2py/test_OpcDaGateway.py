@@ -52,9 +52,9 @@ class OPCServiceTest(ServiceTestCase):
     def Write(self, request):
     """
     name = "test_OpcDaGateway"
-    client_file_name = "OpcXmlDaSrv_services.py"
-    types_file_name = "OpcXmlDaSrv_services_types.py"
-    server_file_name = "OpcXmlDaSrv_services_server.py"
+    client_file_name = "OpcXmlDaSrv_client.py"
+    types_file_name = "OpcXmlDaSrv_types.py"
+    server_file_name = "OpcXmlDaSrv_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

@@ -5,7 +5,7 @@
 ###########################################################################
 import sys
 from ZSI.ServiceContainer import AsServer
-from EchoServer_services_server import EchoServer
+from EchoServer_server import EchoServer
 
 """
 EchoServer example service

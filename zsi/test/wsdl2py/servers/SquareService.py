@@ -4,7 +4,7 @@
 # See LBNLCopyright for copyright notice!
 ###########################################################################
 import sys
-import SquareService_services_server as Square
+import SquareService_server as Square
 from ZSI.ServiceContainer import AsServer
 
 class Service(Square.SquareService):

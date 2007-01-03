@@ -41,7 +41,6 @@ if hasSetuptools:
     additional_params['entry_points'] = {
         'console_scripts': [
             'wsdl2py = ZSI.generate.commands:wsdl2py',
-            'wsdl2dispatch = ZSI.generate.commands:wsdl2dispatch',
         ],
     }
     additional_params['install_requires'] = [ "PyXML >= 0.8.3", ]
@@ -50,7 +49,7 @@ if hasSetuptools:
         "http://sourceforge.net/project/showfiles.php?group_id=6473&package_id=6541&release_id=286213",
     ]
 else:
-    additional_params['scripts'] = ["scripts/wsdl2py", "scripts/wsdl2dispatch"]
+    additional_params['scripts'] = ["scripts/wsdl2py",]
 
 setup(
     name="ZSI",

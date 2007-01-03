@@ -43,9 +43,9 @@ class WhiteMesaTest(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
     name = "test_WhiteMesa"
-    client_file_name = "RPC_Literal_TestDefinitions_services.py"
-    types_file_name = "RPC_Literal_TestDefinitions_services_types.py"
-    server_file_name = "RPC_Literal_TestDefinitions_services_server.py"
+    client_file_name = "RPC_Literal_TestDefinitions_client.py"
+    types_file_name = "RPC_Literal_TestDefinitions_types.py"
+    server_file_name = "RPC_Literal_TestDefinitions_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

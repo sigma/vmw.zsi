@@ -1,26 +1,37 @@
 \chapter{WSDL to Python Code}
 
-The \WPY script is the most used tool.  It will generate all the
-code needed to access a Web Service through an exposed WSDL document, usually
-this description is available at a URL which is provided to the script. 
+The \WPY script is used to generate all the code needed to access a Web Service
+through an exposed WSDL document, usually this description is available at a URL
+which is provided to the script. 
 
-\WPY generates a "stub" module from the WSDL SOAP Bindings.  It contains various
-classes, including a \it{Locator} which represents the bindings to the actual
-Web Service, and several \it{port} classes that are used to remotely invoke 
-operations on the \WS, as well as various \it{Message} classes that
-represent the SOAP and XML Schema data types.  A \it{Message} instance is
-serialized as a XML instance.  A \it{Message} passed as an argument to a
-\it{port} method is then serialized into a SOAP Envelope and transported to the
-\WS, the client will then wait for an expected response, and finally the SOAP
-response is marshalled back into the \it{Message} returned to the user.
+\section{Generated Modules}
+\WPY will generate a client, types, and service module.   From the the WSDL
+SOAP Bindings, the client and service modules are created.  The types module
+contains typecodes for the schema defined by the WSDL.  
 
-A second module the "types", contains typecodes representing all the components
-of each schema specified by the target WSDL Document (not including built-in
-types).  Each schema component declared at the top-level, the immediate children
-of the \it{schema} tag, are global in scope and by importing the "types" module
-an application has access to the GEDs and global type definitions either
-directly by reference or through the convenience functions \code{GED} and
-\code{GTD}, respectively.  For more information on these functions please see ..
+\subsection{CLIENT: locator, port}
+various classes, including a \it{Locator} which represents the
+SOAP binding to the actual Web Service, and several \it{port} classes that are
+used to remotely invoke  operations on the \WS, as well as various \it{Message}
+classes that represent the SOAP and XML Schema data types.  A \it{Message}
+instance is serialized as a XML instance.  A \it{Message} passed as an argument
+to a \it{port} method is then serialized into a SOAP Envelope and transported to
+the \WS, the client will then wait for an expected response, and finally the
+SOAP response is marshalled back into the \it{Message} returned to the user.
+
+\subsection{TYPES: typecodes/schema}
+typecodes representing all the components of each schema specified by the target
+WSDL Document (not including built-in types).  Each schema component declared at
+the top-level, the immediate children of the \it{schema} tag, are global in
+scope and by importing the "types" module an application has access to the GEDs
+and global type definitions either directly by reference or through the
+convenience functions \code{GED} and \code{GTD}, respectively.  For more
+information on these functions please see ..
+
+\subsection{SERVICE: service interface/bindings}
+skeleton class, normally subclassed and invoked by implementation code.  The
+skeleton defines a callback method for each operation defined in the SOAP
+\it{Binding}.  These methods marshal/unmarshall XML into python types.
 
 \section{wsdl2py}
 

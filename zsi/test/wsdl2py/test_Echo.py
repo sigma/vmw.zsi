@@ -40,9 +40,9 @@ def all():
 
 class EchoTestCase(ServiceTestCase):
     name = "test_Echo"
-    client_file_name = "EchoServer_services.py"
-    types_file_name  = "EchoServer_services_types.py"
-    server_file_name = "EchoServer_services_server.py"
+    client_file_name = "EchoServer_client.py"
+    types_file_name  = "EchoServer_types.py"
+    server_file_name = "EchoServer_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

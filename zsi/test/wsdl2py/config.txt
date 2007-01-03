@@ -19,7 +19,7 @@
 #
 ##########################################################################
 [configuration]
-tracefile = False
+tracefile = 1
 debug = False
 skip = False
 twisted = False
@@ -117,7 +117,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_OpcDaGateway test_Sabre test_Echo test_AWSECommerceService test_FinancialService
+tests =  test_MapPoint test_OpcDaGateway test_Echo test_AWSECommerceService test_FinancialService
 
 [doc_literal_broke]
 document = True
@@ -162,3 +162,6 @@ test_FinancialService = FinancialService.wsdl
 test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
 test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
 test_InfoBil = http://javatest2.infodata.se/webservices/services/Infobil?wsdl
+
+# Google AdWords
+test_GoogleAdWords_TES = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorService?wsdl

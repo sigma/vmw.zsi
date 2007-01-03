@@ -5,7 +5,7 @@
 ###########################################################################
 import sys
 from ZSI.ServiceContainer import AsServer
-from RPC_Literal_TestDefinitions_services_server import WhiteMesaSoapRpcLitTestSvc as WhiteMesa
+from RPC_Literal_TestDefinitions_server import WhiteMesaSoapRpcLitTestSvc as WhiteMesa
 """
 WhiteMesa web service for rpc/literal tests.
 

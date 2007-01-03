@@ -44,9 +44,9 @@ class ZipCodeResolverTest(ServiceTestCase):
     """Test case for ZipCodeResolver Web service
     """
     name = "test_ZipCodeResolver"
-    client_file_name = "ZipCodeResolver_services.py"
-    types_file_name = "ZipCodeResolver_services_types.py"
-    #server_file_name = "ZipCodeResolver_services_server.py"
+    client_file_name = "ZipCodeResolver.py"
+    types_file_name = "ZipCodeResolver_types.py"
+    #server_file_name = "ZipCodeResolver_server.py"
     
     def test_net_CorrectedAddressHtml(self):
         loc = self.client_module.ZipCodeResolverLocator()

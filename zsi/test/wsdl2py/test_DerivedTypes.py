@@ -46,7 +46,7 @@ def all():
 class DTTestCase(ServiceTestCase):
     name = "test_DerivedTypes"
     client_file_name = None
-    types_file_name  = "test_DerivedTypes_xsd_services_types.py"
+    types_file_name  = "test_DerivedTypes_xsd_types.py"
     server_file_name = None
 
     def __init__(self, methodName):

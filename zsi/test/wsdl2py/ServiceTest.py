@@ -262,9 +262,9 @@ class ServiceTestCase(unittest.TestCase):
         args = []
         ServiceTestCase._wsdl[url] = False
         if os.path.isfile(url):
-            args += ['-f', os.path.abspath(url)]
+            args.append(os.path.abspath(url))
         else:
-            args += ['-u', url]
+            args.append(url)
 
         try:
             os.mkdir(MODULEDIR)
@@ -277,7 +277,7 @@ class ServiceTestCase(unittest.TestCase):
             
         try:
             # Client Stubs
-            wsdl2py = ['wsdl2py'] + args + self.wsdl2py_args
+            wsdl2py = ['wsdl2py'] + self.wsdl2py_args + args
             try:
                 exit = subprocess.call(wsdl2py)
             except OSError, ex:
@@ -292,19 +292,19 @@ class ServiceTestCase(unittest.TestCase):
                 '"%s" exited with exit status: %d' %(wsdl2py, exit))
             
             # Service Stubs
-            if '-x' not in self.wsdl2py_args:
-                wsdl2dispatch = (['wsdl2dispatch'] + args + 
-                        self.wsdl2dispatch_args)
-                try:
-                    exit = subprocess.call(wsdl2dispatch)
-                except OSError, ex:
-                    warnings.warn("TODO: Not sure what is going on here?")
+            #if '-x' not in self.wsdl2py_args:
+            #    wsdl2dispatch = (['wsdl2dispatch'] + args + 
+            #            self.wsdl2dispatch_args)
+            #    try:
+            #        exit = subprocess.call(wsdl2dispatch)
+            #    except OSError, ex:
+            #        warnings.warn("TODO: Not sure what is going on here?")
             
-                #TODO: returncode WINDOWS?
-                if WIF: self.failUnless(os.WIFEXITED(exit), 
-                    '"%s" exited with signal#: %d' %(wsdl2dispatch, exit))
-                self.failUnless(exit == 0, 
-                    '"%s" exited with exit status: %d' %(wsdl2dispatch, exit))
+            #    #TODO: returncode WINDOWS?
+            #    if WIF: self.failUnless(os.WIFEXITED(exit), 
+            #        '"%s" exited with signal#: %d' %(wsdl2dispatch, exit))
+            #    self.failUnless(exit == 0, 
+            #        '"%s" exited with exit status: %d' %(wsdl2dispatch, exit))
             
             ServiceTestCase._wsdl[url] = True
             

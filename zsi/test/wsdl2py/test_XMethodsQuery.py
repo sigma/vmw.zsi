@@ -43,9 +43,9 @@ class XMethodsQueryTest(ServiceTestCase):
     """Test case for XMethodsQuery Web service
     """
     name = "test_XMethodsQuery"
-    client_file_name = "XMethodsQuery_services.py"
-    types_file_name = "XMethodsQuery_services_types.py"
-    server_file_name = "XMethodsQuery_services_server.py"
+    client_file_name = "XMethodsQuery_client.py"
+    types_file_name = "XMethodsQuery_types.py"
+    server_file_name = "XMethodsQuery_server.py"
 
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

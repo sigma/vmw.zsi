@@ -44,7 +44,7 @@ def all():
 
 class ChoiceTestCase(ServiceTestCase):
     name = "test_Choice"
-    types_file_name = "test_Choice_xsd_services_types.py"
+    types_file_name = "test_Choice_xsd_types.py"
  
     def __init__(self, methodName):
         ServiceTestCase.__init__(self, methodName)

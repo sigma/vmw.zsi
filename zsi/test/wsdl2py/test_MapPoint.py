@@ -42,9 +42,9 @@ class MapPointTest(ServiceTestCase):
     
     """
     name = "test_MapPoint"
-    client_file_name = "CommonService_services.py"
-    types_file_name = "CommonService_services_types.py"
-    server_file_name = "CommonService_services_server.py"
+    client_file_name = "CommonService_client.py"
+    types_file_name = "CommonService_types.py"
+    server_file_name = "CommonService_server.py"
 
     def test_net_GetVersionInfo(self):
         """expect this to fail cause i'm not doing http authentication.

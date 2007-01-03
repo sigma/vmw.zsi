@@ -5,7 +5,7 @@
 ###########################################################################
 import sys, time
 from ZSI.ServiceContainer import AsServer
-from DateService_services_server import simple_Date_Service as _DateService 
+from DateService_server import simple_Date_Service as _DateService 
 
 class Service(_DateService):
     def soap_getCurrentDate(self, ps):
