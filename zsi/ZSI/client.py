@@ -171,7 +171,7 @@ class _Binding:
         return self.Receive(replytype, **kw)
 
     def Send(self, url, opname, obj, nsdict={}, soapaction=None, wsaction=None, 
-             endPointReference=None, **kw):
+             endPointReference=None, soapheaders=(), **kw):
         '''Send a message.  If url is None, use the value from the
         constructor (else error). obj is the object (data) to send.
         Data may be described with a requesttypecode keyword, the default 
@@ -192,6 +192,8 @@ class _Binding:
             wsaction -- WS-Address Action, goes in SOAP Header.
             endPointReference --  set by calling party, must be an 
                 EndPointReference type instance.
+            soapheaders -- list of pyobj, typically w/typecode attribute.
+                serialized in the SOAP:Header.
             requesttypecode -- 
 
         '''
@@ -224,7 +226,10 @@ class _Binding:
             sw.serialize(obj, tc)
         else:
             sw.serialize(obj, requesttypecode)
-
+            
+        for i in soapheaders:
+           sw.serialize_header(i) 
+            
         # 
         # Determine the SOAP auth element.  SOAP:Header element
         if self.auth_style & AUTH.zsibasic:

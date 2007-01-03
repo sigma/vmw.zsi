@@ -6,7 +6,7 @@
 # contains text container classes for new generation generator
 
 # $Id$
-import types
+import types, warnings
 from utility import StringWriter, TextProtect, TextProtectAttributeName,\
     GetPartsSubNames
 from utility import NamespaceAliasDict as NAD, NCName_to_ClassName as NC_to_CN
@@ -424,7 +424,7 @@ class ServiceOperationContainer(ServiceContainerBase):
         ServiceContainerBase.__init__(self)
         self.useWSA  = useWSA
         self.do_extended = do_extended
-
+    
     def hasInput(self):
         return self.inputName is not None
 
@@ -480,6 +480,9 @@ class ServiceOperationContainer(ServiceContainerBase):
         self.name = name = item.name
         self.binding_operation = bop = item
         
+        self.soap_input_headers = None
+        self.soap_output_headers = None
+        
         op = port.operations.get(name)
         if op is None:
             raise WSDLFormatError(
@@ -516,7 +519,11 @@ class ServiceOperationContainer(ServiceContainerBase):
             self.outputSimpleType = \
                 FromMessageGetSimpleElementDeclaration(op.getOutputMessage())
             self.outputAction = op.getOutputAction()
-
+            
+            
+        self.soap_input_headers = bop.input.findBindings(WSDLTools.SoapHeaderBinding)
+        self.soap_output_headers = bop.output.findBindings(WSDLTools.SoapHeaderBinding)    
+        
     def _setContent(self):
         '''create string representation of operation.
         '''
@@ -576,6 +583,18 @@ class ServiceOperationContainer(ServiceContainerBase):
                 '%sself.binding.Send(None, None, request, soapaction="%s", %s'\
                 %(ID2, self.soapaction, bindArgs),
             ]
+        elif self.soap_input_headers:
+            method = [
+                '%s# op: %s' % (ID1, self.name),
+                '%sdef %s(self, request, soapheaders=()):' % (ID1, self.name),
+                '%s%s' % (ID2, tCheck),
+                '%sraise TypeError, "%%s incorrect request type" %% (%s)' %(ID3, 'request.__class__'),
+                '%s%s' % (ID2, kwstring),
+                '%s%s' % (ID2, wsactionIn),
+                '%s# TODO: Check soapheaders' % (ID2),
+                '%sself.binding.Send(None, None, request, soapaction="%s", soapheaders=soapheaders, %s'\
+                %(ID2, self.soapaction, bindArgs),
+            ]
         else:
             method = [
                 '%s# op: %s' % (ID1, self.name),
@@ -587,7 +606,6 @@ class ServiceOperationContainer(ServiceContainerBase):
                 '%sself.binding.Send(None, None, request, soapaction="%s", %s'\
                 %(ID2, self.soapaction, bindArgs),
             ]
-            
         #
         # BP 1.0: rpc/literal
         # WSDL 1.1 Section 3.5 could be interpreted to mean the RPC response 
@@ -619,6 +637,33 @@ class ServiceOperationContainer(ServiceContainerBase):
                 response.append(\
                     '%sresponse = self.binding.Receive(%s.typecode%s)' %(
                          ID2, self.outputName, responseArgs)
+                    )
+
+            # only support lit
+            if self.soap_output_headers:
+                sh = '['
+                for shb in self.soap_output_headers:
+                    #shb.encodingStyle, shb.use, shb.namespace
+                    shb.message
+                    shb.part
+                    try:
+                        msg = self._wsdl.messages[shb.message]
+                        part = msg.parts[shb.part]
+                        if part.element is not None:
+                            sh += 'GED%s,' %str(part.element)
+                        else:
+                            warnings.warn('skipping soap output header in Message "%s"' %str(msg))
+                    except:
+                        raise WSDLFormatError(
+                          'failure processing output header typecodes, ' +
+                          'could not find message "%s" or its part "%s"' %(
+                                   shb.message, shb.part)
+                        )
+                                     
+                sh += ']'
+                if len(sh) > 2:
+                    response.append(\
+                    '%sself.soapheaders = self.binding.ps.ParseHeaderElements(%s)' %(ID2, sh)
                     )
 
             if self.outputSimpleType:
@@ -694,7 +739,8 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
         all bindings that are not SOAP.  
         port -- WSDL.Port instance
         '''
-        assert isinstance(port, WSDLTools.Port), 'expecting WSDLTools Port instance'
+        assert isinstance(port, WSDLTools.Port), \
+              'expecting WSDLTools Port instance'
 
         self.operations = []
         self.bName = port.getBinding().name
@@ -712,6 +758,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
                     %(port.name, bop.name),
                 )
                 continue
+
 
             #soapAction = soap_bop.soapAction
             if bop.input is not None:
@@ -779,7 +826,8 @@ class MessageContainerInterface:
         raise NotImplementedError, 'Message container must implemented setUp.'
 
 
-class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, MessageContainerInterface):
+class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, 
+                                             MessageContainerInterface):
     logger = _GetLogger("ServiceDocumentLiteralMessageContainer")
 
     def __init__(self, do_extended=False):
@@ -805,11 +853,9 @@ class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, MessageContai
             message = operation.getOutputMessage()
             
         # using underlying data structure to avoid phantom problem.
-#        parts = message.parts.data.values()
-#        if len(parts) > 1:
-#            raise Wsdl2PythonError, 'not suporting multi part doc/lit msgs'
+        # with message.parts.data.values() 
         if len(message.parts) == 0:
-            raise Wsdl2PythonError, 'must specify part for doc/lit msg'
+            raise Wsdl2PythonError, 'must specify part for doc/lit msg'        
         
         p = None
         if soapBodyBind.parts is not None:
@@ -830,6 +876,7 @@ class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, MessageContai
         if not p.element:
             return
         
+        self.ns = p.element[0]
         content.ns = p.element[0]
         content.pName = p.element[1]
         content.mName = message.name
@@ -850,7 +897,7 @@ class ServiceDocumentLiteralMessageContainer(ServiceContainerBase, MessageContai
         #    raise ContainerError, 'no self.ns attr defined in %s' % self.__class__
         # ZSI.generate.containers.ContainerError: no self.ns attr defined in ZSI.generate.containers.ServiceDocumentLiteralMessageContainer
         #            
-        self.ns = self.content.ns
+#        self.ns = self.content.ns
         
         
         kw = KW.copy()
@@ -1981,7 +2028,26 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
             '%(ID3)s%(baseinit)s',
             ]
         )
+
+        app = element.append
+        pyclass = self.pyclass        
+        if pyclass is not None:
+            # bool cannot be subclassed
+            if pyclass == 'bool': pyclass = 'int'
+            kw['pyclass'] = pyclass
+            app('%(ID3)sclass IHolder(%(pyclass)s): typecode=self' %kw)
+            app('%(ID3)sself.pyclass = IHolder' %kw)
+            app('%(ID3)sIHolder.__name__ = "%(aname)s_immutable_holder"' %kw)
+        
         self.writeArray(element)
+
+    def _setup_pyclass(self):
+        try:
+            self.pyclass = BTI.get_pythontype(None, None, 
+                                              typeclass=self.sKlass)
+        except Exception, ex:
+            raise Wsdl2PythonError('Error occured processing element: %s' %(
+                self._item.getItemTrace()), *ex.args)
 
     def setUp(self, tp):
         self._item = tp
@@ -2002,6 +2068,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
             qName = content.getAttributeBase()
             if base is None:
                 self.sKlass = BTI.get_typeclass(qName[1], qName[0])
+                self._setup_pyclass()
                 return
 
             raise Wsdl2PythonError, 'unsupported local simpleType restriction: %s' \
@@ -2016,6 +2083,7 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
             if base is None:
                 qName = content.getItemType()
                 self.sKlass = BTI.get_typeclass(qName[1], qName[0])
+                self._setup_pyclass()
                 return
 
             raise Wsdl2PythonError, 'unsupported local simpleType List: %s' \

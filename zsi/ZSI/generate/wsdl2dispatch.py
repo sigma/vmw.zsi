@@ -31,7 +31,7 @@ class ServiceModuleWriter:
     '''Creates a skeleton for a SOAP service instance.
     '''
     indent = ' '*4
-    server_module_suffix = '_services_server'
+    server_module_suffix = '_server'
     func_aname = TextProtectAttributeName
     func_aname = staticmethod(func_aname)
     separate_messages = False # Whether to write message definitions into a separate file.

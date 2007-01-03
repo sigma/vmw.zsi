@@ -51,9 +51,9 @@ class WriteServiceModule:
         client_module_suffix -- suffix of client module.
         types_module_suffix -- suffix of types module.
     """
-    client_module_suffix = '_services'
+    client_module_suffix = '_client'
     messages_module_suffix = '_messages'
-    types_module_suffix = '_services_types'
+    types_module_suffix = '_types'
     logger = _GetLogger("WriteServiceModule")
     
     def __init__(self, wsdl, addressing=False, notification=False,
@@ -307,6 +307,7 @@ class ServiceDescription:
             print >>msg_fd, self.imports
         else:
             print >>fd, self.imports
+            
         print >>fd, self.locator
         for m in self.methods:
             print >>fd, m

@@ -74,23 +74,25 @@ def wsdl2py(args=None):
     directory named after the wsdl definition name.
 
     eg. <definition name='SampleService'>
-        SampleService.py
+        SampleService_client.py
         SampleService_types.py
+        SampleService_server.py
     """
     
-    op = optparse.OptionParser(usage="usage: %prog [options]",
+    op = optparse.OptionParser(usage="USAGE: %wsdl2py [options] WSDL",
                  description=wsdl2py.__doc__)
     
     # Basic options
-    op.add_option("-f", "--file",
-                  action="store", dest="file", default=None, type="string",
-                  help="FILE to load wsdl from")
-    op.add_option("-u", "--url",
-                  action="store", dest="url", default=None, type="string",
-                  help="URL to load wsdl from")
+    #op.add_option("-f", "--file",
+    #              action="store", dest="file", default=None, type="string",
+    #              help="FILE to load wsdl from")
+    #op.add_option("-u", "--url",
+    #              action="store", dest="url", default=None, type="string",
+    #              help="URL to load wsdl from")
     op.add_option("-x", "--schema",
                   action="store_true", dest="schema", default=False,
                   help="process just the schema from an xsd file [no services]")
+
     op.add_option("-d", "--debug",
                   action="callback", callback=SetDebugCallback,
                   help="debug output")
@@ -121,40 +123,44 @@ def wsdl2py(args=None):
                   help="generate a twisted.web client, dependencies python>=2.4, Twisted>=2.0.0, TwistedWeb>=0.5.0")
     
     # Extended generation options
-    op.add_option("-e", "--extended",
-                  action="store_true", dest="extended", default=False,
-                  help="Do Extended code generation.")    
-    op.add_option("-z", "--aname",
-                  action="store", dest="aname", default=None, type="string",
-                  help="pass in a function for attribute name creation")
-    op.add_option("-t", "--types",
-                  action="store", dest="types", default=None, type="string",
-                  help="file to load types from")
+    #op.add_option("-e", "--extended",
+    #              action="store_true", dest="extended", default=False,
+    #              help="Do Extended code generation.")    
+    #op.add_option("-z", "--aname",
+    #              action="store", dest="aname", default=None, type="string",
+    #              help="pass in a function for attribute name creation")
+    #op.add_option("-t", "--types",
+    #              action="store", dest="types", default=None, type="string",
+    #              help="file to load types from")
     op.add_option("-o", "--output-dir",
                   action="store", dest="output_dir", default=".", type="string",
-                  help="Write generated files to OUTPUT_DIR")
+                  help="Directory to place generated files in (default current directory)")
     op.add_option("-s", "--simple-naming",
                   action="store_true", dest="simple_naming", default=False,
-                  help="Simplify generated naming.")
-    op.add_option("-c", "--clientClassSuffix",
-                  action="store", dest="clientClassSuffix", default=None, type="string",
-                  help="Suffix to use for service client class (default \"SOAP\")")
-    op.add_option("-m", "--pyclassMapModule",
-                  action="store", dest="pyclassMapModule", default=None, type="string",
-                  help="Python file that maps external python classes to a schema type.  The classes are used as the \"pyclass\" for that type.  The module should contain a dict() called mapping in the format: mapping = {schemaTypeName:(moduleName.py,className) }")
+                  help="map element names directly to python attributes")
+    #op.add_option("-c", "--clientClassSuffix",
+    #              action="store", dest="clientClassSuffix", default=None, type="string",
+    #              help="Suffix to use for service client class (default \"SOAP\")")
+    #op.add_option("-m", "--pyclassMapModule",
+    #              action="store", dest="pyclassMapModule", default=None, type="string",
+    #              help="Python file that maps external python classes to a schema type.  The classes are used as the \"pyclass\" for that type.  The module should contain a dict() called mapping in the format: mapping = {schemaTypeName:(moduleName.py,className) }")
                   
     if args is None:
         (options, args) = op.parse_args()
     else:
         (options, args) = op.parse_args(args)
 
-    if not xor(options.file is None, options.url is None):
-        print 'Must specify either --file or --url option'
+    #if not xor(options.file is None, options.url is None):
+    #    print 'Must specify either --file or --url option'
+    #    sys.exit(os.EX_USAGE)
+    #location = options.file            
+    #if options.url is not None:
+    #    location = options.url
+    if len(args) != 1:
+        print>>sys.stderr, 'Expecting a file/url as argument (WSDL).'
         sys.exit(os.EX_USAGE)
-    
-    location = options.file            
-    if options.url is not None:
-        location = options.url
+        
+    location = args[0]
     
     if options.schema is True:
         reader = XMLSchema.SchemaReader(base_url=location)
@@ -162,7 +168,7 @@ def wsdl2py(args=None):
         reader = WSDLTools.WSDLReader()
 
     load = reader.loadFromFile
-    if options.url is not None:
+    if not os.path.isfile(location):
         load = reader.loadFromURL
 
     wsdl = None
@@ -173,10 +179,16 @@ def wsdl2py(args=None):
         # exit code UNIX specific, Windows?
         if hasattr(os, 'EX_NOINPUT'): sys.exit(os.EX_NOINPUT)
         sys.exit("error loading %s" %location)
-        
+    
+    _wsdl2py(options, wsdl)
+    _wsdl2dispatch(options, wsdl)
+    
+    
+def _wsdl2py(options, wsdl):
+    
     if options.simple_naming:
         # Use a different client suffix
-        WriteServiceModule.client_module_suffix = "_client"
+        # WriteServiceModule.client_module_suffix = "_client"
         # Write messages definitions to a separate file.
         ServiceDescription.separate_messages = True
         # Use more simple type and element class names
@@ -187,35 +199,36 @@ def wsdl2py(args=None):
         # write out the modules with their names rather than their number.
         utility.namespace_name = lambda cls, ns: utility.Namespace2ModuleName(ns)
 
-    if options.clientClassSuffix:
-        from ZSI.generate.containers import ServiceContainerBase
-        ServiceContainerBase.clientClassSuffix = options.clientClassSuffix
+    #if options.clientClassSuffix:
+    #    from ZSI.generate.containers import ServiceContainerBase
+    #    ServiceContainerBase.clientClassSuffix = options.clientClassSuffix
 
     if options.schema is True:
-        wsdl = formatSchemaObject(location, wsdl)
+        wsdl = formatSchemaObject(wsdl.location, wsdl)
 
-    if options.aname is not None:
-        args = options.aname.rsplit('.',1)
-        assert len(args) == 2, 'expecting module.function'
-        # The following exec causes a syntax error.
-        #exec('from %s import %s as FUNC' %(args[0],args[1]))
-        assert callable(FUNC),\
-            '%s must be a callable method with one string parameter' %options.aname
-        from ZSI.generate.containers import TypecodeContainerBase
-        TypecodeContainerBase.func_aname = staticmethod(FUNC)
+    #if options.aname is not None:
+    #    args = options.aname.rsplit('.',1)
+    #    assert len(args) == 2, 'expecting module.function'
+    #    # The following exec causes a syntax error.
+    #    #exec('from %s import %s as FUNC' %(args[0],args[1]))
+    #    assert callable(FUNC),\
+    #        '%s must be a callable method with one string parameter' %options.aname
+    #    from ZSI.generate.containers import TypecodeContainerBase
+    #    TypecodeContainerBase.func_aname = staticmethod(FUNC)
 
-    if options.pyclassMapModule != None:
-        mod = __import__(options.pyclassMapModule)
-        components = options.pyclassMapModule.split('.')
-        for comp in components[1:]:
-            mod = getattr(mod, comp)
-        extPyClasses = mod.mapping
-    else:
-        extPyClasses = None
+    #if options.pyclassMapModule != None:
+    #    mod = __import__(options.pyclassMapModule)
+    #    components = options.pyclassMapModule.split('.')
+    #    for comp in components[1:]:
+    #        mod = getattr(mod, comp)
+    #    extPyClasses = mod.mapping
+    #else:
+    #    extPyClasses = None
         
-    wsm = WriteServiceModule(wsdl, addressing=options.address, do_extended=options.extended, extPyClasses=extPyClasses)
-    if options.types != None:
-        wsm.setTypesModuleName(options.types)
+    #wsm = WriteServiceModule(wsdl, addressing=options.address, do_extended=options.extended, extPyClasses=extPyClasses)
+    wsm = WriteServiceModule(wsdl, addressing=options.address)
+#    if options.types != None:
+#        wsm.setTypesModuleName(options.types)
     if options.schema is False:
          fd = open(os.path.join(options.output_dir, '%s.py' %wsm.getClientModuleName()), 'w+')
          # simple naming writes the messages to a separate file
@@ -239,20 +252,20 @@ def wsdl2dispatch(args=None):
     A utility for automatically generating service skeleton code from a wsdl
     definition.
     """
-    
+     
     op = optparse.OptionParser()
-    op.add_option("-f", "--file",
-                  action="store", dest="file", default=None, type="string",
-                  help="file to load wsdl from")
-    op.add_option("-u", "--url",
-                  action="store", dest="url", default=None, type="string",
-                  help="URL to load wsdl from")
+#    op.add_option("-f", "--file",
+#                  action="store", dest="file", default=None, type="string",
+#                  help="file to load wsdl from")
+#    op.add_option("-u", "--url",
+#                  action="store", dest="url", default=None, type="string",
+#                  help="URL to load wsdl from")
     op.add_option("-a", "--address",
                   action="store_true", dest="address", default=False,
                   help="ws-addressing support, must include WS-Addressing schema.")
-    op.add_option("-e", "--extended",
-                  action="store_true", dest="extended", default=False,
-                  help="Extended code generation.")
+#    op.add_option("-e", "--extended",
+#                  action="store_true", dest="extended", default=False,
+#                  help="Extended code generation.")
     op.add_option("-d", "--debug",
                   action="callback", callback=SetDebugCallback,
                   help="debug output")
@@ -270,6 +283,21 @@ def wsdl2dispatch(args=None):
         (options, args) = op.parse_args()
     else:
         (options, args) = op.parse_args(args)
+        
+    if len(args) != 1:
+        print>>sys.stderr, 'Expecting a file/url as argument (WSDL).'
+        sys.exit(os.EX_USAGE)
+        
+    reader = WSDLTools.WSDLReader()
+    if os.path.isfile(args[0]):
+        wsdl = reader.loadFromFile(args[0])
+    else:
+        wsdl = reader.loadFromURL(args[0])        
+
+    _wsdl2dispatch(options, wsdl)
+    
+    
+def _wsdl2dispatch(options, wsdl):
 
     if options.simple_naming:
         ServiceDescription.server_module_suffix = '_interface'
@@ -278,26 +306,18 @@ def wsdl2dispatch(args=None):
         # use module names rather than their number.
         utility.namespace_name = lambda cls, ns: utility.Namespace2ModuleName(ns)
 
-    reader = WSDLTools.WSDLReader()
-    wsdl = None
-    if options.file is not None:
-        wsdl = reader.loadFromFile(options.file)
-    elif options.url is not None:
-        wsdl = reader.loadFromURL(options.url)
-
-    assert wsdl is not None, 'Must specify WSDL either with --file or --url'
 
     ss = None
     if options.address is True:
-        if options.extended:
-            ss = DelAuthServiceDescriptionWSA(do_extended=options.extended)
-        else:
-            ss = ServiceDescriptionWSA(do_extended=options.extended)
+#        if options.extended:
+#            ss = DelAuthServiceDescriptionWSA(do_extended=options.extended)
+#        else:
+            ss = ServiceDescriptionWSA()
     else:
-        if options.extended:
-            ss = DelAuthServiceDescription(do_extended=options.extended)
-        else:
-            ss = ServiceDescription(do_extended=options.extended)
+#        if options.extended:
+#            ss = DelAuthServiceDescription(do_extended=options.extended)
+#        else:
+            ss = ServiceDescription()
 
     ss.fromWSDL(wsdl)
     fd = open( os.path.join(options.output_dir, ss.getServiceModuleName()+'.py'), 'w+')
