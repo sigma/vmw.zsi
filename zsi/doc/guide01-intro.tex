@@ -67,13 +67,14 @@ service's interface, this document is typically available at a published URL (se
 service. These bindings will be used to exchange SOAP messages, the contents of
 these messages must adhere to the document structure specified by the schema. The 
 schema is either included in the WSDL Document, imported by it, or represented
-by the available built-in types (such as \emph{xsd:int, xsd:string, etc}).  
+by the available built-in types (such as \emph{xsd:int, xsd:string,
+etc}).\footnote{The xsd prefix refers to namespace \it{"http://www.w3.org/2001/XMLSchema"}}
 
 \subsection{soap bindings}
 The two styles of SOAP bindings are \emph{rpc} and \emph{document}.  The use of
 \it{literal} encoding is encouraged and the recommended way to develop new \WS
 applications (see \WSI).  The SOAP \it{encoded} support is maintained for use
-with old apps, and other SOAP toolkits restricted to \RPCENC development.  A
+with older applications, and other SOAP toolkits restricted to \RPCENC development.  A
 \DOCLIT service is typically described as an exchange of documents, while a
 \RPCENC or \RPCLIT service is thought of in terms of remote procedure calls.
 Whether this distinction of purpose is meaningful or useful is debatable.  \ZSI
@@ -83,13 +84,8 @@ development.
 \subsection{python tools}
 \subsubsection{wsdl2py}
 The \WPY script generates python code representing the various components
-defined in a WSDL Document.  The second chapter introduces \WPY and demonstrates
-how to create a client for a simple \WS from a WSDL document.
-\subsubsection{wsdl2dispatch}
-The \WPYDIS script should be run after running \WPY, since it will attempt to
-import all it generates.  This sciprt generates a module containing a service
-interface generated  from the WSDL Document. This interface is typically
-subclassed and invoked through an HTTP server. 
+defined in a WSDL Document.  Most of the remaining guide focuses on how to use
+this tool and understand its output.
 
 
 \section{Not Covered}
