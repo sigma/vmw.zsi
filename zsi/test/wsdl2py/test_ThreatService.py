@@ -54,7 +54,7 @@ class HomelandTestCase(ServiceTestCase):
     
     def test_net_threatLevel(self):
         loc = self.client_module.Current_Homeland_Security_Threat_LevelLocator()
-        port = loc.getthreat(**self.getPortKWArgs())
+        port = loc.getthreat_cfc(**self.getPortKWArgs())
 
         msg = self.client_module.threatLevelRequest()
         rsp = port.threatLevel(msg)

@@ -7,7 +7,7 @@
 
 # $Id$
 
-import os
+import os, warnings
 from ZSI import _get_idstr
 from ZSI.wstools.logging import getLogger as _GetLogger
 from ZSI.wstools import WSDLTools
@@ -239,7 +239,7 @@ class ServiceDescription:
         self.imports   = ServiceHeaderContainer()
         self.messagesImports   = ServiceHeaderContainer()
         self.locator   = ServiceLocatorContainer()
-        self.methods   = []
+        self.bindings   = []
         self.messages  = []
         self.do_extended=do_extended
         self._wsdl = wsdl # None unless do_extended == True
@@ -272,29 +272,41 @@ class ServiceDescription:
 
         self.locator.setUp(service)
 
+        try:
+            bindings =  map(lambda p: p.binding, service.ports)
+        except:
+            warnings.warn('not all ports have binding declared,')
+            bindings = ()
+
         for port in service.ports:
-            sop_container = ServiceOperationsClassContainer(useWSA=self.wsAddressing, do_extended=self.do_extended, wsdl=self._wsdl)
+            if port.binding not in bindings:
+                continue
+            while port.binding in bindings: 
+                bindings.remove(port.binding)
+
+            desc = BindingDescription(useWSA=self.wsAddressing, do_extended=self.do_extended, wsdl=self._wsdl)
             try:
-                sop_container.setUp(port)
+                desc.setUp(port.getBinding())
             except Wsdl2PythonError, ex:
                 self.logger.warning('Skipping port(%s)' %port.name)
                 if len(ex.args): 
                     self.logger.warning(ex.args[0])
-            else:
-                sop_container.setReaderClass(kw.get('readerclass'))
-                sop_container.setWriterClass(kw.get('writerclass'))
-                for soc in sop_container.operations:
-                    if soc.hasInput() is True:
+                continue
+   
+            desc.setReaderClass(kw.get('readerclass'))
+            desc.setWriterClass(kw.get('writerclass'))
+            for soc in desc.operations:
+                if soc.hasInput() is True:
+                    mw = MessageWriter(do_extended=self.do_extended)
+                    mw.setUp(soc, port, input=True)
+                    self.messages.append(mw)
+
+                    if soc.hasOutput() is True:
                         mw = MessageWriter(do_extended=self.do_extended)
-                        mw.setUp(soc, port, input=True)
+                        mw.setUp(soc, port, input=False)
                         self.messages.append(mw)
 
-                        if soc.hasOutput() is True:
-                            mw = MessageWriter(do_extended=self.do_extended)
-                            mw.setUp(soc, port, input=False)
-                            self.messages.append(mw)
-
-                self.methods.append(sop_container)
+            self.bindings.append(desc)
 
  
     def write(self, fd, msg_fd=None):
@@ -309,7 +321,7 @@ class ServiceDescription:
             print >>fd, self.imports
             
         print >>fd, self.locator
-        for m in self.methods:
+        for m in self.bindings:
             print >>fd, m
 
         if msg_fd != None:

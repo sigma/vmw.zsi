@@ -63,7 +63,7 @@ class WhiteMesaTest(ServiceTestCase):
         msg._inputBoolean = True
         
         loc = self.client_module.WhiteMesaSoapRpcLitTestSvcLocator()
-        port = loc.getSoapTestPortTypeRpc(**self.getPortKWArgs())
+        port = loc.getSoap11TestRpcLitPort(**self.getPortKWArgs())
         rsp = port.echoBoolean(msg)
         
         self.failUnless(msg._inputBoolean == rsp._return,

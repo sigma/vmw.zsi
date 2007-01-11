@@ -61,7 +61,7 @@ class Test(ServiceTestCase):
         
     def test_dispatch_getSquare(self):
         loc = self.client_module.SquareServiceLocator()
-        port = loc.getSquarePortType(**self.getPortKWArgs())
+        port = loc.getSquarePort(**self.getPortKWArgs())
 
         msg = self.client_module.getSquareRequest()
         msg.X = 4.0

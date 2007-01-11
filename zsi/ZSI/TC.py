@@ -1666,8 +1666,7 @@ class _AnyStrict(Any):
     logger = _GetLogger('ZSI.TC._AnyStrict')
     
     def __init__(self, pname=None, aslist=False, **kw):
-        TypeCode.__init__(self, pname=pname, **kw)
-        self.aslist = aslist
+        Any.__init__(self, pname=pname, aslist=aslist, **kw)
         self.unique = True
         
     def serialize(self, elt, sw, pyobj, name=None, **kw):
@@ -1687,8 +1686,7 @@ class _AnyLax(Any):
     logger = _GetLogger('ZSI.TC._AnyLax')
     
     def __init__(self, pname=None, aslist=False, **kw):
-        TypeCode.__init__(self, pname=pname, **kw)
-        self.aslist = aslist
+        Any.__init__(self, pname=pname, aslist=aslist, **kw)
         self.unique = True
         
     def parse_into_dict_or_list(self, elt, ps):

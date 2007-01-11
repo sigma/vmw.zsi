@@ -371,8 +371,11 @@ class ServiceLocatorContainer(ServiceContainerBase):
                 self.logger.warning('Skip port(%s), not a SOAP-1.1 address binding' %p.name)
                 continue
 
-            info = (p.getBinding().getPortType().name, p.getBinding().name, ab.location)
-            self.portInfo.append(info) 
+            #info = (p.getBinding().getPortType().name, p.getBinding().name, ab.location)
+            self.portInfo.append( (NC_to_CN(p.name), 
+                 NC_to_CN(p.getBinding().name), 
+                 ab.location)
+            )
 
     def getLocatorName(self):
         '''return class name of generated locator.
@@ -392,23 +395,22 @@ class ServiceLocatorContainer(ServiceContainerBase):
         self.locatorName = '%sLocator' %self.serviceName
         locator = ['# Locator', 'class %s:' %self.locatorName, ]
         self.portMethods = []
-        for p in self.portInfo:
-            ptName = NC_to_CN(p[0])
-            bName  = NC_to_CN(p[1])
-            sAdd   = p[2]
-            method = 'get%s' %ptName
-            
-            pI = [
-                '%s%s_address = "%s"' % (ID1, ptName, sAdd),
-                '%sdef get%sAddress(self):' % (ID1, ptName),
-                '%sreturn %sLocator.%s_address' % (ID2,
-                                                   self.serviceName,ptName),
-                '%sdef %s(self, url=None, **kw):' %(ID1, method),
-                '%sreturn %s%s(url or %sLocator.%s_address, **kw)' \
-                % (ID2, bName, self.clientClassSuffix, self.serviceName, ptName),
+        kwargs = KW.copy()
+        for port,bind,addr in self.portInfo:
+            # access method each port
+            method = 'get%s' %port
+            kwargs.update(dict(port=port, bind=bind, addr=addr, 
+                service=self.serviceName, suffix=self.clientClassSuffix, method=method))
+
+            locator += [
+                '%(ID1)s%(port)s_address = "%(addr)s"' %kwargs,
+                '%(ID1)sdef get%(port)sAddress(self):' %kwargs,
+                '%(ID2)sreturn %(service)sLocator.%(port)s_address' %kwargs,
+                '%(ID1)sdef %(method)s(self, url=None, **kw):' %kwargs,
+                '%(ID2)sreturn %(bind)s%(suffix)s(url or %(service)sLocator.%(port)s_address, **kw)' %kwargs,
                 ]
+
             self.portMethods.append(method)
-            locator += pI
 
         self.writeArray(locator)
 
@@ -509,6 +511,7 @@ class ServiceOperationContainer(ServiceContainerBase):
         self.inputSimpleType = \
             FromMessageGetSimpleElementDeclaration(op.getInputMessage())
         self.inputAction = op.getInputAction()
+        self.soap_input_headers = bop.input.findBindings(WSDLTools.SoapHeaderBinding)
 
         if bop.output is not None:
             sbody = bop.output.findBinding(WSDLTools.SoapBodyBinding)
@@ -519,10 +522,7 @@ class ServiceOperationContainer(ServiceContainerBase):
             self.outputSimpleType = \
                 FromMessageGetSimpleElementDeclaration(op.getOutputMessage())
             self.outputAction = op.getOutputAction()
-            
-            
-        self.soap_input_headers = bop.input.findBindings(WSDLTools.SoapHeaderBinding)
-        self.soap_output_headers = bop.output.findBindings(WSDLTools.SoapHeaderBinding)    
+            self.soap_output_headers = bop.output.findBindings(WSDLTools.SoapHeaderBinding)    
         
     def _setContent(self):
         '''create string representation of operation.
@@ -687,8 +687,9 @@ class ServiceOperationContainer(ServiceContainerBase):
         self.writeArray(method)
 
 
-class ServiceOperationsClassContainer(ServiceContainerBase):
-    '''
+class BindingDescription(ServiceContainerBase):
+    '''writes out SOAP Binding class
+
     class variables:
         readerclass --  
         writerclass --
@@ -697,7 +698,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
     readerclass = None
     writerclass = None
     operationclass = ServiceOperationContainer
-    logger = _GetLogger("ServiceOperationsClassContainer")
+    logger = _GetLogger("BindingDescription")
     
     def __init__(self, useWSA=False, do_extended=False, wsdl=None):
         '''Parameters:
@@ -709,7 +710,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
         ServiceContainerBase.__init__(self)
         self.useWSA = useWSA
         self.rProp = None
-        self.bName = None
+        #self.bName = None
         self.operations = None
         self.do_extended = do_extended
         self._wsdl = wsdl # None unless do_extended == True
@@ -734,43 +735,44 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
         cls.operationclass = className
     setOperationClass = classmethod(setOperationClass)
 
-    def setUp(self, port):
+    def setUp(self, item):
         '''This method finds all SOAP Binding Operations, it will skip 
         all bindings that are not SOAP.  
-        port -- WSDL.Port instance
+        item -- WSDL.Binding instance
         '''
-        assert isinstance(port, WSDLTools.Port), \
-              'expecting WSDLTools Port instance'
+        assert isinstance(item, WSDLTools.Binding), \
+              'expecting WSDLTools Binding instance'
 
+        portType = item.getPortType()
+        self._kwargs = KW.copy()
+        self._kwargs['bind'] = NC_to_CN(item.name)
         self.operations = []
-        self.bName = port.getBinding().name
-        self.rProp = port.getBinding().getPortType().getResourceProperties() 
-        soap_binding = port.getBinding().findBinding(WSDLTools.SoapBinding)
+        self.rProp = portType.getResourceProperties() 
+        soap_binding = item.findBinding(WSDLTools.SoapBinding)
         if soap_binding is None:
             raise Wsdl2PythonError,\
-                'port(%s) missing WSDLTools.SoapBinding' %port.name
+                'Binding(%s) missing WSDLTools.SoapBinding' %item.name
 
-        for bop in port.getBinding().operations:
+        for bop in item.operations:
             soap_bop = bop.findBinding(WSDLTools.SoapOperationBinding)
             if soap_bop is None:
                 self.logger.warning(\
-                    'Skip port(%s) operation(%s) no SOAP Binding Operation'\
-                    %(port.name, bop.name),
+                    'Skip Binding(%s) operation(%s) no SOAP Binding Operation'\
+                    %(item.name, bop.name),
                 )
                 continue
-
 
             #soapAction = soap_bop.soapAction
             if bop.input is not None:
                 soapBodyBind = bop.input.findBinding(WSDLTools.SoapBodyBinding)
                 if soapBodyBind is None:
                     self.logger.warning(\
-                        'Skip port(%s) operation(%s) Bindings(%s) not supported'\
-                        %(port.name, bop.name, bop.extensions)
+                        'Skip Binding(%s) operation(%s) Bindings(%s) not supported'\
+                        %(item.name, bop.name, bop.extensions)
                     )
                     continue
                 
-            op = port.getBinding().getPortType().operations.get(bop.name)
+            op = portType.operations.get(bop.name)
             if op is None:
                 raise Wsdl2PythonError,\
                     'no matching portType/Binding operation(%s)' % bop.name
@@ -782,27 +784,32 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
 
     def _setContent(self):
         if self.useWSA is True:
-            ctorArgs = 'endPointReference=None, **kw'
-            epr      = 'self.endPointReference = endPointReference'
+            args = 'endPointReference=None, **kw'
+            epr = 'self.endPointReference = endPointReference'
         else:
-            ctorArgs = '**kw'
+            args = '**kw'
             epr      = '# no ws-addressing'
 
         if self.rProp:
-            rprop = 'kw.setdefault("ResourceProperties", ("%s","%s"))'\
+            rp = 'kw.setdefault("ResourceProperties", ("%s","%s"))'\
                 %(self.rProp[0], self.rProp[1])
         else:
-            rprop = '# no resource properties'
+            rp = '# no resource properties'
+
+        kwargs = self._kwargs
+        kwargs.update(dict(suffix=self.clientClassSuffix, 
+            args=args, epr=epr, rp=rp, readerclass=self.readerclass, 
+            writerclass=self.writerclass,))
 
         methods = [
             '# Methods',
-            'class %s%s:' % (NC_to_CN(self.bName), self.clientClassSuffix),
-            '%sdef __init__(self, url, %s):' % (ID1, ctorArgs),
-            '%skw.setdefault("readerclass", %s)' % (ID2, self.readerclass),
-            '%skw.setdefault("writerclass", %s)' % (ID2, self.writerclass),
-            '%s%s' % (ID2, rprop),
-            '%sself.binding = client.Binding(url=url, **kw)' %ID2,
-            '%s%s' % (ID2,epr),
+            'class %(bind)s%(suffix)s:' %kwargs,
+            '%(ID1)sdef __init__(self, url, %(args)s):' %kwargs,
+            '%(ID2)skw.setdefault("readerclass", %(readerclass)s)' %kwargs,
+            '%(ID2)skw.setdefault("writerclass", %(writerclass)s)' %kwargs,
+            '%(ID2)s%(rp)s' % kwargs,
+            '%(ID2)sself.binding = client.Binding(url=url, **kw)' %kwargs,
+            '%(ID2)s%(epr)s' % kwargs,
             ]
 
         for op in self.operations:
@@ -810,6 +817,7 @@ class ServiceOperationsClassContainer(ServiceContainerBase):
 
         self.writeArray(methods)
 
+ServiceOperationsClassContainer = BindingDescription
 
 
 class MessageContainerInterface:

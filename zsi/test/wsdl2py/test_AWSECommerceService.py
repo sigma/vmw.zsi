@@ -96,7 +96,7 @@ class AmazonTestCase(ServiceTestCase):
 
     def test_net_ItemSearch(self):
         loc = self.client_module.AWSECommerceServiceLocator()
-        port = loc.getAWSECommerceServicePortType(**self.getPortKWArgs())
+        port = loc.getAWSECommerceServicePort(**self.getPortKWArgs())
 
         msg = self.client_module.ItemSearchRequestMsg()
         msg.SubscriptionId = '0HP1WHME000749APYWR2'

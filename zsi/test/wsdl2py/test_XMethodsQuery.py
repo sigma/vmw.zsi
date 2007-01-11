@@ -53,7 +53,7 @@ class XMethodsQueryTest(ServiceTestCase):
 
     def test_net_getAllServiceNames(self):
         loc = self.client_module.XMethodsQueryLocator()
-        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        port = loc.getXMethodsQuerySoap(**self.getPortKWArgs())
         
         msg = self.client_module.getAllServiceNames2SoapIn()
         rsp = port.getAllServiceNames(msg)
@@ -61,7 +61,7 @@ class XMethodsQueryTest(ServiceTestCase):
 
     def test_net_getAllServiceSummaries(self):
         loc = self.client_module.XMethodsQueryLocator()
-        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        port = loc.getXMethodsQuerySoap(**self.getPortKWArgs())
         
         msg = self.client_module.getAllServiceSummaries1SoapIn()
         rsp = port.getAllServiceSummaries(msg)
@@ -69,7 +69,7 @@ class XMethodsQueryTest(ServiceTestCase):
         
     def test_net_getServiceDetail(self):
         loc = self.client_module.XMethodsQueryLocator()
-        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        port = loc.getXMethodsQuerySoap(**self.getPortKWArgs())
         
         msg = self.client_module.getServiceDetail4SoapIn()
         msg._id = 'uuid:A29C0D6C-5529-0D27-A91A-8E02D343532B'
@@ -78,7 +78,7 @@ class XMethodsQueryTest(ServiceTestCase):
     
     def test_net_getServiceNamesByPublisher(self):
         loc = self.client_module.XMethodsQueryLocator()
-        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        port = loc.getXMethodsQuerySoap(**self.getPortKWArgs())
         
         msg = self.client_module.getServiceNamesByPublisher3SoapIn()
         msg._publisherID = 'xmethods.net'
@@ -87,7 +87,7 @@ class XMethodsQueryTest(ServiceTestCase):
     
     def test_net_getServiceSummariesByPublisher(self):
         loc = self.client_module.XMethodsQueryLocator()
-        port = loc.getXMethodsQuerySoapPortType(**self.getPortKWArgs())
+        port = loc.getXMethodsQuerySoap(**self.getPortKWArgs())
         
         msg = self.client_module.getServiceSummariesByPublisher0SoapIn()
         msg._publisherID = 'xmethods.net'

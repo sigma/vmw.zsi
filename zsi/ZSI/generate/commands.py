@@ -67,16 +67,12 @@ def formatSchemaObject(fname, schemaObj):
     return f
 
 def wsdl2py(args=None):
-    """
-    A utility for automatically generating client interface code from a wsdl
-    definition, and a set of classes representing element declarations and
-    type definitions.  This will produce two files in the current working 
-    directory named after the wsdl definition name.
-
-    eg. <definition name='SampleService'>
-        SampleService_client.py
-        SampleService_types.py
-        SampleService_server.py
+    """Utility for automatically generating client/service interface code from a wsdl 
+definition, and a set of classes representing element declarations and 
+type definitions.  By default invoking this script produces three files, each 
+named after the wsdl definition name, in the current working directory.
+These files will end with '_client.py', '_types.py', '_server.py' 
+respectively.                                                                    
     """
     
     op = optparse.OptionParser(usage="USAGE: %wsdl2py [options] WSDL",
@@ -120,7 +116,7 @@ def wsdl2py(args=None):
                   action="callback", callback=SetUpTwistedClient, 
                   callback_kwargs={'module':'ZSI.generate.pyclass', 
                       'metaclass':'pyclass_type'},
-                  help="generate a twisted.web client, dependencies python>=2.4, Twisted>=2.0.0, TwistedWeb>=0.5.0")
+                  help="generate a twisted.web client/server, dependencies python>=2.4, Twisted>=2.0.0, TwistedWeb>=0.5.0")
     
     # Extended generation options
     #op.add_option("-e", "--extended",
@@ -134,7 +130,7 @@ def wsdl2py(args=None):
     #              help="file to load types from")
     op.add_option("-o", "--output-dir",
                   action="store", dest="output_dir", default=".", type="string",
-                  help="Directory to place generated files in (default current directory)")
+                  help="save files in directory")
     op.add_option("-s", "--simple-naming",
                   action="store_true", dest="simple_naming", default=False,
                   help="map element names directly to python attributes")
@@ -190,7 +186,7 @@ def _wsdl2py(options, wsdl):
         # Use a different client suffix
         # WriteServiceModule.client_module_suffix = "_client"
         # Write messages definitions to a separate file.
-        wsdl2pyServiceDescription.separate_messages = True
+        #wsdl2pyServiceDescription.separate_messages = True
         # Use more simple type and element class names
         containers.SetTypeNameFunc( lambda n: '%s_' %(NC_to_CN(n)) )
         containers.SetElementNameFunc( lambda n: '%s' %(NC_to_CN(n)) )

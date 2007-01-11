@@ -60,7 +60,7 @@ class Test(ServiceTestCase):
     def test_dispatch_getCurrentDate_getDate(self):
         offset = 9
         loc = self.client_module.simple_Date_ServiceLocator()
-        port = loc.getDateService_PortType(**self.getPortKWArgs())
+        port = loc.getDateService_Port(**self.getPortKWArgs())
         print "START"
         msg = self.client_module.getCurrentDateRequest()
         msg.Input = "Test"

@@ -58,7 +58,7 @@ class Test(ServiceTestCase):
     
     def test_dispatch_getPV(self):
         loc = self.client_module.FinancialServiceLocator()
-        port = loc.getFinancialService_PortType(**self.getPortKWArgs())
+        port = loc.getFinancialService_Port(**self.getPortKWArgs())
 
         msg = self.client_module.getPVRequest()
         msg.Irate = 4
