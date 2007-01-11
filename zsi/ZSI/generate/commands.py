@@ -8,7 +8,7 @@ import exceptions, sys, optparse, os, warnings
 from operator import xor
 import ZSI
 from ConfigParser import ConfigParser
-from ZSI.generate.wsdl2python import WriteServiceModule, ServiceDescription
+from ZSI.generate.wsdl2python import WriteServiceModule, ServiceDescription as wsdl2pyServiceDescription
 from ZSI.wstools import WSDLTools, XMLSchema
 from ZSI.wstools.logging import setBasicLoggerDEBUG
 from ZSI.generate import containers, utility
@@ -190,7 +190,7 @@ def _wsdl2py(options, wsdl):
         # Use a different client suffix
         # WriteServiceModule.client_module_suffix = "_client"
         # Write messages definitions to a separate file.
-        ServiceDescription.separate_messages = True
+        wsdl2pyServiceDescription.separate_messages = True
         # Use more simple type and element class names
         containers.SetTypeNameFunc( lambda n: '%s_' %(NC_to_CN(n)) )
         containers.SetElementNameFunc( lambda n: '%s' %(NC_to_CN(n)) )
