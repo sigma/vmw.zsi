@@ -130,7 +130,7 @@ class AnyTestCase(unittest.TestCase):
         d.update(NSDICT)
         xml = """<tns:i %(tns)s>12</tns:i>""" %NSDICT
         ps = ParsedSoap(xml, envelope=False)
-        self.failUnlessRaises(EvaluateException, ps.Parse, TC.Any())
+        self.failUnless(int(ps.Parse(TC.Any())) == 12)
 
 
 #
