@@ -572,8 +572,9 @@ class Any(TypeCode):
                 return [ self.__class__(**self.kwargs).parse(e, ps)
                             for e in _child_elements(elt) ]
             if len(_child_elements(elt)) == 0:
-                raise EvaluateException("Any cannot parse untyped element",
-                        ps.Backtrace(elt))
+                #raise EvaluateException("Any cannot parse untyped element",
+                #        ps.Backtrace(elt))
+                return self.simple_value(elt, ps)
             return self.parse_into_dict_or_list(elt, ps)
         parser = Any.parsemap.get((ns,type))
         if not parser and _is_xsd_or_soap_ns(ns):
@@ -1455,14 +1456,18 @@ class AnyElement(AnyType):
             what = _AnyStrict(pname=(nspname,pname))
 
         try:
-            pyobj = what.parse(elt, ps)
+            return what.parse(elt, ps)
         except EvaluateException, ex:
+            self.logger.debug("error parsing:  %s" %str(ex))
+
+        if len(_children(elt)) == 0:
             self.logger.debug("Give up, parse (%s,%s) as a String", 
                   what.nspname, what.pname)
             what = String(pname=(nspname,pname), typed=False)
-            pyobj = WrapImmutable(what.parse(elt, ps), what)
+            return WrapImmutable(what.parse(elt, ps), what)
 
-        return pyobj
+        self.logger.debug('parse <any>, return as dict')
+        return Any(aslist=False).parse_into_dict_or_list(elt, ps)
 
 
 class Union(SimpleType):
