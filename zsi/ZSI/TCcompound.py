@@ -563,13 +563,13 @@ class Array(TypeCode):
     def parse_position(self, elt, ps):
         o = _find_arrayposition(elt)
         if not o: return None
-        if o.find(','):
+        if o.find(',') > -1:
             raise EvaluateException('Sorry, no multi-dimensional arrays',
                     ps.Backtrace(elt))
         if not _position_pat.match(o):
             raise EvaluateException('Bad array position "' + o + '"',
                     ps.Backtrace(elt))
-        return int(o[-1:1])
+        return int(o[1:-1])
 
     def parse(self, elt, ps):
         href = _find_href(elt)
