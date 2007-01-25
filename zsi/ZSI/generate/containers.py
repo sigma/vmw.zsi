@@ -2702,7 +2702,7 @@ class RestrictionContainer(SimpleTypeContainer):
             try:
                 item = tp.content.getTypeDefinition('base')
             except XMLSchema.SchemaError, ex:
-                pass
+                item = None
 
             if item is None:
                 self.sKlass = BTI.get_typeclass(base.getName(), base.getTargetNamespace())
