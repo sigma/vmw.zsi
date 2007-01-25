@@ -277,9 +277,9 @@ class _Binding:
             print >>self.trace, "_" * 33, time.ctime(time.time()), "REQUEST:"
             print >>self.trace, soapdata
 
-        #scheme,netloc,path,nil,nil,nil = urlparse.urlparse(url)
-        path = _get_postvalue_from_absoluteURI(url)
-        self.h.putrequest("POST", path)
+        url = url or self.url
+        request_uri = _get_postvalue_from_absoluteURI(url)
+        self.h.putrequest("POST", request_uri)
         self.h.putheader("Content-Length", "%d" % len(soapdata))
         self.h.putheader("Content-Type", 'text/xml; charset=utf-8')
         self.__addcookies()
@@ -296,7 +296,7 @@ class _Binding:
         elif self.auth_style == AUTH.httpdigest and not headers.has_key('Authorization') \
             and not headers.has_key('Expect'):
             def digest_auth_cb(response):
-                self.SendSOAPDataHTTPDigestAuth(response, soapdata, url, soapaction, **kw)
+                self.SendSOAPDataHTTPDigestAuth(response, soapdata, url, request_uri, soapaction, **kw)
                 self.http_callbacks[401] = None
             self.http_callbacks[401] = digest_auth_cb
 
@@ -308,7 +308,7 @@ class _Binding:
         # Clear prior receive state.
         self.data, self.ps = None, None
 
-    def SendSOAPDataHTTPDigestAuth(self, response, soapdata, url, soapaction, **kw):
+    def SendSOAPDataHTTPDigestAuth(self, response, soapdata, url, request_uri, soapaction, **kw):
         '''Resend the initial request w/http digest authorization headers.
         The SOAP server has requested authorization.  Fetch the challenge, 
         generate the authdict for building a response.
@@ -333,7 +333,7 @@ class _Binding:
             dict_fetch(chaldict,'realm',None) and \
             dict_fetch(chaldict,'qop',None):
             authdict = generate_response(chaldict,
-                url, self.auth_user, self.auth_pass, method='POST')
+                request_uri, self.auth_user, self.auth_pass, method='POST')
             headers = {\
                 'Authorization':build_authorization_arg(authdict),
                 'Expect':'100-continue',

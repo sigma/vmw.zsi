@@ -2,7 +2,7 @@
 # $Header$
 '''Utilities for HTTP Digest Authentication
 '''
-
+import re
 from md5 import md5
 import random
 import time
@@ -75,22 +75,29 @@ def generate_response(chaldict,uri,username,passwd,method='GET',cnonce=None):
 
 
 def fetch_challenge(http_header):
+  """ apparently keywords Basic and Digest are not being checked 
+  anywhere and decisions are being made based on authorization 
+  configuration of client, so I guess you better know what you are
+  doing.  Here I am requiring one or the other be specified.
+
+      challenge Basic auth_param
+      challenge Digest auth_param
   """
-  Create a challenge dictionary from a HTTPResponse objects getheaders() method.
-  """
-  chaldict = {}
-  vals = http_header.split(' ')
-  chaldict['challenge'] = vals[0]
-  for val in vals[1:]:
-    try:
-      a,b = val.split('=')
-      b=b.replace('"','')
-      b=b.replace("'",'')
-      b=b.replace(",",'')
-      chaldict[a.lower()] = b
-    except:
-      pass
-  return chaldict
+  m = fetch_challenge.wwwauth_header_re.match(http_header)
+  if m is None:
+      raise RuntimeError, 'expecting "WWW-Authenticate header [Basic,Digest]"'
+
+  d = dict(challenge=m.groups()[0])
+  m = fetch_challenge.auth_param_re.search(http_header)
+  while m is not None:
+      k,v = http_header[m.start():m.end()].split('=')
+      d[k.lower()] = v[1:-1]
+      m = fetch_challenge.auth_param_re.search(http_header, m.end())
+       
+  return d
+
+fetch_challenge.wwwauth_header_re = re.compile(r'\s*([bB]asic|[dD]igest)\s+(?:[\w]+="[^"]+",?\s*)?')
+fetch_challenge.auth_param_re = re.compile(r'[\w]+="[^"]+"')
 
 
 def build_authorization_arg(authdict):

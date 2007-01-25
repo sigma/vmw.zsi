@@ -11,6 +11,7 @@ import test_t9
 import test_union
 import test_list
 import test_TCtimes
+import test_rfc2617
 
 def makeTestSuite():
     return unittest.TestSuite(
