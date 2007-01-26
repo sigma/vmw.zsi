@@ -33,6 +33,7 @@ path = test
 twisted = False
 test_WhiteMesa = servers/WhiteMesa.py
 test_Echo = servers/EchoServer.py 
+test_BasicComm = servers/BasicServer.py
 test_SquareService = servers/SquareService.py
 test_DateService = servers/DateService.py
 test_FinancialService = servers/FinancialService.py
@@ -117,7 +118,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_OpcDaGateway test_Echo test_AWSECommerceService test_FinancialService
+tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing 
 
 [doc_literal_broke]
 document = True
@@ -151,6 +152,7 @@ test_MapPoint = http://staging.mappoint.net/standard-30/mappoint.wsdl
 test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
 
 test_Echo = ../../samples/Echo/Echo.wsdl
+test_BasicComm = BasicComm.wsdl
 test_Choice = test_Choice.xsd
 test_Attributes = test_Attributes.xsd
 test_DerivedTypes = test_DerivedTypes.xsd

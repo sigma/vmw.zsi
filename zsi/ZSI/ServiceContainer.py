@@ -113,7 +113,7 @@ def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw
 
     # If No response just return.
     if result is None:
-        return
+        return SendResponse('', **kw)
 
     sw = SoapWriter(nsdict=nsdict)
     try:

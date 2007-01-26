@@ -191,10 +191,16 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         '''Send some XML.
         '''
         self.send_response(code)
-        self.send_header('Content-type', 'text/xml; charset="utf-8"')
-        self.send_header('Content-Length', str(len(text)))
+        
+        if text:
+            self.send_header('Content-type', 'text/xml; charset="utf-8"')
+            self.send_header('Content-Length', str(len(text)))
+
         self.end_headers()
-        self.wfile.write(text)
+        
+        if text:
+            self.wfile.write(text)
+
         self.wfile.flush()
 
     def send_fault(self, f, code=500):
