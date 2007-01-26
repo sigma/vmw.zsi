@@ -175,7 +175,12 @@ respectively.
         # exit code UNIX specific, Windows?
         if hasattr(os, 'EX_NOINPUT'): sys.exit(os.EX_NOINPUT)
         sys.exit("error loading %s" %location)
-    
+  
+    if isinstance(wsdl, XMLSchema.XMLSchema): 
+        wsdl.location = location
+        _wsdl2py(options, wsdl)
+        return
+
     _wsdl2py(options, wsdl)
     _wsdl2dispatch(options, wsdl)
     

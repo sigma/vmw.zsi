@@ -118,7 +118,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing 
+tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes
 
 [doc_literal_broke]
 document = True

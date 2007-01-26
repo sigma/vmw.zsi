@@ -221,7 +221,7 @@ class Gregorian(SimpleType):
             d['neg'] = ''
 
         ms = pyobj[6]
-        if not ms: 
+        if not ms or not hasattr(self, 'format_ms'): 
             d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
                 'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
             return self.format % d

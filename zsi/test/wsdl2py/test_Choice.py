@@ -64,12 +64,9 @@ class ChoiceTestCase(ServiceTestCase):
         """<choice minOccurs=1 maxOccurs=unbounded>
         """
         pyobj = GED("urn:example", "Hard").pyclass()
-        pyobj.Name = "steve"
-        pyobj.Name.append("mark")
-        pyobj.Any = "whatever"
-        pyobj.Rank = 2
-        pyobj.Rank.append(3)
-        pyobj.Rank.append(4)
+        pyobj.Name = ["steve", "mark"]
+        pyobj.Any = ["whatever"]
+        pyobj.Rank = [2,3,4]
         sw = SoapWriter()
         sw.serialize(pyobj)
         print str(sw)

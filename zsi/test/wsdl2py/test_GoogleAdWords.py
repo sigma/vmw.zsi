@@ -42,14 +42,14 @@ class TrafficEstimatorServiceTest(ServiceTestCase):
     """Test case for Google AdWords, sandbox v8
     Reads header information from a file "adwords.properties", need to format this for ConfigParser
 
-[test_GoogleAdWords_TES]
+[test_GoogleAdWords]
 email = 
 password = 
 useragent = 
 applicationtoken = 
 
     """
-    name = "test_GoogleAdWords_TES"
+    name = "test_GoogleAdWords"
     client_file_name = "TrafficEstimatorService_client.py"
     types_file_name = "TrafficEstimatorService_types.py"
     server_file_name = "TrafficEstimatorService_server.py"
