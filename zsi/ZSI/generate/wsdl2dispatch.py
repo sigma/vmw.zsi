@@ -3,7 +3,7 @@ from cStringIO import StringIO
 import ZSI, string, sys, getopt, urlparse, types, warnings
 from ZSI.wstools import WSDLTools
 from ZSI.generate.wsdl2python import WriteServiceModule, MessageTypecodeContainer
-from ZSI.ServiceContainer import ServiceSOAPBinding, SimpleWSResource
+from ZSI.ServiceContainer import ServiceSOAPBinding, SimpleWSResource, WSAResource
 from ZSI.generate.utility import TextProtect, GetModuleBaseNameFromWSDL, NCName_to_ClassName, GetPartsSubNames, TextProtectAttributeName
 from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
 from ZSI.generate.wsdl2python import SchemaDescription
@@ -364,7 +364,7 @@ class ServiceModuleWriter:
 class WSAServiceModuleWriter(ServiceModuleWriter):
     '''Creates a skeleton for a WS-Address service instance.
     '''
-    def __init__(self, base=SimpleWSResource, prefix='wsa', service_class=SOAPService, strict=True):
+    def __init__(self, base=WSAResource, prefix='wsa', service_class=SOAPService, strict=True):
         '''
         Parameters:
             strict -- check that soapAction and input ws-action do not collide.
@@ -430,6 +430,7 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
             for ext in bop.extensions:
                 if isinstance(ext, WSDLTools.SoapOperationBinding) is False: continue
                 soap_action = ext.soapAction
+                if not soap_action: break
                 if wsaction_in is None: break
                 if wsaction_in == soap_action: break
                 if self.strict is False:

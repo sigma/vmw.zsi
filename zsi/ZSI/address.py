@@ -52,7 +52,7 @@ class Address(object):
         value  -- Action value server returned.
         '''
         if action is None:
-            raise WSActionException, 'User did not specify WSAddress Action value to expect'
+            raise WSActionException, 'Response missing WSAddress Action'
         if not value:
             raise WSActionException, 'missing WSAddress Action, expecting %s' %action
         if value != action:
@@ -72,8 +72,8 @@ class Address(object):
             if scheme==schemeF and path==pathF and query==queryF and fragment==fragmentF:
                 netloc = netloc.split(':') + ['80']
                 netlocF = netlocF.split(':') + ['80']
-                if netloc[1]==netlocF[1] and \
-                   socket.gethostbyname(netloc[0])==socket.gethostbyname(netlocF[0]):
+                if netloc[1]==netlocF[1] and (socket.gethostbyname(netlocF[0]) in
+                    ('127.0.0.1', socket.gethostbyname(netloc[0]))):
                     return
 
             raise WSActionException, 'wrong WS-Address From(%s), expecting %s'%(value,self._addressTo)

@@ -19,7 +19,7 @@
 #
 ##########################################################################
 [configuration]
-tracefile = 1
+tracefile = False
 debug = False
 skip = False
 twisted = False
@@ -37,6 +37,7 @@ test_BasicComm = servers/BasicServer.py
 test_SquareService = servers/SquareService.py
 test_DateService = servers/DateService.py
 test_FinancialService = servers/FinancialService.py
+test_EchoWSAddr200403 = servers/EchoWSAddr200403Server.py
 
 
 ##########################################################################
@@ -118,7 +119,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes
+tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes test_EchoWSAddr200403
 
 [doc_literal_broke]
 document = True
@@ -165,6 +166,8 @@ test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
 test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
 test_InfoBil = http://javatest2.infodata.se/webservices/services/Infobil?wsdl
 
+test_EchoWSAddr200403 = EchoWSAddr200403.wsdl
+
 # Google AdWords
 test_GoogleAdWords = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorService?wsdl
 
@@ -172,4 +175,3 @@ test_GoogleAdWords = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorS
 test_GoogleAdWords_CS = https://sandbox.google.com/api/adwords/v8/CampaignService?wsdl
 test_Manufacturer = ManufacturerImpl.wsdl
 test_Racing = Racing.wsdl
-
