@@ -621,68 +621,73 @@ class ServiceOperationContainer(ServiceContainerBase):
         # not significant. However, a convention is to name it after the method name 
         # with the string "Response" appended.
         #   
-        if self.outputName:
-            response = ['%s%s' % (ID2, wsactionOut),]
-            if self.isRPC() and not self.isLiteral():
-                # rpc/encoded Replace wrapper name with None
-                response.append(\
-                    '%stypecode = Struct(pname=None, ofwhat=%s.typecode.ofwhat, pyclass=%s.typecode.pyclass)' %(
-                         ID2, self.outputName, self.outputName)
+        if not self.outputName:
+            method.append('%s#check for soap, assume soap:fault' %(ID2,))
+            method.append('%sif self.binding.IsSOAP(): self.binding.Receive(None, **kw)' % (ID2,))
+            self.writeArray(method)
+            return
+        
+        response = ['%s%s' % (ID2, wsactionOut),]
+        if self.isRPC() and not self.isLiteral():
+            # rpc/encoded Replace wrapper name with None
+            response.append(\
+                '%stypecode = Struct(pname=None, ofwhat=%s.typecode.ofwhat, pyclass=%s.typecode.pyclass)' %(
+                     ID2, self.outputName, self.outputName)
+                )
+            response.append(\
+                '%sresponse = self.binding.Receive(typecode%s)' %(
+                     ID2, responseArgs)
+                )
+        else:
+            response.append(\
+                '%sresponse = self.binding.Receive(%s.typecode%s)' %(
+                     ID2, self.outputName, responseArgs)
+                )
+
+        # only support lit
+        if self.soap_output_headers:
+            sh = '['
+            for shb in self.soap_output_headers:
+                #shb.encodingStyle, shb.use, shb.namespace
+                shb.message
+                shb.part
+                try:
+                    msg = self._wsdl.messages[shb.message]
+                    part = msg.parts[shb.part]
+                    if part.element is not None:
+                        sh += 'GED%s,' %str(part.element)
+                    else:
+                        warnings.warn('skipping soap output header in Message "%s"' %str(msg))
+                except:
+                    raise WSDLFormatError(
+                      'failure processing output header typecodes, ' +
+                      'could not find message "%s" or its part "%s"' %(
+                               shb.message, shb.part)
                     )
+                                 
+            sh += ']'
+            if len(sh) > 2:
                 response.append(\
-                    '%sresponse = self.binding.Receive(typecode%s)' %(
-                         ID2, responseArgs)
-                    )
+                '%sself.soapheaders = self.binding.ps.ParseHeaderElements(%s)' %(ID2, sh)
+                )
+
+        if self.outputSimpleType:
+            response.append('%sreturn %s(response)' %(ID2, self.outputName))
+        else: 
+            if self.do_extended:
+                partsList = self.getOperation().getOutputMessage().parts.values()
+                subNames = GetPartsSubNames(partsList, self._wsdl)
+                args = []
+                for pa in subNames:
+                    args += pa
+
+                for arg in args:
+                    response.append('%s%s = response.%s' % (ID2, self.mangle(arg), self.getAttributeName(arg)) )
+                margs = ",".join(args)
+                response.append("%sreturn %s" % (ID2, margs) )
             else:
-                response.append(\
-                    '%sresponse = self.binding.Receive(%s.typecode%s)' %(
-                         ID2, self.outputName, responseArgs)
-                    )
-
-            # only support lit
-            if self.soap_output_headers:
-                sh = '['
-                for shb in self.soap_output_headers:
-                    #shb.encodingStyle, shb.use, shb.namespace
-                    shb.message
-                    shb.part
-                    try:
-                        msg = self._wsdl.messages[shb.message]
-                        part = msg.parts[shb.part]
-                        if part.element is not None:
-                            sh += 'GED%s,' %str(part.element)
-                        else:
-                            warnings.warn('skipping soap output header in Message "%s"' %str(msg))
-                    except:
-                        raise WSDLFormatError(
-                          'failure processing output header typecodes, ' +
-                          'could not find message "%s" or its part "%s"' %(
-                                   shb.message, shb.part)
-                        )
-                                     
-                sh += ']'
-                if len(sh) > 2:
-                    response.append(\
-                    '%sself.soapheaders = self.binding.ps.ParseHeaderElements(%s)' %(ID2, sh)
-                    )
-
-            if self.outputSimpleType:
-                response.append('%sreturn %s(response)' %(ID2, self.outputName))
-            else: 
-                if self.do_extended:
-                    partsList = self.getOperation().getOutputMessage().parts.values()
-                    subNames = GetPartsSubNames(partsList, self._wsdl)
-                    args = []
-                    for pa in subNames:
-                        args += pa
-
-                    for arg in args:
-                        response.append('%s%s = response.%s' % (ID2, self.mangle(arg), self.getAttributeName(arg)) )
-                    margs = ",".join(args)
-                    response.append("%sreturn %s" % (ID2, margs) )
-                else:
-                    response.append('%sreturn response' %ID2)
-            method += response
+                response.append('%sreturn response' %ID2)
+        method += response
 
         self.writeArray(method)
 

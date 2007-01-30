@@ -2,7 +2,7 @@
 
 import os, sys, unittest
 from ServiceTest import main, ServiceTestCase, ServiceTestSuite
-from ZSI import FaultException
+from ZSI import FaultException, Fault
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 """
 Unittest 
@@ -98,6 +98,24 @@ class BasicCommTestCase(ServiceTestCase):
         conn.close()
         self.failUnless(response.status == 200, 'Wrong HTTP Result')
 
+    def test_dispatch_BasicOneWay(self):
+        loc = self.client_module.BasicServerLocator()
+        port = loc.getBasicServer(**self.getPortKWArgs())
+        
+        msg = self.client_module.BasicOneWayRequest()
+        msg.BasicIn = 'bla bla bla'
+        rsp = port.BasicOneWay(msg)
+        self.failUnless(rsp == None, "Bad One-Way")
+
+    def test_dispatch_BasicOneWay_fault(self):
+        """server will send back a soap:fault
+        """
+        loc = self.client_module.BasicServerLocator()
+        port = loc.getBasicServer(**self.getPortKWArgs())
+        
+        msg = self.client_module.BasicOneWayRequest()
+        msg.BasicIn = 'fault'
+        self.failUnlessRaises(FaultException, port.BasicOneWay, msg)
 
 
 if __name__ == "__main__" :

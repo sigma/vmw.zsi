@@ -19,7 +19,12 @@ class Service(BasicServer):
         return response
 
     def soap_BasicOneWay(self, ps):
-        return BasicServer.soap_BasicOneWay(self, ps)
+        response = BasicServer.soap_BasicOneWay(self, ps)
+        if self.request._BasicIn == 'fault':
+            # return a soap:fault
+            raise RuntimeError, 'you wanted a fault?'
+
+        return response
 
 
 if __name__ == "__main__" :
