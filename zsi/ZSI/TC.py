@@ -724,10 +724,15 @@ class String(SimpleType):
 
 class URI(String):
     '''A URI.
+    Class data:
+        reserved -- urllib.quote will escape all reserved characters
+             regardless of whether they are used for the reserved purpose.
+
     '''
     parselist = [ (None,'anyURI'),(SCHEMA.XSD3, 'anyURI')]
     type = (SCHEMA.XSD3, 'anyURI')
     logger = _GetLogger('ZSI.TC.URI')
+    reserved = ";/?:@&=+$,"
 
     def text_to_data(self, text, elt, ps):
         '''text --> typecode specific data.
@@ -739,8 +744,7 @@ class URI(String):
         '''typecode data --> text
         '''
         pyobj = String.get_formatted_content(self, pyobj)
-        return urlencode(pyobj)
-
+        return urlencode(pyobj, safe=self.reserved)
 
 
 class QName(String):
