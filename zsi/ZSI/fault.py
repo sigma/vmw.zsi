@@ -35,7 +35,7 @@ FaultType.typecode = \
          String(pname='faultstring'),
          URI(pname=(SOAP.ENV,'faultactor'), minOccurs=0),
          Detail.typecode,
-         AnyElement(aname='any',minOccurs=0, maxOccurs=UNBOUNDED),
+         AnyElement(aname='any',minOccurs=0, maxOccurs=UNBOUNDED, processContents="lax"),
         ], 
         pname=(SOAP.ENV,'Fault'), 
         inline=True,
@@ -48,7 +48,7 @@ class ZSIHeaderDetail:
 
 ZSIHeaderDetail.typecode =\
     Struct(ZSIHeaderDetail, 
-           [AnyElement(aname='any', minOccurs=0, maxOccurs=UNBOUNDED)], 
+           [AnyElement(aname='any', minOccurs=0, maxOccurs=UNBOUNDED, processContents="lax")], 
            pname=(ZSI_SCHEMA_URI, 'detail'))
 
 

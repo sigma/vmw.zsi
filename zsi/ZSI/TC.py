@@ -516,12 +516,11 @@ class Any(TypeCode):
     logger = _GetLogger('ZSI.TC.Any')
     parsemap, serialmap = {}, {}
 
-    def __init__(self, pname=None, aslist=False, minOccurs=0, **kw):
-        TypeCode.__init__(self, pname, minOccurs=minOccurs, **kw)
+    def __init__(self, pname=None, aslist=False, minOccurs=0, unique=False, **kw):
+        TypeCode.__init__(self, pname, minOccurs=minOccurs, unique=unique, **kw)
         self.aslist = aslist
-        self.kwargs = {'aslist':aslist}
+        self.kwargs = dict(aslist=aslist, unique=unique)
         self.kwargs.update(kw)
-        self.unique = False
 
     # input arg v should be a list of tuples (name, value).
     def listify(self, v):
@@ -623,13 +622,13 @@ class Any(TypeCode):
                     "xsd:anyType[" + str(len(pyobj)) + "]" )
                 for o in pyobj:
                     #TODO maybe this should take **self.kwargs...
-                    serializer = getattr(o, 'typecode', self.__class__()) # also used by _AnyLax()
+                    serializer = getattr(o, 'typecode', Any())
                     serializer.serialize(array, sw, o, name='element', **kw)
             else:
                 struct = elt.createAppendElement(ns, n)
                 for o in pyobj:
                     #TODO maybe this should take **self.kwargs...
-                    serializer = getattr(o, 'typecode', self.__class__()) # also used by _AnyLax()
+                    serializer = getattr(o, 'typecode', Any())
                     serializer.serialize(struct, sw, o, **kw)
             return
 
@@ -737,14 +736,13 @@ class URI(String):
     def text_to_data(self, text, elt, ps):
         '''text --> typecode specific data.
         '''
-        val = String.text_to_data(self, text, elt, ps)   
-        return urldecode(val)
+        return String.text_to_data(self, urldecode(text), elt, ps)   
 
     def get_formatted_content(self, pyobj):
         '''typecode data --> text
         '''
-        pyobj = String.get_formatted_content(self, pyobj)
-        return urlencode(pyobj, safe=self.reserved)
+        return String.get_formatted_content(self, 
+            urlencode(pyobj, safe=self.reserved))
 
 
 class QName(String):
@@ -1352,7 +1350,7 @@ class AnyType(TypeCode):
         pyclass = GTD(namespaceURI, typeName)
         if not pyclass:
             if _is_xsd_or_soap_ns(namespaceURI):
-                pyclass = _AnyStrict
+                pyclass = Any
             elif (str(namespaceURI).lower()==str(Apache.Map.type[0]).lower())\
                 and (str(typeName).lower() ==str(Apache.Map.type[1]).lower()):
                 pyclass = Apache.Map
@@ -1402,13 +1400,13 @@ class AnyElement(AnyType):
                 tc = (types.ClassType, pyobj.__class__.__name__)
                 what = Any.serialmap.get(tc)
         
+        self.logger.debug('processContents: %s', self.processContents)
+
         # failed to find a registered type for class
         if what is None:
             #TODO: seems incomplete.  what about facets.
-            if self.processContents == 'strict':
-                what = _AnyStrict(pname=(self.nspname,self.pname))
-            else:
-                what = _AnyLax(pname=(self.nspname,self.pname))
+            #if self.processContents == 'strict':
+            what = Any(pname=(self.nspname,self.pname))
                 
         self.logger.debug('serialize with %s', what.__class__.__name__)
         what.serialize(elt, sw, pyobj, **kw)
@@ -1455,23 +1453,34 @@ class AnyElement(AnyType):
         if skip:
             what = XML(pname=(nspname,pname), wrapped=False)
         elif self.processContents == 'lax':
-            what = _AnyLax(pname=(nspname,pname))
+            what = Any(pname=(nspname,pname), unique=True)
         else:
-            what = _AnyStrict(pname=(nspname,pname))
+            what = Any(pname=(nspname,pname), unique=True)
 
         try:
-            return what.parse(elt, ps)
+            pyobj = what.parse(elt, ps)
         except EvaluateException, ex:
             self.logger.debug("error parsing:  %s" %str(ex))
 
-        if len(_children(elt)) == 0:
+            if len(_children(elt)) != 0:
+                self.logger.debug('parse <any>, return as dict')
+                return Any(aslist=False).parse_into_dict_or_list(elt, ps)
+
             self.logger.debug("Give up, parse (%s,%s) as a String", 
                   what.nspname, what.pname)
             what = String(pname=(nspname,pname), typed=False)
             return WrapImmutable(what.parse(elt, ps), what)
 
-        self.logger.debug('parse <any>, return as dict')
-        return Any(aslist=False).parse_into_dict_or_list(elt, ps)
+        if pyobj is None: 
+            return
+
+        try:
+            pyobj.typecode = what
+        except AttributeError:
+            pyobj = WrapImmutable(pyobj, what)
+
+        return pyobj  
+
 
 
 class Union(SimpleType):
@@ -1667,113 +1676,6 @@ class List(SimpleType):
         el.createAppendTextNode(s.getvalue())
 
 
-class _AnyStrict(Any):
-    ''' Handles an unspecified types when using a concrete schemas and
-          processContents = "strict".
-    '''
-    #WARNING: unstable
-    logger = _GetLogger('ZSI.TC._AnyStrict')
-    
-    def __init__(self, pname=None, aslist=False, **kw):
-        Any.__init__(self, pname=pname, aslist=aslist, **kw)
-        self.unique = True
-        
-    def serialize(self, elt, sw, pyobj, name=None, **kw):
-        if not (type(pyobj) is dict and not self.aslist):
-            Any.serialize(self, elt=elt,sw=sw,pyobj=pyobj,name=name, **kw)
-            
-        raise EvaluateException(
-            'Serializing dictionaries not implemented when processContents=\"strict\".' +
-            'Try as a list or use processContents=\"lax\".'
-        )
-
-
-class _AnyLax(Any):
-    ''' Handles unspecified types when using a concrete schemas and
-          processContents = "lax".
-    '''
-    logger = _GetLogger('ZSI.TC._AnyLax')
-    
-    def __init__(self, pname=None, aslist=False, **kw):
-        Any.__init__(self, pname=pname, aslist=aslist, **kw)
-        self.unique = True
-        
-    def parse_into_dict_or_list(self, elt, ps):
-        c = _child_elements(elt)
-        count = len(c)
-        v = []
-        if count == 0:
-            href = _find_href(elt)
-            if not href: return {}
-            elt = ps.FindLocalHREF(href, elt)
-            self.checktype(elt, ps)
-            c = _child_elements(elt)
-            count = len(c)
-            if count == 0: return self.listify([])
-        if self.nilled(elt, ps): return Nilled
-
-        # group consecutive elements with the same name together
-        #   We treat consecutive elements with the same name as lists.
-        groupedElements = []  # tuples of (name, elementList)
-        previousName = ""
-        currentElementList = None
-        for ce in _child_elements(elt):
-            name = ce.localName
-            if (name != previousName): # new name, so new group
-                if currentElementList != None: # store previous group if there is one
-                    groupedElements.append( (previousName, currentElementList) )
-                currentElementList = list() 
-            currentElementList.append(ce) # append to list
-            previousName = name
-        # add the last group if necessary
-        if currentElementList != None: # store previous group if there is one
-            groupedElements.append( (previousName, currentElementList) )
-
-        # parse the groups of names 
-        if len(groupedElements) < 1: # should return earlier
-            return None 
-        # return a list if there is one name and multiple data
-        elif (len(groupedElements) == 1) and (len(groupedElements[0][0]) > 1):
-            self.aslist = False
-        # else return a dictionary
-
-        for name,eltList in groupedElements:
-            lst = []
-            for elt in eltList:
-                #aslist = self.aslist 
-                lst.append( self.parse(elt, ps) )
-                #self.aslist = aslist # restore the aslist setting
-            if len(lst) > 1:  # consecutive elements with the same name means a list
-                v.append( (name, lst) )
-            elif len(lst) == 1: 
-                v.append( (name, lst[0]) )
-
-        return self.listify(v)
-
-    def checkname(self, elt, ps):
-        '''See if the name and type of the "elt" element is what we're
-        looking for.   Return the element's type.
-        Since this is _AnyLax, it's ok if names don't resolve.
-        '''
-
-        parselist,errorlist = self.get_parse_and_errorlist()
-        ns, name = _get_element_nsuri_name(elt)
-        if ns == SOAP.ENC:
-            if parselist and \
-            (None, name) not in parselist and (ns, name) not in parselist:
-                raise EvaluateException(
-                'Element mismatch (got %s wanted %s) (SOAP encoding namespace)' % \
-                        (name, errorlist), ps.Backtrace(elt))
-            return (ns, name)
-
-        # Not a type, check name matches.
-        if self.nspname and ns != self.nspname:
-            raise EvaluateException('Element NS mismatch (got %s wanted %s)' % \
-                (ns, self.nspname), ps.Backtrace(elt))
-
-        return self.checktype(elt, ps)
-
-
 def RegisterType(C, clobber=0, *args, **keywords):
     instance = apply(C, args, keywords)
     for t in C.__dict__.get('parselist', []):
@@ -1799,6 +1701,7 @@ def RegisterType(C, clobber=0, *args, **keywords):
                 raise TypeError(
                     str(C) + ' duplicating serial registration for ' + str(t))
         Any.serialmap[key] = instance
+
 
 def _DynamicImport(moduleName, className):
     '''

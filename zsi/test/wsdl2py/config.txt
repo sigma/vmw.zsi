@@ -19,7 +19,7 @@
 #
 ##########################################################################
 [configuration]
-tracefile = False
+tracefile = 1
 debug = False
 skip = False
 twisted = False

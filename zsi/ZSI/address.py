@@ -183,18 +183,13 @@ class Address(object):
                 raise EvaluateException, 'endPointReference must be of type %s' \
                     %GTD(namespaceURI ,'EndpointReferenceType')
 
-            ReferenceProperties = endPointReference._ReferenceProperties
-            any = ReferenceProperties._any or []
-            #if not (what.maxOccurs=='unbounded' and type(any) in _seqtypes):
-            #    raise EvaluateException, 'ReferenceProperties <any> assumed maxOccurs unbounded'
+            ReferenceProperties = getattr(endPointReference, '_ReferenceProperties', None)
+            if ReferenceProperties is not None:
+                for v in getattr(ReferenceProperties, '_any', ()):
+                    if not hasattr(v,'typecode'):
+                       raise EvaluateException, '<any> element, instance missing typecode attribute'
 
-            for v in any:
-                if not hasattr(v,'typecode'):
-                    raise EvaluateException, '<any> element, instance missing typecode attribute'
-
-                pyobjs.append(v)
-
-            #pyobjs.append(v)
+                    pyobjs.append(v)
 
         self.header_pyobjs = tuple(pyobjs)
 
@@ -249,83 +244,6 @@ class Address(object):
         self._from = pyobjs[(namespaceURI,elements[3])]
         self._relatesTo = pyobjs[(namespaceURI,elements[4])]
 
-# TODO: Remove MessageContainer.  Hopefully the new <any> functionality
-#       makes this irrelevant.  But could create an Interop problem.
-"""
-class MessageContainer:
-    '''Automatically wraps all primitive types so attributes 
-    can be specified.
-    '''
-    class IntHolder(int): pass
-    class StrHolder(str): pass
-    class UnicodeHolder(unicode): pass
-    class LongHolder(long): pass
-    class FloatHolder(float): pass
-    class BoolHolder(int): pass
-    #class TupleHolder(tuple): pass
-    #class ListHolder(list): pass
-    typecode = None
-    pyclass_list = [IntHolder,StrHolder,UnicodeHolder,LongHolder,
-        FloatHolder,BoolHolder,]
-
-    def __setattr__(self, key, value):
-        '''wrap all primitives with Holders if present.
-        '''
-        if type(value) in _seqtypes:
-            value = list(value)
-            for indx in range(len(value)):
-                try:
-                    item = self._wrap(value[indx])
-                except TypeError, ex:
-                    pass
-                else:
-                    value[indx] = item
-        elif type(value) is bool:
-            value = BoolHolder(value)
-        else:
-            try:
-                value = self._wrap(value)
-            except TypeError, ex:
-                pass
-        self.__dict__[key] = value
-
-    def _wrap(self, value):
-        '''wrap primitive, return None
-        '''
-        if value is None: 
-            return value
-        for pyclass in self.pyclass_list:
-            if issubclass(value.__class__, pyclass): break
-        else:
-            raise TypeError, 'MessageContainer does not know about type %s' %(type(value))
-        return pyclass(value)
-
-    def setUp(self, typecode=None, pyclass=None):
-        '''set up all attribute names (aname) in this python instance.
-        If what is a ComplexType or a simpleType w/attributes instantiate 
-        a new MessageContainer, else set attribute aname to None.
-        '''
-        if typecode is None: 
-            typecode = self.typecode
-        else:
-            self.typecode = typecode
-
-        if not isinstance(typecode, TypeCode):
-            raise TypeError, 'typecode must be a TypeCode class instance'
-
-        if isinstance(typecode, ComplexType):
-            if typecode.has_attributes() is True:
-                setattr(self, typecode.attrs_aname, {})
-            if typecode.mixed is True:
-                setattr(self, typecode.mixed_aname, None)
-            for what in typecode.ofwhat:
-                setattr(self, what.aname, None)
-                if isinstance(what, ComplexType):
-                    setattr(self, what.aname, MessageContainer())
-                    getattr(self, what.aname).setUp(typecode=what)
-        else:
-            raise TypeError, 'Primitive type'
-"""
 
 
 if __name__ == '__main__': print _copyright

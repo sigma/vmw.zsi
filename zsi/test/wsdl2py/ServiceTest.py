@@ -34,7 +34,7 @@ SECTION_CONFIGURATION = 'configuration'
 SECTION_DISPATCH = 'dispatch'
 TRACEFILE = sys.stdout
 TOPDIR = os.getcwd()
-MODULEDIR = TOPDIR + '/stubs'
+MODULEDIR = os.path.join(TOPDIR, 'stubs')
 SECTION_SERVERS = 'servers'
 
 CONFIG_PARSER.read(CONFIG_FILE)
