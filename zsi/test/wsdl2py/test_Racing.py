@@ -5,7 +5,7 @@
 ###########################################################################
 import os, sys, unittest
 from ServiceTest import main, ServiceTestCase, ServiceTestSuite
-from ZSI import FaultException, ParsedSoap
+from ZSI import FaultException, ParsedSoap, SoapWriter
 """
 Unittest 
 
@@ -59,6 +59,21 @@ class TestCase(ServiceTestCase):
 
         self.failUnless(pyobj.EventApproximatesResult.Any == any, 'Failed match:\n %s\n\n%s' %(
             pyobj.EventApproximatesResult.Any, any))
+
+
+        pyobj.EventApproximatesResult.Any = dict(pyobj.EventApproximatesResult.Any)
+        sw = SoapWriter()
+        sw.serialize(pyobj)
+        print str(sw)
+        ps2 = ParsedSoap(str(sw))
+        pyobj2 = ps.Parse(self.client_module.EventApproximatesSoapOut.typecode)
+        print "EAR: ", pyobj2.EventApproximatesResult
+        print "Any: ", pyobj2.EventApproximatesResult.Any
+        
+        
+        self.failUnless(pyobj.EventApproximatesResult.Any == pyobj2.EventApproximatesResult.Any,
+            'Failed match:\n %s\n\n%s' %(pyobj.EventApproximatesResult.Any, pyobj2.EventApproximatesResult.Any))
+
 
 
 MSG="""<?xml version="1.0" encoding="utf-8"?>

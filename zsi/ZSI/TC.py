@@ -1474,6 +1474,10 @@ class AnyElement(AnyType):
         if pyobj is None: 
             return
 
+        # dict is elementName:value pairs
+        if type(pyobj) is dict:
+            return pyobj
+
         try:
             pyobj.typecode = what
         except AttributeError:

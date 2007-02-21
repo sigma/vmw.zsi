@@ -3,7 +3,7 @@
 '''XML Schema support
 '''
 
-from ZSI import _copyright, _seqtypes, _find_type, EvaluateException
+from ZSI import _copyright, _seqtypes, _find_type, _get_element_nsuri_name, EvaluateException
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 from ZSI.wstools.Utility import SplitQName
 
@@ -14,12 +14,46 @@ def _get_type_definition(namespaceURI, name, **kw):
 def _get_global_element_declaration(namespaceURI, name, **kw):
     return SchemaInstanceType.getElementDeclaration(namespaceURI, name, **kw)
 
-def _get_substitute_element(elt, what):
-    raise NotImplementedError, 'Not implemented'
+def _get_substitute_element(head, elt, ps):
+    '''if elt matches a member of the head substitutionGroup, return 
+    the GED typecode.
+
+    head -- ElementDeclaration typecode, 
+    elt -- the DOM element being parsed
+    ps -- ParsedSoap Instance
+    '''
+    if not isinstance(head, ElementDeclaration):
+        return None
+
+    return ElementDeclaration.getSubstitutionElement(head, elt, ps)
 
 def _has_type_definition(namespaceURI, name):
     return SchemaInstanceType.getTypeDefinition(namespaceURI, name) is not None
 
+def _is_substitute_element(head, sub):
+    '''if head and sub are both GEDs, and sub declares 
+    head as its substitutionGroup then return True.
+
+    head -- Typecode instance
+    sub  -- Typecode instance
+    '''
+    if not isinstance(head, ElementDeclaration) or not isinstance(sub, ElementDeclaration):
+        return False
+
+    try:
+        group = sub.substitutionGroup 
+    except AttributeError:
+        return False
+
+    ged = GED(*group)
+
+    # TODO: better way of representing element references.  Wrap them with
+    # facets, and dereference when needed and delegate to..
+    print (head.nspname == ged.nspname and head.pname == ged.pname)
+    if head is ged or not (head.nspname == ged.nspname and head.pname == ged.pname):
+        return False
+
+    return True
 
 #
 # functions for retrieving schema items from 
@@ -67,6 +101,7 @@ class SchemaInstanceType(type):
     types = {}
     elements = {}
     element_typecode_cache = {}
+    #substitution_registry = {}
     
     def __new__(cls,classname,bases,classdict):
         '''If classdict has literal and schema register it as a
@@ -81,9 +116,22 @@ class SchemaInstanceType(type):
                 raise AttributeError, 'ElementDeclaration must define schema and literal attributes'
 
             key = (classdict['schema'],classdict['literal'])
-            if SchemaInstanceType.elements.has_key(key) is False:
-                SchemaInstanceType.elements[key] = type.__new__(cls,classname,bases,classdict)
-            return SchemaInstanceType.elements[key]
+            if SchemaInstanceType.elements.has_key(key):
+                return SchemaInstanceType.elements[key]
+
+            # create global element declaration
+            ged = SchemaInstanceType.elements[key] = type.__new__(cls,classname,bases,classdict)
+
+            # TODO: Maybe I want access to all registrants??
+            # 
+            #if classdict.has_key('substitutionGroup'):
+            #    sub = classdict.has_key('substitutionGroup')
+            #    if not SchemaInstanceType.substitution_registry.has_key(sub):
+            #        SchemaInstanceType.substitution_registry[sub] = [ged]
+            #    else:
+            #        SchemaInstanceType.substitution_registry[sub].append(ged)
+
+            return ged
 
         if TypeDefinition in bases:
             if classdict.has_key('type') is None:
@@ -148,10 +196,60 @@ class ElementDeclaration:
 
     schema = namespaceURI
     literal = NCName
+    substitutionGroup -- GED reference of form, (namespaceURI,NCName)
     '''
     __metaclass__ = SchemaInstanceType
 
-    
+    def checkSubstitute(self, typecode):
+        '''If this is True, allow typecode to be substituted
+        for "self" typecode.
+        '''
+        if not isinstance(typecode, ElementDeclaration): 
+            return False
+
+        try:
+            nsuri,ncname = typecode.substitutionGroup
+        except AttributeError:
+            return False
+
+        if (nsuri,ncname) != (self.schema,self.literal):
+            # allow slop with the empty namespace 
+            if not nsuri and not self.schema and ncname == self.literal:
+                 return True
+
+            return False
+
+        sub = GED(self.schema, self.literal)
+        if sub is None or sub is not typecode:
+            return False
+
+        return True
+
+    def getSubstitutionElement(self, elt, ps):
+        '''if elt matches a member of the head substitutionGroup, return 
+        the GED typecode representation of the member.
+
+        head -- ElementDeclaration typecode, 
+        elt -- the DOM element being parsed
+        ps -- ParsedSoap instance
+        '''
+        nsuri,ncname = _get_element_nsuri_name(elt)
+        typecode = GED(nsuri,ncname)
+        if typecode is None:
+            return
+
+        try:
+            nsuri,ncname = typecode.substitutionGroup
+        except AttributeError:
+            return
+
+        if (ncname == self.pname) and (nsuri == self.nspname or 
+           (not nsuri and not self.nspname)):
+             return typecode
+       
+        return 
+ 
+ 
 class LocalElementDeclaration:
     '''Typecodes subclass to represent a Local Element Declaration.
     '''
@@ -273,8 +371,8 @@ class _GetPyobjWrapper:
     during parsing is retained in the pyobj representation
     and thus can be serialized.
     '''
-    types_dict = {}
-    
+    types_dict = dict()
+
     def RegisterBuiltin(cls, arg):
         '''register a builtin, create a new wrapper.
         '''

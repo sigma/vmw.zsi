@@ -1942,12 +1942,20 @@ class RPCMessageTcListComponentContainer(TcListComponentContainer):
 
         raise RuntimeError('Must set style(%s) for typecode list generation' %
                            self.style)
-    
+   
 
 class ElementSimpleTypeContainer(TypecodeContainerBase):
     type = DEC
     logger = _GetLogger("ElementSimpleTypeContainer")
 
+    def _substitutionGroupTag(self):
+        value = self.substitutionGroup
+        if not value:
+            return 'substitutionGroup = None'
+  
+        nsuri,ncname = value
+        return 'substitutionGroup = ("%s","%s")' %(nsuri, ncname)
+        
     def _setContent(self):
         aname = self.getAttributeName(self.name)
         pyclass = self.pyclass
@@ -1956,6 +1964,7 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
         if pyclass == 'bool': pyclass = 'int'
         kw = KW.copy()
         kw.update(dict(aname=aname, ns=self.ns, name=self.name, 
+                       substitutionGroup=self._substitutionGroupTag(),
                        subclass=self.sKlass,literal=self.literalTag(),
                        schema=self.schemaTag(), init=self.simpleConstructor(),
                        klass=self.getClassName(), element="ElementDeclaration"))
@@ -1993,6 +2002,7 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
         self.local = tp.isLocal()
         try:
             self.name = tp.getAttribute('name')
+            self.substitutionGroup = tp.getAttribute('substitutionGroup')
             self.ns = tp.getTargetNamespace()
             qName = tp.getAttribute('type')
         except Exception, ex:
@@ -2253,6 +2263,14 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
     type = DEC
     logger = _GetLogger("ElementGlobalDefContainer")
 
+    def _substitutionGroupTag(self):
+        value = self.substitutionGroup
+        if not value:
+            return 'substitutionGroup = None'
+  
+        nsuri,ncname = value
+        return 'substitutionGroup = ("%s","%s")' %(nsuri, ncname)
+
     def _setContent(self):
         '''GED defines element name, so also define typecode aname
         '''
@@ -2261,6 +2279,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
             kw.update(dict(klass=self.getClassName(),
                        element='ElementDeclaration',
                        literal=self.literalTag(),
+                       substitutionGroup=self._substitutionGroupTag(),
                        schema=self.schemaTag(), 
                        init=self.simpleConstructor(),
                        ns=self.ns, name=self.name,
@@ -2286,6 +2305,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
             '%(ID1)sclass %(klass)s(%(element)s):',
             '%(ID2)s%(literal)s',
             '%(ID2)s%(schema)s',
+            '%(ID2)s%(substitutionGroup)s',
             '%(ID2)s%(init)s',
             '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
             '%(ID3)skw["aname"] = "%(aname)s"',
@@ -2301,6 +2321,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
         self._item = element
         self.local = element.isLocal()
         self.name = element.getAttribute('name')
+        self.substitutionGroup = element.getAttribute('substitutionGroup')
         self.ns = element.getTargetNamespace()
         tp = element.getTypeDefinition('type')
         self.sKlass = tp.getAttribute('name')
