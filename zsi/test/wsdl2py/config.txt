@@ -158,6 +158,7 @@ test_Choice = test_Choice.xsd
 test_Attributes = test_Attributes.xsd
 test_DerivedTypes = test_DerivedTypes.xsd
 test_SubstitutionGroup = test_SubstitutionGroup.xsd
+test_WSDLImport = test_WSDLImport.wsdl
 
 test_SquareService = SquareService.wsdl
 test_DateService = DateService.wsdl

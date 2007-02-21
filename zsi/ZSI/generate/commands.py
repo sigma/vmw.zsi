@@ -4,8 +4,8 @@
 # See Copyright for copyright notice!
 ############################################################################
 
-import exceptions, sys, optparse, os, warnings
-from operator import xor
+import exceptions, sys, optparse, os, warnings, traceback
+#from operator import xor
 import ZSI
 from ConfigParser import ConfigParser
 from ZSI.generate.wsdl2python import WriteServiceModule, ServiceDescription as wsdl2pyServiceDescription
@@ -171,7 +171,8 @@ respectively.
     try:
         wsdl = load(location)
     except Exception, e:
-        print "Error loading %s: \n\t%s" % (location, e)
+        print >> sys.stderr, "Error loading %s: \n\t%s" % (location, e)
+        traceback.print_exc(sys.stderr)
         # exit code UNIX specific, Windows?
         if hasattr(os, 'EX_NOINPUT'): sys.exit(os.EX_NOINPUT)
         sys.exit("error loading %s" %location)
