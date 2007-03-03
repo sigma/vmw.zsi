@@ -741,8 +741,9 @@ class URI(String):
     def get_formatted_content(self, pyobj):
         '''typecode data --> text
         '''
+        u = urlencode(pyobj, self.reserved)
         return String.get_formatted_content(self, 
-            urlencode(pyobj, safe=self.reserved))
+            u)
 
 
 class QName(String):
