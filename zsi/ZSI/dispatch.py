@@ -80,11 +80,13 @@ def _Dispatch(ps, modules, SendResponse, SendFault, nsdict={}, typesmodule=None,
                 result = handler(arg)
             except Exception,ex:
                 SendFault(FaultFromZSIException(ex), **kw)
+                return
 
             try:
                 tc = result.typecode
             except AttributeError,ex:
                 SendFault(FaultFromZSIException(ex), **kw)
+                return
 
         elif typesmodule is not None:
             kwargs = {}
