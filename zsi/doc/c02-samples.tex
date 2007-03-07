@@ -165,7 +165,7 @@ mod = __import__('encodings.utf_8', globals(), locals(), '*')
 mod = __import__('encodings.utf_16_be', globals(), locals(), '*')
 
 def handler(req):
-    dispatch.AsHandler(modules=(MyHandler,), request=req)
+    dispatch.AsHandler(modules=(MyHandler,), request=req, rpc=True)
     return apache.OK
 \end{verbatim}
 
