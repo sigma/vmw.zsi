@@ -42,7 +42,7 @@ def _is_substitute_element(head, sub):
 
     try:
         group = sub.substitutionGroup 
-    except AttributeError:
+    except (AttributeError, TypeError):
         return False
 
     ged = GED(*group)
@@ -209,7 +209,7 @@ class ElementDeclaration:
 
         try:
             nsuri,ncname = typecode.substitutionGroup
-        except AttributeError:
+        except (AttributeError, TypeError):
             return False
 
         if (nsuri,ncname) != (self.schema,self.literal):
@@ -240,7 +240,7 @@ class ElementDeclaration:
 
         try:
             nsuri,ncname = typecode.substitutionGroup
-        except AttributeError:
+        except (AttributeError, TypeError):
             return
 
         if (ncname == self.pname) and (nsuri == self.nspname or 
