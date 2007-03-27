@@ -108,8 +108,8 @@ class SoapWriter:
         else:
             self.dom.createDocument(None,None)
 
-        if typecode is None: typecode = pyobj.__class__.typecode
-        kw = kw.copy()
+        if typecode is None: 
+            typecode = pyobj.__class__.typecode
             
         if self.body is None:
             elt = typecode.serialize(self.dom, self, pyobj, **kw)
