@@ -8,6 +8,7 @@ import StringIO, copy, getopt
 import os, sys, unittest, urlparse, signal, time, warnings, subprocess
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from ZSI.wstools.TimeoutSocket import TimeoutError
+from ZSI.generate import commands
 
 """Global Variables:
     CONFIG_FILE -- configuration file 
@@ -255,17 +256,14 @@ class ServiceTestCase(unittest.TestCase):
         instance attributes.
         """
         url = self.url
+        if os.path.isfile(url):
+            url = os.path.abspath(url)
+
         if SKIP:
             ServiceTestCase._wsdl[url] = True
             return
         
-        args = []
         ServiceTestCase._wsdl[url] = False
-        if os.path.isfile(url):
-            args.append(os.path.abspath(url))
-        else:
-            args.append(url)
-
         try:
             os.mkdir(MODULEDIR)
         except OSError, ex:
@@ -274,40 +272,10 @@ class ServiceTestCase(unittest.TestCase):
         os.chdir(MODULEDIR)
         if MODULEDIR not in sys.path:
             sys.path.append(MODULEDIR)
-            
+ 
         try:
-            # Client Stubs
-            wsdl2py = ['wsdl2py'] + self.wsdl2py_args + args
-            try:
-                exit = subprocess.call(wsdl2py)
-            except OSError, ex:
-                warnings.warn("TODO: Not sure what is going on here?")
-                exit = -1
-            
-            #TODO: returncode WINDOWS?
-            WIF = hasattr(os, 'WIFEXITED')
-            if WIF: self.failUnless(os.WIFEXITED(exit), 
-                '"%s" exited with signal#: %d' %(wsdl2py, exit))
-            self.failUnless(exit == 0, 
-                '"%s" exited with exit status: %d' %(wsdl2py, exit))
-            
-            # Service Stubs
-            #if '-x' not in self.wsdl2py_args:
-            #    wsdl2dispatch = (['wsdl2dispatch'] + args + 
-            #            self.wsdl2dispatch_args)
-            #    try:
-            #        exit = subprocess.call(wsdl2dispatch)
-            #    except OSError, ex:
-            #        warnings.warn("TODO: Not sure what is going on here?")
-            
-            #    #TODO: returncode WINDOWS?
-            #    if WIF: self.failUnless(os.WIFEXITED(exit), 
-            #        '"%s" exited with signal#: %d' %(wsdl2dispatch, exit))
-            #    self.failUnless(exit == 0, 
-            #        '"%s" exited with exit status: %d' %(wsdl2dispatch, exit))
-            
+            commands.wsdl2py([url] + self.wsdl2py_args)
             ServiceTestCase._wsdl[url] = True
-            
         finally:
             os.chdir(TOPDIR)
             
