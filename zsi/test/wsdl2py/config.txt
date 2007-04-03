@@ -153,27 +153,27 @@ test_MapPoint = http://staging.mappoint.net/standard-30/mappoint.wsdl
 test_Sabre = http://webservices.sabre.com/wsdl/sabreXML1.0.00/res/SessionCreateRQ.wsdl
 
 test_Echo = ../../samples/Echo/Echo.wsdl
-test_BasicComm = BasicComm.wsdl
-test_Choice = test_Choice.xsd
-test_Attributes = test_Attributes.xsd
-test_DerivedTypes = test_DerivedTypes.xsd
-test_SubstitutionGroup = test_SubstitutionGroup.xsd
-test_WSDLImport = test_WSDLImport.wsdl
+test_BasicComm = wsdl/BasicComm.wsdl
+test_Choice = wsdl/test_Choice.xsd
+test_Attributes = wsdl/test_Attributes.xsd
+test_DerivedTypes = wsdl/test_DerivedTypes.xsd
+test_SubstitutionGroup = wsdl/test_SubstitutionGroup.xsd
+test_WSDLImport = wsdl/test_WSDLImport.wsdl
 
-test_SquareService = SquareService.wsdl
-test_DateService = DateService.wsdl
-test_FinancialService = FinancialService.wsdl
+test_SquareService = wsdl/SquareService.wsdl
+test_DateService = wsdl/DateService.wsdl
+test_FinancialService = wsdl/FinancialService.wsdl
 
 test_ThreatService = http://www.boyzoid.com/threat.cfc?wsdl
 test_TerraService = http://terraservice.net/TerraService.asmx?WSDL
 test_InfoBil = http://javatest2.infodata.se/webservices/services/Infobil?wsdl
 
-test_EchoWSAddr200403 = EchoWSAddr200403.wsdl
+test_EchoWSAddr200403 = wsdl/EchoWSAddr200403.wsdl
 
 # Google AdWords
 test_GoogleAdWords = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorService?wsdl
 
 # TODO: These aren't finished
 test_GoogleAdWords_CS = https://sandbox.google.com/api/adwords/v8/CampaignService?wsdl
-test_Manufacturer = ManufacturerImpl.wsdl
-test_Racing = Racing.wsdl
+test_Manufacturer = wsdl/ManufacturerImpl.wsdl
+test_Racing = wsdl/Racing.wsdl
