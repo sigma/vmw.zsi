@@ -132,6 +132,15 @@ class AnyTestCase(unittest.TestCase):
         ps = ParsedSoap(xml, envelope=False)
         self.failUnless(int(ps.Parse(TC.Any())) == 12)
 
+    def check_any_dict_list_rpcenc(self):
+        sw = SoapWriter()
+        testObj = [{"a":1,"b":2}, {"d":4,"e":5}, {"f":{"x":9}, "g":[6,7.0]}]
+        typecode = TC.Any(aslist=True)
+        sw.serialize(testObj, typecode=typecode)
+        xml = str(sw)
+        ps = ParsedSoap(xml)
+        result = TC.Any().parse(ps.body_root, ps)
+        self.failUnless(result == testObj)
 
 #
 # Creates permutation of test options: "check", "check_any", etc

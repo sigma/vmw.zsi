@@ -622,13 +622,13 @@ class Any(TypeCode):
                     "xsd:anyType[" + str(len(pyobj)) + "]" )
                 for o in pyobj:
                     #TODO maybe this should take **self.kwargs...
-                    serializer = getattr(o, 'typecode', Any())
+                    serializer = getattr(o, 'typecode', Any(**self.kwargs))
                     serializer.serialize(array, sw, o, name='element', **kw)
             else:
                 struct = elt.createAppendElement(ns, n)
                 for o in pyobj:
                     #TODO maybe this should take **self.kwargs...
-                    serializer = getattr(o, 'typecode', Any())
+                    serializer = getattr(o, 'typecode', Any(**self.kwargs))
                     serializer.serialize(struct, sw, o, **kw)
             return
 
