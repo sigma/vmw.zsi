@@ -53,7 +53,7 @@ class _NamedParamCaller:
     def __call__(self, **params):
         # Pull out arguments that Send() uses
         kw = { }
-        for key in [ 'auth_header', 'nsdict', 'requesttypecode' 'soapaction' ]:
+        for key in [ 'auth_header', 'nsdict', 'requesttypecode', 'soapaction' ]:
             if params.has_key(key):
                 kw[key] = params[key]
                 del params[key]
