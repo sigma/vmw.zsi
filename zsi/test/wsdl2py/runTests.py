@@ -3,9 +3,13 @@
 # Joshua R. Boverhof, LBNL
 # See Copyright for copyright notice!
 ###########################################################################
-import unittest, warnings
+import unittest, warnings, os
+from ZSI import version
+from ZSI.wstools.logging import gridLog
 from ServiceTest import main, CONFIG_PARSER, DOCUMENT, LITERAL, BROKE, TESTS
 
+os.environ['GRIDLOG_ON'] = '1'
+os.environ['GRIDLOG_DEST'] = "gridlog-udp://portnoy.lbl.gov:15100"
 
 # General targets
 def dispatch():
@@ -95,6 +99,7 @@ def _makeTestSuite(test, document=None, literal=None, broke=None):
 
    
 if __name__ == "__main__": 
+    gridLog(program="runTests.py", zsi="v%d.%d.%d" % version.Version, event="ping")
     main()
     
 

@@ -179,11 +179,11 @@ respectively.
   
     if isinstance(wsdl, XMLSchema.XMLSchema): 
         wsdl.location = location
-        _wsdl2py(options, wsdl)
-        return
+        return _wsdl2py(options, wsdl)
 
-    _wsdl2py(options, wsdl)
-    _wsdl2dispatch(options, wsdl)
+    modules = _wsdl2py(options, wsdl)
+    modules.append(_wsdl2dispatch(options, wsdl))
+    return modules
     
     
 def _wsdl2py(options, wsdl):
@@ -231,20 +231,32 @@ def _wsdl2py(options, wsdl):
     wsm = WriteServiceModule(wsdl, addressing=options.address)
 #    if options.types != None:
 #        wsm.setTypesModuleName(options.types)
+
+    files = []
+    append =  files.append
     if options.schema is False:
-         fd = open(os.path.join(options.output_dir, '%s.py' %wsm.getClientModuleName()), 'w+')
+         client_mod = wsm.getClientModuleName()
+         client_file = os.path.join(options.output_dir, '%s.py' %client_mod)
+         append(client_file)
+         fd = open(client_file, 'w+')
+
          # simple naming writes the messages to a separate file
          if not options.simple_naming:
              wsm.writeClient(fd)
          else: # provide a separate file to store messages to.
-             msg_fd = open(os.path.join(options.output_dir, '%s.py' %wsm.getMessagesModuleName()), 'w+')
+             msg_fd = open( os.path.join(options.output_dir, '%s.py' %wsm.getMessagesModuleName()), 'w+' )
              wsm.writeClient(fd, msg_fd=msg_fd)
              msg_fd.close()
          fd.close()
 
-    fd = open( os.path.join(options.output_dir, '%s.py' %wsm.getTypesModuleName()), 'w+')
+    
+    types_mod = wsm.getTypesModuleName()
+    types_file = os.path.join(options.output_dir, '%s.py' %types_mod)
+    append(types_file)
+    fd = open( os.path.join(options.output_dir, '%s.py' %types_mod), 'w+' )
     wsm.writeTypes(fd)
     fd.close()
+    return files
 
 
 def wsdl2dispatch(args=None):
@@ -296,7 +308,7 @@ def wsdl2dispatch(args=None):
     else:
         wsdl = reader.loadFromURL(args[0])        
 
-    _wsdl2dispatch(options, wsdl)
+    return _wsdl2dispatch(options, wsdl)
     
     
 def _wsdl2dispatch(options, wsdl):
@@ -322,6 +334,9 @@ def _wsdl2dispatch(options, wsdl):
             ss = ServiceDescription()
 
     ss.fromWSDL(wsdl)
-    fd = open( os.path.join(options.output_dir, ss.getServiceModuleName()+'.py'), 'w+')
+    module_name = ss.getServiceModuleName()+'.py'
+    fd = open( os.path.join(options.output_dir, module_name), 'w+')
     ss.write(fd)
+
+    return module_name
     fd.close()

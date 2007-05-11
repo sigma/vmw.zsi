@@ -14,6 +14,7 @@ import test_TCtimes
 import test_URI
 import test_list
 import test_rfc2617
+import test_callhome
 
 def makeTestSuite():
     return unittest.TestSuite(
