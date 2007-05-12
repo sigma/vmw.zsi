@@ -238,8 +238,7 @@ class ContainerBase:
     '''Base class for all Containers.
         func_aname -- function that takes name, and returns aname.
     '''
-    func_aname = TextProtectAttributeName
-    func_aname = staticmethod(func_aname)
+    func_aname = staticmethod(TextProtectAttributeName)
     logger = _GetLogger("ContainerBase")
 
     def __init__(self):

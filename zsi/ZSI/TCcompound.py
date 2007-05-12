@@ -344,7 +344,7 @@ class ComplexType(TypeCode):
             d = pyobj
             f = lambda attr: pyobj.get(attr)
             if TypeCode.typechecks and type(d) != types.DictType:
-                raise TypeError("Classless struct didn't get dictionary")
+                raise TypeError("Classless complexType didn't get dictionary")
 
         indx, lenofwhat = 0, len(self.ofwhat)
         if debug:

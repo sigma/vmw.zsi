@@ -74,7 +74,6 @@ named after the wsdl definition name, in the current working directory.
 These files will end with '_client.py', '_types.py', '_server.py' 
 respectively.                                                                    
     """
-    
     op = optparse.OptionParser(usage="USAGE: %wsdl2py [options] WSDL",
                  description=wsdl2py.__doc__)
     
@@ -187,7 +186,6 @@ respectively.
     
     
 def _wsdl2py(options, wsdl):
-    
     if options.simple_naming:
         # Use a different client suffix
         # WriteServiceModule.client_module_suffix = "_client"
@@ -312,7 +310,6 @@ def wsdl2dispatch(args=None):
     
     
 def _wsdl2dispatch(options, wsdl):
-
     if options.simple_naming:
         ServiceDescription.server_module_suffix = '_interface'
         ServiceDescription.func_aname = lambda instnc,n: TextProtect(n)

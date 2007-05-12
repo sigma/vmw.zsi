@@ -107,7 +107,7 @@ class ServiceProxy:
         mod = os.path.split(types)[-1].rstrip('.py')
         self._mod = __import__(mod)
         
-    def _call(self, name, *args, **kwargs):
+    def _call(self, name, soapheaders, *args, **kwargs):
         """Call the named remote web service method."""
         if len(args) and len(kwargs):
             raise TypeError(
@@ -189,6 +189,7 @@ class ServiceProxy:
         if self._asdict: self._nullpyclass(request)
         binding.Send(None, None, args,
                      requesttypecode=request,
+                     soapheaders=soapheaders,
                      encodingStyle=callinfo.encodingStyle)
         
         if response is None: 
@@ -215,6 +216,40 @@ class MethodProxy:
         self.__doc__ = callinfo.documentation
         self.callinfo = callinfo
         self.parent = weakref.ref(parent)
+        self.soapheaders = []
 
     def __call__(self, *args, **kwargs):
-        return self.parent()._call(self.__name__, *args, **kwargs)
+        return self.parent()._call(self.__name__, self.soapheaders, *args, **kwargs)
+
+    def add_headers(self, **headers):
+        """packing dicts into typecode pyclass, may fail if typecodes are
+        used in the body (when asdict=True)
+        """
+        class _holder: pass
+        def _remap(pyobj, **d):
+            pyobj.__dict__ = d
+            for k,v in pyobj.__dict__.items():
+                if type(v) is not dict: continue
+                pyobj.__dict__[k] = p = _holder()
+                _remap(p, **v)
+    
+        for k,v in headers.items():
+            h = filter(lambda i: k in i.type, self.callinfo.inheaders)[0]
+            if h.element_type != 1: 
+                raise RuntimeError, 'not implemented'
+
+            typecode = GED(*h.type)
+            if typecode is None: 
+                raise RuntimeError, 'no matching element for %s' %str(h.type)
+
+            pyclass = typecode.pyclass
+            if pyclass is None: 
+                raise RuntimeError, 'no pyclass for typecode %s' %str(h.type)
+
+            if type(v) is not dict:
+                pyobj = pyclass(v)
+            else:
+                pyobj = pyclass()
+                _remap(pyobj, **v)
+
+            self.soapheaders.append(pyobj)
