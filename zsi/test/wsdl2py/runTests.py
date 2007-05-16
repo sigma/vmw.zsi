@@ -99,7 +99,7 @@ def _makeTestSuite(test, document=None, literal=None, broke=None):
 
    
 if __name__ == "__main__": 
-    gridLog(program="runTests.py", zsi="v%d.%d.%d" % version.Version, event="ping")
+    gridLog(prog="runTests.py", zsi="v%d.%d.%d" % version.Version, event="zsi.test.wsdl2py.runTests.ping")
     main()
     
 

@@ -9,7 +9,7 @@ os.environ['GRIDLOG_DEST'] = "gridlog-udp://portnoy.lbl.gov:15100"
 
 class TestCase(unittest.TestCase):
     def ping(self):
-        gridLog(program="test_callhome.py", zsi="v%d.%d.%d" % version.Version, event="ping")
+        gridLog(event="zsi.test.test_callhome.ping", zsi="v%d.%d.%d" % version.Version, prog="test_callhome.py")
 
 def makeTestSuite():
     suite = unittest.TestSuite()
