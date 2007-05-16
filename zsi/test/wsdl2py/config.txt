@@ -177,3 +177,5 @@ test_GoogleAdWords = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorS
 test_GoogleAdWords_CS = https://sandbox.google.com/api/adwords/v8/CampaignService?wsdl
 test_Manufacturer = wsdl/ManufacturerImpl.wsdl
 test_Racing = wsdl/Racing.wsdl
+
+test_NVOAdmin = wsdl/nvo-admin.wsdl

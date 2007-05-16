@@ -1250,29 +1250,33 @@ class XML(TypeCode):
         return c[0]
 
     def serialize(self, elt, sw, pyobj, name=None, unsuppressedPrefixes=[], **kw):
-        if self.wrapped is False:
-            Canonicalize(pyobj, sw, unsuppressedPrefixes=unsuppressedPrefixes,
-                comments=self.comments)
-            return
-
         objid = _get_idstr(pyobj)
         ns,n = self.get_name(name, objid)
-        xmlelt = elt.createAppendElement(ns, n)
 
-        if type(pyobj) in _stringtypes:
-            self.set_attributes(xmlelt, pyobj)
-            self.set_attribute_href(xmlelt, objid)
-        elif kw.get('inline', self.inline):
-            self.cb(xmlelt, sw, pyobj, unsuppressedPrefixes)
-        else:
-            self.set_attributes(xmlelt, pyobj)
-            self.set_attribute_href(xmlelt, objid)
-            sw.AddCallback(self.cb, elt, sw, pyobj, unsuppressedPrefixes)
+        xmlelt = elt
+        if self.wrapped:
+            xmlelt = elt.createAppendElement(ns, n)
+
+        #if type(pyobj) in _stringtypes:
+        #    self.set_attributes(xmlelt, pyobj)
+        #    self.set_attribute_href(xmlelt, objid)
+        #elif kw.get('inline', self.inline):
+        #    self.cb(xmlelt, sw, pyobj, unsuppressedPrefixes)
+        #else:
+        #    self.set_attributes(xmlelt, pyobj)
+        #    self.set_attribute_href(xmlelt, objid)
+        #    sw.AddCallback(self.cb, elt, sw, pyobj, unsuppressedPrefixes)
+
+        self.cb(xmlelt, sw, pyobj, unsuppressedPrefixes)
 
     def cb(self, elt, sw, pyobj, unsuppressedPrefixes=[]):
         """pyobj -- xml.dom.Node.ELEMENT_NODE
         """
-        if sw.Known(pyobj): 
+        #if sw.Known(pyobj): 
+        #    return
+
+        if type(pyobj) in _stringtypes:
+            elt.createAppendTextNode(pyobj)
             return
 
         ## grab document and import node, and append it
