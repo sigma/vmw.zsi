@@ -4,7 +4,7 @@ from ZSI import version
 from ZSI.wstools.logging import gridLog
 
 os.environ['GRIDLOG_ON'] = '1'
-os.environ['GRIDLOG_DEST'] = "gridlog-udp://portnoy.lbl.gov:15100"
+os.environ['GRIDLOG_DEST'] = "gridlog-udp://netlogger.lbl.gov:15100"
 
 
 class TestCase(unittest.TestCase):

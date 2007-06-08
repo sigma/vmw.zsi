@@ -4,4 +4,5 @@
 # $Id$
 ###########################################################################
 
-__all__=['WSresource', 'WSsecurity']
+__all__=['interfaces', 'client', 'WSresource', 'WSsecurity']
+import interfaces
