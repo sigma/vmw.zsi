@@ -275,7 +275,7 @@ class ContainerBase:
 
     # - namespace utility methods
     def getNSAlias(self):
-        if self.ns:
+        if self.ns is not None:
             return NAD.getAlias(self.ns)
         raise ContainerError, 'no self.ns attr defined in %s' % self.__class__
 
@@ -987,11 +987,17 @@ class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerIn
             'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
 
         message = ['class %(pyclass)s:',
-                    '%(ID1)sdef __init__(self):']
+                    '%(ID1)sdef __init__(self, **kw):',
+                    '%(ID2)s"""Keyword parameters:',
+                    ]
                     
-        for aname in tcb.getAttributeNames():
-            message.append('%(ID2)sself.' + aname +' = None')
-        message.append('%(ID2)sreturn')
+        idx = len(message)
+        for a,p in zip(tcb.getAttributeNames(), tcb.getParameterNames()):
+            message.insert(idx, '%(ID2)s' + p + ' -- part ' + p)
+            message.append('%(ID2)sself.' + a + ' =  kw.get("%s")' %p)
+            idx += 1
+            
+        message.insert(idx, '%(ID2)s"""')
                     
         # TODO: This isn't a TypecodeContainerBase instance but it
         #    certaintly generates a pyclass and typecode.
@@ -1071,11 +1077,17 @@ class ServiceRPCLiteralMessageContainer(ServiceContainerBase, MessageContainerIn
             'Struct(pname=("%(nspname)s","%(pname)s"), ofwhat=%(ofwhat)s, pyclass=%(pyclass)s, encoded="%(encoded)s")'
 
         message = ['class %(pyclass)s:',
-                    '%(ID1)sdef __init__(self):']
-                    
-        for aname in tcb.getAttributeNames():
-            message.append('%(ID2)sself.' + aname +' = None')
-        message.append('%(ID2)sreturn')
+                    '%(ID1)sdef __init__(self, **kw):',
+                    '%(ID2)s"""Keyword parameters:',
+                    ]
+        
+        idx = len(message)
+        for a,p in zip(tcb.getAttributeNames(), tcb.getParameterNames()):
+            message.insert(idx, '%(ID2)s' + p + ' -- part ' + p)
+            message.append('%(ID2)sself.' + a + ' =  kw.get("%s")' %p)
+            idx += 1
+        
+        message.insert(idx, '%(ID2)s"""')
                     
         # TODO: This isn't a TypecodeContainerBase instance but it
         #    certaintly generates a pyclass and typecode.
@@ -1786,6 +1798,12 @@ class MessageTypecodeContainer(TypecodeContainerBase):
         '''
         return map(lambda e: self.getAttributeName(e.name), self.tcListElements)
 
+    def getParameterNames(self):
+        '''returns a list of pnames representing the parts
+        of the message.
+        '''
+        return map(lambda e: e.name, self.tcListElements)
+    
     def setParts(self, parts):
         self.mgContent = parts
 

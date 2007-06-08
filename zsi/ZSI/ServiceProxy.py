@@ -32,7 +32,8 @@ class ServiceProxy:
 
     def __init__(self, wsdl, url=None, service=None, port=None, tracefile=None,
                  nsdict=None, transport=None, transdict=None, 
-                 cachedir='.service_proxy_dir', asdict=True):
+                 cachedir=os.path.join(os.path.expanduser('~'), '.zsi_service_proxy_dir'), 
+                 asdict=True):
         """
         Parameters:
            wsdl -- URL of WSDL.
@@ -63,6 +64,7 @@ class ServiceProxy:
         self._port = self._service.ports[port or 0]
         self._name = self._service.name
         self._methods = {}
+        self._cachedir = cachedir
         
         # Set up rpc methods for service/port
         port = self._port
@@ -70,11 +72,24 @@ class ServiceProxy:
         portType = binding.getPortType()
         for port in self._service.ports:
             for item in port.getPortType().operations:
-                callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
+                try:
+                    callinfo = wstools.WSDLTools.callInfoFromWSDL(port, item.name)
+                except:
+                    # ignore non soap-1.1  bindings
+                    continue
+                
                 method = MethodProxy(self, callinfo)
                 setattr(self, item.name, method)
                 self._methods.setdefault(item.name, []).append(method)
        
+        self._mod = self._load(wsdl)
+        
+    def _load(self, location):
+        """
+        location -- URL or file location
+        isxsd -- is this a xsd file?
+        """
+        cachedir = self._cachedir
         # wsdl2py: deal with XML Schema
         if not os.path.isdir(cachedir): os.mkdir(cachedir)
     
@@ -86,118 +101,195 @@ class ServiceProxy:
         except IOError:
             del cp;  cp = None
             
-        option = wsdl.replace(':', '-') # colons seem to screw up option
+        option = location.replace(':', '-') # colons seem to screw up option
         if (cp is not None and cp.has_section(section) and 
             cp.has_option(section, option)):
             types = cp.get(section, option)
         else:
             # dont do anything to anames
             containers.ContainerBase.func_aname = lambda instnc,n: str(n)
-            files = commands.wsdl2py(['-o', cachedir, wsdl])
+            files = commands.wsdl2py(['-o', cachedir, location])
             if cp is None: cp = ConfigParser()
             if not cp.has_section(section): cp.add_section(section)
-
             types = filter(lambda f: f.endswith('_types.py'), files)[0]
             cp.set(section, option, types)
             cp.write(open(file, 'w'))
             
         if os.path.abspath(cachedir) not in sys.path:
             sys.path.append(os.path.abspath(cachedir))
-
+            
         mod = os.path.split(types)[-1].rstrip('.py')
-        self._mod = __import__(mod)
-        
-    def _call(self, name, soapheaders, *args, **kwargs):
-        """Call the named remote web service method."""
-        if len(args) and len(kwargs):
-            raise TypeError(
-                'Use positional or keyword argument only.'
-                )
-
-        callinfo = getattr(self, name).callinfo
-
-        # go through the list of defined methods, and look for the one with
-        # the same number of arguments as what was passed.  this is a weak
-        # check that should probably be improved in the future to check the
-        # types of the arguments to allow for polymorphism
-        for method in self._methods[name]:
-            if len(method.callinfo.inparams) == len(kwargs):
-                callinfo = method.callinfo
-
-        binding = _Binding(tracefile=self._tracefile,
-                          url=self._url or callinfo.location, 
-                          nsdict=self._nsdict, 
-                          soapaction=callinfo.soapAction)
-
-
-        if len(kwargs): args = kwargs
-
-        kw = dict(unique=True)
-        if callinfo.use == 'encoded':
-            kw['unique'] = False
-
-        if callinfo.style == 'rpc':
-            request = TC.Struct(None, ofwhat=[], 
-                             pname=(callinfo.namespace, name), **kw)
-            
-            response = TC.Struct(None, ofwhat=[], 
-                             pname=(callinfo.namespace, name+"Response"), **kw)
-            
-            if len(callinfo.getInParameters()) != len(args):
-                raise RuntimeError('expecting "%s" parts, got %s' %(
-                       str(callinfo.getInParameters(), str(args))))
-            
-            for msg,pms in ((request,callinfo.getInParameters()), 
-                            (response,callinfo.getOutParameters())):
-                msg.ofwhat = []
-                for part in pms:
-                    klass = GTD(*part.type)
-                    if klass is None:
-                        if part.type:
-                            klass = filter(lambda gt: part.type==gt.type,TC.TYPES)
-                            if len(klass) == 0:
-                                klass = filter(lambda gt: part.type[1]==gt.type[1],TC.TYPES)
-                                if not len(klass):klass = [TC.Any]
-                            if len(klass) > 1: #Enumerations, XMLString, etc
-                                klass = filter(lambda i: i.__dict__.has_key('type'), klass)
-                            klass = klass[0]
-                        else:
-                            klass = TC.Any
-                
-                    msg.ofwhat.append(klass(part.name))
-                    
-                msg.ofwhat = tuple(msg.ofwhat)
-            if not args: args = {}
-        else:
-            # Grab <part element> attribute
-            ipart,opart = callinfo.getInParameters(),callinfo.getOutParameters()
-            if ( len(ipart) != 1 or not ipart[0].element_type or 
-                ipart[0].type is None ):
-                raise RuntimeError, 'Bad Input Message "%s"' %callinfo.name
+        return __import__(mod)
     
-            if ( len(opart) not in (0,1) or not opart[0].element_type or 
-                opart[0].type is None ):
-                raise RuntimeError, 'Bad Output Message "%s"' %callinfo.name
+    def _load_schema(self, location, xml=None):
+        """
+        location -- location of schema, also used as a key
+        xml -- optional string representation of schema
+        """
+        cachedir = self._cachedir
+        # wsdl2py: deal with XML Schema
+        if not os.path.isdir(cachedir): os.mkdir(cachedir)
+    
+        file = os.path.join(cachedir, '.cache')
+        section = 'TYPES'
+        cp = ConfigParser()
+        try:
+            cp.readfp(open(file, 'r'))
+        except IOError:
+            del cp;  cp = None
             
-            if ( len(args) != 1 ):
-                raise RuntimeError, 'Message has only one part'
+        option = location.replace(':', '-') # colons seem to screw up option
+        if (cp is not None and cp.has_section(section) and 
+            cp.has_option(section, option)):
+            types = cp.get(section, option)
+        else:
+            # dont do anything to anames
+            containers.ContainerBase.func_aname = lambda instnc,n: str(n)
+            from ZSI.wstools import XMLSchema
             
-            ipart = ipart[0]
-            request,response = GED(*ipart.type),None
-            if opart: response = GED(*opart[0].type)
+            
+            reader = XMLSchema.SchemaReader(base_url=location)
+            if xml is not None and isinstance(xml, basestring):
+                schema = reader.loadFromString(xml)
+            elif xml is not None:
+                raise RuntimeError, 'Unsupported: XML must be string'
+            elif not os.path.isfile(location):
+                schema = reader.loadFromURL(location)
+            else:
+                schema = reader.reader.loadFromFile(location)
+                
+            # TODO: change this to keyword list
+            class options:
+                output_dir = cachedir
+                schema = True
+                simple_naming = False
+                address = False
+            schema.location = location
+            files = commands._wsdl2py(options, schema)
+            if cp is None: cp = ConfigParser()
+            if not cp.has_section(section): cp.add_section(section)
+            types = filter(lambda f: f.endswith('_types.py'), files)[0]
+            cp.set(section, option, types)
+            cp.write(open(file, 'w'))
+            
+        if os.path.abspath(cachedir) not in sys.path:
+            sys.path.append(os.path.abspath(cachedir))
+            
+        mod = os.path.split(types)[-1].rstrip('.py')
+        return __import__(mod)
+            
+    def _call(self, name, soapheaders):
+        """return the Call to the named remote web service method.
+        closure used to prevent multiple values for name and soapheaders 
+        parameters 
+        """
+        
+        def call_closure(*args, **kwargs):
+            """Call the named remote web service method."""
+            if len(args) and len(kwargs):
+                raise TypeError, 'Use positional or keyword argument only.'
+                
+            if len(args) > 0:
+                raise TypeError, 'Not supporting SOAPENC:Arrays or XSD:List'
+            
+            if len(kwargs): 
+                args = kwargs
 
-        if self._asdict: self._nullpyclass(request)
-        binding.Send(None, None, args,
-                     requesttypecode=request,
-                     soapheaders=soapheaders,
-                     encodingStyle=callinfo.encodingStyle)
+            callinfo = getattr(self, name).callinfo
+    
+            # go through the list of defined methods, and look for the one with
+            # the same number of arguments as what was passed.  this is a weak
+            # check that should probably be improved in the future to check the
+            # types of the arguments to allow for polymorphism
+            for method in self._methods[name]:
+                if len(method.callinfo.inparams) == len(kwargs):
+                    callinfo = method.callinfo
+    
+            binding = _Binding(tracefile=self._tracefile,
+                              url=self._url or callinfo.location, 
+                              nsdict=self._nsdict, 
+                              soapaction=callinfo.soapAction)
+    
+            kw = dict(unique=True)
+            if callinfo.use == 'encoded':
+                kw['unique'] = False
+    
+            if callinfo.style == 'rpc':
+                request = TC.Struct(None, ofwhat=[], 
+                                 pname=(callinfo.namespace, name), **kw)
+                
+                response = TC.Struct(None, ofwhat=[], 
+                                 pname=(callinfo.namespace, name+"Response"), **kw)
+                
+                if len(callinfo.getInParameters()) != len(args):
+                    raise RuntimeError('expecting "%s" parts, got %s' %(
+                           str(callinfo.getInParameters(), str(args))))
+                
+                for msg,pms in ((request,callinfo.getInParameters()), 
+                                (response,callinfo.getOutParameters())):
+                    msg.ofwhat = []
+                    for part in pms:
+                        klass = GTD(*part.type)
+                        if klass is None:
+                            if part.type:
+                                klass = filter(lambda gt: part.type==gt.type,TC.TYPES)
+                                if len(klass) == 0:
+                                    klass = filter(lambda gt: part.type[1]==gt.type[1],TC.TYPES)
+                                    if not len(klass):klass = [TC.Any]
+                                if len(klass) > 1: #Enumerations, XMLString, etc
+                                    klass = filter(lambda i: i.__dict__.has_key('type'), klass)
+                                klass = klass[0]
+                            else:
+                                klass = TC.Any
+                    
+                        msg.ofwhat.append(klass(part.name))
+                        
+                    msg.ofwhat = tuple(msg.ofwhat)
+                if not args: args = {}
+            else:
+                # Grab <part element> attribute
+                ipart,opart = callinfo.getInParameters(),callinfo.getOutParameters()
+                if ( len(ipart) != 1 or not ipart[0].element_type or 
+                    ipart[0].type is None ):
+                    raise RuntimeError, 'Bad Input Message "%s"' %callinfo.name
         
-        if response is None: 
-            return None
-        
-        if self._asdict: self._nullpyclass(response)
-        return binding.Receive(replytype=response,
-                     encodingStyle=callinfo.encodingStyle)
+                if ( len(opart) not in (0,1) or not opart[0].element_type or 
+                    opart[0].type is None ):
+                    raise RuntimeError, 'Bad Output Message "%s"' %callinfo.name
+                
+#                if ( len(args) > 1 ):
+#                    raise RuntimeError, 'Message has only one part:  %s' %str(args)
+                
+                ipart = ipart[0]
+                request,response = GED(*ipart.type),None
+                if opart: response = GED(*opart[0].type)
+    
+            msg = args
+            if self._asdict: 
+                if not msg: msg = dict()
+                self._nullpyclass(request)
+            elif request.pyclass is not None:
+                if type(args) is dict:
+                    msg = request.pyclass()
+                    msg.__dict__.update(args)
+                elif type(args) is list and len(args) == 1: 
+                    msg = request.pyclass(args[0])
+                else: 
+                    msg = request.pyclass()
+                    
+            binding.Send(None, None, msg,
+                         requesttypecode=request,
+                         soapheaders=soapheaders,
+                         encodingStyle=callinfo.encodingStyle)
+            
+            if response is None: 
+                return None
+            
+            if self._asdict: self._nullpyclass(response)
+            return binding.Receive(replytype=response,
+                         encodingStyle=callinfo.encodingStyle)
+            
+        return call_closure
 
     def _nullpyclass(cls, typecode):
         typecode.pyclass = None
@@ -219,7 +311,7 @@ class MethodProxy:
         self.soapheaders = []
 
     def __call__(self, *args, **kwargs):
-        return self.parent()._call(self.__name__, self.soapheaders, *args, **kwargs)
+        return self.parent()._call(self.__name__, self.soapheaders)(*args, **kwargs)
 
     def add_headers(self, **headers):
         """packing dicts into typecode pyclass, may fail if typecodes are

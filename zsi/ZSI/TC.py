@@ -234,7 +234,7 @@ class TypeCode:
             elt -- the DOM element being parsed
         '''
         return self.pname == elt.localName and \
-                    self.nspname in [None, elt.namespaceURI]
+                    self.nspname in [None, '', elt.namespaceURI]
 
     def nilled(self, elt, ps):
         '''Is the element NIL, and is that okay?
