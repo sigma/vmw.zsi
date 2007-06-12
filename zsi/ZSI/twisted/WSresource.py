@@ -190,33 +190,19 @@ class DeferHandlerChain:
             if debug: 
                 log.msg('\t%s handler: %s' %(arg, h), debug=1)
                 log.msg('\thandler callback: %s' %h.processRequest)
-            #arg = h.processRequest(arg, **kw)
             d.addCallback(h.processRequest, **kw)
             
-        #return self.handlercb.processRequest(arg, **kw)
         d.addCallback(self.handlercb.processRequest, **kw)
         reactor.callLater(.0001, d.callback, arg)
-        #return d
-            
-        #def processResponse(self, arg, **kw):
-        #from twisted.internet.defer import Deferred
-        
-        #debug = self.debug
+
         if debug: log.msg('===>DEFER PROCESS RESPONSE: %s' %str(arg), debug=1)
 
-        #if arg is None: 
-        #    return d
+
         
         for h in self.handlers:
             if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
-            #arg = h.processResponse(arg, **kw)
             d.addCallback(h.processResponse, **kw)
-            
-        #s = str(arg)
-        #if debug: log.msg(s, debug=1)
-        #return s
-        
-        # convert SoapWriter into a string
+
         d.addCallback(str)
         return d
     
