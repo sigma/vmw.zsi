@@ -33,34 +33,53 @@ class _Caller:
     that calls back to the Binding object to make an RPC call.
     '''
 
-    def __init__(self, binding, name):
-        self.binding, self.name = binding, name
+    def __init__(self, binding, name, namespace=None):
+        self.binding = binding
+        self.name = name
+        self.namespace = namespace
 
     def __call__(self, *args):
-        return self.binding.RPC(None, self.name, args, 
+        nsuri = self.namespace
+        if nsuri is None:
+            return self.binding.RPC(None, self.name, args, 
+                            encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
+                            replytype=TC.Any(self.name+"Response"))
+            
+        return self.binding.RPC(None, (nsuri,self.name), args, 
                    encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
-                   replytype=TC.Any(self.name+"Response"))
+                   replytype=TC.Any((nsuri,self.name+"Response")))
     
 
 class _NamedParamCaller:
     '''Similar to _Caller, expect that there are named parameters
     not positional.
     '''
-
-    def __init__(self, binding, name):
-        self.binding, self.name = binding, name
-
+        
+    def __init__(self, binding, name, namespace=None):
+        self.binding = binding
+        self.name = name
+        self.namespace = namespace
+        
     def __call__(self, **params):
         # Pull out arguments that Send() uses
-        kw = { }
+        kw = {}
         for key in [ 'auth_header', 'nsdict', 'requesttypecode', 'soapaction' ]:
             if params.has_key(key):
                 kw[key] = params[key]
                 del params[key]
-        return self.binding.RPC(None, self.name, None, 
+        
+        nsuri = self.namespace
+        if nsuri is None:
+            return self.binding.RPC(None, self.name, None, 
+                        encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
+                        _args=params, 
+                        replytype=TC.Any(self.name+"Response", aslist=False),
+                        **kw)      
+                
+        return self.binding.RPC(None, (nsuri,self.name), None, 
                    encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
                    _args=params, 
-                   replytype=TC.Any(self.name+"Response", aslist=False),
+                   replytype=TC.Any((nsuri,self.name+"Response"), aslist=False),
                    **kw)
 
 
@@ -458,9 +477,18 @@ class Binding(_Binding):
     gettypecode = staticmethod(lambda mod,e: getattr(mod, str(e.localName)).typecode)
     logger = _GetLogger('ZSI.client.Binding')
 
-    def __init__(self, typesmodule=None, **kw):
+    def __init__(self, url, namespace=None, typesmodule=None, **kw):
+        """
+        Parameters:
+            url -- location of service
+            namespace -- optional root element namespace
+            typesmodule -- optional response only. dict(name=typecode), 
+                lookup for all children of root element.  
+        """
         self.typesmodule = typesmodule
-        _Binding.__init__(self, **kw)
+        self.namespace = namespace
+        
+        _Binding.__init__(self, url=url, **kw)
 
     def __getattr__(self, name):
         '''Return a callable object that will invoke the RPC method
@@ -469,7 +497,7 @@ class Binding(_Binding):
         if name[:2] == '__' and len(name) > 5 and name[-2:] == '__':
             if hasattr(self, name): return getattr(self, name)
             return getattr(self.__class__, name)
-        return _Caller(self, name)
+        return _Caller(self, name, self.namespace)
 
     def __parse_child(self, node):
         '''for rpc-style map each message part to a class in typesmodule
@@ -524,7 +552,6 @@ class Binding(_Binding):
             self.address.checkResponse(ps, kw.get('wsaction'))
 
         return reply
-        
 
 
 class NamedParamBinding(Binding):
@@ -540,7 +567,7 @@ class NamedParamBinding(Binding):
         if name[:2] == '__' and len(name) > 5 and name[-2:] == '__':
             if hasattr(self, name): return getattr(self, name)
             return getattr(self.__class__, name)
-        return _NamedParamCaller(self, name)
+        return _NamedParamCaller(self, name, self.namespace)
 
 
 if __name__ == '__main__': print _copyright
