@@ -169,13 +169,13 @@ def _JonPySendFault(f, **kw):
 
 def _JonPySendXML(text, code=200, **kw):
     req = kw['request']
-    req.set_header("Content-Type", 'text/xml; charset="utf-8"')
+    req.set_header("Content-Type", 'text/xml; charset="%s"' %UNICODE_ENCODING)
     req.set_header("Content-Length", str(len(text)))
     req.write(text)
 
 def _CGISendXML(text, code=200, **kw):
     print 'Status: %d' % code
-    print 'Content-Type: text/xml; charset="utf-8"'
+    print 'Content-Type: text/xml; charset="%s"' %UNICODE_ENCODING
     print 'Content-Length: %d' % len(text)
     print ''
     print text
@@ -195,7 +195,7 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(code)
         
         if text:
-            self.send_header('Content-type', 'text/xml; charset="utf-8"')
+            self.send_header('Content-type', 'text/xml; charset="%s"' %UNICODE_ENCODING)
             self.send_header('Content-Length', str(len(text)))
 
         self.end_headers()

@@ -8,7 +8,7 @@ from ZSI import _copyright, _children, _child_elements, \
     _find_arraytype, _find_default_namespace, _find_href, _find_encstyle, \
     _resolve_prefix, _find_xsi_attr, _find_type, \
     _find_xmlns_prefix, _get_element_nsuri_name, _get_idstr, \
-    _Node, EvaluateException, \
+    _Node, EvaluateException, UNICODE_ENCODING, \
     _valid_encoding, ParseException
     
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
@@ -708,16 +708,19 @@ class String(SimpleType):
 
     def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
+        Encode all strings as UTF-8, which will be type 'str'
+        not 'unicode'
         '''
         if self.strip: text = text.strip()
         if self.pyclass is not None:
-            return self.pyclass(text)
-        return text
+            return self.pyclass(text.encode(UNICODE_ENCODING))
+        return text.encode(UNICODE_ENCODING)
 
     def get_formatted_content(self, pyobj):
         if type(pyobj) not in _stringtypes:
             pyobj = str(pyobj)
-        if type(pyobj) == types.UnicodeType: pyobj = pyobj.encode('utf-8')
+        if type(pyobj) == unicode: 
+            return pyobj.encode(UNICODE_ENCODING)
         return pyobj
 
 

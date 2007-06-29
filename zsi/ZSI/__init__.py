@@ -150,7 +150,7 @@ import types as _types
 ##
 ##  Public constants.
 from ZSI.wstools.Namespaces import ZSI_SCHEMA_URI
-
+UNICODE_ENCODING = 'utf-8'
 
 ##
 ##  Not public constants.

@@ -103,9 +103,9 @@ def _Dispatch(ps, server, SendResponse, SendFault, post, action, nsdict={}, **kw
 
     try:
         if isWSResource is True: 
-            result = method(ps, address)
+            request,result = method(ps, address)
         else: 
-            result = method(ps)
+            request,result = method(ps)
     except Exception, e:
         return SendFault(FaultFromException(e, 0, sys.exc_info()[2]), **kw)
 

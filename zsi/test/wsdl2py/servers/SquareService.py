@@ -10,9 +10,9 @@ from ZSI.ServiceContainer import AsServer
 class Service(Square.SquareService):
 
     def soap_getSquare(self, ps):
-        response = Square.SquareService.soap_getSquare(self, ps)
-        response._return = self.getSquare(self.request._x)
-        return response
+        request,response = Square.SquareService.soap_getSquare(self, ps)
+        response._return = self.getSquare(request._x)
+        return request,response
 
     def getSquare(self, x):
         return x**2

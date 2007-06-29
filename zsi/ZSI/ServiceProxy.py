@@ -30,32 +30,31 @@ class ServiceProxy:
        service that is described with WSDL. The proxy exposes methods
        that reflect the methods of the remote web service."""
 
-    def __init__(self, wsdl, url=None, service=None, port=None, tracefile=None,
-                 nsdict=None, transport=None, transdict=None, 
+    def __init__(self, wsdl, url=None, service=None, port=None,
                  cachedir=os.path.join(os.path.expanduser('~'), '.zsi_service_proxy_dir'), 
-                 asdict=True):
+                 asdict=True, lazy=False, pyclass=False, force=False, **kw):
         """
         Parameters:
            wsdl -- URL of WSDL.
            url -- override WSDL SOAP address location
            service -- service name or index
            port -- port name or index
-           tracefile -- 
-           nsdict -- key prefix to namespace mappings for serialization
-              in SOAP Envelope.
-           transport -- override default transports.
-           transdict -- arguments to pass into HTTPConnection constructor.
            cachedir -- where to store generated files
            asdict -- use dicts, else use generated pyclass
+           lazy -- use lazy typecode evaluation
+           pyclass -- use pyclass_type metaclass adds properties, "new_", "set_, 
+               "get_" methods for schema element and attribute declarations.
+           force -- regenerate all WSDL code, write over cache.
+           
+        NOTE: all other **kw will be passed to the underlying 
+        ZSI.client._Binding constructor.
+           
         """
         self._asdict = asdict
         
         # client._Binding
-        self._tracefile = tracefile
-        self._nsdict = nsdict or {}
-        self._transdict = transdict 
-        self._transport = transport
         self._url = url
+        self._kw = kw
         
         # WSDL
         self._wsdl = wstools.WSDLTools.WSDLReader().loadFromURL(wsdl)
@@ -65,6 +64,9 @@ class ServiceProxy:
         self._name = self._service.name
         self._methods = {}
         self._cachedir = cachedir
+        self._lazy = lazy
+        self._pyclass = pyclass
+        self._force = force
         
         # Set up rpc methods for service/port
         port = self._port
@@ -102,13 +104,19 @@ class ServiceProxy:
             del cp;  cp = None
             
         option = location.replace(':', '-') # colons seem to screw up option
-        if (cp is not None and cp.has_section(section) and 
+        if (not self._force and cp is not None and cp.has_section(section) and 
             cp.has_option(section, option)):
             types = cp.get(section, option)
         else:
             # dont do anything to anames
-            containers.ContainerBase.func_aname = lambda instnc,n: str(n)
-            files = commands.wsdl2py(['-o', cachedir, location])
+            if not self._pyclass:
+                containers.ContainerBase.func_aname = lambda instnc,n: str(n)
+                
+            args = ['-o', cachedir, location]
+            if self._lazy: args.insert(0, '-l')
+            if self._pyclass: args.insert(0, '-b')
+            files = commands.wsdl2py(args)
+
             if cp is None: cp = ConfigParser()
             if not cp.has_section(section): cp.add_section(section)
             types = filter(lambda f: f.endswith('_types.py'), files)[0]
@@ -144,10 +152,10 @@ class ServiceProxy:
             types = cp.get(section, option)
         else:
             # dont do anything to anames
-            containers.ContainerBase.func_aname = lambda instnc,n: str(n)
+            if not self._pyclass:
+                containers.ContainerBase.func_aname = lambda instnc,n: str(n)
+                
             from ZSI.wstools import XMLSchema
-            
-            
             reader = XMLSchema.SchemaReader(base_url=location)
             if xml is not None and isinstance(xml, basestring):
                 schema = reader.loadFromString(xml)
@@ -164,6 +172,9 @@ class ServiceProxy:
                 schema = True
                 simple_naming = False
                 address = False
+                lazy = self._lazy
+                complexType = self._pyclass
+
             schema.location = location
             files = commands._wsdl2py(options, schema)
             if cp is None: cp = ConfigParser()
@@ -205,10 +216,9 @@ class ServiceProxy:
                 if len(method.callinfo.inparams) == len(kwargs):
                     callinfo = method.callinfo
     
-            binding = _Binding(tracefile=self._tracefile,
-                              url=self._url or callinfo.location, 
-                              nsdict=self._nsdict, 
-                              soapaction=callinfo.soapAction)
+            binding = _Binding(url=self._url or callinfo.location,
+                              soapaction=callinfo.soapAction,
+                              **self._kw)
     
             kw = dict(unique=True)
             if callinfo.use == 'encoded':

@@ -3,37 +3,43 @@
 # See Copyright for copyright notice!
 # $Id: __init__.py 1132 2006-02-17 01:55:41Z boverhof $
 ###########################################################################
-import os, sys, warnings
+import os, sys, types
 from StringIO import StringIO
 
 # twisted & related imports
 from zope.interface import classProvides, implements, Interface
-from twisted.python import log, failure
-#from twisted.web.error import NoResource
-#from twisted.web.server import NOT_DONE_YET
-#import twisted.web.http
-#import twisted.web.resource
 
 # ZSI imports
-from ZSI import _get_element_nsuri_name, EvaluateException, ParseException
-from ZSI import fault, ParsedSoap, SoapWriter
+from ZSI import _get_element_nsuri_name, EvaluateException, ParseException,\
+    fault, ParsedSoap, SoapWriter
+from ZSI.twisted.reverse import DataHandler, ReverseHandlerChain,\
+    HandlerChainInterface
 
 
-# WS-Address related imports
-from ZSI.address import Address
-
-
-class WSAddressException(Exception):
+def soapmethod(requesttypecode, responsetypecode, soapaction='', 
+               operation=None, **kw):
+    """@soapmethod
+    decorator function for soap methods
     """
+    def _closure(func_cb):
+        func_cb.root = (requesttypecode.nspname,requesttypecode.pname)
+        func_cb.action = soapaction
+        func_cb.requesttypecode = requesttypecode
+        func_cb.responsetypecode = responsetypecode
+        func_cb.soapmethod = True
+        func_cb.operation = None
+        return func_cb
+
+    return _closure
+
+
+class SOAPCallbackHandler:
+    """ ps --> pyobj, pyobj --> sw
+    class variables:
+        writerClass -- ElementProxy implementation to use for SoapWriter instances.
     """
-
-from ZSI.twisted.interfaces import HandlerChainInterface, CallbackChainInterface,\
-    DataHandler, CheckInputArgs, DefaultHandlerChain
-
-    
-    
-class DefaultCallbackHandler:
-    classProvides(CallbackChainInterface)
+    classProvides(HandlerChainInterface)
+    writerClass = None
 
     @classmethod
     def processRequest(cls, ps, **kw):
@@ -42,35 +48,47 @@ class DefaultCallbackHandler:
         ps -- ParsedSoap instance representing HTTP Body.
         request -- twisted.web.server.Request
         """
-        #env = kw['env']
-        #start_response = kw['start_response']
         resource = kw['resource']
-        #request = kw['request']
-        method =  getattr(resource, 'soap_%s' %
-                           _get_element_nsuri_name(ps.body_root)[-1])
-                                              
+        request = kw['request']
+
+        root = _get_element_nsuri_name(ps.body_root)
+        for key,method in resource.__dict__:
+            if (callable(method) and 
+                getattr(method, 'soapmethod', False) and 
+                method.root == root):
+                break
+        else:
+            raise RuntimeError, 'Missing soap callback method for root "%s"' %root
+
         try:
-            req_pyobj,rsp_pyobj = method(ps)
-        except TypeError, ex:
-            log.err(
-                'ERROR: service %s is broken, method MUST return request, response'\
-                    % cls.__name__
-            )
-            raise
+            req = ps.Parse(method.requesttypecode)
         except Exception, ex:
-            log.err('failure when calling bound method')
+            raise
+        try:
+            rsp = method.responsetypecode.pyclass()
+        except Exception, ex:
             raise
         
-        return rsp_pyobj
+        try:
+            req,rsp = method(req, rsp)
+        except Exception, ex:
+            raise
+
+        return rsp
+
+    @classmethod
+    def processResponse(cls, output, **kw):
+        sw = SoapWriter(outputclass=cls.writerClass)
+        sw.serialize(output)
+        return sw
     
     
-class DefaultHandlerChainFactory:
-    protocol = DefaultHandlerChain
-    
+class SOAPHandlerChainFactory:
+    protocol = ReverseHandlerChain
+
     @classmethod
     def newInstance(cls):
-        return cls.protocol(DefaultCallbackHandler, DataHandler)
-    
+        return cls.protocol(DataHandler, SOAPCallbackHandler)
 
 
 class WSGIApplication(dict):
@@ -104,8 +122,6 @@ class SOAPApplication(WSGIApplication):
     """
     """
     factory = DefaultHandlerChainFactory
-    soapAction = {}
-    root = {}
     
     def __init__(self, **kw):
         dict.__init__(self, **kw)
@@ -130,7 +146,8 @@ class SOAPApplication(WSGIApplication):
     def _handle_GET(self, env, start_response):
         if env['QUERY_STRING'].lower() == 'wsdl':
             start_response("200 OK", [('Content-Type','text/plain')])
-            return ['NO WSDL YET']
+            r = self.delegate or self
+            return _resourceToWSDL(r)
 
         start_response("404 ERROR", [('Content-Type','text/plain')])
         return ['NO RESOURCE FOR GET']
@@ -168,7 +185,6 @@ class SOAPApplication(WSGIApplication):
 def test(app, port=8080, host="localhost"):
     """
     """
-    import sys
     from twisted.internet import reactor
     from twisted.python import log
     from twisted.web2.channel import HTTPFactory
@@ -183,4 +199,77 @@ def test(app, port=8080, host="localhost"):
     reactor.run()
 
 
+def _issoapmethod(f):
+    return type(f) is types.MethodType and getattr(f, 'soapmethod', False)
 
+def _resourceToWSDL(resource):
+    from xml.etree import ElementTree
+    from xml.etree.ElementTree import Element, QName
+    from ZSI.wstools.Namespaces import WSDL
+    
+    r = resource
+    methods = filter(_issoapmethod, map(lambda i: getattr(r, i), dir(r)))
+    tns = ''
+    
+    #tree = ElementTree()
+    defs = Element("{%s}definitions" %WSDL.BASE)
+    defs.attrib['name'] = 'SampleDefs'
+    defs.attrib['targetNamespace'] = tns
+    #tree.append(defs)
+    
+    porttype = Element("{%s}portType" %WSDL)
+    porttype.attrib['name'] = QName("{%s}SamplePortType" %tns)
+    
+    binding = Element("{%s}binding" %WSDL)
+    defs.append(binding)
+    binding.attrib['name'] = QName("{%s}SampleBinding" %tns)
+    binding.attrib['type'] = porttype.get('name')
+    
+    for m in methods:
+        m.action
+        
+    service = Element("{%s}service" %WSDL.BASE)
+    defs.append(service)
+    service.attrib['name'] = 'SampleService'
+    
+    port = Element("{%s}port" %WSDL.BASE)
+    service.append(port)
+    port.attrib['name'] = "SamplePort"
+    port.attrib['binding'] = binding.get('name')
+    
+    soapaddress = Element("{%s}address" %WSDL.BIND_SOAP)
+    soapaddress.attrib['location'] = 'http://localhost/bla'
+    port.append(soapaddress)
+    
+    return [ElementTree.tostring(defs)]
+    
+   
+    
+"""
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="Counter" targetNamespace="http://counter.com/bindings" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:porttype="http://counter.com" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:import namespace="http://counter.com" location="counter_flattened.wsdl"/>
+  <wsdl:binding name="CounterPortTypeSOAPBinding" type="porttype:CounterPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="createCounter">
+      <soap:operation soapAction="http://counter.com/CounterPortType/createCounterRequest"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+
+
+<wsdl:definitions name="Counter" targetNamespace="http://counter.com/service" 
+xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:binding="http://counter.com/bindings">
+  <wsdl:import namespace="http://counter.com/bindings" location="counter_bindings.wsdl"/>
+  <wsdl:service name="CounterService">
+    <wsdl:port name="CounterPortTypePort" binding="binding:CounterPortTypeSOAPBinding">
+      <soap:address location="http://localhost:8080/wsrf/services/"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
+"""
+    

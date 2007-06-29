@@ -14,17 +14,17 @@ WSDL:  BasicComm.wsdl
 
 class Service(BasicServer):
     def soap_Basic(self, ps):
-        response = BasicServer.soap_Basic(self, ps)
-        response._BasicResult = self.request._BasicIn
-        return response
+        request,response = BasicServer.soap_Basic(self, ps)
+        response._BasicResult = request._BasicIn
+        return request,response
 
     def soap_BasicOneWay(self, ps):
-        response = BasicServer.soap_BasicOneWay(self, ps)
-        if self.request._BasicIn == 'fault':
+        request,response = BasicServer.soap_BasicOneWay(self, ps)
+        if request._BasicIn == 'fault':
             # return a soap:fault
             raise RuntimeError, 'you wanted a fault?'
 
-        return response
+        return request,response
 
 
 if __name__ == "__main__" :

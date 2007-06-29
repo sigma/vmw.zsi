@@ -10,8 +10,8 @@ from ZSI.ServiceContainer import AsServer
 class Service(FinancialService):
 
     def soap_getPV(self, ps):
-        reponse = FinancialService.soap_getPV(self, ps)
-        args = self.request
+        request,response = FinancialService.soap_getPV(self, ps)
+        args = request
 
         # Worker code: Actual present value calculation
         t = 0
@@ -27,8 +27,8 @@ class Service(FinancialService):
         # WARNING specify value eg. SimpleTypeWrapper(1)
         #response = SimpleTypeWrapper(PV)
 
-        response = reponse.__class__(PV)
-        return response
+        response = response.__class__(PV)
+        return request,response
 
 
 

@@ -16,9 +16,7 @@ from ZSI.wstools.logging import setBasicLoggerDEBUG
 from ZSI.generate import containers, utility
 from ZSI.generate.utility import NCName_to_ClassName as NC_to_CN, TextProtect
 from ZSI.generate.wsdl2dispatch import ServiceModuleWriter as ServiceDescription
-from ZSI.generate.wsdl2dispatch import DelAuthServiceModuleWriter as DelAuthServiceDescription
 from ZSI.generate.wsdl2dispatch import WSAServiceModuleWriter as ServiceDescriptionWSA
-from ZSI.generate.wsdl2dispatch import DelAuthWSAServiceModuleWriter as DelAuthServiceDescriptionWSA
 
 
 warnings.filterwarnings('ignore', '', exceptions.UserWarning)

@@ -9,18 +9,18 @@ from DateService_server import simple_Date_Service as _DateService
 
 class Service(_DateService):
     def soap_getCurrentDate(self, ps):
-        response = _DateService.soap_getCurrentDate(self, ps)
+        request,response = _DateService.soap_getCurrentDate(self, ps)
         response.Today = today = response.new_today()
-        self.request._input
+        request._input
         _SetCurrentDate(today)
-        return response
+        return request,response
 
     def soap_getDate(self, ps):
-        response = _DateService.soap_getDate(self, ps)
+        request,response = _DateService.soap_getDate(self, ps)
         response.Day = day = response.new_day()
-        _SetDay(day, offset=self.request.Offset, 
-                            date=self.request.Someday)       
-        return response
+        _SetDay(day, offset=request.Offset, 
+                            date=request.Someday)       
+        return request,response
 
 
 ## ADDED WORKER CODE

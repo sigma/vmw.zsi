@@ -5,7 +5,8 @@
 
 from ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
     EvaluateException, FaultFromFaultMessage, _child_elements, _attrs, _find_arraytype,\
-    _find_type, _get_idstr, _get_postvalue_from_absoluteURI, FaultException, WSActionException
+    _find_type, _get_idstr, _get_postvalue_from_absoluteURI, FaultException, WSActionException,\
+    UNICODE_ENCODING
 from ZSI.auth import AUTH
 from ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
     _get_type_definition
@@ -300,7 +301,7 @@ class _Binding:
         request_uri = _get_postvalue_from_absoluteURI(url)
         self.h.putrequest("POST", request_uri)
         self.h.putheader("Content-Length", "%d" % len(soapdata))
-        self.h.putheader("Content-Type", 'text/xml; charset=utf-8')
+        self.h.putheader("Content-Type", 'text/xml; charset="%s"' %UNICODE_ENCODING)
         self.__addcookies()
 
         for header,value in headers.items():

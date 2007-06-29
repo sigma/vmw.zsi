@@ -17,9 +17,9 @@ WSDL:  ../../samples/Echo/Echo.wsdl
 
 class Service(EchoServer):
     def soap_Echo(self, ps):
-        response = EchoServer.soap_Echo(self, ps)
-        response.EchoResult = self.request.EchoIn
-        return response
+        request,response = EchoServer.soap_Echo(self, ps)
+        response.EchoResult = request.EchoIn
+        return request,response
 
 
 if __name__ == "__main__" :

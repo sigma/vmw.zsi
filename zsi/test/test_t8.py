@@ -73,7 +73,7 @@ class AnyTestCase(unittest.TestCase):
         
         self.assertEqual(type(myInt), type(parsed[0]))
         self.assertEqual(type(myLong), type(parsed[1]))
-        self.assertEqual(type(myStr), type(parsed[2]))
+        self.assertEqual(str, type(parsed[2]))
         self.assertEqual(tuple, type(parsed[3]))
         self.assertEqual(type(myFloat), type(parsed[4]))
 
