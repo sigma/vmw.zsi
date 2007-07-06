@@ -15,6 +15,45 @@ from ZSI import _get_element_nsuri_name, EvaluateException, ParseException,\
 from ZSI.twisted.reverse import DataHandler, ReverseHandlerChain,\
     HandlerChainInterface
 
+"""
+WSGI Module 
+unstable
+
+
+EXAMPLE APPLICATION:
+#
+from EchoServer_client import *
+from ZSI.twisted.wsgi import SOAPApplication, soapmethod, SOAPHandlerChainFactory
+
+class EchoService(SOAPApplication):
+    factory = SOAPHandlerChainFactory
+    wsdl_content = dict(name='', targetNamespace='', imports=(), portType='')
+
+    @soapmethod(EchoRequest.typecode, EchoResponse.typecode, operation='Echo', soapaction='Echo')
+    def soap_Echo(self, request, response, **kw):
+        response.EchoResult = request.EchoIn
+        return request,response
+
+
+def main():
+    from wsgiref.simple_server import make_server, demo_app
+    application = WSGIApplication()
+    httpd = make_server('', 8000, application)
+    application['echo'] = EchoService()
+    httpd.serve_forever()
+
+def main_twisted():
+    from ZSI.twisted.wsgi import test, WSGIApplication
+    app = WSGIApplication()
+    app['echo'] = EchoService()
+    test(app)
+
+if __name__ == '__main__':
+    main_twisted()
+
+"""
+
+
 
 def soapmethod(requesttypecode, responsetypecode, soapaction='', 
                operation=None, **kw):
@@ -116,6 +155,29 @@ class WSGIApplication(dict):
         """
         start_response("404 ERROR", [('Content-Type','text/plain')])
         return ['Move along people, there is nothing to see to hear']
+    
+    def putChild(self, path, resource):
+        """
+        """
+        path = path.split('/')
+        lp = len(path)
+        if lp == 0:
+            raise RuntimeError, 'bad path "%s"' %path
+        
+        if lp == 1:
+            self[path[0]] = resource
+        
+        for i in range(len(path)):
+            if not path[i]: continue
+            break
+        
+        next = self.get(path[i], None)
+        if next is None:
+            next = self[path[i]] = WSGIApplication()
+            
+        next.putChild('/'.join(path[-1:]), resource)
+        
+        
 
 
 class SOAPApplication(WSGIApplication):

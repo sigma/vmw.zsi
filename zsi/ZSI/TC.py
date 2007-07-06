@@ -782,6 +782,7 @@ class QName(String):
         '''
         prefix,localName = SplitQName(text)
         nsdict = ps.GetElementNSdict(elt)
+        prefix = prefix or ''
         try:
             namespaceURI = nsdict[prefix]
         except KeyError, ex:

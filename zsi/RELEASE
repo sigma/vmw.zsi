@@ -123,12 +123,11 @@ methods:
 - Get the LaTeX version of the documentation package and unpack it.
   Create the symlink to .../Python-Doc-VERSION/tools/mkhowto.
 
-- Get them from CVS.  If you have an existing Python checkout, you can
+- Get them from SVN.  If you have an existing Python checkout, you can
   symlink to the .../Doc/tools/mkhowto script in that.  If not, then
   you only need to check out the Doc/ tree::
 
-    cvs -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/python \
-        checkout -d someplace python/dist/src/Doc
+        svn co http://svn.python.org/projects/python/trunk/Doc python-Do
 
   The symlink can then be made to .../someplace/tools/mkhowto.
 
