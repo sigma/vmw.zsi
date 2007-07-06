@@ -219,22 +219,13 @@ def _wsdl2py(options, wsdl):
         client_file = join(options.output_dir, '%s.py' %client_mod)
         append(client_file)
         fd = open(client_file, 'w+')
-
-        # simple naming writes the messages to a separate file
-        if not options.simple_naming:
-            wsm.writeClient(fd)
-        else: # provide a separate file to store messages to.
-            msg_fd = open(join(options.output_dir, 
-                               '%s.py' %(wsm.getMessagesModuleName()), 'w+' ))
-            wsm.writeClient(fd, msg_fd=msg_fd)
-            msg_fd.close()
-            
+        wsm.writeClient(fd)
         fd.close()
     
     types_mod = wsm.getTypesModuleName()
     types_file = join(options.output_dir, '%s.py' %types_mod)
     append(types_file)
-    fd = open( join(options.output_dir, '%s.py' %types_mod), 'w+' )
+    fd = open(types_file, 'w+' )
     wsm.writeTypes(fd)
     fd.close()
     
@@ -242,12 +233,12 @@ def _wsdl2py(options, wsdl):
 
 
 def _wsdl2dispatch(options, wsdl):
-    if options.simple_naming:
-        ServiceDescription.server_module_suffix = '_interface'
-        ServiceDescription.func_aname = lambda instnc,n: TextProtect(n)
-        ServiceDescription.separate_messages = True
-        # use module names rather than their number.
-        utility.namespace_name = lambda cls, ns: utility.Namespace2ModuleName(ns)
+#    if options.simple_naming:
+#        ServiceDescription.server_module_suffix = '_interface'
+#        ServiceDescription.func_aname = lambda instnc,n: TextProtect(n)
+#        ServiceDescription.separate_messages = True
+#        # use module names rather than their number.
+#        utility.namespace_name = lambda cls, ns: utility.Namespace2ModuleName(ns)
 
     if options.address is True:
         ss = ServiceDescriptionWSA()

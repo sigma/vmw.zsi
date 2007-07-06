@@ -306,6 +306,7 @@ class ServiceHeaderContainer(ServiceContainerBase):
     imports = ['\nimport urlparse, types',
               'from ZSI.TCcompound import ComplexType, Struct',
               'from ZSI import client',
+              'from ZSI.schema import GED, GTD',
               'import ZSI'
               ]
     logger = _GetLogger("ServiceHeaderContainer")
@@ -913,12 +914,15 @@ class ServiceDocumentLiteralMessageContainer(ServiceContainerBase,
         
         
         kw = KW.copy()
-        kw['message'],kw['prefix'],kw['typecode'] = \
-            self.content.mName, self.getNSAlias(), element_class_name(self.content.pName)
+        kw.update(dict(message=self.content.mName, nsuri=self.content.ns,
+                       name=self.content.pName))
         
+#        kw['message'],kw['prefix'],kw['typecode'] = \
+#            self.content.mName, self.getNSAlias(), element_class_name(self.content.pName)
+#        
         # These messsages are just global element declarations
-        self.writeArray(['%(message)s = %(prefix)s.%(typecode)s().pyclass' %kw])
-
+#        self.writeArray(['%(message)s = %(prefix)s.%(typecode)s().pyclass' %kw])
+        self.writeArray(['%(message)s = GED("%(nsuri)s", "%(name)s").pyclass' %kw])
 
 class ServiceRPCEncodedMessageContainer(ServiceContainerBase, MessageContainerInterface):
     logger = _GetLogger("ServiceRPCEncodedMessageContainer")

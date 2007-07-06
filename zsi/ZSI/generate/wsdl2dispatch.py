@@ -2,13 +2,14 @@
 from cStringIO import StringIO
 import ZSI, string, sys, getopt, urlparse, types, warnings
 from ZSI.wstools import WSDLTools
-from ZSI.generate.wsdl2python import WriteServiceModule, MessageTypecodeContainer
 from ZSI.ServiceContainer import ServiceSOAPBinding, SimpleWSResource, WSAResource
-from ZSI.generate.utility import TextProtect, GetModuleBaseNameFromWSDL, \
-    NCName_to_ClassName, GetPartsSubNames, TextProtectAttributeName
-from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
-from ZSI.generate.wsdl2python import SchemaDescription
 
+from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
+from utility import TextProtect, GetModuleBaseNameFromWSDL, \
+    NCName_to_ClassName, GetPartsSubNames, TextProtectAttributeName
+from containers import BindingDescription
+from wsdl2python import MessageWriter, WriteServiceModule,\
+    MessageTypecodeContainer, SchemaDescription
 
 # Split last token
 rsplit = lambda x,sep,: (x[:x.rfind(sep)], x[x.rfind(sep)+1:],)
@@ -54,9 +55,10 @@ class ServiceModuleWriter:
 
         self.header  = None
         self.imports  = None
+        self.messages = []
         self._services = None
-        self.client_module_path = None
-        self.client_module_name = None
+        self.types_module_path = None
+        self.types_module_name = None
         self.messages_module_name = None
 
     def _getBaseClassName(self):
@@ -82,6 +84,7 @@ class ServiceModuleWriter:
     def reset(self):
         self.header  = StringIO()
         self.imports  = StringIO()
+        self.message = []
         self._services = {}
 
     def getIndent(self, level=1):
@@ -100,28 +103,31 @@ class ServiceModuleWriter:
         '''
         return NCName_to_ClassName(name)
 
-    def setClientModuleName(self, name):
-        self.client_module_name = name
+    def setTypesModuleName(self, name):
+        self.types_module_name = name
 
-    def getClientModuleName(self):
+    # Backwards compatibility
+    setClientModuleName = setTypesModuleName
+    
+    def getTypesModuleName(self):
         '''return module name.
         '''
         assert self.wsdl is not None, 'initialize, call fromWSDL'
-        if self.client_module_name is not None:
-            return self.client_module_name
+        if self.types_module_name is not None:
+            return self.types_module_name
 
         wsm = WriteServiceModule(self.wsdl)
-        return wsm.getClientModuleName()
+        return wsm.getTypesModuleName()
 
-    def getMessagesModuleName(self):
-        '''return module name.
-        '''
-        assert self.wsdl is not None, 'initialize, call fromWSDL'
-        if self.messages_module_name is not None:
-            return self.messages_module_name
-
-        wsm = WriteServiceModule(self.wsdl)
-        return wsm.getMessagesModuleName()
+#    def getMessagesModuleName(self):
+#        '''return module name.
+#        '''
+#        assert self.wsdl is not None, 'initialize, call fromWSDL'
+#        if self.messages_module_name is not None:
+#            return self.messages_module_name
+#
+#        wsm = WriteServiceModule(self.wsdl)
+#        return wsm.getMessagesModuleName()
     
     def getServiceModuleName(self):
         '''return module name.
@@ -134,14 +140,16 @@ class ServiceModuleWriter:
             return name
         return '%s%s' %(name, self.server_module_suffix)
 
-    def getClientModulePath(self):
-        return self.client_module_path
-
-    def setClientModulePath(self, path):
+    def getTypesModulePath(self):
+        return self.types_module_path
+    getClientModulePath = getTypesModulePath
+    
+    def setTypesModulePath(self, path):
         '''setup module path to where client module before calling fromWSDL.
         '''
-        self.client_module_path = path
-
+        self.types_module_path = path
+    setClientModulePath = setTypesModulePath
+    
     def setUpClassDef(self, service):
         '''set class definition and class variables.
         service -- ServiceDescription instance
@@ -162,19 +170,27 @@ class ServiceModuleWriter:
     def setUpImports(self):
         '''set import statements
         '''
-        path = self.getClientModulePath()
         i = self.imports
-        if path is None:
-            if self.separate_messages:
-                print >>i, 'from %s import *' %self.getMessagesModuleName()
-            else:
-                print >>i, 'from %s import *' %self.getClientModuleName()
-        else:
-            if self.separate_messages:
-                print >>i, 'from %s.%s import *' %(path, self.getMessagesModuleName())
-            else:
-                print >>i, 'from %s.%s import *' %(path, self.getClientModuleName())
+        print >>i, 'from ZSI.schema import GED, GTD'
+        print >>i, 'from ZSI.TCcompound import ComplexType, Struct'
+#        if path is None:
+#            if self.separate_messages:
+#                print >>i, 'from %s import *' %self.getMessagesModuleName()
+#            else:
+#                print >>i, 'from %s import *' %self.getClientModuleName()
+#        else:
+#            if self.separate_messages:
+#                print >>i, 'from %s.%s import *' %(path, self.getMessagesModuleName())
+#            else:
+#                print >>i, 'from %s.%s import *' %(path, self.getClientModuleName())
 
+        module = self.getTypesModuleName()
+        package = self.getTypesModulePath()
+        if package:
+            module = '%s.%s' %(package, module)
+            
+        print >>i, 'from %s import *' %(module)
+            
         mod = self._getBaseClassModule()
         name = self._getBaseClassName()
         if mod is None and name is None:
@@ -267,11 +283,13 @@ class ServiceModuleWriter:
         return
 
     def setUpHeader(self):
-        print >>self.header, '##################################################'
-        print >>self.header, '# %s.py' %self.getServiceModuleName()
-        print >>self.header, '#      Generated by %s' %(self.__class__)
+        print >>self.header, '#'*50
+        print >>self.header, '# file: %s.py' %self.getServiceModuleName()
         print >>self.header, '#'
-        print >>self.header, '##################################################'
+        print >>self.header, '# skeleton generated by "%s"' %self.__class__
+        print >>self.header, '#      %s' %' '.join(sys.argv)
+        print >>self.header, '#'
+        print >>self.header, '#'*50
 
     def write(self, fd=sys.stdout):
         '''write out to file descriptor, 
@@ -279,6 +297,14 @@ class ServiceModuleWriter:
         '''
         print >>fd, self.header.getvalue()
         print >>fd, self.imports.getvalue()
+        
+        print >>fd, '# Messages ',
+        for m in self.messages:
+            print >>fd, m
+        
+        print >>fd, ''
+        print >>fd, ''
+        print >>fd, '# Service Skeletons'
         for k,v in self._services.items():
             print >>fd, v.classdef.getvalue()
             print >>fd, v.initdef.getvalue()
@@ -293,16 +319,32 @@ class ServiceModuleWriter:
 
         if len(wsdl.services) == 0:
             raise WsdlGeneratorError, 'No service defined'
-      
+            
         self.reset() 
         self.wsdl = wsdl
         self.setUpHeader()
         self.setUpImports()
+                
         for service in wsdl.services:
             sd = self._service_class(service.name)
             self._services[service.name] = sd
 
             for port in service.ports:
+                desc = BindingDescription(wsdl=wsdl)
+                try:
+                    desc.setUp(port.getBinding())
+                except Wsdl2PythonError, ex:
+                    continue
+                
+                for soc in desc.operations:
+                    if not soc.hasInput(): continue
+                    
+                    self.messages.append(MessageWriter())
+                    self.messages[-1].setUp(soc, port, input=True)
+                    if soc.hasOutput():
+                        self.messages.append(MessageWriter())
+                        self.messages[-1].setUp(soc, port, input=False)
+                
                 for e in port.extensions:
                     if isinstance(e, WSDLTools.SoapAddressBinding):
                         sd.location = e.location
@@ -346,10 +388,12 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
         '''use soapAction dict for WS-Action input, setup wsAction
         dict for grabbing WS-Action output values.
         '''
-        assert isinstance(service, WSDLTools.Service), 'expecting WSDLTools.Service instance'
+        assert isinstance(service, WSDLTools.Service), \
+            'expecting WSDLTools.Service instance'
 
         s = self._services[service.name].classdef
-        print >>s, 'class %s(%s):' %(self.getClassName(service.name), self._getBaseClassName())
+        print >>s, 'class %s(%s):' %(self.getClassName(service.name), 
+                                     self._getBaseClassName())
         print >>s, '%ssoapAction = {}' % self.getIndent(level=1)
         print >>s, '%swsAction = {}' % self.getIndent(level=1)
         print >>s, '%sroot = {}' % self.getIndent(level=1)

@@ -13,6 +13,7 @@ import test_list
 import test_TCtimes
 import test_URI
 import test_rfc2617
+import test_QName
 
 def makeTestSuite():
     return unittest.TestSuite(

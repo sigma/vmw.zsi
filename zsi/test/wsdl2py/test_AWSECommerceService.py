@@ -42,7 +42,7 @@ def all():
     return suite
 
 
-TargetNamespace = "http://webservices.amazon.com/AWSECommerceService/2007-05-14"
+TargetNamespace = "http://webservices.amazon.com/AWSECommerceService/2007-06-13"
 class AmazonTestCase(ServiceTestCase):
     """Test case for Amazon ECommerce Web service
     """
