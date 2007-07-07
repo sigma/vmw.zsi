@@ -115,7 +115,7 @@ def wsdl2py(args=None):
                   help="map element names directly to python attributes")
     
     op.add_option("-p", "--pydoc",
-                  action="store", dest="pydoc", default=False,
+                  action="store_true", dest="pydoc", default=False,
                   help="top-level directory for pydoc documentation.")
     
     
