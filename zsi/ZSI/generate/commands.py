@@ -114,6 +114,11 @@ def wsdl2py(args=None):
                   action="store_true", dest="simple_naming", default=False,
                   help="map element names directly to python attributes")
     
+    op.add_option("-p", "--pydoc",
+                  action="store", dest="pydoc", default=False,
+                  help="top-level directory for pydoc documentation.")
+    
+    
     is_cmdline = args is None
     if is_cmdline:
         (options, args) = op.parse_args()
@@ -149,6 +154,10 @@ def wsdl2py(args=None):
 
     files = _wsdl2py(options, wsdl)
     files.append(_wsdl2dispatch(options, wsdl))
+    
+    if getattr(options, 'pydoc', False):
+        _writepydoc(os.path.join('docs', 'API'), *files)
+        
     if is_cmdline:
         return
     
@@ -266,4 +275,257 @@ class _XMLSchemaAdapter:
         self.name = '_'.join(split(location)[-1].split('.'))
         self.types = {schema.targetNamespace:schema}
         
+        
+        
+        
+import os, pydoc, sys, warnings, inspect
+import  os.path
+
+from distutils import log
+from distutils.command.build_py import build_py
+from distutils.util import convert_path
+
+#from setuptools import find_packages
+#from setuptools import Command
+from ZSI.schema import ElementDeclaration, TypeDefinition
+#from pyGridWare.utility.generate.Modules import NR
+#from pyGridWare.utility.generate.Modules import CLIENT, TYPES
+
+#def find_packages_modules(where='.'):
+#    #pack,mod,mod_file 
+#    """Return a list all Python packages found within directory 'where'
+#    """
+#    out = []
+#    stack=[(convert_path(where), '')]
+#    while stack:
+#        where,prefix = stack.pop(0)
+#        for name in os.listdir(where):
+#            fn = os.path.join(where,name)
+#            #if (os.path.isdir(fn) and
+#            #    os.path.isfile(os.path.join(fn,'__init__.py'))
+#            #):
+#            #    out.append(prefix+name); stack.append((fn,prefix+name+'.'))
+#            if (os.path.isdir(fn) and
+#                os.path.isfile(os.path.join(fn,'__init__.py'))):
+#                stack.append((fn,prefix+name+'.'))
+#                continue
+#
+#            if name == '__init__.py' or not name.endswith('.py'): 
+#                continue
+#
+#            out.append((prefix, name.split('.py')[0])) 
+#            
+#    return out
+
+
+def _writedoc(doc, thing, forceload=0):
+    """Write HTML documentation to a file in the current directory.
+    """
+    try:
+        object, name = pydoc.resolve(thing, forceload)
+        page = pydoc.html.page(pydoc.describe(object), pydoc.html.document(object, name))
+        fname = os.path.join(doc, name + '.html')
+        file = open(fname, 'w')
+        file.write(page)
+        file.close()
+    except (ImportError, pydoc.ErrorDuringImport), value:
+        traceback.print_exc(sys.stderr)
+    else:
+        return name + '.html'
+        
+
+def _writeclientdoc(doc, thing, forceload=0):
+    """Write HTML documentation to a file in the current directory.
+    """
+    docmodule = pydoc.HTMLDoc.docmodule
+    def strongarm(self, object, name=None, mod=None, *ignored):
+        result = docmodule(self, object, name, mod, *ignored)
+
+        # Grab all the aliases to pyclasses and create links.
+        nonmembers = []
+        push = nonmembers.append
+        for k,v in inspect.getmembers(object, inspect.isclass):
+            if inspect.getmodule(v) is not object and getattr(v,'typecode',None) is not None:
+                push('<a href="%s.html">%s</a>: pyclass alias<br/>' %(v.__name__,k))
+
+        result += self.bigsection('Aliases', '#ffffff', '#eeaa77', ''.join(nonmembers))
+        return result
+
+    pydoc.HTMLDoc.docmodule = strongarm
+    try:
+        object, name = pydoc.resolve(thing, forceload)
+        page = pydoc.html.page(pydoc.describe(object), pydoc.html.document(object, name))
+        name = os.path.join(doc, name + '.html')
+        file = open(name, 'w')
+        file.write(page)
+        file.close()
+    except (ImportError, pydoc.ErrorDuringImport), value:
+        log.debug(str(value))
+
+    pydoc.HTMLDoc.docmodule = docmodule
+
+def _writetypesdoc(doc, thing, forceload=0):
+    """Write HTML documentation to a file in the current directory.
+    """
+    try:
+        object, name = pydoc.resolve(thing, forceload)
+        name = os.path.join(doc, name + '.html')
+    except (ImportError, pydoc.ErrorDuringImport), value:
+        log.debug(str(value))
+        return
+        
+    # inner classes
+    cdict = {}
+    fdict = {}
+    elements_dict = {}
+    types_dict = {}
+    for kname,klass in inspect.getmembers(thing, inspect.isclass):
+        if thing is not inspect.getmodule(klass):
+            continue
+        
+        cdict[kname] = inspect.getmembers(klass, inspect.isclass)
+        for iname,iklass in cdict[kname]:
+            key = (kname,iname)
+            fdict[key] = _writedoc(doc, iklass)
+            if issubclass(iklass, ElementDeclaration):
+                
+                try:
+                    typecode = iklass()
+                except (AttributeError,RuntimeError), ex:
+                    elements_dict[iname] = _writebrokedoc(doc, ex, iname)
+                    continue
+
+                elements_dict[iname] = None
+                if typecode.pyclass is not None:                        
+                    elements_dict[iname] = _writedoc(doc, typecode.pyclass)
+
+                continue
+
+            if issubclass(iklass, TypeDefinition):
+                try:
+                    typecode = iklass(None)
+                except (AttributeError,RuntimeError), ex:
+                    types_dict[iname] = _writebrokedoc(doc, ex, iname)
+                    continue
+
+                types_dict[iname] = None
+                if typecode.pyclass is not None:
+                    types_dict[iname] = _writedoc(doc, typecode.pyclass)
+
+                continue
+                        
+                
+    def strongarm(self, object, name=None, mod=None, funcs={}, classes={}, *ignored):
+        """Produce HTML documentation for a class object."""
+        realname = object.__name__
+        name = name or realname
+        bases = object.__bases__
+        object, name = pydoc.resolve(object, forceload)
+        contents = []
+        push = contents.append
+        if name == realname:
+            title = '<a name="%s">class <strong>%s</strong></a>' % (
+                name, realname)
+        else:   
+            title = '<strong>%s</strong> = <a name="%s">class %s</a>' % (
+                name, name, realname)
+                
+        mdict = {}
+        if bases:
+            parents = []
+            for base in bases:
+                parents.append(self.classlink(base, object.__module__))
+            title = title + '(%s)' % pydoc.join(parents, ', ')
+            
+        doc = self.markup(pydoc.getdoc(object), self.preformat, funcs, classes, mdict)
+        doc = doc and '<tt>%s<br>&nbsp;</tt>' % doc
+        for iname,iclass in cdict[name]:
+            fname = fdict[(name,iname)]
+
+            if elements_dict.has_key(iname):
+                push('class <a href="%s">%s</a>: element declaration typecode<br/>'\
+                    %(fname,iname))
+                pyclass = elements_dict[iname]
+                if pyclass is not None:
+                    push('<ul>instance attributes:')
+                    push('<li><a href="%s">pyclass</a>: instances serializable to XML<br/></li>'\
+                        %elements_dict[iname])
+                    push('</ul>')
+            elif types_dict.has_key(iname):
+                push('class <a href="%s">%s</a>: type definition typecode<br/>' %(fname,iname))
+                pyclass = types_dict[iname]
+                if pyclass is not None:
+                    push('<ul>instance attributes:')
+                    push('<li><a href="%s">pyclass</a>: instances serializable to XML<br/></li>'\
+                          %types_dict[iname])
+                    push('</ul>')
+            else:
+                push('class <a href="%s">%s</a>: TODO not sure what this is<br/>' %(fname,iname))
+                
+        contents = ''.join(contents)
+        return self.section(title, '#000000', '#ffc8d8', contents, 3, doc) 
+    
+    doclass = pydoc.HTMLDoc.docclass
+    pydoc.HTMLDoc.docclass = strongarm
+            
+    try:
+        page = pydoc.html.page(pydoc.describe(object), pydoc.html.document(object, name))
+        file = open(name, 'w')
+        file.write(page)
+        file.close()
+    except (ImportError, pydoc.ErrorDuringImport), value:
+        log.debug(str(value))
+        
+    pydoc.HTMLDoc.docclass = doclass
+    
+
+        
+def _writebrokedoc(doc, ex, name, forceload=0):
+    try:
+        fname = os.path.join(doc, name + '.html')
+        page = pydoc.html.page(pydoc.describe(ex), pydoc.html.document(str(ex), fname))
+        file = open(fname, 'w')
+        file.write(page)
+        file.close()
+    except (ImportError, pydoc.ErrorDuringImport), value:
+        log.debug(str(value))
+        
+    return name + '.html'
+
+def _writepydoc(doc, *args):
+    """create pydoc html pages
+    doc -- destination directory for documents
+    *args -- modules run thru pydoc
+    """
+    ok = True
+    if not os.path.isdir(doc):
+        os.makedirs(doc)
+    
+    if os.path.curdir not in sys.path:
+        sys.path.append(os.path.curdir)
+
+    for f in args:
+        if f.startswith('./'): f = f[2:]
+        name = os.path.sep.join(f.strip('.py').split(os.path.sep))
+        try:
+            e = __import__(name)
+        except Exception,ex:
+            raise
+#            _writebrokedoc(doc, ex, name)
+#            continue
+   
+        if name.endswith('_client'):
+            _writeclientdoc(doc, e)
+            continue
+    
+        if name.endswith('_types'):
+            _writetypesdoc(doc, e)
+            continue
+  
+        try: 
+            _writedoc(doc, e)
+        except IndexError,ex:
+            _writebrokedoc(doc, ex, name)
+            continue
+
 
