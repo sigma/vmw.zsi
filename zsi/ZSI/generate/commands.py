@@ -150,10 +150,10 @@ def wsdl2py(args=None):
   
     if isinstance(wsdl, XMLSchema.XMLSchema): 
         wsdl.location = location
-        return _wsdl2py(options, wsdl)
-
-    files = _wsdl2py(options, wsdl)
-    files.append(_wsdl2dispatch(options, wsdl))
+        files = _wsdl2py(options, wsdl)
+    else:
+        files = _wsdl2py(options, wsdl)
+        files.append(_wsdl2dispatch(options, wsdl))
     
     if getattr(options, 'pydoc', False):
         _writepydoc(os.path.join('docs', 'API'), *files)

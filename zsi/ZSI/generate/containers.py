@@ -586,10 +586,9 @@ class ServiceOperationContainer(ServiceContainerBase):
         elif self.soap_input_headers:
             method = [
                 '%s# op: %s' % (ID1, self.name),
-                '%sdef %s(self, request, soapheaders=()):' % (ID1, self.name),
+                '%sdef %s(self, request, soapheaders=(), **kw):' % (ID1, self.name),
                 '%s%s' % (ID2, tCheck),
                 '%sraise TypeError, "%%s incorrect request type" %% (%s)' %(ID3, 'request.__class__'),
-                '%s%s' % (ID2, kwstring),
                 '%s%s' % (ID2, wsactionIn),
                 '%s# TODO: Check soapheaders' % (ID2),
                 '%sself.binding.Send(None, None, request, soapaction="%s", soapheaders=soapheaders, %s'\
@@ -598,10 +597,9 @@ class ServiceOperationContainer(ServiceContainerBase):
         else:
             method = [
                 '%s# op: %s' % (ID1, self.name),
-                '%sdef %s(self, request):' % (ID1, self.name),
+                '%sdef %s(self, request, **kw):' % (ID1, self.name),
                 '%s%s' % (ID2, tCheck),
                 '%sraise TypeError, "%%s incorrect request type" %% (%s)' %(ID3, 'request.__class__'),
-                '%s%s' % (ID2, kwstring),
                 '%s%s' % (ID2, wsactionIn),
                 '%sself.binding.Send(None, None, request, soapaction="%s", %s'\
                 %(ID2, self.soapaction, bindArgs),
