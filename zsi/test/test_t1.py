@@ -27,6 +27,12 @@ class t1TestCase(unittest.TestCase):
         self.goodTests.sort(lambda a,b: cmp(a[0], b[0]))
         self.badTests.sort(lambda a,b: cmp(a[0], b[0]))
 
+    def check_bug1724481(self):
+        # [ 1724481 ] Error handling of enum serialization broken"
+        enum = TC.Enumeration(['Red', 'Blue', 'Green'], 'color')
+        sw = SoapWriter()
+        self.assertRaises(EvaluateException, sw.serialize,'ddd', enum)
+
     def checkt1(self):
         for key,val in self.badTests:
             print "\n", "." * 60, key

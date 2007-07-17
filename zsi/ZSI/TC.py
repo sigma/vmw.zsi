@@ -917,7 +917,7 @@ class Enumeration(String):
     def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
         if pyobj not in self.choices:
             raise EvaluateException('Value not in enumeration list',
-                    ps.Backtrace(elt))
+                    sw.Backtrace(elt))
         String.serialize(self, elt, sw, pyobj, name=name, orig=orig, **kw)
 
 
