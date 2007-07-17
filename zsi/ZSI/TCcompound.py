@@ -19,6 +19,7 @@ from ZSI.wstools.Namespaces import SCHEMA, SOAP
 from ZSI.wstools.Utility import SplitQName
 from ZSI.wstools.logging import getLogger as _GetLogger
 import re, types
+from copy import copy as _copy
 
 _find_arrayoffset = lambda E: E.getAttributeNS(SOAP.ENC, "offset")
 _find_arrayposition = lambda E: E.getAttributeNS(SOAP.ENC, "position")
@@ -74,12 +75,14 @@ def _get_type_or_substitute(typecode, pyobj, sw, elt):
             'failed to serialize substitute %s for %s,  not derivation: %s' %
              (sub, typecode, sw.Backtrace(elt),))
 
-    # Make our substitution type match the elements facets
+    # Make our substitution type match the elements facets,
+    # since typecode is created for a single existing pyobj
+    # some facets are irrelevant.
+    sub = _copy(sub)
     sub.nspname = typecode.nspname
     sub.pname = typecode.pname
     sub.aname = typecode.aname
-    sub.minOccurs = 1
-    sub.maxOccurs = 1
+    sub.minOccurs = sub.maxOccurs = 1
     return sub
 
 
