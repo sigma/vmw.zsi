@@ -37,12 +37,6 @@ def SetPyclassMetaclass(option, opt, value, parser, *args, **kwargs):
             'from %(module)s import %(metaclass)s' %kwargs
             )
 
-def SetUpTwistedClient(option, opt, value, parser, *args, **kwargs):
-    from ZSI.generate.containers import ServiceHeaderContainer
-    ServiceHeaderContainer.imports.remove('from ZSI import client')
-    ServiceHeaderContainer.imports.append('from ZSI.twisted import client')
-    
-    
 def SetUpLazyEvaluation(option, opt, value, parser, *args, **kwargs):
     from ZSI.generate.containers import TypecodeContainerBase
     TypecodeContainerBase.lazy = True
@@ -101,9 +95,7 @@ def wsdl2py(args=None):
     
     # Use Twisted
     op.add_option("-w", "--twisted",
-                  action="callback", callback=SetUpTwistedClient, 
-                  callback_kwargs={'module':'ZSI.generate.pyclass', 
-                      'metaclass':'pyclass_type'},
+                  action="store_true", dest='twisted', default=False,
                   help="generate a twisted.web client/server, dependencies python>=2.4, Twisted>=2.0.0, TwistedWeb>=0.5.0")
     
     op.add_option("-o", "--output-dir",
@@ -164,46 +156,56 @@ def wsdl2py(args=None):
     return files
     
 
-def wsdl2dispatch(args=None):
-    """Deprecated: wsdl2py now generates everything
-    A utility for automatically generating service skeleton code from a wsdl
-    definition.
-    """
-    op = optparse.OptionParser()
-    op.add_option("-a", "--address",
-                  action="store_true", dest="address", default=False,
-                  help="ws-addressing support, must include WS-Addressing schema.")
-    op.add_option("-d", "--debug",
-                  action="callback", callback=SetDebugCallback,
-                  help="debug output")
-    op.add_option("-t", "--types",
-                  action="store", dest="types", default=None, type="string",
-                  help="Write generated files to OUTPUT_DIR")
-    op.add_option("-o", "--output-dir",
-                  action="store", dest="output_dir", default=".", type="string",
-                  help="file to load types from")
-    op.add_option("-s", "--simple-naming",
-                  action="store_true", dest="simple_naming", default=False,
-                  help="Simplify generated naming.")
-    
-    if args is None:
-        (options, args) = op.parse_args()
-    else:
-        (options, args) = op.parse_args(args)
-        
-    if len(args) != 1:
-        print>>sys.stderr, 'Expecting a file/url as argument (WSDL).'
-        sys.exit(os.EX_USAGE)
-        
-    reader = WSDLTools.WSDLReader()
-    if isfile(args[0]):
-        _wsdl2dispatch(options, reader.loadFromFile(args[0]))
-        return
-
-    _wsdl2dispatch(options, reader.loadFromURL(args[0]))
+#def wsdl2dispatch(args=None):
+#    """Deprecated: wsdl2py now generates everything
+#    A utility for automatically generating service skeleton code from a wsdl
+#    definition.
+#    """
+#    op = optparse.OptionParser()
+#    op.add_option("-a", "--address",
+#                  action="store_true", dest="address", default=False,
+#                  help="ws-addressing support, must include WS-Addressing schema.")
+#    op.add_option("-d", "--debug",
+#                  action="callback", callback=SetDebugCallback,
+#                  help="debug output")
+#    op.add_option("-t", "--types",
+#                  action="store", dest="types", default=None, type="string",
+#                  help="Write generated files to OUTPUT_DIR")
+#    op.add_option("-o", "--output-dir",
+#                  action="store", dest="output_dir", default=".", type="string",
+#                  help="file to load types from")
+#    op.add_option("-s", "--simple-naming",
+#                  action="store_true", dest="simple_naming", default=False,
+#                  help="Simplify generated naming.")
+#    
+#    if args is None:
+#        (options, args) = op.parse_args()
+#    else:
+#        (options, args) = op.parse_args(args)
+#        
+#    if len(args) != 1:
+#        print>>sys.stderr, 'Expecting a file/url as argument (WSDL).'
+#        sys.exit(os.EX_USAGE)
+#        
+#    reader = WSDLTools.WSDLReader()
+#    if isfile(args[0]):
+#        _wsdl2dispatch(options, reader.loadFromFile(args[0]))
+#        return
+#
+#    _wsdl2dispatch(options, reader.loadFromURL(args[0]))
 
 
 def _wsdl2py(options, wsdl):
+
+    if options.twisted:
+        from ZSI.generate.containers import ServiceHeaderContainer
+        try:
+            ServiceHeaderContainer.imports.remove('from ZSI import client')
+        except ValueError:
+            pass
+        ServiceHeaderContainer.imports.append('from ZSI.twisted import client')
+
+
     if options.simple_naming:
         # Use a different client suffix
         # WriteServiceModule.client_module_suffix = "_client"
@@ -242,17 +244,21 @@ def _wsdl2py(options, wsdl):
 
 
 def _wsdl2dispatch(options, wsdl):
-#    if options.simple_naming:
-#        ServiceDescription.server_module_suffix = '_interface'
-#        ServiceDescription.func_aname = lambda instnc,n: TextProtect(n)
-#        ServiceDescription.separate_messages = True
-#        # use module names rather than their number.
-#        utility.namespace_name = lambda cls, ns: utility.Namespace2ModuleName(ns)
-
-    if options.address is True:
-        ss = ServiceDescriptionWSA()
+    """TOOD: Remove ServiceContainer stuff, and replace with WSGI.
+    """
+    kw = dict()
+    if options.twisted:
+        from ZSI.twisted.WSresource import WSResource
+        kw['base'] = WSResource
+        ss = ServiceDescription(**kw)
+        if options.address is True:
+            raise RuntimeError, 'WS-Address w/twisted currently unsupported, edit the "factory" attribute by hand'
     else:
-        ss = ServiceDescription()
+        # TODO: make all this handler arch
+        if options.address is True:
+            ss = ServiceDescriptionWSA()
+        else:
+            ss = ServiceDescription(**kw)
 
     ss.fromWSDL(wsdl)
     file_name = ss.getServiceModuleName()+'.py'

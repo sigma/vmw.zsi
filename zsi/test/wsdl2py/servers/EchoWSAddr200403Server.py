@@ -19,13 +19,13 @@ EndpointReferenceType = GTD('http://schemas.xmlsoap.org/ws/2004/03/addressing','
 
 
 class WSAService(EchoServer):
-    def wsa_Echo(self, ps, addr):
-        request,response = EchoServer.wsa_Echo(self, ps, addr)
+    def wsa_Echo(self, ps, address):
+        request,response = EchoServer.wsa_Echo(self, ps, address)
         response.EchoResult = request.EchoIn
 
         if isinstance(response.EchoResult, EndpointReferenceType):
             addr1 = response.EchoResult
-            for a in addr.Any:
+            for a in address.Any:
                 if a not in addr1.ReferenceProperties.Any:
                     raise RuntimeError, 'EPRs dont match'
 

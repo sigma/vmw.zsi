@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import inspect
 from cStringIO import StringIO
 import ZSI, string, sys, getopt, urlparse, types, warnings
 from ZSI.wstools import WSDLTools
@@ -45,11 +46,16 @@ class ServiceModuleWriter:
         '''
         parameters:
             base -- either a class definition, or a str representing a qualified 
-                class name.
+                class name (eg. module.name.classname)
             prefix -- method prefix.
         '''
+        if inspect.isclass(base):
+            self.base_class_name = base.__name__
+            self.base_module_name = inspect.getmodule(base).__name__
+        else:
+            self.base_module_name, self.base_class_name  = base.rsplit('.', 1)
+
         self.wsdl = None
-        self.base_class = base
         self.method_prefix = prefix
         self._service_class = SOAPService
 
@@ -60,26 +66,6 @@ class ServiceModuleWriter:
         self.types_module_path = None
         self.types_module_name = None
         self.messages_module_name = None
-
-    def _getBaseClassName(self):
-        '''return base class name, do not override.
-        '''
-        if self.base_class is None: 
-            return
-        if type(self.base_class) is types.ClassType:
-            return self.base_class.__name__
-        return rsplit(self.base_class, '.')[-1]
-
-    def _getBaseClassModule(self):
-        '''return base class module, do not override.
-        '''
-        if self.base_class is None: 
-            return
-        if type(self.base_class) is types.ClassType:
-            return self.base_class.__module__
-        if self.base_class.find('.') >= 0:
-            return rsplit(self.base_class, '.')[0]
-        return
 
     def reset(self):
         self.header  = StringIO()
@@ -119,16 +105,6 @@ class ServiceModuleWriter:
         wsm = WriteServiceModule(self.wsdl)
         return wsm.getTypesModuleName()
 
-#    def getMessagesModuleName(self):
-#        '''return module name.
-#        '''
-#        assert self.wsdl is not None, 'initialize, call fromWSDL'
-#        if self.messages_module_name is not None:
-#            return self.messages_module_name
-#
-#        wsm = WriteServiceModule(self.wsdl)
-#        return wsm.getMessagesModuleName()
-    
     def getServiceModuleName(self):
         '''return module name.
         '''
@@ -158,11 +134,8 @@ class ServiceModuleWriter:
             'expecting WSDLTools.Service instance.'
 
         s = self._services[service.name].classdef
-        base = self._getBaseClassName()
-        if base is None:
-             print >>s, 'class %s:' %(self.getClassName(service.name))
-        else:
-             print >>s, 'class %s(%s):' %(self.getClassName(service.name), base)
+
+        print >>s, 'class %s(%s):' %(self.getClassName(service.name), self.base_class_name)
 
         print >>s, '%ssoapAction = {}' % self.getIndent(level=1)
         print >>s, '%sroot = {}' % self.getIndent(level=1)
@@ -173,16 +146,6 @@ class ServiceModuleWriter:
         i = self.imports
         print >>i, 'from ZSI.schema import GED, GTD'
         print >>i, 'from ZSI.TCcompound import ComplexType, Struct'
-#        if path is None:
-#            if self.separate_messages:
-#                print >>i, 'from %s import *' %self.getMessagesModuleName()
-#            else:
-#                print >>i, 'from %s import *' %self.getClientModuleName()
-#        else:
-#            if self.separate_messages:
-#                print >>i, 'from %s.%s import *' %(path, self.getMessagesModuleName())
-#            else:
-#                print >>i, 'from %s.%s import *' %(path, self.getClientModuleName())
 
         module = self.getTypesModuleName()
         package = self.getTypesModulePath()
@@ -191,14 +154,7 @@ class ServiceModuleWriter:
             
         print >>i, 'from %s import *' %(module)
             
-        mod = self._getBaseClassModule()
-        name = self._getBaseClassName()
-        if mod is None and name is None:
-            pass
-        elif mod is None:
-            print >>i, 'import %s' %name
-        else:
-            print >>i, 'from %s import %s' %(mod, name)
+        print >>i, 'from %s import %s' %(self.base_module_name, self.base_class_name)
 
     def setUpInitDef(self, service):
         '''set __init__ function
@@ -215,9 +171,13 @@ class ServiceModuleWriter:
         else:
             print >>d, '%sdef __init__(self, post, **kw):' %self.getIndent(level=1)
 
-        base =  self._getBaseClassName()
-        if base is not None:
-            print >>d, '%s%s.__init__(self, post)' %(self.getIndent(level=2), base)
+        # Require POST initialization value for test implementation
+        if self.base_module_name == inspect.getmodule(ServiceSOAPBinding).__name__:
+            print >>d, '%s%s.__init__(self, post)' %(self.getIndent(level=2), self.base_class_name)
+            return 
+
+        # No POST initialization value, obtained from HTTP Request in twisted or wsgi
+        print >>d, '%s%s.__init__(self)' %(self.getIndent(level=2), self.base_class_name)
 
     def mangle(self, name):
         return TextProtect(name)
@@ -261,7 +221,7 @@ class ServiceModuleWriter:
             method_name = self.getMethodName(op.name)
 
             m = sd.newMethod()
-            print >>m, '%sdef %s(self, ps):' %(self.getIndent(level=1), method_name)
+            print >>m, '%sdef %s(self, ps, **kw):' %(self.getIndent(level=1), method_name)
             if msgin is not None:
                 print >>m, '%srequest = ps.Parse(%s.typecode)' %(self.getIndent(level=2), msgin_name)
             else:
@@ -392,8 +352,7 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
             'expecting WSDLTools.Service instance'
 
         s = self._services[service.name].classdef
-        print >>s, 'class %s(%s):' %(self.getClassName(service.name), 
-                                     self._getBaseClassName())
+        print >>s, 'class %s(%s):' %(self.getClassName(service.name), self.base_class_name)
         print >>s, '%ssoapAction = {}' % self.getIndent(level=1)
         print >>s, '%swsAction = {}' % self.getIndent(level=1)
         print >>s, '%sroot = {}' % self.getIndent(level=1)

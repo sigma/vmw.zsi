@@ -147,9 +147,6 @@ def AsServer(port=80, services=()):
     '''
     address = ('', port)
     sc = ServiceContainer(address, services)
-    #for service in services:
-    #    path = service.getPost()
-    #    sc.setNode(service, path)
     sc.serve_forever()
 
 
@@ -232,7 +229,7 @@ class WSAResource(ServiceSOAPBinding):
     '''
     encoding = "UTF-8"
 
-    def __init__(self, post=None):
+    def __init__(self, post):
         '''
         post -- POST value
         '''

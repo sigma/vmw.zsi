@@ -83,7 +83,7 @@ def _LaunchContainer(cmd):
     except:
         print >>sys.stderr, 'error executing: %s' %cmd
         raise
-    time.sleep(1)
+    time.sleep(3)
     return process
 
 
