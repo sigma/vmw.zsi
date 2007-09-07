@@ -1774,7 +1774,7 @@ class MessageTypecodeContainer(TypecodeContainerBase):
                 tc = RPCMessageTcListComponentContainer(qualified=False)
                 tc.setOccurs(min, max, nil)
                 tc.name = p.name
-                if nsuri in SCHEMA.XSD_LIST:
+                if nsuri in [SOAP.ENC] + SCHEMA.XSD_LIST:
                     tpc = BTI.get_typeclass(name, nsuri)
                     tc.klass = tpc
                 else:
