@@ -537,6 +537,9 @@ class Array(TypeCode):
             elif TypeCode.typechecks:
                 raise TypeError('Size must be integer or list, not ' + str(t))
 
+        # by default use Any
+        ofwhat = ofwhat or Any()
+
         if TypeCode.typechecks:
             if self.undeclared is False and type(atype) not in _seqtypes and len(atype) == 2:
                 raise TypeError("Array type must be a sequence of len 2.")

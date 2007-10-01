@@ -2404,38 +2404,53 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             self._kw_array = {'atype':None, 'id3':ID3, 'ofwhat':None}
             self.sKlass = BTI.get_typeclass(base[1], base[0])
             self.sKlassNS = base[0]
-            attr = None
+
             for a in derivation.getAttributeContent():
+
                 assert a.isAttribute() is True,\
                     'only attribute content expected: %s' %a.getItemTrace()
 
-                if a.isReference() is True:
-                    if a.getAttribute('ref') == (SOAP.ENC,'arrayType'):
-                        self._kw_array['atype'] = a.getAttributeQName((WSDL.BASE, 'arrayType'))
-                        attr = a
-                        break
+                if a.isReference() is False:
+                    continue
 
-            qname = self._kw_array.get('atype')
-            if attr is not None:
+                if a.getAttribute('ref') != (SOAP.ENC,'arrayType'):
+                    continue
+
+                attr = a.getAttributeQName((WSDL.BASE, 'arrayType'))
+                if attr is None:
+                    warnings.warn('soapenc:array derivation declares attribute reference ("%s","%s"), does not define attribute ("%s","%s")' %(
+                        SOAP.ENC,'arrayType',WSDL.BASE, 'arrayType'))
+                    break
+                
+                self._kw_array['atype'] = attr
                 qname = self._kw_array.get('atype')
-                ncname = qname[1].strip('[]')
-                namespace = qname[0]
-                try:
-                    ofwhat = attr.getSchemaItem(XMLSchema.TYPES, namespace, ncname)
-                except XMLSchema.SchemaError, ex:
-                    ofwhat = None
+                if a is not None:
+                    ncname = qname[1].strip('[]')
+                    namespace = qname[0]
+                    try:
+                        ofwhat = a.getSchemaItem(XMLSchema.TYPES, namespace, ncname)
+                    except XMLSchema.SchemaError, ex:
+                        ofwhat = None
 
-                if ofwhat is None:
-                    self._kw_array['ofwhat'] = BTI.get_typeclass(ncname, namespace)
-                else:
-                    self._kw_array['ofwhat'] = GetClassNameFromSchemaItem(ofwhat, do_extended=self.do_extended)
+                    if ofwhat is None:
+                        self._kw_array['ofwhat'] = BTI.get_typeclass(ncname, namespace)
+                    else:
+                        self._kw_array['ofwhat'] = GetClassNameFromSchemaItem(ofwhat, do_extended=self.do_extended)
 
-                if self._kw_array['ofwhat'] is None:
-                    raise ContainerError, 'For Array could not resolve ofwhat typecode(%s,%s): %s'\
-                        %(namespace, ncname, derivation.getItemTrace())
-                        
-                self.logger.debug('Attribute soapenc:arrayType="%s"' %
-                                  str(self._kw_array['ofwhat']))
+                    if self._kw_array['ofwhat'] is None:
+                        raise ContainerError, 'For Array could not resolve ofwhat typecode(%s,%s): %s'\
+                            %(namespace, ncname, derivation.getItemTrace())
+                    
+                    self.logger.debug('Attribute soapenc:arrayType="%s"' %
+                                      str(self._kw_array['ofwhat']))
+
+                    break
+
+            #else:
+            #    raise Wsdl2PythonError, \
+            #        'derivation of soapenc:array must declare attribute reference ("%s","%s")' %(
+            #        SOAP.ENC,'arrayType')
+
        
         elif isinstance(base, XMLSchema.XMLSchemaComponent):
             self.sKlass = base.getAttribute('name')
@@ -2497,11 +2512,16 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
                 '%s%s' % (ID2, self.schemaTag()),
                 '%s%s' % (ID2, self.typeTag()),
                 '%s%s' % (ID2, self.pnameConstructor()),
-                '%(id3)sofwhat = %(ofwhat)s(None, typed=False)' %self._kw_array,
-                '%(id3)satype = %(atype)s' %self._kw_array,
-                '%s%s.__init__(self, atype, ofwhat, pname=pname, childnames=\'item\', **kw)'
-                    %(ID3, self.sKlass),
                 ]
+
+            append = definition.append
+            if  self._kw_array.get('ofwhat') is None:
+                append('%s%s.__init__(self, None, None, pname=pname, childnames=\'item\', undeclared=True, **kw)' %(ID3, self.sKlass))
+            else:
+                append('%(id3)sofwhat = %(ofwhat)s(None, typed=False)' %self._kw_array)
+                append('%(id3)satype = %(atype)s' %self._kw_array)
+                append('%s%s.__init__(self, atype, ofwhat, pname=pname, childnames=\'item\', **kw)' %(ID3, self.sKlass))
+
             self.writeArray(definition)
             return
     
