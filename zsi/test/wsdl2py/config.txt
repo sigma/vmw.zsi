@@ -19,7 +19,7 @@
 #
 ##########################################################################
 [configuration]
-tracefile = False
+tracefile = True
 debug = False
 skip = False
 twisted = False
@@ -171,10 +171,12 @@ test_InfoBil = http://javatest2.infodata.se/webservices/services/Infobil?wsdl
 test_EchoWSAddr200403 = wsdl/EchoWSAddr200403.wsdl
 
 # Google AdWords
-test_GoogleAdWords = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorService?wsdl
+#test_GoogleAdWords = https://sandbox.google.com/api/adwords/v8/TrafficEstimatorService?wsdl
+test_GoogleAdWords = https://adwords.google.com:443/api/adwords/v10/TrafficEstimatorService?wsdl
 
 # TODO: These aren't finished
-test_GoogleAdWords_CS = https://sandbox.google.com/api/adwords/v8/CampaignService?wsdl
+#test_GoogleAdWords_CS = https://sandbox.google.com/api/adwords/v8/CampaignService?wsdl
+test_GoogleAdWords_CS = https://adwords.google.com:443/api/adwords/v10/CampaignService?wsdl
 test_Manufacturer = wsdl/ManufacturerImpl.wsdl
 test_Racing = wsdl/Racing.wsdl
 

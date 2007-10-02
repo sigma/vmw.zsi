@@ -64,7 +64,7 @@ applicationtoken =
         from ConfigParser import ConfigParser
         cp = ConfigParser(); cp.read(self.header_info)
         p,e,a,u = map(lambda var: cp.get(self.__class__.name, var), 'password email applicationtoken useragent'.split())
-        tns,GED = "https://adwords.google.com/api/adwords/v8", self.client_module.GED
+        tns,GED = "https://adwords.google.com/api/adwords/v10", self.client_module.GED
 
         password = GED(tns, "password").pyclass(p)
         email = GED(tns, "email").pyclass(e)
@@ -72,7 +72,7 @@ applicationtoken =
         useragent = GED(tns, "useragent").pyclass(u)
 
         # google sandbox uses these conventions...
-        dtoken = GED(tns, "developerToken").pyclass('%s++USD' %e)
+        dtoken = GED(tns, "developerToken").pyclass('%s++USD' %e) ## v8 sandbox syntax isnt working for v10
         cemail = GED(tns, "clientEmail").pyclass('client_1+'+e)
 
         return (email, password, useragent, dtoken, atoken, cemail)
