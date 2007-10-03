@@ -2,7 +2,6 @@
 import unittest, sys
 from ZSI import *
 from ZSI import resolvers
-from xml.dom.ext import PrettyPrint
 
 OUT = sys.stdout
 IN='''<SOAP-ENV:Envelope
@@ -45,7 +44,7 @@ class t4TestCase(unittest.TestCase):
             # Faulted while processing; now it's the body 
             print >>OUT, FaultFromException(e, 0, sys.exc_info()[2]).AsSOAP() 
             self.fail() 
-        PrettyPrint(dict['xmltest']) 
+        ##PrettyPrint(dict['xmltest']) 
         print '**', dict['stringtest'], '**'
 
 def makeTestSuite():

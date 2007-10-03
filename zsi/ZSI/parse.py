@@ -3,6 +3,7 @@
 '''SOAP messaging parsing.
 '''
 
+from xml.dom import expatbuilder
 from ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
         _backtrace, EvaluateException, ParseException, _valid_encoding, \
         _Node, _find_attr, _resolve_prefix
@@ -16,6 +17,11 @@ _find_actor = lambda E: E.getAttributeNS(SOAP.ENV, "actor") or None
 _find_mu = lambda E: E.getAttributeNS(SOAP.ENV, "mustUnderstand")
 _find_root = lambda E: E.getAttributeNS(SOAP.ENC, "root")
 _find_id = lambda E: _find_attr(E, 'id')
+
+class DefaultReader:
+    """ExpatReaderClass"""
+    fromString = staticmethod(expatbuilder.parseString)
+    fromStream = staticmethod(expatbuilder.parse)
 
 class ParsedSoap:
     '''A Parsed SOAP object.
@@ -32,7 +38,7 @@ class ParsedSoap:
             data_elements -- list of non-root elements in the SOAP Body
             trailer_elements -- list of elements following the SOAP body
     '''
-    defaultReaderClass = None
+    defaultReaderClass = DefaultReader
 
     def __init__(self, input, readerclass=None, keepdom=False,
     trailers=False, resolver=None,  envelope=True, **kw):
@@ -48,11 +54,8 @@ class ParsedSoap:
         self.readerclass = readerclass
         self.keepdom = keepdom
         if not self.readerclass:
-            if self.defaultReaderClass != None:
-                self.readerclass = self.defaultReaderClass
-            else:
-                from xml.dom.ext.reader import PyExpat
-                self.readerclass = PyExpat.Reader
+            self.readerclass = self.defaultReaderClass
+
         try:
             self.reader = self.readerclass()
             if type(input) in _stringtypes:

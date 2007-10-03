@@ -7,6 +7,7 @@ Change for xxx released xxx:
     -   Remove Send()'s kwargs out of _args list <efrain@bogotron.net>
 
 Change for 2.1.0 released xxx:
+    -	No PyXML Dependency, use minidom by default (much faster)
 
 Change for 2.0.0 released xxx:
     -   no more wsdl2dispatch, wsdl2py does it all

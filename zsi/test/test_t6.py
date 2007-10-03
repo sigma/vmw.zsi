@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 import unittest, sys, multifile, mimetools, base64
-from xml.dom import Node
-from xml.dom.ext.reader import PyExpat
 from ZSI import *
 from ZSI import resolvers
 try:

@@ -167,9 +167,8 @@ to a non-zero value.
 
 \ZSI{} supports multiple DOM implementations.
 The \code{readerclass} parameter specifies which one to use.
-The default is to use the DOM provided with the PyXML package developed
-by the Python XML SIG, provided through the \class{PyExpat.Reader} class
-in the \module{xml.dom.ext.reader} module.
+The default is to use minidom, provided through the \class{DefaultReader} class
+in the \module{ZSI.parse} module.
 
 The specified reader class must support the following methods:
 

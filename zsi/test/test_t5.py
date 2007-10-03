@@ -3,7 +3,10 @@ import unittest, multifile, mimetools
 from ZSI import *
 from ZSI import resolvers
 from xml.dom import Node
-from xml.dom.ext.reader import PyExpat
+#from xml.dom.ext.reader import PyExpat
+from ZSI.parse import DefaultReader as Reader
+
+
 try:
     import cStringIO as StringIO
 except ImportError:
@@ -21,7 +24,7 @@ class t5TestCase(unittest.TestCase):
             print 'xml=', xml.getvalue()
             for h,b in cid.parts:
                 print h, b.read()
-            dom = PyExpat.Reader().fromStream(xml)
+            dom = Reader.fromStream(xml)
             print dom
 
 def makeTestSuite():
