@@ -131,8 +131,10 @@ class AttributeMixIn:
             return formatted_attribute_list
         
         atd_list.append('# attribute handling code')
-        for a in attributes:
-            
+        idx = 0
+        while(idx < len(attributes)):
+            a = attributes[idx] 
+            idx += 1
             if a.isWildCard() and a.isDeclaration():
                 atd_list.append(\
                     '%s[("%s","anyAttribute")] = ZSI.TC.AnyElement()'\
@@ -173,9 +175,8 @@ class AttributeMixIn:
             elif a.isReference() and a.isAttributeGroup():
                 # flatten 'em out....
                 for ga in a.getAttributeGroup().getAttributeContent():
-                    if not ga.isAttributeGroup():
-                        attributes += (ga,)
-                continue
+                    attributes += (ga,)
+
             elif a.isReference():
                 try:
                     ga = a.getAttributeDeclaration()
@@ -2573,9 +2574,6 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             definition.append('%(ID3)sself.pyclass = %(pyclass)s' %kw)  
             self.writeArray(definition)
             return
-    
-        for l in self.attrComponents: 
-            definition.append('%s%s'%(ID3, l))
             
         definition.append('%s'   % self.getBasesLogic(ID3))
         prefix = NAD.getAlias(self.sKlassNS)
