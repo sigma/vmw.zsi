@@ -3,7 +3,7 @@
 # See Copyright for copyright notice!
 # $Id: __init__.py 1132 2006-02-17 01:55:41Z boverhof $
 ###########################################################################
-import os, sys, types
+import os, sys, types, inspect
 from StringIO import StringIO
 
 # twisted & related imports
@@ -37,6 +37,7 @@ class EchoService(SOAPApplication):
 
 def main():
     from wsgiref.simple_server import make_server, demo_app
+    from ZSI.twisted.wsgi import WSGIApplication
     application = WSGIApplication()
     httpd = make_server('', 8000, application)
     application['echo'] = EchoService()
@@ -91,10 +92,8 @@ class SOAPCallbackHandler:
         request = kw['request']
 
         root = _get_element_nsuri_name(ps.body_root)
-        for key,method in resource.__dict__:
-            if (callable(method) and 
-                getattr(method, 'soapmethod', False) and 
-                method.root == root):
+        for key,method in inspect.getmembers(resource, inspect.ismethod):
+            if (getattr(method, 'soapmethod', False) and method.root == root):
                 break
         else:
             raise RuntimeError, 'Missing soap callback method for root "%s"' %root
@@ -183,7 +182,7 @@ class WSGIApplication(dict):
 class SOAPApplication(WSGIApplication):
     """
     """
-    factory = DefaultHandlerChainFactory
+    factory = SOAPHandlerChainFactory
     
     def __init__(self, **kw):
         dict.__init__(self, **kw)
