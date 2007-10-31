@@ -134,7 +134,7 @@ class Address(object):
         pyobjs = ps.ParseHeaderElements(typecodes)
 
         got_action = pyobjs.get((namespaceURI,"Action"))
-        self._checkAction(got_action, action)
+        self._checkAction(action, got_action)
 
         From = pyobjs.get((namespaceURI,"From"))
         self._checkFrom(From)
