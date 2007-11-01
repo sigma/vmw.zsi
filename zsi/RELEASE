@@ -47,23 +47,22 @@ information on getting and setting up those tools.
 
     For example:
 
-        % svn mkdir https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3
-        % cd pywebsvcs
+        % svn mkdir https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3
         % svn copy https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/trunk/zsi  \
-            https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
+            https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
 
         % svn copy https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/trunk/wstools  \
-            https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
+            https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
 
-        % svn propset svn:externals "wstools https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/ZSI/wstools"
-            https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/wstools
+        % svn propset svn:externals "wstools https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/ZSI/wstools"
+            https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/wstools
 
         % svn commit
 
 8.  Export the tagged sources from CVS.  You'll need to run the
     command::
 
-        svn export https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/zsi
+        svn export https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/zsi
 
 
 9.  Build the release from the export.  Switch to the export directory
@@ -133,7 +132,7 @@ methods:
   symlink to the .../Doc/tools/mkhowto script in that.  If not, then
   you only need to check out the Doc/ tree::
 
-        svn co http://svn.python.org/projects/python/tags/r25/Doc python-Doc
+        svn co http://pywebsvcs.svn.python.org/projects/python/tags/r25/Doc python-Doc
 
   The symlink can then be made to .../someplace/tools/mkhowto.
 
