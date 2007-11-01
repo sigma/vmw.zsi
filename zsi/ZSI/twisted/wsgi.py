@@ -1,7 +1,7 @@
 ############################################################################
 # Joshua R. Boverhof, LBNL
 # See Copyright for copyright notice!
-# $Id: __init__.py 1132 2006-02-17 01:55:41Z boverhof $
+# $Id: $
 ###########################################################################
 import os, sys, types, inspect
 from StringIO import StringIO
@@ -16,45 +16,12 @@ from ZSI.twisted.reverse import DataHandler, ReverseHandlerChain,\
     HandlerChainInterface
 
 """
-WSGI Module 
-unstable
+EXAMPLES:
 
+     See zsi/samples/WSGI
 
-EXAMPLE APPLICATION:
-#
-from EchoServer_client import *
-from ZSI.twisted.wsgi import SOAPApplication, soapmethod, SOAPHandlerChainFactory
-
-class EchoService(SOAPApplication):
-    factory = SOAPHandlerChainFactory
-    wsdl_content = dict(name='', targetNamespace='', imports=(), portType='')
-
-    @soapmethod(EchoRequest.typecode, EchoResponse.typecode, operation='Echo', soapaction='Echo')
-    def soap_Echo(self, request, response, **kw):
-        response.EchoResult = request.EchoIn
-        return request,response
-
-
-def main():
-    from wsgiref.simple_server import make_server, demo_app
-    from ZSI.twisted.wsgi import WSGIApplication
-    application = WSGIApplication()
-    httpd = make_server('', 8000, application)
-    application['echo'] = EchoService()
-    httpd.serve_forever()
-
-def main_twisted():
-    from ZSI.twisted.wsgi import test, WSGIApplication
-    app = WSGIApplication()
-    app['echo'] = EchoService()
-    test(app)
-
-if __name__ == '__main__':
-    main_twisted()
 
 """
-
-
 
 def soapmethod(requesttypecode, responsetypecode, soapaction='', 
                operation=None, **kw):

@@ -3,7 +3,7 @@
 # put the path to where the Python source was untar'd here (not where it
 # is installed)
 PYSRCDIR=	/Library/Frameworks/Python.framework/Versions/2.4
-MKHOWTO=	PATH=$$PATH:$(HOME)/Desktop/Python/PythonDocTools/tools/ mkhowto
+MKHOWTO=	PATH=$$PATH mkhowto
 #PAPER=		a4
 PAPER=		letter
 

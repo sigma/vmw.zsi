@@ -127,7 +127,7 @@ methods:
   symlink to the .../Doc/tools/mkhowto script in that.  If not, then
   you only need to check out the Doc/ tree::
 
-        svn co http://svn.python.org/projects/python/trunk/Doc python-Do
+        svn co http://svn.python.org/projects/python/tags/r25/Doc python-Doc
 
   The symlink can then be made to .../someplace/tools/mkhowto.
 

@@ -1,14 +1,13 @@
 ###########################################################################
 # Joshua R. Boverhof, LBNL
 # See Copyright for copyright notice!
-# $Id: WSresource.py 1287 2006-10-30 23:04:17Z feanor420 $
+# $Id: $
 ###########################################################################
 
 import sys, warnings
 
 # twisted & related imports
 from zope.interface import classProvides, implements, Interface
-from twisted.python import log
 
 # ZSI imports
 from ZSI import EvaluateException, ParseException, ParsedSoap, SoapWriter
@@ -94,31 +93,23 @@ class DefaultHandlerChain:
     def __init__(self, cb, *handlers):
         self.handlercb = cb
         self.handlers = handlers
-        self.debug = len(log.theLogPublisher.observers) > 0
         
     def processRequest(self, arg, **kw):
-        debug = self.debug
-        if debug: log.msg('--->PROCESS REQUEST: %s' %arg, debug=1)
         
         for h in self.handlers:
-            if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
             arg = h.processRequest(arg, **kw)
             
         return self.handlercb.processRequest(arg, **kw)
             
     def processResponse(self, arg, **kw):
-        debug = self.debug
-        if debug: log.msg('===>PROCESS RESPONSE: %s' %str(arg), debug=1)
 
         if arg is None: 
             return
 
         for h in self.handlers:
-            if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
             arg = h.processResponse(arg, **kw)
             
         s = str(arg)
-        if debug: log.msg(s, debug=1)
         
         return s
 

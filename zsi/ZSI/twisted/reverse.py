@@ -1,5 +1,10 @@
+###########################################################################
+# Joshua R. Boverhof, LBNL
+# See Copyright for copyright notice!
+# $Id: $
+###########################################################################
 from ZSI import _get_element_nsuri_name, SoapWriter, ParsedSoap
-from ZSI.twisted.interfaces import HandlerChainInterface
+from interfaces import HandlerChainInterface
 from zope.interface import classProvides, implements, Interface
 
 

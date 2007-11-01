@@ -1,7 +1,12 @@
 include CHANGES
 recursive-include ZSI *.py
 recursive-include scripts *
-recursive-include doc *
-recursive-include samples *
+recursive-include samples WSGI
 recursive-include test *.py README
-recursive-include interop *.py README *.wsdl
+
+recursive-exclude doc *.tex
+recursive-exclude samples poly.py
+global-exclude *.pyc
+exclude RELEASE newver.py MANIFEST.in
+prune samples/Echo
+prune interop

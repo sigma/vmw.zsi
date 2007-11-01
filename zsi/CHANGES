@@ -6,8 +6,9 @@ Change for xxx released xxx:
     -   Record facets (restrictions) in XMLSchema.py <vchen@datapower.com>
     -   Remove Send()'s kwargs out of _args list <efrain@bogotron.net>
 
-Change for 2.1.0 released xxx:
+Change for 2.1.0_a1 released 31-Oct-2007:
     -	No PyXML Dependency, use minidom by default (much faster)
+    -	samples/WSGI, server and client examples using python wsgi and twisted.web2.wsgi
 
 Change for 2.0.0 released xxx:
     -   no more wsdl2dispatch, wsdl2py does it all

@@ -17,12 +17,18 @@ major = cf.getint('version', 'major')
 minor = cf.getint('version', 'minor')
 patchlevel = cf.getint('version', 'patchlevel')
 candidate = cf.getint('version', 'candidate')
+alpha = cf.getint('version', 'alpha')
+beta = cf.getint('version', 'beta')
 
 _version = "%d.%d" % ( major, minor )
 if patchlevel:
     _version += '.%d' % patchlevel
 if candidate:
     _version += '_rc%d' % candidate
+elif alpha:
+    _version += '_a%d' % alpha
+elif beta:
+    _version += '_b%d' % beta
 
 try:
     open('ZSI/version.py', 'r').close()
