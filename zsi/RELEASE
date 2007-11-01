@@ -54,8 +54,9 @@ information on getting and setting up those tools.
         % svn copy https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/trunk/wstools  \
             https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
 
-        % svn propset svn:externals "wstools https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/ZSI/wstools"
-            https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/wstools
+        % svn co https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3
+        % cd ZSI_v2_0_0RC3/zsi/ZSI
+        % svn propset "svn:externals" "wstools/ https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI-v2_0_0RC3/wstools" . 
 
         % svn commit
 
