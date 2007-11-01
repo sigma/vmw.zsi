@@ -1,7 +1,7 @@
 include CHANGES Copyright
 recursive-include ZSI *
 recursive-include scripts *
-recursive-include samples WSGI
+recursive-include samples WSGI *
 recursive-include test *
 recursive-include doc *
 
