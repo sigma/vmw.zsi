@@ -47,12 +47,18 @@ information on getting and setting up those tools.
 
     For example:
 
-        svn co https://svn.sourceforge.net/svnroot/pywebsvcs
-        svn mkdir https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3
-        cd pywebsvcs
-        svn copy trunk/zsi tags/ZSI_v2_0_0RC3/zsi
-        svn copy trunk/wstools tags/ZSI_v2_0_0RC3/wstools
-        svn commit
+        % svn mkdir https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3
+        % cd pywebsvcs
+        % svn copy https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/trunk/zsi  \
+            https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
+
+        % svn copy https://pywebsvcs.svn.sourceforge.net/svnroot/pywebsvcs/trunk/wstools  \
+            https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/
+
+        % svn propset svn:externals "wstools https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/ZSI/wstools"
+            https://svn.sourceforge.net/svnroot/pywebsvcs/tags/ZSI_v2_0_0RC3/wstools
+
+        % svn commit
 
 8.  Export the tagged sources from CVS.  You'll need to run the
     command::
