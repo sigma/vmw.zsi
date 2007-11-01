@@ -1,4 +1,4 @@
-include CHANGES
+include CHANGES Copyright
 recursive-include ZSI *
 recursive-include scripts *
 recursive-include samples WSGI
