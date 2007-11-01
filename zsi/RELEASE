@@ -69,9 +69,9 @@ information on getting and setting up those tools.
 9.  Build the release from the export.  Switch to the export directory
     (the one containing setup.py) and run **make kit**.
 
-    Create eggs for supported python versions:
+    Create eggs and tarball for supported python versions:
 
-        python setup.py bdist_egg
+        % make kit
 
 
 10.  Rename the PDF documentation.  If the patchlevel from setug.cfg is
