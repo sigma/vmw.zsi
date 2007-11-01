@@ -3,10 +3,11 @@ recursive-include ZSI *.py
 recursive-include scripts *
 recursive-include samples WSGI
 recursive-include test *.py README
+recursive-include doc *
 
 recursive-exclude doc *.tex
 recursive-exclude samples poly.py
-global-exclude *.pyc
+global-exclude *.pyc Makefile
 exclude RELEASE newver.py MANIFEST.in
 prune samples/Echo
 prune interop
