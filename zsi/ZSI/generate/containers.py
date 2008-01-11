@@ -1984,20 +1984,27 @@ class ElementSimpleTypeContainer(TypecodeContainerBase):
         if pyclass == 'bool': pyclass = 'int'
         kw = KW.copy()
         kw.update(dict(aname=aname, ns=self.ns, name=self.name, 
+                       pname=(self.ns,self.name),
                        substitutionGroup=self._substitutionGroupTag(),
                        subclass=self.sKlass,literal=self.literalTag(),
                        schema=self.schemaTag(), init=self.simpleConstructor(),
                        klass=self.getClassName(), element="ElementDeclaration"))
 
+        # 
+        # TODO: What does this local check do???? relevant for 
+        # [ 1853368 ] "elementFormDefault='unqualified'" mishandled 
+        # 
+
         if self.local:
             kw['element'] = 'LocalElementDeclaration'
+            kw['pname'] = '"%s"' %self.name
         
         element = map(lambda i: i %kw, [
             '%(ID1)sclass %(klass)s(%(subclass)s, %(element)s):',
             '%(ID2)s%(literal)s',
             '%(ID2)s%(schema)s',
             '%(ID2)s%(init)s',
-            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["pname"] = %(pname)s',
             '%(ID3)skw["aname"] = "%(aname)s"',
             ]
         )
@@ -2053,20 +2060,27 @@ class ElementLocalSimpleTypeContainer(TypecodeContainerBase):
     def _setContent(self):
         kw = KW.copy()
         kw.update(dict(aname=self.getAttributeName(self.name), ns=self.ns, name=self.name, 
+                       pname=(self.ns,self.name),
                        subclass=self.sKlass,literal=self.literalTag(),
                        schema=self.schemaTag(), init=self.simpleConstructor(),
                        klass=self.getClassName(), element="ElementDeclaration",
                        baseinit=self.simpleConstructor(self.sKlass)))
 
+        # 
+        # TODO: What does this local check do???? relevant for 
+        # [ 1853368 ] "elementFormDefault='unqualified'" mishandled 
+        # 
+
         if self.local:
             kw['element'] = 'LocalElementDeclaration'
+            kw['pname'] = '"%s"' %self.name
         
         element = map(lambda i: i %kw, [
             '%(ID1)sclass %(klass)s(%(subclass)s, %(element)s):',
             '%(ID2)s%(literal)s',
             '%(ID2)s%(schema)s',
             '%(ID2)s%(init)s',
-            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["pname"] = %(pname)s',
             '%(ID3)skw["aname"] = "%(aname)s"',
             '%(ID3)s%(baseinit)s',
             ]
@@ -2154,6 +2168,7 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
                        schema=self.schemaTag(), 
                        init=self.simpleConstructor(),
                        ns=self.ns, name=self.name,
+                       pname=(self.ns,self.name),
                        aname=self.getAttributeName(self.name),  
                        nsurilogic=self.nsuriLogic(),
                        ofwhat=self.getTypecodeList(),
@@ -2167,8 +2182,14 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
             ex.args = tuple(args)
             raise
 
+        # 
+        # TODO: What does this local check do???? relevant for 
+        # [ 1853368 ] "elementFormDefault='unqualified'" mishandled 
+        # 
+
         if self.local:
             kw['element'] = 'LocalElementDeclaration'
+            kw['pname'] = '"%s"' %self.name
         
         element = [
             '%(ID1)sclass %(klass)s(%(subclass)s, %(element)s):',
@@ -2177,7 +2198,7 @@ class ElementLocalComplexTypeContainer(TypecodeContainerBase, AttributeMixIn):
             '%(ID2)s%(init)s',
             '%(ID3)s%(nsurilogic)s',
             '%(ID3)sTClist = [%(ofwhat)s]',
-            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["pname"] = %(pname)s',
             '%(ID3)skw["aname"] = "%(aname)s"',
             '%(ID3)s%(atypecode)s = {}',
             '%(ID3)sZSI.TCcompound.ComplexType.__init__(self,None,TClist,inorder=0,**kw)',
@@ -2303,6 +2324,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
                        schema=self.schemaTag(), 
                        init=self.simpleConstructor(),
                        ns=self.ns, name=self.name,
+                       pname=(self.ns,self.name),
                        aname=self.getAttributeName(self.name),  
                        baseslogic=self.getBasesLogic(ID3),
                        #ofwhat=self.getTypecodeList(),
@@ -2317,9 +2339,15 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
             args += ex.args
             ex.args = tuple(args)
             raise
-        
+       
+        # 
+        # TODO: What does this local check do???? relevant for 
+        # [ 1853368 ] "elementFormDefault='unqualified'" mishandled 
+        # 
+
         if self.local:
             kw['element'] = 'LocalElementDeclaration'
+            kw['pname'] = '"%s"' %self.name
         
         element = [
             '%(ID1)sclass %(klass)s(%(element)s):',
@@ -2327,7 +2355,7 @@ class ElementGlobalDefContainer(TypecodeContainerBase):
             '%(ID2)s%(schema)s',
             '%(ID2)s%(substitutionGroup)s',
             '%(ID2)s%(init)s',
-            '%(ID3)skw["pname"] = ("%(ns)s","%(name)s")',
+            '%(ID3)skw["pname"] = %(pname)s',
             '%(ID3)skw["aname"] = "%(aname)s"',
             '%(baseslogic)s',
             '%(ID3)s%(alias)s.%(subclass)s.__init__(self, **kw)',

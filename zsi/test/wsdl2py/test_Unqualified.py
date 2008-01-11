@@ -66,6 +66,13 @@ def _test_local_serialize1():
               </element>
               <element name="Unqualified2" type="xsd:int"/>
               <element name="Unqualified3" type="tns:GlobalType"/>
+
+              <element name="Unqualified4">
+                  <simpleType>
+                       <restriction base="xsd:string"/>
+                  </simpleType>
+              </element>
+
             </sequence>
           </complexType>
       </element>
@@ -79,6 +86,8 @@ def _test_local_serialize1():
         pyobj.Unqualified3.Unqualified1 = pyobj.Unqualified3.new_Unqualified1()
         pyobj.Unqualified3.Unqualified2 = 32
 
+        pyobj.Unqualified4 = "whatever"
+
         sw = SoapWriter(envelope=False)
         sw.serialize(pyobj)
         xml = str(sw)
@@ -89,7 +98,7 @@ def _test_local_serialize1():
         # GlobalElementLocalType
         assert(et.tag == '{urn:test}GlobalElementLocalType'), "root GED"
 
-        for i,j in zip([ 'Unqualified1', 'Unqualified2', 'Unqualified3',], 
+        for i,j in zip([ 'Unqualified1', 'Unqualified2', 'Unqualified3', 'Unqualified4'], 
             map(lambda c: c.tag, et.getchildren())):
 
             assert(i == j), 'Match Failed: expected "%s" not "%s"' %(i,j)

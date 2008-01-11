@@ -12,6 +12,13 @@
               </element>
               <element name="Unqualified2" type="xsd:int"/>
               <element name="Unqualified3" type="tns:GlobalType"/>
+
+              <element name="Unqualified4">
+                  <simpleType>
+                       <restriction base="xsd:string"/>
+                  </simpleType>
+              </element>
+
             </sequence>
           </complexType>
       </element>
