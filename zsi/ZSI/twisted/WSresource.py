@@ -253,6 +253,41 @@ class DefaultHandlerChainFactory:
         return cls.protocol(DefaultCallbackHandler, DataHandler)
     
 
+class DefaultHandlerChain:
+
+    @CheckInputArgs(CallbackChainInterface, HandlerChainInterface)
+    def __init__(self, cb, *handlers):
+        self.handlercb = cb
+        self.handlers = handlers
+        self.debug = len(log.theLogPublisher.observers) > 0
+        
+    def processRequest(self, arg, **kw):
+        debug = self.debug
+        if debug: log.msg('--->PROCESS REQUEST: %s' %arg, debug=1)
+        
+        for h in self.handlers:
+            if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
+            arg = h.processRequest(arg, **kw)
+            
+        return self.handlercb.processRequest(arg, **kw)
+            
+    def processResponse(self, arg, **kw):
+        debug = self.debug
+        if debug: log.msg('===>PROCESS RESPONSE: %s' %str(arg), debug=1)
+
+        if arg is None: 
+            return
+
+        for h in self.handlers:
+            if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
+            arg = h.processResponse(arg, **kw)
+            
+        s = str(arg)
+        if debug: log.msg(s, debug=1)
+        
+        return s
+
+
 class WSAddressHandlerChainFactory:
     protocol = DefaultHandlerChain
     
@@ -320,41 +355,4 @@ class WSResource(twisted.web.resource.Resource, object):
         
         return NOT_DONE_YET
 
-
-
-
-
-class DefaultHandlerChain:
-
-    @CheckInputArgs(CallbackChainInterface, HandlerChainInterface)
-    def __init__(self, cb, *handlers):
-        self.handlercb = cb
-        self.handlers = handlers
-        self.debug = len(log.theLogPublisher.observers) > 0
-        
-    def processRequest(self, arg, **kw):
-        debug = self.debug
-        if debug: log.msg('--->PROCESS REQUEST: %s' %arg, debug=1)
-        
-        for h in self.handlers:
-            if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
-            arg = h.processRequest(arg, **kw)
-            
-        return self.handlercb.processRequest(arg, **kw)
-            
-    def processResponse(self, arg, **kw):
-        debug = self.debug
-        if debug: log.msg('===>PROCESS RESPONSE: %s' %str(arg), debug=1)
-
-        if arg is None: 
-            return
-
-        for h in self.handlers:
-            if debug: log.msg('\t%s handler: %s' %(arg, h), debug=1)
-            arg = h.processResponse(arg, **kw)
-            
-        s = str(arg)
-        if debug: log.msg(s, debug=1)
-        
-        return s
 

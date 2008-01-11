@@ -159,6 +159,7 @@ test_Attributes = wsdl/test_Attributes.xsd
 test_DerivedTypes = wsdl/test_DerivedTypes.xsd
 test_SubstitutionGroup = wsdl/test_SubstitutionGroup.xsd
 test_WSDLImport = wsdl/test_WSDLImport.wsdl
+test_Unqualified = wsdl/test_Unqualified.xsd
 
 test_SquareService = wsdl/SquareService.wsdl
 test_DateService = wsdl/DateService.wsdl
@@ -183,5 +184,3 @@ test_Racing = wsdl/Racing.wsdl
 test_NVOAdmin = wsdl/nvo-admin.wsdl
 test_Clearspace = http://eval.jivesoftware.com/clearspace/rpc/soap/BlogService?wsdl
 test_VIM = wsdl/vim.wsdl
-
-
