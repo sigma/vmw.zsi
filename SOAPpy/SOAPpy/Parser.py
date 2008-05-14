@@ -137,7 +137,10 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
                 i = kind.find(':')
                 if i >= 0:
-                    kind = (self._prem[kind[:i]], kind[i + 1:])
+                    try:
+                        kind = (self._prem[kind[:i]], kind[i + 1:])
+                    except:
+                        kind = None
                 else:
                     kind = None
 
@@ -232,7 +235,10 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 if kind != None:
                     i = kind.find(':')
                     if i >= 0:
-                        kind = (self._prem[kind[:i]], kind[i + 1:])
+                        try:
+                            kind = (self._prem[kind[:i]], kind[i + 1:])
+                        except:
+                            kind = (None, kind)
                     else:
 # XXX What to do here? (None, kind) is just going to fail in convertType
                         #print "Kind with no NS:", kind
