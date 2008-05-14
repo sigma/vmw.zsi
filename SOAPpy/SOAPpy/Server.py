@@ -248,10 +248,11 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             # It is enabled by default.  To disable, set
             # Config.specialArgs to False.
 
-            if Config.specialArgs: 
 
-                ordered_args = {}
-                named_args   = {}
+            ordered_args = {}
+            named_args   = {}
+
+            if Config.specialArgs: 
                 
                 for (k,v) in  kw.items():
 
