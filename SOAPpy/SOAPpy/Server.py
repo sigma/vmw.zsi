@@ -514,7 +514,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             t = 'text/xml';
             if self.server.encoding != None:
-                t += '; charset="%s"' % self.server.encoding
+                t += '; charset=%s' % self.server.encoding
             self.send_header("Content-type", t)
             self.send_header("Content-length", str(len(resp)))
             self.end_headers()
