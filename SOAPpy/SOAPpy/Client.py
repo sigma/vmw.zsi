@@ -50,6 +50,7 @@ import urllib
 from types import *
 import re
 import base64
+import Cookie
 
 # SOAPpy modules
 from Errors      import *
@@ -112,6 +113,11 @@ class SOAPAddress:
 
 
 class HTTPTransport:
+            
+
+    def __init__(self):
+        self.cookies = Cookie.SimpleCookie();
+
     def getNS(self, original_namespace, data):
         """Extract the (possibly extended) namespace from the returned
         SOAP message."""
@@ -125,6 +131,23 @@ class HTTPTransport:
                 return original_namespace
         else:
             return original_namespace
+    
+    def __addcookies(self, r):
+        '''Add cookies from self.cookies to request r
+        '''
+        for cname, morsel in self.cookies.items():
+            attrs = []
+            value = morsel.get('version', '')
+            if value != '' and value != '0':
+                attrs.append('$Version=%s' % value)
+            attrs.append('%s=%s' % (cname, morsel.coded_value))
+            value = morsel.get('path')
+            if value:
+                attrs.append('$Path=%s' % value)
+            value = morsel.get('domain')
+            if value:
+                attrs.append('$Domain=%s' % value)
+            r.putheader('Cookie', "; ".join(attrs))
     
     # Need a Timeout someday?
     def call(self, addr, data, namespace, soapaction = None, encoding = None,
@@ -160,7 +183,8 @@ class HTTPTransport:
             t += '; charset="%s"' % encoding
         r.putheader("Content-type", t)
         r.putheader("Content-length", str(len(data)))
-
+        self.__addcookies(r);
+        
         # if user is not a user:passwd format
         #    we'll receive a failure from the server. . .I guess (??)
         if addr.user != None:
@@ -200,9 +224,14 @@ class HTTPTransport:
         # read response line
         code, msg, headers = r.getreply()
 
+        self.cookies = Cookie.SimpleCookie();
         if headers:
             content_type = headers.get("content-type","text/xml")
             content_length = headers.get("Content-length")
+
+            for cookie in headers.getallmatchingheaders("Set-Cookie"):
+                self.cookies.load(cookie);
+
         else:
             content_type=None
             content_length=None
