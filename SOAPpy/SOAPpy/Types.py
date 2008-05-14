@@ -33,10 +33,10 @@
 ################################################################################
 """
 
-from __future__ import nested_scopes
-
 ident = '$Id$'
 from version import __version__
+
+from __future__ import nested_scopes
 
 import UserList
 import base64
@@ -198,6 +198,10 @@ class stringType(anyType):
             raise AttributeError, "invalid %s type:" % self._type
 
         return data
+
+    def _marshalData(self):
+        return self._data
+
 
 class untypedType(stringType):
     def __init__(self, data = None, name = None, attrs = None):
