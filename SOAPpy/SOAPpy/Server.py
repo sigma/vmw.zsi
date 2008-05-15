@@ -558,7 +558,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.connection.shutdown(1)
 
         def do_GET(self):
-
+            
             #print 'command        ', self.command
             #print 'path           ', self.path
             #print 'request_version', self.request_version
@@ -567,7 +567,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             #print '   maintype', self.headers.maintype
             #print '   subtype ', self.headers.subtype
             #print '   params  ', self.headers.plist
-
+            
             path = self.path.lower()
             if path.endswith('wsdl'):
                 method = 'wsdl'
@@ -581,7 +581,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         l = method.split(".")
                         for i in l:
                             function = getattr(function, i)
-
+            
                 if function:
                     self.send_response(200)
                     self.send_header("Content-type", 'text/plain')
@@ -589,7 +589,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     response = apply(function, ())
                     self.wfile.write(str(response))
                     return
-
+            
             # return error
             self.send_response(200)
             self.send_header("Content-type", 'text/html')
@@ -613,7 +613,7 @@ class SOAPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 </body>''')
-            
+
             
     def log_message(self, format, *args):
         if self.server.log:
