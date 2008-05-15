@@ -541,10 +541,9 @@ class SOAPBuilder:
         if isinstance(obj, faultType):    # Fault
             cns, cdecl = self.genns(ns_map, NS.ENC)
             vns, vdecl = self.genns(ns_map, NS.ENV)
-            self.out.append('''<%sFault %sroot="1"%s%s>
-<faultcode>%s</faultcode>
-<faultstring>%s</faultstring>
-''' % (vns, cns, vdecl, cdecl, obj.faultcode, obj.faultstring))
+            self.out.append('<%sFault %sroot="1"%s%s>' % (vns, cns, vdecl, cdecl))
+            self.dump(obj.faultcode, "faultcode", typed, ns_map)
+            self.dump(obj.faultstring, "faultstring", typed, ns_map)
             if hasattr(obj, "detail"):
                 self.dump(obj.detail, "detail", typed, ns_map)
             self.out.append("</%sFault>\n" % vns)
