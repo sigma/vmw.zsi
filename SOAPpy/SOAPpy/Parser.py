@@ -910,43 +910,38 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 l = self.floatlimits[t[1]]
                 s = d.strip().lower()
 
-                d = float(s)
+                # Explicitly check for NaN and Infinities
+                if s == "nan":
+                    d = fpconst.NaN
+                elif s[0:2]=="inf" or s[0:3]=="+inf":
+                    d = fpconst.PosInf
+                elif s[0:3] == "-inf":
+                    d = fpconst.NegInf
+                else :
+                    d = float(s)
 
                 if config.strict_range:
-                    if d < l[1]: raise UnderflowError
-                    if d > l[2]: raise OverflowError
-                else:
-                    # some older SOAP impementations (notably SOAP4J,
-                    # Apache SOAP) return "infinity" instead of "INF"
-                    # so check the first 3 characters for a match.
-                    if s == "nan":
-                        return fpconst.NaN
-                    elif s[0:3] in ("inf", "+inf"):
-                        return fpconst.PosInf
-                    elif s[0:3] == "-inf":
-                        return fpconst.NegInf
-
-                if fpconst.isNaN(d):
-                    if s != 'nan':
-                        raise ValueError, "invalid %s: %s" % (t[1], s)
-                elif fpconst.isNegInf(d):
-                    if s != '-inf':
-                        raise UnderflowError, "%s too small: %s" % (t[1], s)
-                elif fpconst.isPosInf(d):
-                    if s != 'inf':
-                        raise OverflowError, "%s too large: %s" % (t[1], s)
-                elif d < 0 and d < l[1]:
-                        raise UnderflowError, "%s too small: %s" % (t[1], s)
-                elif d > 0 and ( d < l[0] or d > l[2] ):
-                        raise OverflowError, "%s too large: %s" % (t[1], s)
-                elif d == 0:
-                    if type(self.zerofloatre) == StringType:
-                        self.zerofloatre = re.compile(self.zerofloatre)
-
-                    if self.zerofloatre.search(s):
-                        raise UnderflowError, "invalid %s: %s" % (t[1], s)
-
+                    if fpconst.isNaN(d):
+                        if s[0:2] != 'nan':
+                            raise ValueError, "invalid %s: %s" % (t[1], s)
+                    elif fpconst.isNegInf(d):
+                        if s[0:3] != '-inf':
+                            raise UnderflowError, "%s too small: %s" % (t[1], s)
+                    elif fpconst.isPosInf(d):
+                        if s[0:2] != 'inf' and s[0:3] != '+inf':
+                            raise OverflowError, "%s too large: %s" % (t[1], s)
+                    elif d < 0 and d < l[1]:
+                            raise UnderflowError, "%s too small: %s" % (t[1], s)
+                    elif d > 0 and ( d < l[0] or d > l[2] ):
+                            raise OverflowError, "%s too large: %s" % (t[1], s)
+                    elif d == 0:
+                        if type(self.zerofloatre) == StringType:
+                            self.zerofloatre = re.compile(self.zerofloatre)
+    
+                        if self.zerofloatre.search(s):
+                            raise UnderflowError, "invalid %s: %s" % (t[1], s)
                 return d
+            
             if t[1] in ("dateTime", "date", "timeInstant", "time"):
                 return self.convertDateTime(d, t[1])
             if t[1] == "decimal":
