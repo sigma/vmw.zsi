@@ -592,9 +592,10 @@ class timeType(anyType):
     def _marshalData(self):
         if self._cache == None:
             d = self._data
-            s = ''
-
-            s = time.strftime("%H:%M:%S", (0, 0, 0) + d + (0, 0, -1))
+            #s = ''
+            #
+            #s = time.strftime("%H:%M:%S", (0, 0, 0) + d + (0, 0, -1))
+            s = "%02d:%02d:%02d" % d
             f = d[2] - int(d[2])
             if f != 0:
                 s += ("%g" % f)[1:]
