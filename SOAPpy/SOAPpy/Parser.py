@@ -371,6 +371,12 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 # Nothing's been added to the current frame so it must be a
                 # simple type.
 
+#                 print "cur:", cur
+#                 print "ns:", ns
+#                 print "attrs:", attrs
+#                 print "kind:", kind
+                
+
                 if kind == None:
                     # If the current item's container is an array, it will
                     # have a kind. If so, get the bit before the first [,
@@ -792,7 +798,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
         'negative-integer':     (0, None, -1),
         'long':                 (1, -9223372036854775808L,
                                     9223372036854775807L),
-        'int':                  (0, -2147483648L, 2147483647),
+        'int':                  (0, -2147483648L, 2147483647L),
         'short':                (0, -32768, 32767),
         'byte':                 (0, -128, 127),
         'nonNegativeInteger':   (0, 0, None),
@@ -854,8 +860,18 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             #print "   requested_type=", t
             #print "   data=", d
 
+
+#         print "convertToBasicTypes:"
+#         print "   requested_type=", t
+#         print "   data=", d
+#         print "   attrs=", attrs
+#         print "   t[0]=", t[0]
+#         print "   t[1]=", t[1]
+            
+#         print "   in?", t[0] in NS.EXSD_L
+
         if t[0] in NS.EXSD_L:
-            if t[1] in ["int", "integer"]:
+            if t[1]=="integer": # unbounded integer type
                 try:
                     d = int(d)
                     if len(attrs):
@@ -863,7 +879,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                 except:
                     d = long(d)
                 return d
-            if self.intlimits.has_key (t[1]): # integer types
+            if self.intlimits.has_key (t[1]): # range-bounded integer types
                 l = self.intlimits[t[1]]
                 try: d = int(d)
                 except: d = long(d)
@@ -883,7 +899,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                     return str(dnn)
                 except:
                     return dnn
-            if t[1] in ["bool", "boolean"]:
+            if t[1] in ("bool", "boolean"):
                 d = d.strip().lower()
                 if d in ('0', 'false'):
                     return False
