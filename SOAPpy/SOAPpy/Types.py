@@ -1119,7 +1119,7 @@ class intType(anyType):
 
         if type(data) not in (IntType, LongType) or \
             data < -2147483648L or \
-            data >  2147483647:
+            data >  2147483647L:
             raise ValueError, "invalid %s value" % self._type
 
         return data
@@ -1313,8 +1313,14 @@ class compoundType(anyType):
         else:
             self.__dict__[name][subpos] = value
 
-        self._keyord[pos] = name
-
+        # only add to key order list if it does not already 
+        # exist in list
+        if not (name in self._keyord):
+            if pos < len(x):
+                self._keyord[pos] = name
+            else:
+                self._keyord.append(name)
+              
 
     def _getItemAsList(self, name, default = []):
         try:
