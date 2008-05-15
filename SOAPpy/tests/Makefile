@@ -4,7 +4,7 @@ default: echoClient echoHeader largeDataTest bugs \
 	 card independent \
          testClient1 outside_services
 
-bugs: Bug1001646 Bug916265 Bug1161780
+bugs: Bug1001646 Bug916265 Bug1161780 Bug1936883
 
 echoClient: 
 	$(PYTHON) echoServer.py >& echoServer_echoClient.log &
@@ -30,6 +30,9 @@ esj:
 	$(PYTHON) esj_test_server.py >& esj_test.log &
 	$(PYTHON) esj_test_client.py
 
+
+Bug1936883:
+	$(PYTHON) Bug1936883.py
 
 Bug1161780:
 	$(PYTHON) Bug1161780.py

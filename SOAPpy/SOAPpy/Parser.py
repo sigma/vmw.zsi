@@ -855,7 +855,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             #print "   data=", d
 
         if t[0] in NS.EXSD_L:
-            if t[1] == "integer":
+            if t[1] in ["int", "integer"]:
                 try:
                     d = int(d)
                     if len(attrs):
@@ -883,7 +883,7 @@ class SOAPParser(xml.sax.handler.ContentHandler):
                     return str(dnn)
                 except:
                     return dnn
-            if t[1] == "boolean":
+            if t[1] in ["bool", "boolean"]:
                 d = d.strip().lower()
                 if d in ('0', 'false'):
                     return False
