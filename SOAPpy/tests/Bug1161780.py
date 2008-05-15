@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import sys
-sys.path = ["/home/tim/SOAPpy-0.12.0"] \
-            + sys.path
+sys.path.insert(1, "..")
+from SOAPpy.Errors import Error
 from SOAPpy.Parser import parseSOAPRPC
-bad = """<?xml version="1.0"?>
+
+original = """<?xml version="1.0"?>
 <SOAP-ENV:Envelope
  SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
@@ -15,4 +16,13 @@ bad = """<?xml version="1.0"?>
 	<ErrorString>The CustomerID tag could not be found or the number contained in the tag was invalid</ErrorString></SOAP-ENV:Envelope>
 
 """
-parseSOAPRPC(bad, attrs = 1)
+
+try:
+    parseSOAPRPC(original, attrs = 1)
+except Error, e:
+    if e.msg != "expected nothing, got `ErrorString'":
+        raise AssertionError, "Incorrect error message generated: " + e.msg
+else:
+    raise AssertionError, "Incorrect error message generated"
+
+print "Success"

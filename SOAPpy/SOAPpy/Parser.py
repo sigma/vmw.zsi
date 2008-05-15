@@ -85,6 +85,16 @@ class SOAPParser(xml.sax.handler.ContentHandler):
         self._rules    = rules
 
     def startElementNS(self, name, qname, attrs):
+
+        def toStr( name ):
+            prefix = name[0]
+            tag    = name[1]
+            if self._prem_r.has_key(prefix):
+               tag = self._prem_r[name[0]] + ':' + name[1]
+            elif prefix:
+               tag = prefix + ":" + tag
+            return tag
+        
         # Workaround two sax bugs
         if name[0] == None and name[1][0] == ' ':
             name = (None, name[1][1:])
@@ -95,8 +105,8 @@ class SOAPParser(xml.sax.handler.ContentHandler):
 
         if self._next == "E":
             if name[1] != 'Envelope':
-                raise Error, "expected `SOAP-ENV:Envelope', gto `%s:%s'" % \
-                    (self._prem_r[name[0]], name[1])
+                raise Error, "expected `SOAP-ENV:Envelope', " \
+                    "got `%s'" % toStr( name )
             if name[0] != NS.ENV:
                 raise faultType, ("%s:VersionMismatch" % NS.ENV_T,
                     "Don't understand version `%s' Envelope" % name[0])
@@ -108,16 +118,17 @@ class SOAPParser(xml.sax.handler.ContentHandler):
             else:
                 raise Error, \
                     "expected `SOAP-ENV:Header' or `SOAP-ENV:Body', " \
-                    "got `%s'" % self._prem_r[name[0]] + ':' + name[1]
+                    "got `%s'" % toStr( name )
         elif self._next == "B":
             if name == (NS.ENV, "Body"):
                 self._next = None
             else:
-                raise Error, "expected `SOAP-ENV:Body', got `%s'" % \
-                    self._prem_r[name[0]] + ':' + name[1]
+                raise Error, "expected `SOAP-ENV:Body', " \
+                      "got `%s'" % toStr( name )
         elif self._next == "":
-            raise Error, "expected nothing, got `%s'" % \
-                self._prem_r[name[0]] + ':' + name[1]
+            raise Error, "expected nothing, " \
+                  "got `%s'" % toStr( name )
+                  
 
         if len(self._stack) == 2:
             rules = self._rules

@@ -1,8 +1,10 @@
 PYTHON=python
 
-default: echoClient echoHeader largeDataTest Bug1001646 Bug916265 \
+default: echoClient echoHeader largeDataTest bugs \
 	 card independent \
          testClient1 outside_services
+
+bugs: Bug1001646 Bug916265 Bug1161780
 
 echoClient: 
 	$(PYTHON) echoServer.py >& echoServer_echoClient.log &
@@ -29,6 +31,9 @@ esj:
 	$(PYTHON) esj_test_client.py
 
 
+Bug1161780:
+	$(PYTHON) Bug1161780.py
+
 Bug1001646:
 	$(PYTHON) echoServer.py >& echoServer_largeDataTest.log &
 	sleep 5s # wait for server to start up
@@ -50,7 +55,7 @@ outside_services:
 independent:
 	$(PYTHON) speedTest.py
 	$(PYTHON) Bug918216.py
-	$(PYTHON) ComplexTypes.py
+	-$(PYTHON) ComplexTypes.py
 	-$(PYTHON) SOAPtest.py # one subtest will fail
 	$(PYTHON) TCtest.py
 	$(PYTHON) testleak.py
