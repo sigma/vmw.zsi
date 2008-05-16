@@ -180,7 +180,7 @@ class HTTPTransport:
         r.putheader("User-agent", SOAPUserAgent())
         t = 'text/xml';
         if encoding != None:
-            t += '; charset="%s"' % encoding
+            t += '; charset=%s' % encoding
         r.putheader("Content-type", t)
         r.putheader("Content-length", str(len(data)))
         self.__addcookies(r);
