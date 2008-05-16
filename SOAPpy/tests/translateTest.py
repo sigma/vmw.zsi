@@ -7,7 +7,7 @@ import os, re
 import sys
 sys.path.insert(1, "..")
 
-from SOAPpy import SOAPProxy
+from SOAPpy import *
 
 # Check for a web proxy definition in environment
 try:
@@ -17,9 +17,38 @@ try:
 except:
    proxy = None
 
-server = SOAPProxy("http://services.xmethods.com:80/perl/soaplite.cgi",
-                   http_proxy=proxy)
-babel = server._ns('urn:xmethodsBabelFish#BabelFish')
 
-print babel.BabelFish(translationmode = "en_fr",
-    sourcedata = "The quick brown fox did something or other")
+if 1:
+
+   server = WSDL.Proxy('http://www.webservicex.com/TranslateService.asmx?WSDL',
+                       http_proxy=proxy,
+                       ns="http://www.webservicex.com/")
+   
+   print server.show_methods()
+
+   server.soapproxy.config.dumpHeadersOut = True
+   server.soapproxy.config.dumpSOAPOut = True
+
+   server.soapproxy.config.dumpSOAPIn = True
+   server.soapproxy.config.dumpHeadersIn = True
+
+
+
+else:
+
+   server = SOAPProxy("http://www.webservicex.net/TranslateService.asmx/",
+                      http_proxy=proxy,
+                      soapaction="http://www.webservicex.net/Translate")
+   
+   server.config.dumpHeadersOut = True
+   server.config.dumpSOAPOut = True
+   
+   server.config.dumpSOAPIn = True
+   server.config.dumpHeadersIn = True
+
+query = server.Translate(LanguageMode="EnglishToFrench",
+                         Text="Hello, how are you today?")
+
+print query
+
+print repr(query)
