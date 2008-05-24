@@ -1,3 +1,5 @@
+from __future__ import nested_scopes
+
 """
 ################################################################################
 # Copyright (c) 2003, Pfizer
@@ -35,8 +37,6 @@
 
 ident = '$Id$'
 from version import __version__
-
-from __future__ import nested_scopes
 
 import UserList
 import base64
