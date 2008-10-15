@@ -38,7 +38,7 @@ test_SquareService = servers/SquareService.py
 test_DateService = servers/DateService.py
 test_FinancialService = servers/FinancialService.py
 test_EchoWSAddr200403 = servers/EchoWSAddr200403Server.py
-
+test_NoMessagePart = servers/NoMessagePartServer.py
 
 ##########################################################################
 # URL SECTIONS: All SOAP-1.1
@@ -119,7 +119,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes test_EchoWSAddr200403 test_SubstitutionGroup test_VIM test_Unqualified
+tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes test_EchoWSAddr200403 test_SubstitutionGroup test_VIM test_Unqualified test_NoMessagePart
 
 [doc_literal_broke]
 document = True
@@ -184,3 +184,5 @@ test_Racing = wsdl/Racing.wsdl
 test_NVOAdmin = wsdl/nvo-admin.wsdl
 test_Clearspace = http://eval.jivesoftware.com/clearspace/rpc/soap/BlogService?wsdl
 test_VIM = wsdl/vim.wsdl
+
+test_NoMessagePart = wsdl/NoMessagePart.wsdl
