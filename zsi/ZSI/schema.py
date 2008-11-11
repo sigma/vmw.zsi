@@ -349,7 +349,11 @@ class _Mirage:
     
     def _reveal_type(self):
         if self.__cache is None:
-            self.__cache = self.klass(pname=self.pname, 
+            pname = self.pname
+            if self.nspname != None:
+                pname = (self.nspname,self.pname)
+
+            self.__cache = self.klass(pname=pname, 
                             aname=self.aname, minOccurs=self.minOccurs, 
                             maxOccurs=self.maxOccurs, nillable=self.nillable, 
                             **self.__kw)
