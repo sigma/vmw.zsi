@@ -184,6 +184,8 @@ class Address(object):
                     %GTD(namespaceURI ,'EndpointReferenceType')
 
             ReferenceProperties = getattr(endPointReference, '_ReferenceProperties', None)
+            if ReferenceProperties is None: # In recent WS-A attribute name changed
+                ReferenceProperties = getattr(endPointReference, '_ReferenceParameters', None)
             if ReferenceProperties is not None:
                 for v in getattr(ReferenceProperties, '_any', ()):
                     if not hasattr(v,'typecode'):
