@@ -1247,11 +1247,17 @@ class XML(TypeCode):
             #raise EvaluateException('Embedded XML has unknown encodingStyle',
             #       ps.Backtrace(elt)
             pass
-        if len(c) != 1:
-            raise EvaluateException('Embedded XML has more than one child',
+        if len(c) < self.minOccurs:
+            raise EvaluateException('Not enough XML children %d (minOccurs = %d)' % (len(c), self.minOccurs),
                     ps.Backtrace(elt))
-        if self.copyit: return c[0].cloneNode(1)
-        return c[0]
+        if self.maxOccurs != UNBOUNDED and len(c) > self.maxOccurs:
+            raise EvaluateException('Too many XML children %d (maxOccurs = %d)' % (len(c), self.maxOccurs),
+                    ps.Backtrace(elt))
+        if self.copyit:
+            c = map(lambda n: n.cloneNode(1), c)
+        if self.maxOccurs == 1:
+            return c[0]
+        return c
 
     def serialize(self, elt, sw, pyobj, name=None, unsuppressedPrefixes=[], **kw):
         objid = _get_idstr(pyobj)
