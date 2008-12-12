@@ -9,21 +9,17 @@ from ZSI.wstools.Namespaces import SCHEMA
 import operator, re, time as _time
 from time import mktime as _mktime, localtime as _localtime, gmtime as _gmtime
 from datetime import tzinfo as _tzinfo, timedelta as _timedelta,\
-    datetime as _datetime
+    datetime as _datetime, MINYEAR, MAXYEAR
 from math import modf as _modf
 
-_niltime = [
-    0, 0, 0,    # year month day
-    0, 0, 0,    # hour minute second
-    0, 0, 0     # weekday, julian day, dst flag
-]
+# Year, month or day may be None
+_niltime = [None] * 3 + [0] * 6
 
 #### Code added to check current timezone offset
 _zero = _timedelta(0)
 _dstoffset = _stdoffset = _timedelta(seconds=-_time.timezone)
 if _time.daylight: _dstoffset = _timedelta(seconds=-_time.altzone)
 _dstdiff = _dstoffset - _stdoffset
-
 
 class _localtimezone(_tzinfo):
     """ """
@@ -75,6 +71,41 @@ class _fixedoffset(_tzinfo):
         """datetime -> minutes east of UTC (negative for west of UTC)."""
         return self.__offset
 
+def _tz_to_tzinfo(tz):
+    if not tz:
+        return _localtimezone()
+    if tz == "Z": tz = "+00:00"
+    h, m = map(int, tz.split(':'))
+    if h < 0: m = -m
+    return _fixedoffset(60 * h + m)
+
+def _fix_timezone(tv, tz_from = "Z", tz_to = None):
+    if None in tv[3:5]: # Hour or minute is absent
+        return tv
+
+    # Fix local copy of time tuple
+    ltv = list(_fix_none_fields(tv))
+
+    if ltv[0] < MINYEAR or ltv[0] > MAXYEAR:
+        return tv # Unable to fix timestamp
+
+    _tz_from = _tz_to_tzinfo(tz_from)
+    _tz_to   = _tz_to_tzinfo(tz_to)
+
+    ltv[:6] = _datetime(*(ltv[:6] + [0, _tz_from])).astimezone(_tz_to).timetuple()[:6]
+
+    # Patch local copy with original values
+    for i in range(0, 6):
+        if tv[i] is None: ltv[i] = None
+
+    return tuple(ltv)
+
+def _fix_none_fields(tv):
+    ltv = list(tv)
+    if ltv[0] is None: ltv[0] = MINYEAR + 1 # Year is absent
+    if ltv[1] is None: ltv[1] = 1 # Month is absent
+    if ltv[2] is None: ltv[2] = 1 # Day is absent
+    return tuple(ltv)
     
 def _dict_to_tuple(d):
     '''Convert a dictionary to a time tuple.  Depends on key values in the
@@ -96,42 +127,10 @@ def _dict_to_tuple(d):
     if v:
         msec,sec = _modf(float(v))
         retval[6],retval[5] = int(round(msec*1000)), int(sec)
-            
-    v = d.get('tz')
-    if v and v != 'Z':
-        h,m = map(int, v.split(':'))
-        # check for time zone offset, if within the same timezone, 
-        # ignore offset specific calculations
-        offset=_localtimezone().utcoffset(_datetime.now())
-        local_offset_hour = offset.seconds/3600
-        local_offset_min = (offset.seconds%3600)%60
-        if local_offset_hour > 12: 
-            local_offset_hour -= 24
-            
-        if local_offset_hour != h or local_offset_min != m:                
-            if h<0:
-                #TODO: why is this set to server
-                #foff = _fixedoffset(-((abs(h)*60+m)),"server")
-                foff = _fixedoffset(-((abs(h)*60+m)))
-            else:
-                #TODO: why is this set to server
-                #foff = _fixedoffset((abs(h)*60+m),"server")
-                foff = _fixedoffset((abs(h)*60+m)) 
-                
-            dt = _datetime(retval[0],retval[1],retval[2],retval[3],retval[4],
-                           retval[5],0,foff)
-            
-            # update dict with calculated timezone
-            localdt=dt.astimezone(_localtimezone())
-            retval[0] = localdt.year
-            retval[1] = localdt.month
-            retval[2] = localdt.day
-            retval[3] = localdt.hour
-            retval[4] = localdt.minute
-            retval[5] = localdt.second
-            
+
     if d.get('neg', 0):
-        retval[0:5] = map(operator.__neg__, retval[0:5])
+        retval[0:5] = map(lambda x: (x is not None or x) and operator.__neg__(x), retval[0:5])
+
     return tuple(retval)
 
 
@@ -188,6 +187,7 @@ class Gregorian(SimpleType):
     '''Gregorian times.
     '''
     lex_pattern = tag = format = None
+    fix_timezone = False
 
     def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
@@ -203,7 +203,12 @@ class Gregorian(SimpleType):
         except ValueError, e:
             #raise EvaluateException(str(e))
             raise
-        
+
+        if self.fix_timezone:
+            retval = _fix_timezone(retval, tz_from = m.groupdict().get('tz'), tz_to = None)
+
+        retval = _fix_none_fields(retval)
+
         if self.pyclass is not None:
             return self.pyclass(retval)
         return retval    
@@ -212,6 +217,9 @@ class Gregorian(SimpleType):
         if type(pyobj) in _floattypes or type(pyobj) in _inttypes:
             pyobj = _gmtime(pyobj)
         
+        if self.fix_timezone:
+            pyobj = _fix_timezone(pyobj, tz_from = None, tz_to = "Z")
+
         d = {}
         pyobj = tuple(pyobj)
         if 1 in map(lambda x: x < 0, pyobj[0:6]):
@@ -220,17 +228,18 @@ class Gregorian(SimpleType):
         else:
             d['neg'] = ''
 
+        d = {}
+        for k,i in [ ('Y', 0), ('M', 1), ('D', 2), ('h', 3), ('m', 4), ('s', 5) ]:
+            d[k] = pyobj[i]
+
         ms = pyobj[6]
         if not ms or not hasattr(self, 'format_ms'): 
-            d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
-                'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], }
             return self.format % d
 
         if  ms > 999:
             raise ValueError, 'milliseconds must be a integer between 0 and 999'
 
-        d = { 'Y': pyobj[0], 'M': pyobj[1], 'D': pyobj[2],
-            'h': pyobj[3], 'm': pyobj[4], 's': pyobj[5], 'ms':ms, }
+        d['ms'] = ms
         return self.format_ms % d
  
 
@@ -245,6 +254,7 @@ class gDateTime(Gregorian):
     tag, format = 'dateTime', '%(Y)04d-%(M)02d-%(D)02dT%(h)02d:%(m)02d:%(s)02dZ'
     format_ms = format[:-1] + '.%(ms)03dZ'
     type = (SCHEMA.XSD3, 'dateTime')
+    fix_timezone = True
 
 class gDate(Gregorian):
     '''A date.
@@ -253,7 +263,7 @@ class gDate(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
                         '(?P<Y>\d{4,})-' r'(?P<M>\d\d)-' r'(?P<D>\d\d)' \
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'date', '%(Y)04d-%(M)02d-%(D)02dZ'
+    tag, format = 'date', '%(Y)04d-%(M)02d-%(D)02d'
     type = (SCHEMA.XSD3, 'date')
 
 class gYearMonth(Gregorian):
@@ -263,7 +273,7 @@ class gYearMonth(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
                         '(?P<Y>\d{4,})-' r'(?P<M>\d\d)' \
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gYearMonth', '%(Y)04d-%(M)02dZ'
+    tag, format = 'gYearMonth', '%(Y)04d-%(M)02d'
     type = (SCHEMA.XSD3, 'gYearMonth')
 
 class gYear(Gregorian):
@@ -273,7 +283,7 @@ class gYear(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
                         '(?P<Y>\d{4,})' \
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gYear', '%(Y)04dZ'
+    tag, format = 'gYear', '%(Y)04d'
     type = (SCHEMA.XSD3, 'gYear')
 
 class gMonthDay(Gregorian):
@@ -283,7 +293,7 @@ class gMonthDay(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
                         r'--(?P<M>\d\d)-' r'(?P<D>\d\d)' \
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gMonthDay', '---%(M)02d-%(D)02dZ'
+    tag, format = 'gMonthDay', '--%(M)02d-%(D)02d'
     type = (SCHEMA.XSD3, 'gMonthDay')
 
 
@@ -294,7 +304,7 @@ class gDay(Gregorian):
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
                         r'---(?P<D>\d\d)' \
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gDay', '---%(D)02dZ'
+    tag, format = 'gDay', '---%(D)02d'
     type = (SCHEMA.XSD3, 'gDay')
     
 class gMonth(Gregorian):
@@ -302,9 +312,9 @@ class gMonth(Gregorian):
     '''
     parselist = [ (None,'gMonth') ]
     lex_pattern = re.compile('^' r'(?P<neg>-?)' \
-                        r'---(?P<M>\d\d)' \
+                        r'--(?P<M>\d\d)' \
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
-    tag, format = 'gMonth', '---%(M)02dZ'
+    tag, format = 'gMonth', '--%(M)02d'
     type = (SCHEMA.XSD3, 'gMonth')
     
 class gTime(Gregorian):
@@ -317,5 +327,6 @@ class gTime(Gregorian):
     tag, format = 'time', '%(h)02d:%(m)02d:%(s)02dZ'
     format_ms = format[:-1] + '.%(ms)03dZ'
     type = (SCHEMA.XSD3, 'time')
+    fix_timezone = True
 
 if __name__ == '__main__': print _copyright
