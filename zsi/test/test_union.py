@@ -8,7 +8,6 @@ from ZSI.wstools.c14n import Canonicalize
 from ZSI.wstools.Namespaces import WSA200403, SOAP
 from cStringIO import StringIO
 
-
 # 
 # Generated code
 class ns3:
@@ -34,7 +33,12 @@ class ns3:
         def __init__(self, pname, **kw):
             ZSI.TC.Union.__init__(self, pname, **kw)
 
-
+class TestUnionTC(ZSI.TC.Union, TypeDefinition):
+    memberTypes = [(u'http://www.w3.org/2001/XMLSchema', u'long'), (u'http://www.w3.org/2001/XMLSchema', u'dateTime')]
+    schema = "urn:test:union"
+    type = (schema, "TestUnion")
+    def __init__(self, pname, **kw):
+        ZSI.TC.Union.__init__(self, pname, **kw)
 
 class UnionTestCase(unittest.TestCase):
     "test Union TypeCode"
@@ -61,7 +65,16 @@ class UnionTestCase(unittest.TestCase):
             #     so string is going to parse the URI when we want anyURI
             self.failUnless(value == pyobj, 'Expected equivalent')
 
-
+    def check_union_text_to_data(self):
+        from ZSI.TC import EvaluateException
+        class _PS:
+            def Backtrace(self, *a, **kw): return ""
+        typecode = TestUnionTC("TestUnion")
+        self.assertEquals(100, typecode.text_to_data('100', None, None), "Fail to parse long")
+        date = typecode.text_to_data("2002-10-30T12:30:00Z", None, None)
+        self.assertEquals((2002, 10, 30), date[:3], "Fail to parse dateTime")
+        self.assertRaises(EvaluateException, typecode.text_to_data, "urn:string", None, _PS())
+        
 
 def makeTestSuite():
     suite = unittest.TestSuite()

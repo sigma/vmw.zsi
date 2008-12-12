@@ -1575,6 +1575,29 @@ class Union(SimpleType):
 
         return pyobj
 
+    def text_to_data(self, text, elt, ps):
+        """ Copy of parse method with some cleanups and logging"""
+        self.setMemberTypeCodes()
+
+        for indx in range(len(self.memberTypeCodes)):
+            typecode = self.memberTypeCodes[indx]
+            self.logger.debug("Trying member %s", str(typecode.type))
+            try:
+                pyobj = typecode.text_to_data(text, elt, ps)
+            except Exception, ex:
+                self.logger.debug("Fail to parse with %s: %s", typecode, ex)
+                continue
+
+            if indx > 0:
+                self.memberTypeCodes.remove(typecode)
+                self.memberTypeCodes.insert(0, typecode)
+            break
+        else:
+            raise EvaluateException('No member matches data "%s" (while parsing %s)' % (text, str(self.type)),
+                    ps.Backtrace(elt))
+
+        return pyobj
+
     def get_formatted_content(self, pyobj, **kw): 
         self.setMemberTypeCodes()
         for indx in range(len(self.memberTypeCodes)):
