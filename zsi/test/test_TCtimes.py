@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-import unittest, sys, tests_good, tests_bad, time
+import unittest, sys, tests_good, tests_bad, time, os
 from ZSI import *
 try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
 
+os.environ['TZ'] = 'Europe/Moscow'
+time.tzset()
 
 class TestCase(unittest.TestCase):
     '''Examples from "Definitive XML Schema, Priscilla Walmsley, p237-246
@@ -18,23 +20,37 @@ class TestCase(unittest.TestCase):
             '%s with local offset(%s): expecting "%s" got "%s"' %(
             msg, data, correct, stamp))
 
-    def check_datetime_timezone(self):
+    def _wrap_timezone(self, f, *a, **kw):
+        oldtz = os.environ.get('TZ', 'UTC')
+        for tz in ['Europe/Moscow', 'Antarctica/Vostok', 'America/Los_Angeles', 'UTC']:
+            try:
+                os.environ['TZ'] = tz
+                time.tzset()
+                f(*a, **kw)
+            finally:
+                os.environ['TZ'] = oldtz
+                time.tzset()
+
+    def _check_datetime_timezone(self):
         # UTC with local timezone offset
         # Base example from http://www.w3.org/TR/xmlschema11-2/#dateTime-lexical-mapping
 
         correct = "2002-10-10T17:00:00Z"
         for t in ['2002-10-10T12:00:00-05:00', '2002-10-10T19:00:00+02:00', '2002-10-10T17:00:00+00:00', '2002-10-10T17:00:00Z']:
             self._check_data2data(TC.gDateTime(), t, correct, 'dateTime')
+    check_datetime_timezone = lambda s: s._wrap_timezone(s._check_datetime_timezone)
 
-    def check_time_timezone(self):
+    def _check_time_timezone(self):
         correct = "17:30:00Z"
         for t in ['12:30:00-05:00', '19:30:00+02:00', '17:30:00+00:00']:
             self._check_data2data(TC.gTime(), t, correct, 'time')
+    check_time_timezone = lambda s: s._wrap_timezone(s._check_time_timezone)
 
-    def check_date_timezone(self):
+    def _check_date_timezone(self):
         correct = "2002-10-10"
         for t in ['2002-10-10-05:00', '2002-10-10+02:00', '2002-10-10+00:00', '2002-10-10Z']:
             self._check_data2data(TC.gDate(), t, correct, 'date')
+    check_date_timezone = lambda s: s._wrap_timezone(s._check_date_timezone)
 
     def check_valid_dateTime(self):
         typecode = TC.gDateTime()
