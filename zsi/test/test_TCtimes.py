@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# vim: sts=4 sw=4 et
+
 import unittest, sys, tests_good, tests_bad, time, os
 from ZSI import *
 try:
@@ -15,6 +17,7 @@ class TestCase(unittest.TestCase):
     def _check_data2data(self, tc, data, correct, msg):
         tmp = tc.text_to_data(data, None, None)
         stamp = tc.get_formatted_content(tmp)
+        #print "%s -> %s" % (data, str(tmp))
 
         self.failUnless(stamp == correct, 
             '%s with local offset(%s): expecting "%s" got "%s"' %(
@@ -30,6 +33,12 @@ class TestCase(unittest.TestCase):
             finally:
                 os.environ['TZ'] = oldtz
                 time.tzset()
+
+    def _check_minimum(self):
+        data = "0001-01-01T00:00:00.0000000-07:00"
+        tc = TC.gDateTime()
+        tc.text_to_data(data, None, None)
+    check_minimum = lambda s: s._wrap_timezone(s._check_minimum)
 
     def _check_datetime_timezone(self):
         # UTC with local timezone offset
