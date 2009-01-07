@@ -17,17 +17,20 @@ _niltime = [None] * 3 + [0] * 6
 
 #### Code added to check current timezone offset
 _zero = _timedelta(0)
-_dstoffset = _stdoffset = _timedelta(seconds=-_time.timezone)
-if _time.daylight: _dstoffset = _timedelta(seconds=-_time.altzone)
-_dstdiff = _dstoffset - _stdoffset
 
 class _localtimezone(_tzinfo):
+    def __init__(self, *a, **kw):
+        _tzinfo.__init__(self, *a, **kw)
+        self.__dstoffset = self.__stdoffset = _timedelta(seconds=-_time.timezone)
+        if _time.daylight: self.__dstoffset = _timedelta(seconds=-_time.altzone)
+        self.__dstdiff = self.__dstoffset - self.__stdoffset
+        
     """ """
     def dst(self, dt):
         """datetime -> DST offset in minutes east of UTC."""
         tt = _localtime(_mktime((dt.year, dt.month, dt.day,
                  dt.hour, dt.minute, dt.second, dt.weekday(), 0, -1)))
-        if tt.tm_isdst > 0: return _dstdiff
+        if tt.tm_isdst > 0: return self.__dstdiff
         return _zero
     
     #def fromutc(...)
@@ -43,8 +46,8 @@ class _localtimezone(_tzinfo):
         """datetime -> minutes east of UTC (negative for west of UTC)."""
         tt = _localtime(_mktime((dt.year, dt.month, dt.day,
                  dt.hour, dt.minute, dt.second, dt.weekday(), 0, -1)))
-        if tt.tm_isdst > 0: return _dstoffset
-        return _stdoffset
+        if tt.tm_isdst > 0: return self.__dstoffset
+        return self.__stdoffset
 
 class _fixedoffset(_tzinfo):
     """Fixed offset in minutes east from UTC.
@@ -86,7 +89,7 @@ def _fix_timezone(tv, tz_from = "Z", tz_to = None):
     # Fix local copy of time tuple
     ltv = list(_fix_none_fields(tv))
 
-    if ltv[0] < MINYEAR or ltv[0] > MAXYEAR:
+    if ltv[0] < MINYEAR + 1 or ltv[0] > MAXYEAR - 1:
         return tv # Unable to fix timestamp
 
     _tz_from = _tz_to_tzinfo(tz_from)
