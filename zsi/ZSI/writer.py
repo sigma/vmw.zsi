@@ -8,6 +8,8 @@ from ZSI import _backtrace, _stringtypes, _seqtypes
 from ZSI.wstools.Utility import MessageInterface, ElementProxy
 from ZSI.wstools.Namespaces import XMLNS, SOAP, SCHEMA
 from ZSI.wstools.c14n import Canonicalize
+from ZSI.wstools.MIMEAttachment import MIMEMessage
+
 import types
 
 _standard_ns = [ ('xml', XMLNS.XML), ('xmlns', XMLNS.BASE) ]
@@ -46,10 +48,35 @@ class SoapWriter:
         self.body = None
         self.callbacks = []
         self.closed = False
+        self._attachments = []
+        self._MIMEBoundary = ""
+        self._startCID = ""
 
     def __str__(self):
         self.close()
-        return str(self.dom)
+        if len(self._attachments) == 0:
+            #we have no attachment let's return the SOAP message
+            return str(self.dom)
+        else:
+            #we have some files to attach let's create the MIME message
+            #first part the SOAP message
+            msg = MIMEMessage()
+            msg.addXMLMessage(str(self.dom))
+            for file in self._attachments:
+                msg.attachFile(file)
+            msg.makeBoundary()
+            self._MIMEBoundary = msg.getBoundary()
+            self._startCID = msg.getStartCID()
+            return msg.toString()
+
+    def getMIMEBoundary(self):
+        #return the httpHeader if any
+        return self._MIMEBoundary
+
+    def getStartCID(self):
+        #return the CID of the xml part
+        return self._startCID
+
 
     def getSOAPHeader(self):
         if self.header in (True, False):
@@ -120,7 +147,7 @@ class SoapWriter:
             if root not in [ 0, 1 ]:
                 raise ValueError, "SOAP-ENC root attribute not in [0,1]"
             elt.setAttributeNS(SOAP.ENC, 'root', root)
-                        
+
         return self
 
     def writeNSdict(self, nsdict):
@@ -174,6 +201,12 @@ class SoapWriter:
         the specified element.
         '''
         return _backtrace(elt._getNode(), self.dom._getNode())
+
+
+    def addAttachment(self, fileDesc):
+        '''This function add an attachment to the SaopMessage
+        '''
+        self._attachments.append(fileDesc)
 
     def close(self):
         '''Invoke all the callbacks, and close off the SOAP message.

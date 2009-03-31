@@ -4,7 +4,9 @@
 '''
 
 from ZSI import _copyright, _child_elements, _get_idstr
-from ZSI.TC import TypeCode, Struct as _Struct, Any as _Any
+from ZSI.TC import SimpleType, TypeCode, Struct as _Struct, Any as _Any
+from ZSI.wstools.logging import getLogger as _GetLogger
+#import types
 
 class Apache:
     NS = "http://xml.apache.org/xml-soap"
@@ -68,6 +70,54 @@ class _Map(TypeCode):
         else:
             for k,v in pyobj.items():
                 self.tc.serialize(el, sw, {'key': k, 'value': v}, name='item')
+
+
+class AttachmentRef(SimpleType):
+    '''Type code for Attachment. This attachment will work only with axis...
+    '''
+
+    logger = _GetLogger('ZSI.TC.Attachment')
+    type = (Apache.NS, "DataHandler")
+    parselist = [(Apache.NS, "DataHandler")]
+    #seriallist = [ types.FileType ]
+
+    def __init__(self, pname=None, format='%s', **kw):
+        TypeCode.__init__(self, pname, **kw)
+        self.format = format
+
+
+    def parse(self, elt, ps):
+        #never invoked ???
+        #print "elt is: " + str(elt)
+        #print "while ps: " + str(ps)
+        return 
+
+    def get_formatted_content(self, pyobj):
+        return self.format %pyobj
+
+    def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
+        '''This function is in charge of serializing the attachment
+           fist it add the <attachment href=""/> tag
+           then it wraps up everything
+
+           pyobj is the file descriptor pointing to the file we wanna attach
+           elt is the ElementProxy containing the <inputFile> tag with the attachment tag
+           sw SoapWriter
+        '''
+        #print "serialize called with pyobj: "  + str(pyobj)
+        #adding the attachment tag
+        if pyobj is None:
+            return
+        if not sw.Known(pyobj):
+            sw.addAttachment(pyobj)
+            idhref = id(pyobj)
+            attachmentElement = elt.createAppendElement(None, "attachment", prefix="")
+            attachmentElement.setAttributeNS(None, "href", "cid:" + str(idhref))
+        else:
+            #print "the file " + pyobj + " was already attached"
+            #do nothing 
+            #this should not happen
+            pass
 
 
 Apache.Map = _Map

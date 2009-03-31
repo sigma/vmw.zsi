@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import unittest, sys, types, time
-from ZSI import TC, SoapWriter, ParsedSoap, EvaluateException
+from ZSI import TC, SoapWriter, ParsedSoap, EvaluateException, TCapache
 from ZSI.wstools.Namespaces import SCHEMA, SOAP
 
 NSDICT = {'tns':'xmlns:tns="urn:a"',
@@ -31,7 +31,7 @@ class AnyTestCase(unittest.TestCase):
 
     def check_parse_empty_all(self):
         # None
-        skip = [TC.FPEnumeration, TC.Enumeration, TC.IEnumeration, TC.List, TC.Integer]
+        skip = [TC.FPEnumeration, TC.Enumeration, TC.IEnumeration, TC.List, TC.Integer, TCapache.AttachmentRef]
         for typeclass in filter(lambda c: type(c) in [types.ClassType,type] and not issubclass(c, TC.String) and issubclass(c, TC.SimpleType), TC.__dict__.values()):
             if typeclass in skip: continue
             tc = typeclass()

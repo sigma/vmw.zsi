@@ -31,7 +31,7 @@ class BaseTypeInterpreter:
                            TC.gMonthDay, TC.InonPositiveInteger, \
                            TC.Ibyte, TC.FPdouble, TC.gTime, TC.gYear, \
                            TC.Ilong, TC.IunsignedLong, TC.Ishort, \
-                           TC.Token, TC.QName]
+                           TC.Token, TC.QName, ZSI.TCapache.AttachmentRef]
 
         self._tc_to_int = [
             ZSI.TCnumbers.IEnumeration,
@@ -63,7 +63,8 @@ class BaseTypeInterpreter:
             ZSI.TC.String,
             ZSI.TC.URI,
             ZSI.TC.XMLString,
-            ZSI.TC.Token]
+            ZSI.TC.Token,
+            ZSI.TCapache.AttachmentRef]
 
         self._tc_to_tuple = [
             ZSI.TC.Duration,
@@ -86,7 +87,7 @@ class BaseTypeInterpreter:
         if untaged_xsd_types.has_key(msg_type):
             return untaged_xsd_types[msg_type]
         for tc in self._type_list:
-            if tc.type == (SCHEMA.XSD3,msg_type):
+            if tc.type == (SCHEMA.XSD3,msg_type) or tc.type == (SCHEMA.AXIS,msg_type):
                 break
         else:
             tc = TC.AnyType

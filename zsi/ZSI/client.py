@@ -289,6 +289,8 @@ class _Binding:
         soapdata = str(sw)
         self.h = transport(netloc, None, **self.transdict)
         self.h.connect()
+        self.boundary = sw.getMIMEBoundary()
+        self.startCID = sw.getStartCID()
         self.SendSOAPData(soapdata, url, soapaction, **kw)
 
     def SendSOAPData(self, soapdata, url, soapaction, headers={}, **kw):
@@ -301,7 +303,13 @@ class _Binding:
         request_uri = _get_postvalue_from_absoluteURI(url)
         self.h.putrequest("POST", request_uri)
         self.h.putheader("Content-Length", "%d" % len(soapdata))
-        self.h.putheader("Content-Type", 'text/xml; charset="%s"' %UNICODE_ENCODING)
+        if len(self.boundary) == 0:
+            #no attachment
+            self.h.putheader("Content-Type", 'text/xml; charset="%s"' %UNICODE_ENCODING)
+        else:
+            #we have attachment 
+            contentType =  "multipart/related; "
+            self.h.putheader("Content-Type" , "multipart/related; boundary=\"" + self.boundary + "\"; start=\"" + self.startCID + '\"; type="text/xml"')
         self.__addcookies()
 
         for header,value in headers.items():

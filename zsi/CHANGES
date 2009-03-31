@@ -5,6 +5,8 @@ Change for xxx released xxx:
     -   In SoapWriter, put nsdecls on body, not envelope
     -   Record facets (restrictions) in XMLSchema.py <vchen@datapower.com>
     -   Remove Send()'s kwargs out of _args list <efrain@bogotron.net>
+    -   Added support for file attachment using AXIS apachesoap:DataHandler to 
+        reference it in the WSDL (only client side) lclement@sf.net
 
 Change for 2.1.0_a1 released 31-Oct-2007:
     -	No PyXML Dependency, use minidom by default (much faster)
