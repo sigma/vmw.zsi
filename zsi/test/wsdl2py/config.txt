@@ -119,7 +119,7 @@ tests =
 document = True
 literal = True
 broke = False
-tests =  test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes test_EchoWSAddr200403 test_SubstitutionGroup test_VIM test_Unqualified test_NoMessagePart
+tests = test_Attachment test_MapPoint test_Echo test_AWSECommerceService test_FinancialService test_BasicComm test_Manufacturer test_Racing  test_Attributes test_Choice test_DerivedTypes test_EchoWSAddr200403 test_SubstitutionGroup test_VIM test_Unqualified test_NoMessagePart 
 
 [doc_literal_broke]
 document = True
@@ -186,3 +186,6 @@ test_Clearspace = http://eval.jivesoftware.com/clearspace/rpc/soap/BlogService?w
 test_VIM = wsdl/vim.wsdl
 
 test_NoMessagePart = wsdl/NoMessagePart.wsdl
+
+test_Attachment = wsdl/test_Attachment.wsdl
+
