@@ -75,7 +75,9 @@ test_NoMessagePart = servers/NoMessagePartServer.py
 document = False
 literal = False
 broke = False
-tests = test_XMethodsQuery test_ThreatService
+tests = test_ThreatService
+#XMethods web site is broken wsdl can not be retreived
+#tests = test_XMethodsQuery test_ThreatService
 
 [rpc_encoded_broke]
 document = False

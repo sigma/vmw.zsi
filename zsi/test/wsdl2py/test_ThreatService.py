@@ -59,8 +59,8 @@ class HomelandTestCase(ServiceTestCase):
         msg = self.client_module.threatLevelRequest()
         rsp = port.threatLevel(msg)
         for item in rsp.ThreatLevelReturn.Item:
-            item.Key
-            item.Value
+            item['key']
+            item['value']
         
     
 

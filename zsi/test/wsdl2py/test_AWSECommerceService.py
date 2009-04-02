@@ -42,7 +42,9 @@ def all():
     return suite
 
 
-TargetNamespace = 'http://webservices.amazon.com/AWSECommerceService/2007-10-29'
+
+#TargetNamespace = 'http://webservices.amazon.com/AWSECommerceService/2007-10-29'
+TargetNamespace = 'http://webservices.amazon.com/AWSECommerceService/2009-02-01'
 
 class AmazonTestCase(ServiceTestCase):
     """Test case for Amazon ECommerce Web service
@@ -117,12 +119,12 @@ class AmazonTestCase(ServiceTestCase):
 
         response.OperationRequest.Arguments
         for i in response.OperationRequest.Arguments.Argument: 
-             i.get_attribute_Name()
-             i.get_attribute_Value()
-
-        for i in response.OperationRequest.HTTPHeaders.Header or []:
-             i.get_attribute_Name()
-             i.get_attribute_Value()
+            i.get_attribute_Name()
+            i.get_attribute_Value()
+        if response.OperationRequest.HTTPHeaders:
+            for i in response.OperationRequest.HTTPHeaders.Header or []:
+                i.get_attribute_Name()
+                i.get_attribute_Value()
              
         response.OperationRequest.RequestId
         response.OperationRequest.RequestProcessingTime
