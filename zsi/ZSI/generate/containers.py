@@ -14,7 +14,7 @@ from utility import NamespaceAliasDict as NAD, NCName_to_ClassName as NC_to_CN
 import ZSI
 from ZSI.TC import _is_xsd_or_soap_ns
 from ZSI.wstools import XMLSchema, WSDLTools
-from ZSI.wstools.Namespaces import SCHEMA, SOAP, WSDL
+from ZSI.wstools.Namespaces import SCHEMA, SOAP, WSDL, APACHE
 from ZSI.wstools.logging import getLogger as _GetLogger
 from ZSI.typeinterpreter import BaseTypeInterpreter
 from ZSI.generate import WSISpec, WSInteropError, Wsdl2PythonError,\
@@ -1627,7 +1627,8 @@ class TypecodeContainerBase(TypesContainerBase):
                 elif global_type is not None:
                     tc.name = c.getAttribute('name')
                     ns = global_type[0]
-                    if ns in SCHEMA.XSD_LIST:
+                    #APACHE.AXIS_NS is for DataHandler type
+                    if ns in SCHEMA.XSD_LIST + [APACHE.AXIS_NS]:
                         tpc = BTI.get_typeclass(global_type[1],global_type[0])
                         tc.klass = tpc
 #                    elif (self.ns,self.name) == global_type:
@@ -1775,7 +1776,7 @@ class MessageTypecodeContainer(TypecodeContainerBase):
                 tc = RPCMessageTcListComponentContainer(qualified=False)
                 tc.setOccurs(min, max, nil)
                 tc.name = p.name
-                if nsuri in [SOAP.ENC] + SCHEMA.XSD_LIST:
+                if nsuri in XMLSchema.BUILT_IN_NAMESPACES: 
                     tpc = BTI.get_typeclass(name, nsuri)
                     tc.klass = tpc
                 else:

@@ -87,7 +87,7 @@ class BaseTypeInterpreter:
         if untaged_xsd_types.has_key(msg_type):
             return untaged_xsd_types[msg_type]
         for tc in self._type_list:
-            if tc.type == (SCHEMA.XSD3,msg_type) or tc.type == (SCHEMA.AXIS,msg_type):
+            if tc.type == (SCHEMA.XSD3,msg_type):
                 break
         else:
             tc = TC.AnyType
@@ -107,6 +107,14 @@ class BaseTypeInterpreter:
             return self._get_xsd_typecode(name)
         elif targetNamespace in [SOAP.ENC]:
             return self._get_soapenc_typecode(name)
+        elif targetNamespace in  [ZSI.TCapache.Apache.NS]:
+            #maybe we have an AXIS attachment
+            if name == ZSI.TCapache.AttachmentRef.type[1]:
+                #we have an AXIS attachment
+                return ZSI.TCapache.AttachmentRef
+            else:
+                #AXIS Map type
+                return TC.AnyType
         return None
 
     def get_pythontype(self, msg_type, targetNamespace, typeclass=None):

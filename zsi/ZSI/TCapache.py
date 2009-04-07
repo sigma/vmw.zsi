@@ -6,10 +6,11 @@
 from ZSI import _copyright, _child_elements, _get_idstr
 from ZSI.TC import SimpleType, TypeCode, Struct as _Struct, Any as _Any
 from ZSI.wstools.logging import getLogger as _GetLogger
+from  ZSI.wstools.Namespaces import APACHE
 #import types
 
 class Apache:
-    NS = "http://xml.apache.org/xml-soap"
+    NS = APACHE.AXIS_NS
 
 class _Map(TypeCode):
     '''Apache's "Map" type.
