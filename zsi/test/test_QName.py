@@ -8,6 +8,7 @@ except ImportError:
 
 
 """Bug [ 1520092 ] URI Bug: urllib.quote escaping reserved chars
+   Bug [ 2748314 ] Malformed type attribute (bad NS) with 2.1a1 but not with 2.
 """
 
 
@@ -37,6 +38,16 @@ class TestCase(unittest.TestCase):
         fault = FaultFromFaultMessage(ps)
         self.failUnless(fault.code == ('','ServerFaultCode'), 'faultcode should be (namespace,name) tuple')
 
+    def check_type_attribute_qname_in_default_ns(self):
+        msg = """
+<ns1:test xsi:type="int" xmlns:ns1="urn:vim25" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns="http://www.w3.org/2001/XMLSchema">
+100
+</ns1:test>"""
+        ps = ParsedSoap(msg, envelope=False)
+        pyobj = ps.Parse(TC.Integer(pname=("urn:vim25","test")))
+
+
 
 #
 # Creates permutation of test options: "check", "check_any", etc
@@ -63,5 +74,4 @@ makeTestSuite = check
 def main():
     unittest.main(defaultTest="makeTestSuite")
 if __name__ == "__main__" : main()
-
 
