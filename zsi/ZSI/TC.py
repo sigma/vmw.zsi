@@ -213,7 +213,15 @@ class TypeCode:
 
         # Parse the QNAME.
         prefix,typeName = SplitQName(typeName)
-        uri = ps.GetElementNSdict(elt).get(prefix)
+        nsdict = ps.GetElementNSdict(elt)
+        prefix = prefix or ''
+
+        try:
+            uri = nsdict[prefix]
+        except KeyError, ex:
+            raise EvaluateException('cannot resolve prefix(%s)'%prefix,
+                ps.Backtrace(elt))
+
         if uri is None:
             raise EvaluateException('Malformed type attribute (bad NS)',
                     ps.Backtrace(elt))
