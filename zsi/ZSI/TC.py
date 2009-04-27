@@ -1465,7 +1465,7 @@ class AnyElement(AnyType):
         # element declarations
         prefix, typeName = SplitQName(_find_type(elt))
         if not skip and typeName:
-            namespaceURI = _resolve_prefix(elt, prefix or 'xmlns')
+            namespaceURI = _resolve_prefix(elt, prefix)
             # First look thru user defined namespaces, if don't find
             # look for 'primitives'.
             pyclass = GTD(namespaceURI, typeName) or Any
