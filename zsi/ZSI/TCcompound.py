@@ -92,6 +92,7 @@ class ComplexType(TypeCode):
     elements.
     '''
     logger = _GetLogger('ZSI.TCcompound.ComplexType')
+    class _DictHolder: pass
     
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
     mutable=True, mixed=False, mixed_aname='_text', **kw):
@@ -156,17 +157,26 @@ class ComplexType(TypeCode):
         if self.nilled(elt, ps): return Nilled
 
         # Create the object.
-        v = {}
+        if self.pyclass: 
+            # type definition must be informed of element tag (nspname,pname),
+            # element declaration is initialized with a tag.
+            try:
+                pyobj = self.pyclass()
+            except Exception, e:
+                raise TypeError("Constructing element (%s,%s) with pyclass(%s), %s" \
+                    %(self.nspname, self.pname, self.pyclass.__name__, str(e)))
+        else:
+            pyobj = ComplexType._DictHolder()
 
         # parse all attributes contained in attribute_typecode_dict (user-defined attributes),
         # the values (if not None) will be keyed in self.attributes dictionary.
         attributes = self.parse_attributes(elt, ps)
         if attributes:
-            v[self.attrs_aname] = attributes
+            setattr(pyobj, self.attrs_aname, attributes)
 
         #MIXED
         if self.mixed is True:
-            v[self.mixed_aname] = self.simple_value(elt,ps, mixed=True)
+            setattr(pyobj, self.mixed_aname, self.simple_value(elt,ps, mixed=True))
 
         # Clone list of kids (we null it out as we process)
         c, crange = c[:], range(len(c))
@@ -194,6 +204,9 @@ class ComplexType(TypeCode):
                 if what.name_match(c_elt):
                     match = True
                     value = what.parse(c_elt, ps)
+                elif isinstance(what,AnyElement):
+                    match = True
+                    value = what.parse(c_elt, ps)
                 else:
                     # substitutionGroup head must be a global element declaration
                     # if successful delegate to matching GED
@@ -207,14 +220,15 @@ class ComplexType(TypeCode):
 
                 if match:
                     if what.maxOccurs > 1:
-                        if v.has_key(what.aname):
-                            v[what.aname].append(value)
+                        attr = getattr(pyobj, what.aname, None)
+                        if attr is not None:
+                            attr.append(value)
                         else:
-                            v[what.aname] = [value]
+                            setattr(pyobj, what.aname, [value])
                         c[j] = None
                         continue
                     else:
-                        v[what.aname] = value
+                        setattr(pyobj, what.aname, value)
                     c[j] = None
                     break
 
@@ -226,48 +240,15 @@ class ComplexType(TypeCode):
                     raise EvaluateException('Out of order complexType',
                             ps.Backtrace(c_elt))
             else:
-                # only supporting 1 <any> declaration in content.
-                if isinstance(what,AnyElement):
-                    any = what
-                elif hasattr(what, 'default'):
-                    v[what.aname] = what.default
-                elif what.minOccurs > 0 and not v.has_key(what.aname):
+                if hasattr(what, 'default'):
+                    setattr(pyobj, what.aname, what.default)
+                elif what.minOccurs > 0 and not hasattr(pyobj, what.aname):
                     raise EvaluateException('Element "' + what.aname + \
                         '" missing from complexType', ps.Backtrace(elt))
 
-        # Look for wildcards and unprocessed children
-        # XXX Stick all this stuff in "any", hope for no collisions
-        if any is not None:
-            occurs = 0
-            v[any.aname] = []
-            for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
-                value = any.parse(c_elt, ps)
-                if any.maxOccurs == UNBOUNDED or any.maxOccurs > 1:
-                    v[any.aname].append(value)
-                else:
-                    v[any.aname] = value
+        if isinstance(pyobj, ComplexType._DictHolder):
+            return pyobj.__dict__
 
-                occurs += 1
-
-            # No such thing as nillable <any>
-            if any.maxOccurs == 1 and occurs == 0:
-                v[any.aname] = None
-            elif occurs < any.minOccurs or (any.maxOccurs!=UNBOUNDED and any.maxOccurs<occurs):
-                raise EvaluateException('occurances of <any> elements(#%d) bound by (%d,%s)' %(
-                    occurs, any.minOccurs,str(any.maxOccurs)), ps.Backtrace(elt))
-
-        if not self.pyclass: 
-            return v
-
-        # type definition must be informed of element tag (nspname,pname),
-        # element declaration is initialized with a tag.
-        try:
-            pyobj = self.pyclass()
-        except Exception, e:
-            raise TypeError("Constructing element (%s,%s) with pyclass(%s), %s" \
-                %(self.nspname, self.pname, self.pyclass.__name__, str(e)))
-        for key in v.keys():
-            setattr(pyobj, key, v[key])
         return pyobj
 
     def serialize(self, elt, sw, pyobj, inline=False, name=None, **kw):

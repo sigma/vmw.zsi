@@ -9,7 +9,6 @@
   <xsd:complexType name='baseType'>
     <xsd:sequence>
       <xsd:element name="base" type='xsd:string'/>
-      <xsd:any namespace="##other" minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
     </xsd:sequence>
   </xsd:complexType>
 
