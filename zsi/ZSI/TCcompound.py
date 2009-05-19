@@ -185,17 +185,19 @@ class ComplexType(TypeCode):
         if debug:
             self.logger.debug("ofwhat: %s",str(self.ofwhat))
             
-        any = None
-        for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
-            
-            # retrieve typecode if it is hidden
-            if callable(what): what = what()
-            
-            # Loop over all available kids
-            if debug: 
-                self.logger.debug("what: (%s,%s)", what.nspname, what.pname)
-                
-            for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
+        for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
+            for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
+                # Loop over all available kids
+                if debug: 
+                    self.logger.debug("what: (%s,%s)", what.nspname, what.pname)
+
+                # retrieve typecode if it is hidden
+                if callable(what): what = what()
+
+                # Loop over all available kids
+                if debug: 
+                    self.logger.debug("what: (%s,%s)", what.nspname, what.pname)
+
                 # Parse value, and mark this one done. 
                 if debug:
                     self.logger.debug("child node: (%s,%s)", c_elt.namespaceURI, c_elt.tagName)
