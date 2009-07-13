@@ -42,14 +42,14 @@ class ParsedSoap:
 
     def __init__(self, input, readerclass=None, keepdom=False,
     trailers=False, resolver=None,  envelope=True, **kw):
-        '''Initialize.
+        """Initialize.
         Keyword arguments:
             trailers -- allow trailer elments (default is zero)
             resolver -- function (bound method) to resolve URI's
             readerclass -- factory class to create a reader
             keepdom -- do not release the DOM
             envelope -- look for a SOAP envelope.
-        '''
+        """
 
         self.readerclass = readerclass
         self.keepdom = keepdom
@@ -261,7 +261,7 @@ class ParsedSoap:
                     self.id_cache[nodeid] = e
                     if nodeid == frag: return e
             list += _children(e)
-        raise EvaluateException('''Can't find node for HREF "%s"''' % href,
+        raise EvaluateException("""Can't find node for HREF '%s'""" % href,
                 self.Backtrace(elt))
 
     def ResolveHREF(self, uri, tc, **keywords):
@@ -272,7 +272,7 @@ class ParsedSoap:
             if type(uri) == types.UnicodeType: uri = str(uri)
             retval = r(uri, tc, self, **keywords)
         except Exception, e:
-            raise EvaluateException('''Can't resolve "''' + uri + '" (' + \
+            raise EvaluateException("""Can't resolve '""" + uri + "' (" + \
                 str(e.__class__) + "): " + str(e))
         return retval
 
@@ -333,9 +333,9 @@ class ParsedSoap:
                 for E in self.header_elements if _find_mu(E) == "1" ]
 
     def WhatActorsArePresent(self):
-        '''Return a list of URI's of all the actor attributes found in
+        """Return a list of URI's of all the actor attributes found in
         the header.  The special actor "next" is ignored.
-        '''
+        """
         results = []
         for E in self.header_elements:
             a = _find_actor(E)
@@ -351,7 +351,7 @@ class ParsedSoap:
         c, crange = self.header_elements[:], range(len(self.header_elements))
         for i,what in [ (i, ofwhat[i]) for i in range(lenofwhat) ]:
             if isinstance(what, AnyElement): 
-                raise EvaluateException, 'not supporting <any> as child of SOAP-ENC:Header'
+                raise EvaluateException, 'not supporting <any> as child of soapenc:Header'
 
             v = []
             occurs = 0

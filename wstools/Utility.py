@@ -717,8 +717,8 @@ class MessageInterface:
 class ElementProxy(Base, MessageInterface):
     '''
     '''
-    _soap_env_prefix = 'SOAP-ENV'
-    _soap_enc_prefix = 'SOAP-ENC'
+    _soap_env_prefix = 'soapenv'
+    _soap_enc_prefix = 'soapenc'
     _zsi_prefix = 'ZSI'
     _xsd_prefix = 'xsd'
     _xsi_prefix = 'xsi'

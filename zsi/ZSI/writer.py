@@ -15,8 +15,8 @@ import types
 _standard_ns = [ ('xml', XMLNS.XML), ('xmlns', XMLNS.BASE) ]
 
 _reserved_ns = {
-        'SOAP-ENV': SOAP.ENV,
-        'SOAP-ENC': SOAP.ENC,
+        'soapenv': SOAP.ENV,
+        'soapenc': SOAP.ENC,
         'ZSI': ZSI_SCHEMA_URI,
         'xsd': SCHEMA.BASE,
         'xsi': SCHEMA.BASE + '-instance',
@@ -84,7 +84,7 @@ class SoapWriter:
         return self.header
 
     def serialize_header(self, pyobj, typecode=None, **kw):
-        '''Serialize a Python object in SOAP-ENV:Header, make
+        '''Serialize a Python object in soapenv:Header, make
         sure everything in Header unique (no #href).  Must call
         serialize first to create a document.
 
@@ -93,7 +93,7 @@ class SoapWriter:
             typecode -- default typecode
         '''
         kw['unique'] = True
-        soap_env = _reserved_ns['SOAP-ENV']
+        soap_env = _reserved_ns['soapenv']
         #header = self.dom.getElement(soap_env, 'Header')
         header = self._header
         if header is None:
@@ -111,13 +111,13 @@ class SoapWriter:
         '''Serialize a Python object to the output stream.
            pyobj -- python instance to serialize in body.
            typecode -- typecode describing body 
-           root -- SOAP-ENC:root
+           root -- soapenc:root
            header_pyobjs -- list of pyobj for soap header inclusion, each
               instance must specify the typecode attribute.
         '''
         self.body = None
         if self.envelope: 
-            soap_env = _reserved_ns['SOAP-ENV']
+            soap_env = _reserved_ns['soapenv']
             self.dom.createDocument(soap_env, 'Envelope')
             for prefix, nsuri in _reserved_ns.items():
                 self.dom.setNamespaceAttribute(prefix, nsuri)
@@ -145,7 +145,7 @@ class SoapWriter:
             
         if root is not None:
             if root not in [ 0, 1 ]:
-                raise ValueError, "SOAP-ENC root attribute not in [0,1]"
+                raise ValueError, "soapenc root attribute not in [0,1]"
             elt.setAttributeNS(SOAP.ENC, 'root', root)
 
         return self
