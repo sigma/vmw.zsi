@@ -126,9 +126,9 @@ class Fault(ZSIException):
     '''SOAP Faults.
     '''
 
-    Client = "SOAP-ENV:Client"
-    Server = "SOAP-ENV:Server"
-    MU     = "SOAP-ENV:MustUnderstand"
+    Client = "soapenv:Client"
+    Server = "soapenv:Server"
+    MU     = "soapenv:MustUnderstand"
 
     def __init__(self, code, string,
                 actor=None, detail=None, headerdetail=None):
@@ -213,8 +213,8 @@ def FaultFromZSIException(ex, actor=None):
 def FaultFromException(ex, inheader, tb=None, actor=None):
     '''Return a Fault object created from a Python exception.
 
-    <SOAP-ENV:Fault>
-      <faultcode>SOAP-ENV:Server</faultcode>
+    <soapenv:Fault>
+      <faultcode>soapenv:Server</faultcode>
       <faultstring>Processing Failure</faultstring>
       <detail>
         <ZSI:FaultDetail>
@@ -222,7 +222,7 @@ def FaultFromException(ex, inheader, tb=None, actor=None):
           <ZSI:trace></ZSI:trace>
         </ZSI:FaultDetail>
       </detail>
-    </SOAP-ENV:Fault>
+    </soapenv:Fault>
     '''
     tracetext = None
     if tb:

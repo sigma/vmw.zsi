@@ -2538,7 +2538,7 @@ class ComplexTypeComplexContentContainer(TypecodeContainerBase, AttributeMixIn):
             # SOAP-ENC:arrayType attribute.
             definition += [\
                 '%sclass %s(ZSI.TC.Array, TypeDefinition):' % (ID1, self.getClassName()),
-                '%s#complexType/complexContent base="SOAP-ENC:Array"' %(ID2),
+                '%s#complexType/complexContent base="soapenc:Array"' %(ID2),
                 '%s%s' % (ID2, self.schemaTag()),
                 '%s%s' % (ID2, self.typeTag()),
                 '%s%s' % (ID2, self.pnameConstructor()),
