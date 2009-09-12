@@ -97,7 +97,7 @@ class ComplexType(TypeCode):
     
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
     mutable=True, mixed=False, mixed_aname='_text', **kw):
-        '''pyclass -- the Python class to hold the fields
+        """pyclass -- the Python class to hold the fields
         ofwhat -- a list of fields to be in the complexType
         inorder -- fields must be in exact order or not
         inline -- don't href/id when serializing
@@ -105,7 +105,7 @@ class ComplexType(TypeCode):
         type -- the (URI,localname) of the datatype
         mixed -- mixed content model? True/False
         mixed_aname -- if mixed is True, specify text content here. Default _text
-        '''
+        """
         TypeCode.__init__(self, pname, pyclass=pyclass, **kw)
         self.inorder = inorder
         self.inline = inline
@@ -185,13 +185,21 @@ class ComplexType(TypeCode):
         
         if debug:
             self.logger.debug("ofwhat: %s",str(self.ofwhat))
-            
-        for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
-            for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
-                # Loop over all available kids
-                if debug: 
-                    self.logger.debug("what: (%s,%s)", what.nspname, what.pname)
+            for _c in c:
+                self.logger.debug(">>>> %s",_c.localName)
 
+            print [ (j, c[j]) for j in crange if c[j] ]
+
+        for j,c_elt in [ (j, c[j]) for j in crange if c[j] ]:
+            if debug:
+                self.logger.debug(">>>>>> %s",c_elt.localName)
+
+            print [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]
+
+            for i,what in [ (i, self.ofwhat[i]) for i in range(len(self.ofwhat)) ]:
+                if debug:
+                    self.logger.debug(">>>>>>>> %s",what.pname)
+                    
                 # retrieve typecode if it is hidden
                 if callable(what): what = what()
 
@@ -202,7 +210,7 @@ class ComplexType(TypeCode):
                 # Parse value, and mark this one done. 
                 if debug:
                     self.logger.debug("child node: (%s,%s)", c_elt.namespaceURI, c_elt.tagName)
-
+                    self.logger.debug("PUSH")
                 match = False
                 if what.name_match(c_elt):
                     match = True
@@ -221,6 +229,8 @@ class ComplexType(TypeCode):
                     if debug: 
                         self.logger.debug("substitutionGroup: %s", subwhat)
 
+                if debug:
+                    self.logger.debug("POP")
                 if match:
                     if what.maxOccurs > 1:
                         attr = getattr(pyobj, what.aname, None)
@@ -242,12 +252,11 @@ class ComplexType(TypeCode):
                 if self.inorder is True and i == j:
                     raise EvaluateException('Out of order complexType',
                             ps.Backtrace(c_elt))
-            else:
-                if hasattr(what, 'default'):
-                    setattr(pyobj, what.aname, what.default)
-                elif what.minOccurs > 0 and not hasattr(pyobj, what.aname):
-                    raise EvaluateException('Element "' + what.aname + \
-                        '" missing from complexType', ps.Backtrace(elt))
+                else:
+                    if hasattr(what, 'default'):
+                        setattr(pyobj, what.aname, what.default)
+                    # elif what.minOccurs > 0 and not hasattr(pyobj, what.aname):
+                    #     raise EvaluateException('Element "' + what.aname + '" missing from complexType', ps.Backtrace(elt))
 
         if isinstance(pyobj, ComplexType._DictHolder):
             return pyobj.__dict__
