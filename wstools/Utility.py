@@ -969,7 +969,9 @@ class ElementProxy(Base, MessageInterface):
         self.logger.debug('setAttributeType: (%s,%s)', namespaceURI, localName)
         value = localName
         if namespaceURI:
-            value = '%s:%s' %(self.getPrefix(namespaceURI),localName)
+            pref = self.getPrefix(namespaceURI)
+            if pref != "":
+                value = '%s:%s' %(pref,localName)
 
         xsi_prefix = self.getPrefix(self._xsi_nsuri)
         self._setAttributeNS(self._xsi_nsuri, '%s:type' %xsi_prefix, value)
