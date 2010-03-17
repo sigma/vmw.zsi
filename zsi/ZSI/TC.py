@@ -727,9 +727,14 @@ class String(SimpleType):
         return text.encode(UNICODE_ENCODING)
 
     def get_formatted_content(self, pyobj):
-        if type(pyobj) not in _stringtypes:
+        found = False
+        for typ in _stringtypes:
+            if isinstance(pyobj, typ):
+                found = True
+                break
+        if not found:
             pyobj = str(pyobj)
-        if type(pyobj) == unicode:
+        if isinstance(pyobj, unicode):
             return pyobj.encode(UNICODE_ENCODING)
         return pyobj
 
