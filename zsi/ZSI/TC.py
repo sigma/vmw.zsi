@@ -727,17 +727,9 @@ class String(SimpleType):
         return text.encode(UNICODE_ENCODING)
 
     def get_formatted_content(self, pyobj):
-        found = False
-        for typ in _stringtypes:
-            if isinstance(pyobj, typ):
-                found = True
-                break
-        if not found:
-            pyobj = str(pyobj)
         if isinstance(pyobj, unicode):
             return pyobj.encode(UNICODE_ENCODING)
-        return pyobj
-
+        return str(pyobj)
 
 class URI(String):
     '''A URI.
