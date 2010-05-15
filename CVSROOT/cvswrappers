@@ -1,6 +1,0 @@
-*.gif -k 'b'
-*.jpeg -k 'b'
-*.jpg -k 'b'
-*.pdf -k 'b'
-*.png -k 'b'
-*.xcf -k 'b'

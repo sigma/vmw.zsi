@@ -1,3 +1,0 @@
-# The "loginfo" file controls where "cvs commit" log information
-# is sent.
-DEFAULT /cvsroot/sitedocs/CVSROOT/cvstools/syncmail -u %{sVv} pywebsvcs-checkins@lists.sourceforge.net
