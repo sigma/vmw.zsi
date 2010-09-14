@@ -4,11 +4,11 @@
 ###########################################################################
 
 import time, urlparse, socket
-from ZSI import _seqtypes, EvaluateException, WSActionException
+from vmw.ZSI import _seqtypes, EvaluateException, WSActionException
 from TC import AnyElement, AnyType, TypeCode
 from schema import GED, GTD, _has_type_definition
-from ZSI.TCcompound import ComplexType
-from ZSI.wstools.Namespaces import WSA_LIST
+from vmw.ZSI.TCcompound import ComplexType
+from vmw.ZSI.wstools.Namespaces import WSA_LIST
 
 
 class Address(object):
@@ -59,7 +59,7 @@ class Address(object):
             raise WSActionException, 'wrong WSAddress Action(%s), expecting %s'%(value,action)
 
     def _checkFrom(self, pyobj):
-        '''WS-Address From, 
+        '''WS-Address From,
         XXX currently not checking the hostname, not forwarding messages.
         pyobj  -- From server returned.
         '''
@@ -84,7 +84,7 @@ class Address(object):
         '''
         if value != self._messageID:
             raise WSActionException, 'wrong WS-Address RelatesTo(%s), expecting %s'%(value,self._messageID)
-        
+
     def _checkReplyTo(self, value):
         '''WS-Address From
         value  -- From server returned in wsa:To
@@ -124,7 +124,7 @@ class Address(object):
         return typecodes
 
     def checkResponse(self, ps, action):
-        ''' 
+        '''
         ps -- ParsedSoap
         action -- ws-action for response
         '''
@@ -205,7 +205,7 @@ class Address(object):
         namespaceURI = self.wsAddressURI
 
         for nsuri,name,value in (\
-             (namespaceURI, "Action", self._action), 
+             (namespaceURI, "Action", self._action),
              (namespaceURI, "MessageID","uuid:%s" %time.time()),
              (namespaceURI, "RelatesTo", address.getMessageID()),
              (namespaceURI, "To", self.anonymousURI),):
@@ -229,7 +229,7 @@ class Address(object):
                 raise RuntimeError, 'all header pyobjs must have a typecode attribute'
 
             sw.serialize_header(pyobj, **kw)
-        
+
 
     def parse(self, ps, **kw):
         '''

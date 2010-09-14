@@ -8,23 +8,23 @@
 # $Id$
 
 import os, sys, warnings
-from ZSI import _get_idstr
-from ZSI.wstools.logging import getLogger as _GetLogger
-from ZSI.wstools import WSDLTools
-from ZSI.wstools.WSDLTools import SoapAddressBinding,\
+from vmw.ZSI import _get_idstr
+from vmw.ZSI.wstools.logging import getLogger as _GetLogger
+from vmw.ZSI.wstools import WSDLTools
+from vmw.ZSI.wstools.WSDLTools import SoapAddressBinding,\
     SoapBodyBinding, SoapBinding,MimeContentBinding,\
     HttpUrlEncodedBinding
-from ZSI.wstools.XMLSchema import SchemaReader, ElementDeclaration, SchemaError
-from ZSI.typeinterpreter import BaseTypeInterpreter
-from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
+from vmw.ZSI.wstools.XMLSchema import SchemaReader, ElementDeclaration, SchemaError
+from vmw.ZSI.typeinterpreter import BaseTypeInterpreter
+from vmw.ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
 from containers import *
-from ZSI.generate import utility
-from ZSI.generate.utility import NamespaceAliasDict as NAD
-from ZSI.generate.utility import GetModuleBaseNameFromWSDL
+from vmw.ZSI.generate import utility
+from vmw.ZSI.generate.utility import NamespaceAliasDict as NAD
+from vmw.ZSI.generate.utility import GetModuleBaseNameFromWSDL
 
 """
 classes:
-    WriteServiceModule 
+    WriteServiceModule
     -- composes/writes out client stubs and types module.
 
     ServiceDescription
@@ -34,7 +34,7 @@ classes:
     -- represents a single WSDL Message and associated bindings
     of the port/binding.
 
-    SchemaDescription 
+    SchemaDescription
     -- generates classes for defs and decs in the schema instance.
 
     TypeWriter
@@ -55,7 +55,7 @@ class WriteServiceModule:
     messages_module_suffix = '_messages'
     types_module_suffix = '_types'
     logger = _GetLogger("WriteServiceModule")
-    
+
     def __init__(self, wsdl, addressing=False, notification=False,
                  do_extended=False, extPyClasses=None, configParser = None):
         self._wsdl = wsdl
@@ -70,14 +70,14 @@ class WriteServiceModule:
         self.messages_module_path = None # used in extended generation
         self.do_extended = do_extended
         self.extPyClasses = extPyClasses
-       
+
     def getClientModuleName(self):
         """client module name.
         """
         name = GetModuleBaseNameFromWSDL(self._wsdl)
         if not name:
             raise WsdlGeneratorError, 'could not determine a service name'
-        
+
         if self.client_module_suffix is None:
             return name
 
@@ -87,7 +87,7 @@ class WriteServiceModule:
 #        name = GetModuleBaseNameFromWSDL(self._wsdl)
 #        if not name:
 #            raise WsdlGeneratorError, 'could not determine a service name'
-#        
+#
 #        if self.messages_module_suffix is None:
 #            return name
 #
@@ -108,7 +108,7 @@ class WriteServiceModule:
         name = GetModuleBaseNameFromWSDL(self._wsdl)
         if not name:
             raise WsdlGeneratorError, 'could not determine a service name'
-        
+
         if self.types_module_suffix is None:
             return name
 
@@ -123,13 +123,13 @@ class WriteServiceModule:
     def getTypesModulePath(self):
         """module path to types module eg. MyApp.types
         """
-        return self.types_module_path 
+        return self.types_module_path
 
 #    def getMessagesModulePath(self):
 #        '''module path to messages module
 #           same as types path
 #        '''
-#        return self.messages_module_path 
+#        return self.messages_module_path
 
     def setTypesModulePath(self, path):
         """setup module path to where service module before calling fromWsdl.
@@ -152,7 +152,7 @@ class WriteServiceModule:
 
         self.logger.debug('gatherNamespaces')
         self.usedNamespaces = {}
-            
+
         # Add all schemas defined in wsdl
         # to used namespace and to the Alias dict
         for schema in self._wsdl.types.values():
@@ -163,7 +163,7 @@ class WriteServiceModule:
                 self.usedNamespaces[tns] = []
             self.usedNamespaces[tns].append(schema)
             NAD.add(tns)
-            
+
         # Add all xsd:import schema instances
         # to used namespace and to the Alias dict
         for k,v in SchemaReader.namespaceToSchema.items():
@@ -173,7 +173,7 @@ class WriteServiceModule:
                 self.usedNamespaces[k] = []
             self.usedNamespaces[k].append(v)
             NAD.add(k)
-            
+
     def writeClient(self, fd, sdClass=None, **kw):
         """write out client module to file descriptor.
         Parameters and Keywords arguments:
@@ -199,12 +199,12 @@ class WriteServiceModule:
 
         self.services = []
         for service in self._wsdl.services:
-            sd = sdClass(self._addressing, do_extended=self.do_extended, 
+            sd = sdClass(self._addressing, do_extended=self.do_extended,
                          wsdl=self._wsdl)
             if len(self._wsdl.types) > 0:
-                sd.setTypesModuleName(self.getTypesModuleName(), 
+                sd.setTypesModuleName(self.getTypesModuleName(),
                                       self.getTypesModulePath())
-#                sd.setMessagesModuleName(self.getMessagesModuleName(), 
+#                sd.setMessagesModuleName(self.getMessagesModuleName(),
 #                                         self.getMessagesModulePath())
 
             self.gatherNamespaces()
@@ -222,17 +222,17 @@ class WriteServiceModule:
         print >>fd, '#    %s' %' '.join(sys.argv)
         print >>fd, '#'
         print >>fd, '#'*50
-                  
+
         print >>fd, TypesHeaderContainer()
         self.gatherNamespaces()
         for l in self.usedNamespaces.values():
-            sd = SchemaDescription(do_extended=self.do_extended, 
+            sd = SchemaDescription(do_extended=self.do_extended,
                                    extPyClasses=self.extPyClasses)
             for schema in l:
                 sd.fromSchema(schema)
             sd.write(fd)
 
-            
+
 class ServiceDescription:
     """client interface - locator, port, etc classes"""
     separate_messages = False
@@ -287,20 +287,20 @@ class ServiceDescription:
         for port in service.ports:
             if port.binding not in bindings:
                 continue
-            while port.binding in bindings: 
+            while port.binding in bindings:
                 bindings.remove(port.binding)
 
-            desc = BindingDescription(useWSA=self.wsAddressing, 
-                                      do_extended=self.do_extended, 
+            desc = BindingDescription(useWSA=self.wsAddressing,
+                                      do_extended=self.do_extended,
                                       wsdl=self._wsdl)
             try:
                 desc.setUp(port.getBinding())
             except Wsdl2PythonError, ex:
                 self.logger.warning('Skipping port(%s)' %port.name)
-                if len(ex.args): 
+                if len(ex.args):
                     self.logger.warning(ex.args[0])
                 continue
-   
+
             desc.setReaderClass(kw.get('readerclass'))
             desc.setWriterClass(kw.get('writerclass'))
             for soc in desc.operations:
@@ -316,7 +316,7 @@ class ServiceDescription:
 
             self.bindings.append(desc)
 
- 
+
     def write(self, fd, msg_fd=None):
         """write out module to file descriptor.
         fd -- file descriptor to write out service description.
@@ -327,7 +327,7 @@ class ServiceDescription:
 #            print >>msg_fd, self.imports
 #        else:
         print >>fd, self.imports
-            
+
         print >>fd, self.locator
         for m in self.bindings:
             print >>fd, m
@@ -354,12 +354,12 @@ class MessageWriter:
         """
         self.content = None
         self.do_extended = do_extended
-       
+
     def __str__(self):
         if not self.content:
             raise Wsdl2PythonError, 'Must call setUp.'
         return self.content.getvalue()
-        
+
     def setUp(self, soc, port, input=False):
         assert isinstance(soc, ServiceOperationContainer),\
             'expecting a ServiceOperationContainer instance'
@@ -368,7 +368,7 @@ class MessageWriter:
 
         rpc,literal = soc.isRPC(), soc.isLiteral(input)
         kw,klass = {}, None
-        
+
         if rpc and literal:
             klass = ServiceRPCLiteralMessageContainer
         elif not rpc and literal:
@@ -378,7 +378,7 @@ class MessageWriter:
             klass = ServiceRPCEncodedMessageContainer
         else:
             raise WsdlGeneratorError, 'doc/enc not supported.'
-                                
+
         self.content = klass(**kw)
         self.content.setUp(port, soc, input)
 
@@ -401,7 +401,7 @@ class SchemaDescription:
     def fromSchema(self, schema):
         ''' Can be called multiple times, but will not redefine a
         previously defined type definition or element declaration.
-        '''  
+        '''
         ns = schema.getTargetNamespace()
         assert self.targetNamespace is None or self.targetNamespace == ns,\
             'SchemaDescription instance represents %s, not %s'\
@@ -409,7 +409,7 @@ class SchemaDescription:
 
         if self.targetNamespace is None:
             self.targetNamespace = ns
- 
+
         self.classHead.ns = self.classFoot.ns = ns
         for item in [t for t in schema.types if t.getAttributeName() not in self.__types]:
             self.__types.append(item.getAttributeName())
@@ -443,7 +443,7 @@ class SchemaItemWriter:
         self.content = None
         self.do_extended=do_extended
         self.extPyClasses=extPyClasses
-        
+
     def __str__(self):
         '''this appears to set up whatever is in self.content.localElements,
         local elements simpleType|complexType.
@@ -472,15 +472,15 @@ class ElementWriter(SchemaItemWriter):
             local = True
         else:
             etp = item.getTypeDefinition('type')
-            
+
         if etp is None:
-            if local is True: 
+            if local is True:
                 self.content = ElementLocalComplexTypeContainer(do_extended=self.do_extended)
-            else: 
+            else:
                 self.content = ElementSimpleTypeContainer()
         elif etp.isLocal() is False:
             self.content = ElementGlobalDefContainer()
-        elif etp.isSimple() is True: 
+        elif etp.isSimple() is True:
             self.content = ElementLocalSimpleTypeContainer()
         elif etp.isComplex():
             self.content = ElementLocalComplexTypeContainer(do_extended=self.do_extended)
@@ -489,14 +489,14 @@ class ElementWriter(SchemaItemWriter):
 
         self.logger.debug('ElementWriter setUp container "%r", Schema Item "%s"' %(
             self.content, item.getItemTrace()))
-        
+
         self.content.setUp(item)
 
 
 class TypeWriter(SchemaItemWriter):
     """contains/generates a single definition"""
     logger = _GetLogger("TypeWriter")
-        
+
     def fromSchemaItem(self, item):
         if item.isDefinition() is False or item.isLocal() is True:
             raise TypeError, \
@@ -513,16 +513,16 @@ class TypeWriter(SchemaItemWriter):
             else:
                 raise Wsdl2PythonError,\
                     'unknown simple type definition: %s' %item.getItemTrace()
-                    
+
             self.content.setUp(item)
             return
-        
+
         if item.isComplex():
             kw = {}
             if item.content is None or item.content.isModelGroup():
                 self.content = \
                     ComplexTypeContainer(\
-                        do_extended=self.do_extended, 
+                        do_extended=self.do_extended,
                         extPyClasses=self.extPyClasses
                         )
                 kw['empty'] = item.content is None
@@ -539,7 +539,7 @@ class TypeWriter(SchemaItemWriter):
 
             self.logger.debug('TypeWriter setUp container "%r", Schema Item "%s"' %(
                 self.content, item.getItemTrace()))
-            
+
             try:
                 self.content.setUp(item, **kw)
             except Exception, ex:
@@ -547,11 +547,11 @@ class TypeWriter(SchemaItemWriter):
                 args += ex.args
                 ex.args = tuple(args)
                 raise
-            
+
             return
 
         raise TypeError,\
             'expecting SimpleType or ComplexType: %s' %item.getItemTrace()
 
-        
+
 

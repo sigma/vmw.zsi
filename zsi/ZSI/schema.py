@@ -3,9 +3,9 @@
 """XML Schema support
 """
 
-from ZSI import _copyright, _seqtypes, _find_type, _get_element_nsuri_name, EvaluateException
-from ZSI.wstools.Namespaces import SCHEMA, SOAP
-from ZSI.wstools.Utility import SplitQName
+from vmw.ZSI import _copyright, _seqtypes, _find_type, _get_element_nsuri_name, EvaluateException
+from vmw.ZSI.wstools.Namespaces import SCHEMA, SOAP
+from vmw.ZSI.wstools.Utility import SplitQName
 
 
 def _get_type_definition(namespaceURI, name, **kw):
@@ -15,10 +15,10 @@ def _get_global_element_declaration(namespaceURI, name, **kw):
     return SchemaInstanceType.getElementDeclaration(namespaceURI, name, **kw)
 
 def _get_substitute_element(head, elt, ps):
-    """if elt matches a member of the head substitutionGroup, return 
+    """if elt matches a member of the head substitutionGroup, return
     the GED typecode.
 
-    head -- ElementDeclaration typecode, 
+    head -- ElementDeclaration typecode,
     elt -- the DOM element being parsed
     ps -- ParsedSoap Instance
     """
@@ -31,7 +31,7 @@ def _has_type_definition(namespaceURI, name):
     return SchemaInstanceType.getTypeDefinition(namespaceURI, name) is not None
 
 def _is_substitute_element(head, sub):
-    """if head and sub are both GEDs, and sub declares 
+    """if head and sub are both GEDs, and sub declares
     head as its substitutionGroup then return True.
 
     head -- Typecode instance
@@ -41,7 +41,7 @@ def _is_substitute_element(head, sub):
         return False
 
     try:
-        group = sub.substitutionGroup 
+        group = sub.substitutionGroup
     except (AttributeError, TypeError):
         return False
 
@@ -56,7 +56,7 @@ def _is_substitute_element(head, sub):
     return True
 
 #
-# functions for retrieving schema items from 
+# functions for retrieving schema items from
 # the global schema instance.
 #
 GED = _get_global_element_declaration
@@ -86,23 +86,23 @@ def RegisterAnyElement():
 
 
 class SchemaInstanceType(type):
-    """Register all types/elements, when hit already defined 
-    class dont create a new one just give back reference.  Thus 
+    """Register all types/elements, when hit already defined
+    class dont create a new one just give back reference.  Thus
     import order determines which class is loaded.
 
     class variables:
-        types -- dict of typecode classes definitions 
+        types -- dict of typecode classes definitions
             representing global type definitions.
-        elements -- dict of typecode classes representing 
+        elements -- dict of typecode classes representing
             global element declarations.
-        element_typecode_cache -- dict of typecode instances 
+        element_typecode_cache -- dict of typecode instances
             representing global element declarations.
     """
     types = {}
     elements = {}
     element_typecode_cache = {}
     #substitution_registry = {}
-    
+
     def __new__(cls,classname,bases,classdict):
         """If classdict has literal and schema register it as a
         element declaration, else if has type and schema register
@@ -112,7 +112,7 @@ class SchemaInstanceType(type):
             return type.__new__(cls,classname,bases,classdict)
 
         if ElementDeclaration in bases:
-            if classdict.has_key('schema') is False  or classdict.has_key('literal') is False: 
+            if classdict.has_key('schema') is False  or classdict.has_key('literal') is False:
                 raise AttributeError, 'ElementDeclaration must define schema and literal attributes'
 
             key = (classdict['schema'],classdict['literal'])
@@ -123,7 +123,7 @@ class SchemaInstanceType(type):
             ged = SchemaInstanceType.elements[key] = type.__new__(cls,classname,bases,classdict)
 
             # TODO: Maybe I want access to all registrants??
-            # 
+            #
             #if classdict.has_key('substitutionGroup'):
             #    sub = classdict.has_key('substitutionGroup')
             #    if not SchemaInstanceType.substitution_registry.has_key(sub):
@@ -150,10 +150,10 @@ class SchemaInstanceType(type):
     def getTypeDefinition(cls, namespaceURI, name, lazy=False):
         """Grab a type definition, returns a typecode class definition
         because the facets (name, minOccurs, maxOccurs) must be provided.
- 
+
         Parameters:
-           namespaceURI -- 
-           name -- 
+           namespaceURI --
+           name --
         """
         klass = cls.types.get((namespaceURI, name), None)
         if lazy and klass is not None:
@@ -163,13 +163,13 @@ class SchemaInstanceType(type):
 
     def getElementDeclaration(cls, namespaceURI, name, isref=False, lazy=False):
         """Grab an element declaration, returns a typecode instance
-        representation or a typecode class definition.  An element 
+        representation or a typecode class definition.  An element
         reference has its own facets, and is local so it will not be
         cached.
 
         Parameters:
-            namespaceURI -- 
-            name -- 
+            namespaceURI --
+            name --
             isref -- if element reference, return class definition.
         """
         key = (namespaceURI, name)
@@ -178,14 +178,14 @@ class SchemaInstanceType(type):
             if klass is not None and lazy is True:
                 return _Mirage(klass)
             return klass
- 
+
         typecode = cls.element_typecode_cache.get(key, None)
         if typecode is None:
             tcls = cls.elements.get(key,None)
             if tcls is not None:
                 typecode = cls.element_typecode_cache[key] = tcls()
                 typecode.typed = False
-            
+
         return typecode
     getElementDeclaration = classmethod(getElementDeclaration)
 
@@ -204,7 +204,7 @@ class ElementDeclaration:
         """If this is True, allow typecode to be substituted
         for "self" typecode.
         """
-        if not isinstance(typecode, ElementDeclaration): 
+        if not isinstance(typecode, ElementDeclaration):
             return False
 
         try:
@@ -213,7 +213,7 @@ class ElementDeclaration:
             return False
 
         if (nsuri,ncname) != (self.schema,self.literal):
-            # allow slop with the empty namespace 
+            # allow slop with the empty namespace
             if not nsuri and not self.schema and ncname == self.literal:
                  return True
 
@@ -226,10 +226,10 @@ class ElementDeclaration:
         return True
 
     def getSubstitutionElement(self, elt, ps):
-        """if elt matches a member of the head substitutionGroup, return 
+        """if elt matches a member of the head substitutionGroup, return
         the GED typecode representation of the member.
 
-        head -- ElementDeclaration typecode, 
+        head -- ElementDeclaration typecode,
         elt -- the DOM element being parsed
         ps -- ParsedSoap instance
         """
@@ -243,18 +243,18 @@ class ElementDeclaration:
         except (AttributeError, TypeError):
             return
 
-        if (ncname == self.pname) and (nsuri == self.nspname or 
+        if (ncname == self.pname) and (nsuri == self.nspname or
            (not nsuri and not self.nspname)):
              return typecode
-       
-        return 
- 
- 
+
+        return
+
+
 class LocalElementDeclaration:
     """Typecodes subclass to represent a Local Element Declaration.
     """
     __metaclass__ = SchemaInstanceType
-    
+
 
 class TypeDefinition:
     """Typecodes subclass to represent a Global Type Definition by
@@ -263,13 +263,13 @@ class TypeDefinition:
     type = (namespaceURI, NCName)
     """
     __metaclass__ = SchemaInstanceType
-    
+
     def getSubstituteType(self, elt, ps):
         """if xsi:type does not match the instance type attr,
         check to see if it is a derived type substitution.
-        
+
         DONT Return the element's type.
-        
+
         Parameters:
             elt -- the DOM element being parsed
             ps -- the ParsedSoap object.
@@ -279,7 +279,7 @@ class TypeDefinition:
             raise EvaluateException(
                     'No Type registed for xsi:type=(%s, %s)' %
                     (self.type[0], self.type[1]), ps.Backtrace(elt))
-            
+
         typeName = _find_type(elt)
         prefix,typeName = SplitQName(typeName)
         uri = ps.GetElementNSdict(elt).get(prefix)
@@ -288,21 +288,21 @@ class TypeDefinition:
             raise EvaluateException(
                     'No registered xsi:type=(%s, %s), substitute for xsi:type=(%s, %s)' %
                     (uri, typeName, self.type[0], self.type[1]), ps.Backtrace(elt))
-                    
+
         if not issubclass(subclass, pyclass) and subclass(None) and not issubclass(subclass, pyclass):
             raise TypeError(
                     'Substitute Type (%s, %s) is not derived from %s' %
                     (self.type[0], self.type[1], pyclass), ps.Backtrace(elt))
 
         return subclass((self.nspname, self.pname))
-    
-    
+
+
 
 class _Mirage:
-    """Used with SchemaInstanceType for lazy evaluation, eval during serialize or 
+    """Used with SchemaInstanceType for lazy evaluation, eval during serialize or
     parse as needed.  Mirage is callable, TypeCodes are not.  When called it returns the
     typecode.  Tightly coupled with generated code.
-    
+
     NOTE: **Must Use ClassType** for intended MRO of __call__ since setting it in
     an instance attribute rather than a class attribute (will not work for object).
     """
@@ -312,31 +312,31 @@ class _Mirage:
         self.__cache = None
         if issubclass(klass, ElementDeclaration):
             self.__call__ = self._hide_element
-            
+
     def __str__(self):
         msg = "<Mirage id=%s, Local Element %s>"
         if issubclass(self.klass, ElementDeclaration):
             msg = "<Mirage id=%s, GED %s>"
         return  msg %(id(self), self.klass)
-        
-    def _hide_type(self, pname, aname, minOccurs=0, maxOccurs=1, nillable=False, 
+
+    def _hide_type(self, pname, aname, minOccurs=0, maxOccurs=1, nillable=False,
                    **kw):
         self.__call__ = self._reveal_type
         self.__reveal = True
-        
+
         # store all attributes, make some visable for pyclass_type
         self.__kw = kw
         self.minOccurs,self.maxOccurs,self.nillable = minOccurs,maxOccurs,nillable
         self.nspname,self.pname,self.aname = None,pname,aname
         if type(self.pname) in (tuple,list):
             self.nspname,self.pname = pname
-        
+
         return self
-        
+
     def _hide_element(self, minOccurs=0, maxOccurs=1, nillable=False, **kw):
         self.__call__ = self._reveal_element
         self.__reveal = True
-        
+
         # store all attributes, make some visable for pyclass_type
         self.__kw = kw
         self.nspname = self.klass.schema
@@ -344,28 +344,28 @@ class _Mirage:
         #TODO: Fix hack
         #self.aname = '_%s' %self.pname
         self.minOccurs,self.maxOccurs,self.nillable = minOccurs,maxOccurs,nillable
-        
+
         return self
-    
+
     def _reveal_type(self):
         if self.__cache is None:
             pname = self.pname
             if self.nspname != None:
                 pname = (self.nspname,self.pname)
 
-            self.__cache = self.klass(pname=pname, 
-                            aname=self.aname, minOccurs=self.minOccurs, 
-                            maxOccurs=self.maxOccurs, nillable=self.nillable, 
+            self.__cache = self.klass(pname=pname,
+                            aname=self.aname, minOccurs=self.minOccurs,
+                            maxOccurs=self.maxOccurs, nillable=self.nillable,
                             **self.__kw)
         return self.__cache
-        
+
     def _reveal_element(self):
         if self.__cache is None:
-            self.__cache = self.klass(minOccurs=self.minOccurs, 
-                            maxOccurs=self.maxOccurs, nillable=self.nillable, 
+            self.__cache = self.klass(minOccurs=self.minOccurs,
+                            maxOccurs=self.maxOccurs, nillable=self.nillable,
                             **self.__kw)
         return self.__cache
-    
+
     __call__ = _hide_type
 
 
@@ -387,9 +387,9 @@ class _GetPyobjWrapper:
         _Wrapper.__name__ = '_%sWrapper' %arg.__name__
         cls.types_dict[arg] = _Wrapper
     RegisterBuiltin = classmethod(RegisterBuiltin)
-        
+
     def RegisterAnyElement(cls):
-        """If find registered TypeCode instance, add Wrapper class 
+        """If find registered TypeCode instance, add Wrapper class
         to TypeCode class serialmap and Re-RegisterType.  Provides
         Any serialzation of any instances of the Wrapper.
         """
@@ -408,7 +408,7 @@ class _GetPyobjWrapper:
             what -- typecode describing the data
         """
         d = cls.types_dict
-        if type(pyobj) is bool:  
+        if type(pyobj) is bool:
             pyclass = d[int]
         elif d.has_key(type(pyobj)) is True:
             pyclass = d[type(pyobj)]
@@ -421,7 +421,7 @@ class _GetPyobjWrapper:
         newobj.typecode = what
         return newobj
     WrapImmutable = classmethod(WrapImmutable)
-    
+
 
 from TC import Any, RegisterType
 

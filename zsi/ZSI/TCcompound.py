@@ -3,7 +3,7 @@
 '''Compound typecodes.
 '''
 
-from ZSI import _copyright, _children, _child_elements, \
+from vmw.ZSI import _copyright, _children, _child_elements, \
     _inttypes, _stringtypes, _seqtypes, _find_arraytype, _find_href, \
     _find_type, _find_xmlns_prefix, _get_idstr, EvaluateException, \
     ParseException
@@ -15,9 +15,9 @@ from TC import _get_element_nsuri_name, \
 from schema import GED, ElementDeclaration, TypeDefinition, \
     _get_substitute_element, _get_type_definition, _is_substitute_element
 
-from ZSI.wstools.Namespaces import SCHEMA, SOAP
-from ZSI.wstools.Utility import SplitQName
-from ZSI.wstools.logging import getLogger as _GetLogger
+from vmw.ZSI.wstools.Namespaces import SCHEMA, SOAP
+from vmw.ZSI.wstools.Utility import SplitQName
+from vmw.ZSI.wstools.logging import getLogger as _GetLogger
 import re, types
 from copy import copy as _copy
 
@@ -92,7 +92,7 @@ class ComplexType(TypeCode):
     '''Represents an element of complexType, potentially containing other
     elements.
     '''
-    logger = _GetLogger('ZSI.TCcompound.ComplexType')
+    logger = _GetLogger('vmw.ZSI.TCcompound.ComplexType')
     class _DictHolder: pass
 
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
@@ -450,7 +450,7 @@ class Struct(ComplexType):
         <xs:attributeGroup ref="tns:commonAttributes"/>
       </xs:complexType>
     '''
-    logger = _GetLogger('ZSI.TCcompound.Struct')
+    logger = _GetLogger('vmw.ZSI.TCcompound.Struct')
 
     def __init__(self, pyclass, ofwhat, pname=None, inorder=False, inline=False,
         mutable=True, **kw):
@@ -484,7 +484,7 @@ class Array(TypeCode):
         mutable -- object could change between multiple serializations
         undeclared -- do not serialize/parse arrayType attribute.
     '''
-    logger = _GetLogger('ZSI.TCcompound.Array')
+    logger = _GetLogger('vmw.ZSI.TCcompound.Array')
 
     def __init__(self, atype, ofwhat, pname=None, dimensions=1, fill=None,
     sparse=False, mutable=False, size=None, nooffset=0, undeclared=False,

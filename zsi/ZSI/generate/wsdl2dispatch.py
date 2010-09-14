@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import inspect
 from cStringIO import StringIO
-import ZSI, string, sys, getopt, urlparse, types, warnings
-from ZSI.wstools import WSDLTools
-from ZSI.ServiceContainer import ServiceSOAPBinding, SimpleWSResource, WSAResource
+import vmw.ZSI, string, sys, getopt, urlparse, types, warnings
+from vmw.ZSI.wstools import WSDLTools
+from vmw.ZSI.ServiceContainer import ServiceSOAPBinding, SimpleWSResource, WSAResource
 
-from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
+from vmw.ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
 from utility import TextProtect, GetModuleBaseNameFromWSDL, \
     NCName_to_ClassName, GetPartsSubNames, TextProtectAttributeName
 from containers import BindingDescription
@@ -39,13 +39,13 @@ class ServiceModuleWriter:
     server_module_suffix = '_server'
     func_aname = TextProtectAttributeName
     func_aname = staticmethod(func_aname)
-    separate_messages = False 
+    separate_messages = False
 
-    def __init__(self, base=ServiceSOAPBinding, prefix='soap', 
+    def __init__(self, base=ServiceSOAPBinding, prefix='soap',
                  service_class=SOAPService):
         '''
         parameters:
-            base -- either a class definition, or a str representing a qualified 
+            base -- either a class definition, or a str representing a qualified
                 class name (eg. module.name.classname)
             prefix -- method prefix.
         '''
@@ -94,7 +94,7 @@ class ServiceModuleWriter:
 
     # Backwards compatibility
     setClientModuleName = setTypesModuleName
-    
+
     def getTypesModuleName(self):
         '''return module name.
         '''
@@ -111,7 +111,7 @@ class ServiceModuleWriter:
         name = GetModuleBaseNameFromWSDL(self.wsdl)
         if not name:
             raise WsdlGeneratorError, 'could not determine a service name'
-        
+
         if self.server_module_suffix is None:
             return name
         return '%s%s' %(name, self.server_module_suffix)
@@ -119,13 +119,13 @@ class ServiceModuleWriter:
     def getTypesModulePath(self):
         return self.types_module_path
     getClientModulePath = getTypesModulePath
-    
+
     def setTypesModulePath(self, path):
         '''setup module path to where client module before calling fromWSDL.
         '''
         self.types_module_path = path
     setClientModulePath = setTypesModulePath
-    
+
     def setUpClassDef(self, service):
         '''set class definition and class variables.
         service -- ServiceDescription instance
@@ -139,21 +139,21 @@ class ServiceModuleWriter:
 
         print >>s, '%ssoapAction = {}' % self.getIndent(level=1)
         print >>s, '%sroot = {}' % self.getIndent(level=1)
-        
+
     def setUpImports(self):
         '''set import statements
         '''
         i = self.imports
-        print >>i, 'from ZSI.schema import GED, GTD'
-        print >>i, 'from ZSI.TCcompound import ComplexType, Struct'
+        print >>i, 'from vmw.ZSI.schema import GED, GTD'
+        print >>i, 'from vmw.ZSI.TCcompound import ComplexType, Struct'
 
         module = self.getTypesModuleName()
         package = self.getTypesModulePath()
         if package:
             module = '%s.%s' %(package, module)
-            
+
         print >>i, 'from %s import *' %(module)
-            
+
         print >>i, 'from %s import %s' %(self.base_module_name, self.base_class_name)
 
     def setUpInitDef(self, service):
@@ -161,10 +161,10 @@ class ServiceModuleWriter:
         '''
         assert isinstance(service, WSDLTools.Service), \
             'expecting WSDLTools.Service instance.'
-            
+
         sd = self._services[service.name]
         d = sd.initdef
- 
+
         if sd.location is not None:
             scheme,netloc,path,params,query,fragment = urlparse.urlparse(sd.location)
             print >>d, '%sdef __init__(self, post=\'%s\', **kw):' %(self.getIndent(level=1), path)
@@ -174,7 +174,7 @@ class ServiceModuleWriter:
         # Require POST initialization value for test implementation
         if self.base_module_name == inspect.getmodule(ServiceSOAPBinding).__name__:
             print >>d, '%s%s.__init__(self, post)' %(self.getIndent(level=2), self.base_class_name)
-            return 
+            return
 
         # No POST initialization value, obtained from HTTP Request in twisted or wsgi
         print >>d, '%s%s.__init__(self)' %(self.getIndent(level=2), self.base_class_name)
@@ -252,16 +252,16 @@ class ServiceModuleWriter:
         print >>self.header, '#'*50
 
     def write(self, fd=sys.stdout):
-        '''write out to file descriptor, 
+        '''write out to file descriptor,
         should not need to override.
         '''
         print >>fd, self.header.getvalue()
         print >>fd, self.imports.getvalue()
-        
+
         print >>fd, '# Messages ',
         for m in self.messages:
             print >>fd, m
-        
+
         print >>fd, ''
         print >>fd, ''
         print >>fd, '# Service Skeletons'
@@ -279,12 +279,12 @@ class ServiceModuleWriter:
 
         if len(wsdl.services) == 0:
             raise WsdlGeneratorError, 'No service defined'
-            
-        self.reset() 
+
+        self.reset()
         self.wsdl = wsdl
         self.setUpHeader()
         self.setUpImports()
-                
+
         for service in wsdl.services:
             sd = self._service_class(service.name)
             self._services[service.name] = sd
@@ -295,16 +295,16 @@ class ServiceModuleWriter:
                     desc.setUp(port.getBinding())
                 except Wsdl2PythonError, ex:
                     continue
-                
+
                 for soc in desc.operations:
                     if not soc.hasInput(): continue
-                    
+
                     self.messages.append(MessageWriter())
                     self.messages[-1].setUp(soc, port, input=True)
                     if soc.hasOutput():
                         self.messages.append(MessageWriter())
                         self.messages[-1].setUp(soc, port, input=False)
-                
+
                 for e in port.extensions:
                     if isinstance(e, WSDLTools.SoapAddressBinding):
                         sd.location = e.location
@@ -318,7 +318,7 @@ class ServiceModuleWriter:
 class WSAServiceModuleWriter(ServiceModuleWriter):
     '''Creates a skeleton for a WS-Address service instance.
     '''
-    def __init__(self, base=WSAResource, prefix='wsa', service_class=SOAPService, 
+    def __init__(self, base=WSAResource, prefix='wsa', service_class=SOAPService,
                  strict=True):
         '''
         Parameters:
@@ -335,12 +335,12 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
         body = []
         if msgInName is not None:
             body.append('request = ps.Parse(%s.typecode)' %msgInName)
-            
+
         if msgOutName is not None:
             body.append('return request,%s()' %msgOutName)
-        else: 
+        else:
             body.append('return request,None')
-            
+
         return tuple(body)
     createMethodBody = staticmethod(createMethodBody)
 
@@ -403,14 +403,14 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
 
             m = s.newMethod()
             print >>m, '%sdef %s(self, ps, address):' %(self.getIndent(level=1), method_name)
-            
+
             msgin_name = msgout_name = None
             msgin,msgout = op.getInputMessage(),op.getOutputMessage()
-            if msgin is not None: 
+            if msgin is not None:
                 msgin_name = TextProtect(msgin.name)
-            if msgout is not None: 
+            if msgout is not None:
                 msgout_name = TextProtect(msgout.name)
-        
+
             indent = self.getIndent(level=2)
             for l in self.createMethodBody(msgin_name, msgout_name):
                 print >>m, indent + l
@@ -420,4 +420,4 @@ class WSAServiceModuleWriter(ServiceModuleWriter):
             print >>m, '%swsAction[\'%s\'] = \'%s\'' %(self.getIndent(level=1), method_name, wsaction_out)
             print >>m, '%sroot[(%s.typecode.nspname,%s.typecode.pname)] = \'%s\'' \
                      %(self.getIndent(level=1), msgin_name, msgin_name, method_name)
- 
+

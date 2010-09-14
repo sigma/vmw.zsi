@@ -3,15 +3,15 @@
 '''Faults.
 '''
 
-from ZSI import _copyright, _children, _child_elements, \
+from vmw.ZSI import _copyright, _children, _child_elements, \
         _get_idstr, _stringtypes, _seqtypes, _Node, SoapWriter, ZSIException
 
-from ZSI.TCcompound import Struct
-from ZSI.TC import QName, URI, String, XMLString, AnyElement, UNBOUNDED
+from vmw.ZSI.TCcompound import Struct
+from vmw.ZSI.TC import QName, URI, String, XMLString, AnyElement, UNBOUNDED
 
-from ZSI.wstools.Namespaces import SOAP, ZSI_SCHEMA_URI
-from ZSI.wstools.c14n import Canonicalize
-from ZSI.TC import ElementDeclaration
+from vmw.ZSI.wstools.Namespaces import SOAP, ZSI_SCHEMA_URI
+from vmw.ZSI.wstools.c14n import Canonicalize
+from vmw.ZSI.TC import ElementDeclaration
 
 import traceback, cStringIO as StringIO
 
@@ -28,18 +28,18 @@ class FaultType:
         self.faultstring= faultstring
         self.faultactor = faultactor
         self.detail = detail
-        
+
 FaultType.typecode = \
     Struct(FaultType,
-        [QName(pname='faultcode'), 
+        [QName(pname='faultcode'),
          String(pname='faultstring'),
          URI(pname=(SOAP.ENV,'faultactor'), minOccurs=0),
          Detail.typecode,
          AnyElement(aname='any',minOccurs=0, maxOccurs=UNBOUNDED, processContents="lax"),
-        ], 
-        pname=(SOAP.ENV,'Fault'), 
+        ],
+        pname=(SOAP.ENV,'Fault'),
         inline=True,
-        hasextras=0, 
+        hasextras=0,
     )
 
 class ZSIHeaderDetail:
@@ -47,8 +47,8 @@ class ZSIHeaderDetail:
         self.any = detail
 
 ZSIHeaderDetail.typecode =\
-    Struct(ZSIHeaderDetail, 
-           [AnyElement(aname='any', minOccurs=0, maxOccurs=UNBOUNDED, processContents="lax")], 
+    Struct(ZSIHeaderDetail,
+           [AnyElement(aname='any', minOccurs=0, maxOccurs=UNBOUNDED, processContents="lax")],
            pname=(ZSI_SCHEMA_URI, 'detail'))
 
 
@@ -61,8 +61,8 @@ class ZSIFaultDetailTypeCode(ElementDeclaration, Struct):
     schema = ZSI_SCHEMA_URI
     literal = 'FaultDetail'
     def __init__(self, **kw):
-        Struct.__init__(self, ZSIFaultDetail, [String(pname=(ZSI_SCHEMA_URI, 'string')), 
-            String(pname=(ZSI_SCHEMA_URI, 'trace'),minOccurs=0),], 
+        Struct.__init__(self, ZSIFaultDetail, [String(pname=(ZSI_SCHEMA_URI, 'string')),
+            String(pname=(ZSI_SCHEMA_URI, 'trace'),minOccurs=0),],
             pname=(ZSI_SCHEMA_URI, 'FaultDetail'), **kw
         )
 
@@ -91,8 +91,8 @@ class URIFaultDetailTypeCode(ElementDeclaration, Struct):
     schema = ZSI_SCHEMA_URI
     literal = 'URIFaultDetail'
     def __init__(self, **kw):
-        Struct.__init__(self, URIFaultDetail, 
-           [String(pname=(ZSI_SCHEMA_URI, 'URI')), String(pname=(ZSI_SCHEMA_URI, 'localname')),], 
+        Struct.__init__(self, URIFaultDetail,
+           [String(pname=(ZSI_SCHEMA_URI, 'URI')), String(pname=(ZSI_SCHEMA_URI, 'localname')),],
             pname=(ZSI_SCHEMA_URI, 'URIFaultDetail'), **kw
         )
 
@@ -148,7 +148,7 @@ class Fault(ZSIException):
     def serialize(self, sw):
         '''Serialize the object.'''
         detail = None
-        if self.detail is not None: 
+        if self.detail is not None:
             detail = Detail()
             detail.any = self.detail
 
@@ -157,7 +157,7 @@ class Fault(ZSIException):
 
     def AsSOAP(self, **kw):
 
-        header = self.DataForSOAPHeader() 
+        header = self.DataForSOAPHeader()
         sw = SoapWriter(**kw)
         self.serialize(sw)
         if header is not None:
@@ -233,7 +233,7 @@ def FaultFromException(ex, inheader, tb=None, actor=None):
             pass
         else:
             tracetext = lines
-  
+
     exceptionName = ""
     try:
         exceptionName = ":".join([ex.__module__, ex.__class__.__name__])

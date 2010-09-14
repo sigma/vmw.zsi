@@ -149,7 +149,7 @@ import types as _types
 
 ##
 ##  Public constants.
-from ZSI.wstools.Namespaces import ZSI_SCHEMA_URI
+from vmw.ZSI.wstools.Namespaces import ZSI_SCHEMA_URI
 UNICODE_ENCODING = 'utf-8'
 
 ##
@@ -168,7 +168,7 @@ _child_elements = lambda E: [ n for n in (E.childNodes or [])
 
 ##
 ##  Stuff imported from elsewhere.
-from ZSI.wstools.Namespaces import SOAP as _SOAP, SCHEMA as _SCHEMA, XMLNS as _XMLNS
+from vmw.ZSI.wstools.Namespaces import SOAP as _SOAP, SCHEMA as _SCHEMA, XMLNS as _XMLNS
 
 ##
 ##  Low-level DOM oriented utilities; useful for typecode implementors.
@@ -233,7 +233,7 @@ _get_element_nsuri_name = lambda E: (E.namespaceURI, E.localName)
 _is_element = lambda E: E.nodeType == _Node.ELEMENT_NODE
 
 def _resolve_prefix(celt, prefix):
-    '''resolve prefix to a namespaceURI.  If None or 
+    '''resolve prefix to a namespaceURI.  If None or
     empty str, return default namespace or None.
 
     Parameters:
@@ -249,7 +249,7 @@ def _resolve_prefix(celt, prefix):
         if namespaceURI: break
         celt = celt.parentNode
     else:
-        if prefix:  
+        if prefix:
             raise EvaluateException, 'cant resolve xmlns:%s' %prefix
     return namespaceURI
 
@@ -275,7 +275,7 @@ def _backtrace(elt, dom):
     while elt != dom:
         name, parent = elt.nodeName, elt.parentNode
         if parent is None: break
-        matches = [ c for c in _child_elements(parent) 
+        matches = [ c for c in _child_elements(parent)
                         if c.nodeName == name ]
         if len(matches) == 1:
             s = '/' + name + s
@@ -298,7 +298,7 @@ def _get_idstr(pyobj):
 def _get_postvalue_from_absoluteURI(url):
     """Bug [ 1513000 ] POST Request-URI not limited to "abs_path"
     Request-URI = "*" | absoluteURI | abs_path | authority
-    
+
     Not a complete solution, but it seems to work with all known
     implementations.  ValueError thrown if bad uri.
     """

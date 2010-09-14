@@ -3,17 +3,17 @@
 #
 # Copyright (c) 2001 Zolera Systems.  All rights reserved.
 
-from ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
+from vmw.ZSI import _copyright, _seqtypes, ParsedSoap, SoapWriter, TC, ZSI_SCHEMA_URI,\
     EvaluateException, FaultFromFaultMessage, _child_elements, _attrs, _find_arraytype,\
     _find_type, _get_idstr, _get_postvalue_from_absoluteURI, FaultException, WSActionException,\
     UNICODE_ENCODING
-from ZSI.auth import AUTH
-from ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
+from vmw.ZSI.auth import AUTH
+from vmw.ZSI.TC import AnyElement, AnyType, String, TypeCode, _get_global_element_declaration,\
     _get_type_definition
-from ZSI.TCcompound import Struct
+from vmw.ZSI.TCcompound import Struct
 import base64, httplib, Cookie, types, time, urlparse
-from ZSI.address import Address
-from ZSI.wstools.logging import getLogger as _GetLogger
+from vmw.ZSI.address import Address
+from vmw.ZSI.wstools.logging import getLogger as _GetLogger
 _b64_encode = base64.encodestring
 
 class _AuthHeader:
@@ -24,10 +24,10 @@ class _AuthHeader:
     def __init__(self, name=None, password=None):
         self.Name = name
         self.Password = password
-_AuthHeader.typecode = Struct(_AuthHeader, ofwhat=(String((ZSI_SCHEMA_URI,'Name'), typed=False), 
-        String((ZSI_SCHEMA_URI,'Password'), typed=False)), pname=(ZSI_SCHEMA_URI,'BasicAuth'), 
+_AuthHeader.typecode = Struct(_AuthHeader, ofwhat=(String((ZSI_SCHEMA_URI,'Name'), typed=False),
+        String((ZSI_SCHEMA_URI,'Password'), typed=False)), pname=(ZSI_SCHEMA_URI,'BasicAuth'),
         typed=False)
-  
+
 
 class _Caller:
     '''Internal class used to give the user a callable object
@@ -42,25 +42,25 @@ class _Caller:
     def __call__(self, *args):
         nsuri = self.namespace
         if nsuri is None:
-            return self.binding.RPC(None, self.name, args, 
+            return self.binding.RPC(None, self.name, args,
                             encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
                             replytype=TC.Any(self.name+"Response"))
-            
-        return self.binding.RPC(None, (nsuri,self.name), args, 
+
+        return self.binding.RPC(None, (nsuri,self.name), args,
                    encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
                    replytype=TC.Any((nsuri,self.name+"Response")))
-    
+
 
 class _NamedParamCaller:
     '''Similar to _Caller, expect that there are named parameters
     not positional.
     '''
-        
+
     def __init__(self, binding, name, namespace=None):
         self.binding = binding
         self.name = name
         self.namespace = namespace
-        
+
     def __call__(self, **params):
         # Pull out arguments that Send() uses
         kw = {}
@@ -68,18 +68,18 @@ class _NamedParamCaller:
             if params.has_key(key):
                 kw[key] = params[key]
                 del params[key]
-        
+
         nsuri = self.namespace
         if nsuri is None:
-            return self.binding.RPC(None, self.name, None, 
+            return self.binding.RPC(None, self.name, None,
                         encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
-                        _args=params, 
+                        _args=params,
                         replytype=TC.Any(self.name+"Response", aslist=False),
-                        **kw)      
-                
-        return self.binding.RPC(None, (nsuri,self.name), None, 
+                        **kw)
+
+        return self.binding.RPC(None, (nsuri,self.name), None,
                    encodingStyle="http://schemas.xmlsoap.org/soap/encoding/",
-                   _args=params, 
+                   _args=params,
                    replytype=TC.Any((nsuri,self.name+"Response"), aslist=False),
                    **kw)
 
@@ -91,16 +91,16 @@ class _Binding:
     '''
     defaultHttpTransport = httplib.HTTPConnection
     defaultHttpsTransport = httplib.HTTPSConnection
-    logger = _GetLogger('ZSI.client.Binding')
+    logger = _GetLogger('vmw.ZSI.client.Binding')
 
     def __init__(self, nsdict=None, transport=None, url=None, tracefile=None,
-                 readerclass=None, writerclass=None, soapaction='', 
+                 readerclass=None, writerclass=None, soapaction='',
                  wsAddressURI=None, sig_handler=None, transdict=None, **kw):
         '''Initialize.
         Keyword arguments include:
-            transport -- default use HTTPConnection. 
+            transport -- default use HTTPConnection.
             transdict -- dict of values to pass to transport.
-            url -- URL of resource, POST is path 
+            url -- URL of resource, POST is path
             soapaction -- value of SOAPAction header
             auth -- (type, name, password) triplet; default is unauth
             nsdict -- namespace entries to add
@@ -108,7 +108,7 @@ class _Binding:
             cert_file, key_file -- SSL data (q.v.)
             readerclass -- DOM reader class
             writerclass -- DOM writer class, implements MessageInterface
-            wsAddressURI -- namespaceURI of WS-Address to use.  By default 
+            wsAddressURI -- namespaceURI of WS-Address to use.  By default
             it's not used.
             sig_handler -- XML Signature handler, must sign and verify.
             endPointReference -- optional Endpoint Reference.
@@ -190,31 +190,31 @@ class _Binding:
         self.Send(url, opname, obj, **kw)
         return self.Receive(replytype, **kw)
 
-    def Send(self, url, opname, obj, nsdict={}, soapaction=None, wsaction=None, 
+    def Send(self, url, opname, obj, nsdict={}, soapaction=None, wsaction=None,
              endPointReference=None, soapheaders=(), **kw):
         '''Send a message.  If url is None, use the value from the
         constructor (else error). obj is the object (data) to send.
-        Data may be described with a requesttypecode keyword, the default 
+        Data may be described with a requesttypecode keyword, the default
         is the class's typecode (if there is one), else Any.
 
-        Try to serialize as a Struct, if this is not possible serialize an Array.  If 
+        Try to serialize as a Struct, if this is not possible serialize an Array.  If
         data is a sequence of built-in python data types, it will be serialized as an
         Array, unless requesttypecode is specified.
 
         arguments:
-            url -- 
+            url --
             opname -- struct wrapper
             obj -- python instance
 
         key word arguments:
-            nsdict -- 
+            nsdict --
             soapaction --
             wsaction -- WS-Address Action, goes in SOAP Header.
-            endPointReference --  set by calling party, must be an 
+            endPointReference --  set by calling party, must be an
                 EndPointReference type instance.
             soapheaders -- list of pyobj, typically w/typecode attribute.
                 serialized in the SOAP:Header.
-            requesttypecode -- 
+            requesttypecode --
 
         '''
         url = url or self.url
@@ -225,9 +225,9 @@ class _Binding:
         d.update(self.nsdict)
         d.update(nsdict)
 
-        sw = SoapWriter(nsdict=d, header=True, outputclass=self.writerclass, 
+        sw = SoapWriter(nsdict=d, header=True, outputclass=self.writerclass,
                  encodingStyle=kw.get('encodingStyle'),)
-        
+
         requesttypecode = kw.get('requesttypecode')
         if kw.has_key('_args'): #NamedParamBinding
             tc = requesttypecode or TC.Any(pname=opname, aslist=False)
@@ -246,17 +246,17 @@ class _Binding:
             sw.serialize(obj, tc)
         else:
             sw.serialize(obj, requesttypecode)
-            
+
         for i in soapheaders:
-           sw.serialize_header(i) 
-            
-        # 
+           sw.serialize_header(i)
+
+        #
         # Determine the SOAP auth element.  SOAP:Header element
         if self.auth_style & AUTH.zsibasic:
             sw.serialize_header(_AuthHeader(self.auth_user, self.auth_pass),
                 _AuthHeader.typecode)
 
-        # 
+        #
         # Serialize WS-Address
         if self.wsAddressURI is not None:
             if self.soapaction and wsaction.strip('\'"') != self.soapaction:
@@ -267,7 +267,7 @@ class _Binding:
             self.address.setRequest(endPointReference, wsaction)
             self.address.serialize(sw)
 
-        # 
+        #
         # WS-Security Signature Handler
         if self.sig_handler is not None:
             self.sig_handler.sign(sw)
@@ -307,7 +307,7 @@ class _Binding:
             #no attachment
             self.h.putheader("Content-Type", 'text/xml; charset="%s"' %UNICODE_ENCODING)
         else:
-            #we have attachment 
+            #we have attachment
             contentType =  "multipart/related; "
             self.h.putheader("Content-Type" , "multipart/related; boundary=\"" + self.boundary + "\"; start=\"" + self.startCID + '\"; type="text/xml"')
         self.__addcookies()
@@ -338,7 +338,7 @@ class _Binding:
 
     def SendSOAPDataHTTPDigestAuth(self, response, soapdata, url, request_uri, soapaction, **kw):
         '''Resend the initial request w/http digest authorization headers.
-        The SOAP server has requested authorization.  Fetch the challenge, 
+        The SOAP server has requested authorization.  Fetch the challenge,
         generate the authdict for building a response.
         '''
         if self.trace:
@@ -350,7 +350,7 @@ class _Binding:
             raise RuntimeError,\
                 'Auth style(%d) does not support requested digest authorization.' %self.auth_style
 
-        from ZSI.digest_auth import fetch_challenge,\
+        from vmw.ZSI.digest_auth import fetch_challenge,\
             generate_response,\
             build_authorization_arg,\
             dict_fetch
@@ -425,8 +425,8 @@ class _Binding:
         if len(self.data) == 0:
             raise TypeError('Received empty response')
 
-        self.ps = ParsedSoap(self.data, 
-                        readerclass=readerclass or self.readerclass, 
+        self.ps = ParsedSoap(self.data,
+                        readerclass=readerclass or self.readerclass,
                         encodingStyle=kw.get('encodingStyle'))
 
         if self.sig_handler is not None:
@@ -476,27 +476,27 @@ class _Binding:
 
 
 class Binding(_Binding):
-    '''Object that represents a binding (connection) to a SOAP server.  
+    '''Object that represents a binding (connection) to a SOAP server.
     Can be used in the "name overloading" style.
-    
+
     class attr:
         gettypecode -- funcion that returns typecode from typesmodule,
             can be set so can use whatever mapping you desire.
     '''
     gettypecode = staticmethod(lambda mod,e: getattr(mod, str(e.localName)).typecode)
-    logger = _GetLogger('ZSI.client.Binding')
+    logger = _GetLogger('vmw.ZSI.client.Binding')
 
     def __init__(self, url, namespace=None, typesmodule=None, **kw):
         """
         Parameters:
             url -- location of service
             namespace -- optional root element namespace
-            typesmodule -- optional response only. dict(name=typecode), 
-                lookup for all children of root element.  
+            typesmodule -- optional response only. dict(name=typecode),
+                lookup for all children of root element.
         """
         self.typesmodule = typesmodule
         self.namespace = namespace
-        
+
         _Binding.__init__(self, url=url, **kw)
 
     def __getattr__(self, name):
@@ -514,7 +514,7 @@ class Binding(_Binding):
         try:
             tc = self.gettypecode(self.typesmodule, node)
         except:
-            self.logger.debug('didnt find typecode for "%s" in typesmodule: %s', 
+            self.logger.debug('didnt find typecode for "%s" in typesmodule: %s',
                 node.localName, self.typesmodule)
             tc = TC.Any(aslist=1)
             return tc.parse(node, self.ps)
@@ -535,7 +535,7 @@ class Binding(_Binding):
             faults   -- list of WSDL operation.fault typecodes
             wsaction -- If using WS-Address, must specify Action value we expect to
                 receive.
-        ''' 
+        '''
         self.ReceiveSOAP(**kw)
         ps = self.ps
         tp = _find_type(ps.body_root)
@@ -567,7 +567,7 @@ class NamedParamBinding(Binding):
     '''Like Binding, except the argument list for invocation is
     named parameters.
     '''
-    logger = _GetLogger('ZSI.client.Binding')
+    logger = _GetLogger('vmw.ZSI.client.Binding')
 
     def __getattr__(self, name):
         '''Return a callable object that will invoke the RPC method

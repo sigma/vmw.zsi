@@ -9,10 +9,10 @@ from StringIO import StringIO
 # twisted & related imports
 from zope.interface import classProvides, implements, Interface
 
-# ZSI imports
-from ZSI import _get_element_nsuri_name, EvaluateException, ParseException,\
+# vmw.ZSI imports
+from vmw.ZSI import _get_element_nsuri_name, EvaluateException, ParseException,\
     fault, ParsedSoap, SoapWriter
-from ZSI.twisted.reverse import DataHandler, ReverseHandlerChain,\
+from vmw.ZSI.twisted.reverse import DataHandler, ReverseHandlerChain,\
     HandlerChainInterface
 
 """
@@ -23,7 +23,7 @@ EXAMPLES:
 
 """
 
-def soapmethod(requesttypecode, responsetypecode, soapaction='', 
+def soapmethod(requesttypecode, responsetypecode, soapaction='',
                operation=None, **kw):
     """@soapmethod
     decorator function for soap methods
@@ -73,7 +73,7 @@ class SOAPCallbackHandler:
             rsp = method.responsetypecode.pyclass()
         except Exception, ex:
             raise
-        
+
         try:
             req,rsp = method(req, rsp)
         except Exception, ex:
@@ -86,8 +86,8 @@ class SOAPCallbackHandler:
         sw = SoapWriter(outputclass=cls.writerClass)
         sw.serialize(output)
         return sw
-    
-    
+
+
 class SOAPHandlerChainFactory:
     protocol = ReverseHandlerChain
 
@@ -98,7 +98,7 @@ class SOAPHandlerChainFactory:
 
 class WSGIApplication(dict):
     encoding = "UTF-8"
-    
+
     def __call__(self, env, start_response):
         """do dispatching, else process
         """
@@ -113,7 +113,7 @@ class WSGIApplication(dict):
                 env['PATH_INFO'] =  ''
                 print "SCRIPT: ", env['SCRIPT_NAME']
                 return application(env, start_response)
-            
+
         return self._request_cb(env, start_response)
 
     def _request_cb(self, env, start_response):
@@ -121,7 +121,7 @@ class WSGIApplication(dict):
         """
         start_response("404 ERROR", [('Content-Type','text/plain')])
         return ['Move along people, there is nothing to see to hear']
-    
+
     def putChild(self, path, resource):
         """
         """
@@ -129,41 +129,41 @@ class WSGIApplication(dict):
         lp = len(path)
         if lp == 0:
             raise RuntimeError, 'bad path "%s"' %path
-        
+
         if lp == 1:
             self[path[0]] = resource
-        
+
         for i in range(len(path)):
             if not path[i]: continue
             break
-        
+
         next = self.get(path[i], None)
         if next is None:
             next = self[path[i]] = WSGIApplication()
-            
+
         next.putChild('/'.join(path[-1:]), resource)
-        
-        
+
+
 
 
 class SOAPApplication(WSGIApplication):
     """
     """
     factory = SOAPHandlerChainFactory
-    
+
     def __init__(self, **kw):
         dict.__init__(self, **kw)
         self.delegate = None
-        
+
     def _request_cb(self, env, start_response):
-        """process request, 
+        """process request,
         """
         if env['REQUEST_METHOD'] == 'GET':
             return self._handle_GET(env, start_response)
 
         if env['REQUEST_METHOD'] == 'POST':
             return self._handle_POST(env, start_response)
-            
+
         start_response("500 ERROR", [('Content-Type','text/plain')])
         s = StringIO()
         h = env.items(); h.sort()
@@ -179,7 +179,7 @@ class SOAPApplication(WSGIApplication):
 
         start_response("404 ERROR", [('Content-Type','text/plain')])
         return ['NO RESOURCE FOR GET']
-    
+
     def _handle_POST(self, env, start_response):
         """Dispatch Method called by twisted render, creates a
         request/response handler chain.
@@ -205,11 +205,11 @@ class SOAPApplication(WSGIApplication):
         except Exception, ex:
             start_response("500 ERROR", [('Content-Type',mimeType)])
             return [fault.FaultFromException(ex, False, sys.exc_info()[2]).AsSOAP()]
-        
+
         start_response("200 OK", [('Content-Type',mimeType)])
         return [soap]
-    
-    
+
+
 def test(app, port=8080, host="localhost"):
     """
     """
@@ -218,9 +218,9 @@ def test(app, port=8080, host="localhost"):
     from twisted.web2.channel import HTTPFactory
     from twisted.web2.server import Site
     from twisted.web2.wsgi import WSGIResource
-    
+
     log.startLogging(sys.stdout)
-    reactor.listenTCP(port, 
+    reactor.listenTCP(port,
         HTTPFactory( Site(WSGIResource(app)) ),
         interface=host,
     )
@@ -233,46 +233,46 @@ def _issoapmethod(f):
 def _resourceToWSDL(resource):
     from xml.etree import ElementTree
     from xml.etree.ElementTree import Element, QName
-    from ZSI.wstools.Namespaces import WSDL
-    
+    from vmw.ZSI.wstools.Namespaces import WSDL
+
     r = resource
     methods = filter(_issoapmethod, map(lambda i: getattr(r, i), dir(r)))
     tns = ''
-    
+
     #tree = ElementTree()
     defs = Element("{%s}definitions" %WSDL.BASE)
     defs.attrib['name'] = 'SampleDefs'
     defs.attrib['targetNamespace'] = tns
     #tree.append(defs)
-    
+
     porttype = Element("{%s}portType" %WSDL)
     porttype.attrib['name'] = QName("{%s}SamplePortType" %tns)
-    
+
     binding = Element("{%s}binding" %WSDL)
     defs.append(binding)
     binding.attrib['name'] = QName("{%s}SampleBinding" %tns)
     binding.attrib['type'] = porttype.get('name')
-    
+
     for m in methods:
         m.action
-        
+
     service = Element("{%s}service" %WSDL.BASE)
     defs.append(service)
     service.attrib['name'] = 'SampleService'
-    
+
     port = Element("{%s}port" %WSDL.BASE)
     service.append(port)
     port.attrib['name'] = "SamplePort"
     port.attrib['binding'] = binding.get('name')
-    
+
     soapaddress = Element("{%s}address" %WSDL.BIND_SOAP)
     soapaddress.attrib['location'] = 'http://localhost/bla'
     port.append(soapaddress)
-    
+
     return [ElementTree.tostring(defs)]
-    
-   
-    
+
+
+
 """
 <?xml version="1.0" encoding="UTF-8"?>
 <wsdl:definitions name="Counter" targetNamespace="http://counter.com/bindings" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:porttype="http://counter.com" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
@@ -290,7 +290,7 @@ def _resourceToWSDL(resource):
     </wsdl:operation>
 
 
-<wsdl:definitions name="Counter" targetNamespace="http://counter.com/service" 
+<wsdl:definitions name="Counter" targetNamespace="http://counter.com/service"
 xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:binding="http://counter.com/bindings">
   <wsdl:import namespace="http://counter.com/bindings" location="counter_bindings.wsdl"/>
   <wsdl:service name="CounterService">
@@ -300,4 +300,4 @@ xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap
   </wsdl:service>
 </wsdl:definitions>
 """
-    
+

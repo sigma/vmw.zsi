@@ -10,11 +10,11 @@
 # $Id$
 
 import re
-from ZSI import EvaluateException
-from ZSI.TCcompound import Struct
-from ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
-from ZSI.wstools.Utility import SplitQName
-from ZSI.wstools.Namespaces import SCHEMA
+from vmw.ZSI import EvaluateException
+from vmw.ZSI.TCcompound import Struct
+from vmw.ZSI.generate import WsdlGeneratorError, Wsdl2PythonError
+from vmw.ZSI.wstools.Utility import SplitQName
+from vmw.ZSI.wstools.Namespaces import SCHEMA
 
 NCName_to_ModuleName = lambda name: re.sub('\.', '_', TextProtect(name))
 NCName_to_ClassName = lambda name: re.sub('\.', '_', TextProtect(name))
@@ -29,7 +29,7 @@ def GetModuleBaseNameFromWSDL(wsdl):
     """
     base_name = wsdl.name or wsdl.services[0].name
     base_name = SplitQName(base_name)[1]
-    if base_name is None: 
+    if base_name is None:
         return None
     return NCName_to_ModuleName(base_name)
 
@@ -46,31 +46,31 @@ class NamespaceAliasDict:
         cls.alias_dict[ns] = (Namespace2ModuleName(ns), '%s' % namespace_name(cls,ns))
         cls.alias_list.append(ns)
     add = classmethod(add)
-            
+
     def getModuleName(cls, ns):
         if cls.alias_dict.has_key(ns):
             return cls.alias_dict[ns][0]
-                                 
+
         msg = 'failed to find import for schema "%s"'%ns +\
         'possibly missing @schemaLocation attribute.'
         if ns in SCHEMA.XSD_LIST:
             msg = 'missing built-in typecode for schema "%s"' %ns
-            
+
         raise WsdlGeneratorError, msg
-                                 
+
     getModuleName = classmethod(getModuleName)
-        
+
     def getAlias(cls, ns):
         if cls.alias_dict.has_key(ns):
             return cls.alias_dict[ns][1]
-                                 
+
         msg = 'failed to find import for schema "%s"'%ns +\
         'possibly missing @schemaLocation attribute.'
         if ns in SCHEMA.XSD_LIST:
             msg = 'missing built-in typecode for schema "%s"' %ns
-            
+
         raise WsdlGeneratorError, msg
-    
+
     getAlias = classmethod(getAlias)
 
     def getNSList(cls):
@@ -141,7 +141,7 @@ def GetPartsSubNames(args, wsdl):
 			    # I'm not sure when the name attribute was dropped
 			    # but at some point, or in some circumstance it's not
 			    # there, but instead a ref attribute is there which is
-		     	    # tuple of (namespace, name). This hack fixes things, 
+		     	    # tuple of (namespace, name). This hack fixes things,
 			    # but I'm not sure why this happens or has happened.
 			    # IRJ - 2005-05-25
                             if i.content.mgContent != None:

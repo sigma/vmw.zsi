@@ -3,7 +3,7 @@
 '''General typecodes.
 '''
 
-from ZSI import _copyright, _children, _child_elements, \
+from vmw.ZSI import _copyright, _children, _child_elements, \
     _floattypes, _stringtypes, _seqtypes, _find_attr, _find_attrNS, _find_attrNodeNS, \
     _find_arraytype, _find_default_namespace, _find_href, _find_encstyle, \
     _resolve_prefix, _find_xsi_attr, _find_type, \
@@ -11,10 +11,10 @@ from ZSI import _copyright, _children, _child_elements, \
     _Node, EvaluateException, UNICODE_ENCODING, \
     _valid_encoding, ParseException
 
-from ZSI.wstools.Namespaces import SCHEMA, SOAP
-from ZSI.wstools.Utility import SplitQName
-from ZSI.wstools.c14n import Canonicalize
-from ZSI.wstools.logging import getLogger as _GetLogger
+from vmw.ZSI.wstools.Namespaces import SCHEMA, SOAP
+from vmw.ZSI.wstools.Utility import SplitQName
+from vmw.ZSI.wstools.c14n import Canonicalize
+from vmw.ZSI.wstools.logging import getLogger as _GetLogger
 
 import re, types, time, copy
 
@@ -32,7 +32,7 @@ _is_xsd_or_soap_ns = lambda ns: ns in [
 _find_nil = lambda E: _find_xsi_attr(E, "null") or _find_xsi_attr(E, "nil")
 
 def _get_xsitype(pyclass):
-    '''returns the xsi:type as a tuple, coupled with ZSI.schema
+    '''returns the xsi:type as a tuple, coupled with vmw.ZSI.schema
     '''
     if hasattr(pyclass,'type') and type(pyclass.type) in _seqtypes:
         return pyclass.type
@@ -67,7 +67,7 @@ class TypeCode:
     type = (None,None)
     typechecks = True
     attribute_typecode_dict = None
-    logger = _GetLogger('ZSI.TC.TypeCode')
+    logger = _GetLogger('vmw.ZSI.TC.TypeCode')
 
     def __init__(self, pname=None, aname=None, minOccurs=1,
          maxOccurs=1, nillable=False, typed=True, unique=True,
@@ -413,7 +413,7 @@ class SimpleType(TypeCode):
         empty_content -- value representing an empty element.
     '''
     empty_content = None
-    logger = _GetLogger('ZSI.TC.SimpleType')
+    logger = _GetLogger('vmw.ZSI.TC.SimpleType')
 
     def parse(self, elt, ps):
         self.checkname(elt, ps)
@@ -523,7 +523,7 @@ class Any(TypeCode):
                 parsing
         serialmap -- same, for (outgoing) serialization
     '''
-    logger = _GetLogger('ZSI.TC.Any')
+    logger = _GetLogger('vmw.ZSI.TC.Any')
     parsemap, serialmap = {}, {}
 
     def __init__(self, pname=None, aslist=False, minOccurs=0, unique=False, **kw):
@@ -608,7 +608,7 @@ class Any(TypeCode):
         else:
             serializer = Any.serialmap.get(tc)
             if not serializer and isinstance(pyobj, time.struct_time):
-                from ZSI.TCtimes import gDateTime
+                from vmw.ZSI.TCtimes import gDateTime
                 serializer = gDateTime()
         if serializer:
             return serializer.get_formatted_content(pyobj)
@@ -670,7 +670,7 @@ class Any(TypeCode):
         else:
             serializer = Any.serialmap.get(tc)
             if not serializer and isinstance(pyobj, time.struct_time):
-                from ZSI.TCtimes import gDateTime
+                from vmw.ZSI.TCtimes import gDateTime
                 serializer = gDateTime()
 
         if not serializer:
@@ -709,7 +709,7 @@ class String(SimpleType):
     parselist = [ (None,'string') ]
     seriallist = [ types.StringType, types.UnicodeType ]
     type = (SCHEMA.XSD3, 'string')
-    logger = _GetLogger('ZSI.TC.String')
+    logger = _GetLogger('vmw.ZSI.TC.String')
 
     def __init__(self, pname=None, strip=True, **kw):
         TypeCode.__init__(self, pname, **kw)
@@ -740,7 +740,7 @@ class URI(String):
     '''
     parselist = [ (None,'anyURI'),(SCHEMA.XSD3, 'anyURI')]
     type = (SCHEMA.XSD3, 'anyURI')
-    logger = _GetLogger('ZSI.TC.URI')
+    logger = _GetLogger('vmw.ZSI.TC.URI')
     reserved = ";/?:@&=+$,"
 
     def text_to_data(self, text, elt, ps):
@@ -761,7 +761,7 @@ class QName(String):
     '''
     parselist = [ (None,'QName') ]
     type = (SCHEMA.XSD3, 'QName')
-    logger = _GetLogger('ZSI.TC.QName')
+    logger = _GetLogger('vmw.ZSI.TC.QName')
 
     def __init__(self, pname=None, strip=1, **kw):
         String.__init__(self, pname, strip, **kw)
@@ -813,7 +813,7 @@ class Token(String):
     '''
     parselist = [ (None, 'token') ]
     type = (SCHEMA.XSD3, 'token')
-    logger = _GetLogger('ZSI.TC.Token')
+    logger = _GetLogger('vmw.ZSI.TC.Token')
 
 
 class Base64String(String):
@@ -821,7 +821,7 @@ class Base64String(String):
     '''
     parselist = [ (None,'base64Binary'), (SOAP.ENC, 'base64') ]
     type = (SOAP.ENC, 'base64')
-    logger = _GetLogger('ZSI.TC.Base64String')
+    logger = _GetLogger('vmw.ZSI.TC.Base64String')
 
     def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
@@ -839,7 +839,7 @@ class Base64String(String):
 class Base64Binary(String):
     parselist = [ (None,'base64Binary'), ]
     type = (SCHEMA.XSD3, 'base64Binary')
-    logger = _GetLogger('ZSI.TC.Base64Binary')
+    logger = _GetLogger('vmw.ZSI.TC.Base64Binary')
 
     def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
@@ -859,7 +859,7 @@ class HexBinaryString(String):
     '''
     parselist = [ (None,'hexBinary') ]
     type = (SCHEMA.XSD3, 'hexBinary')
-    logger = _GetLogger('ZSI.TC.HexBinaryString')
+    logger = _GetLogger('vmw.ZSI.TC.HexBinaryString')
 
     def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
@@ -877,7 +877,7 @@ class HexBinaryString(String):
 class XMLString(String):
     '''A string that represents an XML document
     '''
-    logger = _GetLogger('ZSI.TC.XMLString')
+    logger = _GetLogger('vmw.ZSI.TC.XMLString')
 
     def __init__(self, pname=None, readerclass=None, **kw):
         String.__init__(self, pname, **kw)
@@ -898,7 +898,7 @@ class XMLString(String):
 class Enumeration(String):
     '''A string type, limited to a set of choices.
     '''
-    logger = _GetLogger('ZSI.TC.Enumeration')
+    logger = _GetLogger('vmw.ZSI.TC.Enumeration')
 
     def __init__(self, choices, pname=None, **kw):
         String.__init__(self, pname, **kw)
@@ -956,7 +956,7 @@ class Integer(SimpleType):
     }
     parselist = [ (None,k) for k in ranges.keys() ]
     seriallist = [ types.IntType, types.LongType ]
-    logger = _GetLogger('ZSI.TC.Integer')
+    logger = _GetLogger('vmw.ZSI.TC.Integer')
 
     def __init__(self, pname=None, format='%d', **kw):
         TypeCode.__init__(self, pname, **kw)
@@ -1087,7 +1087,7 @@ class Decimal(SimpleType):
                         -1.7976931348623158E+308, 1.7976931348623157E+308),
     }
     zeropat = re.compile('[1-9]')
-    logger = _GetLogger('ZSI.TC.Decimal')
+    logger = _GetLogger('vmw.ZSI.TC.Decimal')
 
     def __init__(self, pname=None, format='%f', **kw):
         TypeCode.__init__(self, pname, **kw)
@@ -1167,7 +1167,7 @@ class Boolean(SimpleType):
     parselist = [ (None,'boolean') ]
     seriallist = [ bool ]
     type = (SCHEMA.XSD3, 'boolean')
-    logger = _GetLogger('ZSI.TC.Boolean')
+    logger = _GetLogger('vmw.ZSI.TC.Boolean')
 
     def text_to_data(self, text, elt, ps):
         '''convert text into typecode specific data.
@@ -1226,7 +1226,7 @@ class XML(TypeCode):
 
     # Clone returned data?
     copyit = 0
-    logger = _GetLogger('ZSI.TC.XML')
+    logger = _GetLogger('vmw.ZSI.TC.XML')
 
     def __init__(self, pname=None, comments=0, inline=0, wrapped=True, **kw):
         TypeCode.__init__(self, pname, **kw)
@@ -1320,7 +1320,7 @@ class AnyType(TypeCode):
     all = '#all'
     other = '#other'
     type = (SCHEMA.XSD3, 'anyType')
-    logger = _GetLogger('ZSI.TC.AnyType')
+    logger = _GetLogger('vmw.ZSI.TC.AnyType')
 
     def __init__(self, pname=None, namespaces=['#all'],
     minOccurs=1, maxOccurs=1, strip=1, **kw):
@@ -1399,7 +1399,7 @@ class AnyElement(AnyType):
             tag -- global element declaration
     """
     tag = (SCHEMA.XSD3, 'any')
-    logger = _GetLogger('ZSI.TC.AnyElement')
+    logger = _GetLogger('vmw.ZSI.TC.AnyElement')
 
     def __init__(self, namespaces=['#all'],pname=None,
         minOccurs=1, maxOccurs=1, strip=1, processContents='strict',
@@ -1523,7 +1523,7 @@ class Union(SimpleType):
         memberTypes -- list [(namespace,name),] tuples, each representing a type defintion.
     '''
     memberTypes = None
-    logger = _GetLogger('ZSI.TC.Union')
+    logger = _GetLogger('vmw.ZSI.TC.Union')
 
     def __init__(self, pname=None, minOccurs=1, maxOccurs=1, **kw):
         SimpleType.__init__(self, pname=pname, minOccurs=minOccurs, maxOccurs=maxOccurs, **kw)
@@ -1632,7 +1632,7 @@ class List(SimpleType):
             representing the type definition
     '''
     itemType = None
-    logger = _GetLogger('ZSI.TC.List')
+    logger = _GetLogger('vmw.ZSI.TC.List')
 
     def __init__(self, pname=None, itemType=None, **kw):
         '''Currently need to require maxOccurs=1, so list
@@ -1786,7 +1786,7 @@ def RegisterType(C, clobber=0, *args, **keywords):
 #        from EchoServer_services_types import urn_ZSI_examples as ExampleTypes
 #
 #        for key,value in SchemaToPyTypeMap.mapping.items():
-#        ZSI.TC.RegisterTypeWithSchemaAndClass(importedSchemaTypes = ExampleTypes, schemaTypeName=key, classModuleName=value[0], className=value[1])
+#        vmw.ZSI.TC.RegisterTypeWithSchemaAndClass(importedSchemaTypes = ExampleTypes, schemaTypeName=key, classModuleName=value[0], className=value[1])
 #
 #    '''
 #    # Doing this: (schemaTypeName="ExampleTypes", classModuleName="Description",

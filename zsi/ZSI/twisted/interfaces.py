@@ -9,13 +9,13 @@ import sys, warnings
 # twisted & related imports
 from zope.interface import classProvides, implements, Interface
 
-# ZSI imports
-from ZSI import EvaluateException, ParseException, ParsedSoap, SoapWriter
+# vmw.ZSI imports
+from vmw.ZSI import EvaluateException, ParseException, ParsedSoap, SoapWriter
 
 
-# 
+#
 # Stability: Unstable
-# 
+#
 
 def CheckInputArgs(*interfaces):
     """Must provide at least one interface, the last one may be repeated.
@@ -34,9 +34,9 @@ def CheckInputArgs(*interfaces):
 
 
 class HandlerChainInterface(Interface):
-    
+
     def processRequest(self, input, **kw):
-        """returns a representation of the request, the 
+        """returns a representation of the request, the
         last link in the chain must return a response
         pyobj with a typecode attribute.
         Parameters:
@@ -55,9 +55,9 @@ class HandlerChainInterface(Interface):
         """
 
 class CallbackChainInterface(Interface):
-    
+
     def processRequest(self, input, **kw):
-        """returns a response pyobj with a typecode 
+        """returns a response pyobj with a typecode
         attribute.
         Parameters:
             input --
@@ -93,23 +93,23 @@ class DefaultHandlerChain:
     def __init__(self, cb, *handlers):
         self.handlercb = cb
         self.handlers = handlers
-        
+
     def processRequest(self, arg, **kw):
-        
+
         for h in self.handlers:
             arg = h.processRequest(arg, **kw)
-            
+
         return self.handlercb.processRequest(arg, **kw)
-            
+
     def processResponse(self, arg, **kw):
 
-        if arg is None: 
+        if arg is None:
             return
 
         for h in self.handlers:
             arg = h.processResponse(arg, **kw)
-            
+
         s = str(arg)
-        
+
         return s
 

@@ -3,10 +3,10 @@
 '''Apache typecodes.
 '''
 
-from ZSI import _copyright, _child_elements, _get_idstr
-from ZSI.TC import SimpleType, TypeCode, Struct as _Struct, Any as _Any
-from ZSI.wstools.logging import getLogger as _GetLogger
-from  ZSI.wstools.Namespaces import APACHE
+from vmw.ZSI import _copyright, _child_elements, _get_idstr
+from vmw.ZSI.TC import SimpleType, TypeCode, Struct as _Struct, Any as _Any
+from vmw.ZSI.wstools.logging import getLogger as _GetLogger
+from vmw.ZSI.wstools.Namespaces import APACHE
 #import types
 
 class Apache:
@@ -57,7 +57,7 @@ class _Map(TypeCode):
             self.set_attribute_href(el, objid)
             return None
 
-        # xsi:type attribute 
+        # xsi:type attribute
         if kw.get('typed', self.typed) is True:
             self.set_attribute_xsi_type(el, **kw)
 
@@ -77,7 +77,7 @@ class AttachmentRef(SimpleType):
     '''Type code for Attachment. This attachment will work only with axis...
     '''
 
-    logger = _GetLogger('ZSI.TC.Attachment')
+    logger = _GetLogger('vmw.ZSI.TC.Attachment')
     type = (Apache.NS, "DataHandler")
     parselist = [(Apache.NS, "DataHandler")]
     #seriallist = [ types.FileType ]
@@ -91,7 +91,7 @@ class AttachmentRef(SimpleType):
         #never invoked ???
         #print "elt is: " + str(elt)
         #print "while ps: " + str(ps)
-        return 
+        return
 
     def get_formatted_content(self, pyobj):
         return self.format %pyobj
@@ -116,7 +116,7 @@ class AttachmentRef(SimpleType):
             attachmentElement.setAttributeNS(None, "href", "cid:" + str(idhref))
         else:
             #print "the file " + pyobj + " was already attached"
-            #do nothing 
+            #do nothing
             #this should not happen
             pass
 

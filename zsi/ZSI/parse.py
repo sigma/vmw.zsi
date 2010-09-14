@@ -4,14 +4,14 @@
 '''
 
 from xml.dom import expatbuilder
-from ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
+from vmw.ZSI import _copyright, _children, _attrs, _child_elements, _stringtypes, \
         _backtrace, EvaluateException, ParseException, _valid_encoding, \
         _Node, _find_attr, _resolve_prefix
-from ZSI.TC import AnyElement
+from vmw.ZSI.TC import AnyElement
 import types
 
-from ZSI.wstools.Namespaces import SOAP, XMLNS
-from ZSI.wstools.Utility import SplitQName
+from vmw.ZSI.wstools.Namespaces import SOAP, XMLNS
+from vmw.ZSI.wstools.Utility import SplitQName
 
 _find_actor = lambda E: E.getAttributeNS(SOAP.ENV, "actor") or None
 _find_mu = lambda E: E.getAttributeNS(SOAP.ENV, "mustUnderstand")
@@ -210,7 +210,7 @@ class ParsedSoap:
             if t != _Node.ELEMENT_NODE:
                 if t == _Node.TEXT_NODE and n.nodeValue.strip() == "":
                     continue
-                raise ParseException("Non-element child in " + name, 
+                raise ParseException("Non-element child in " + name,
                         inheader, elt, self.dom)
             if mustqualify and not n.namespaceURI:
                 raise ParseException('Unqualified element "' + \
@@ -350,7 +350,7 @@ class ParsedSoap:
         lenofwhat = len(ofwhat)
         c, crange = self.header_elements[:], range(len(self.header_elements))
         for i,what in [ (i, ofwhat[i]) for i in range(lenofwhat) ]:
-            if isinstance(what, AnyElement): 
+            if isinstance(what, AnyElement):
                 raise EvaluateException, 'not supporting <any> as child of soapenc:Header'
 
             v = []

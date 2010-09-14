@@ -5,9 +5,9 @@
 
 import types, os, sys
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from ZSI import *
-from ZSI import _child_elements, _copyright, _seqtypes, _find_arraytype, _find_type, resolvers 
-from ZSI.auth import _auth_tc, AUTH, ClientBinding
+from vmw.ZSI import *
+from vmw.ZSI import _child_elements, _copyright, _seqtypes, _find_arraytype, _find_type, resolvers
+from vmw.ZSI.auth import _auth_tc, AUTH, ClientBinding
 
 
 # Client binding information is stored in a global. We provide an accessor
@@ -20,14 +20,14 @@ def GetClientBinding():
     return _client_binding
 
 gettypecode = lambda mod,e: getattr(mod, str(e.localName)).typecode
-def _Dispatch(ps, modules, SendResponse, SendFault, nsdict={}, typesmodule=None, 
+def _Dispatch(ps, modules, SendResponse, SendFault, nsdict={}, typesmodule=None,
               gettypecode=gettypecode, rpc=False, docstyle=False, **kw):
     '''Find a handler for the SOAP request in ps; search modules.
     Call SendResponse or SendFault to send the reply back, appropriately.
 
     Behaviors:
         default -- Call "handler" method with pyobj representation of body root, and return
-            a self-describing request (w/typecode).  Parsing done via a typecode from 
+            a self-describing request (w/typecode).  Parsing done via a typecode from
             typesmodule, or Any.
 
         docstyle -- Call "handler" method with ParsedSoap instance and parse result with an
@@ -35,7 +35,7 @@ def _Dispatch(ps, modules, SendResponse, SendFault, nsdict={}, typesmodule=None,
 
         rpc -- Specify RPC wrapper of result. Behavior, ignore body root (RPC Wrapper)
            of request, parse all "parts" of message via individual typecodes.  Expect
-           the handler to return the parts of the message, whether it is a dict, single instance, 
+           the handler to return the parts of the message, whether it is a dict, single instance,
            or a list try to serialize it as a Struct but if this is not possible put it in an Array.
            Parsing done via a typecode from typesmodule, or Any.
 
@@ -193,13 +193,13 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         '''Send some XML.
         '''
         self.send_response(code)
-        
+
         if text:
             self.send_header('Content-type', 'text/xml; charset="%s"' %UNICODE_ENCODING)
             self.send_header('Content-Length', str(len(text)))
 
         self.end_headers()
-        
+
         if text:
             self.wfile.write(text)
 
@@ -271,7 +271,7 @@ def AsHandler(request=None, modules=None, **kw):
     ps = ParsedSoap(request)
     kw['request'] = request
     _Dispatch(ps, modules, _ModPythonSendXML, _ModPythonSendFault, **kw)
-    
+
 def AsJonPy(request=None, modules=None, **kw):
     '''Dispatch within a jonpy CGI/FastCGI script.
     '''

@@ -3,10 +3,10 @@
 '''Typecodes for numbers.
 '''
 import types
-from ZSI import _copyright, _inttypes, _floattypes, _seqtypes, \
+from vmw.ZSI import _copyright, _inttypes, _floattypes, _seqtypes, \
         EvaluateException
-from ZSI.TC import TypeCode, Integer, Decimal
-from ZSI.wstools.Namespaces import SCHEMA
+from vmw.ZSI.TC import TypeCode, Integer, Decimal
+from vmw.ZSI.wstools.Namespaces import SCHEMA
 
 class IunsignedByte(Integer):
     '''Unsigned 8bit value.
@@ -173,12 +173,12 @@ class FPEnumeration(FPfloat):
                         '" not in enumeration list',
                     ps.Backtrace(elt))
         return val
-    
+
     def serialize(self, elt, sw, pyobj, name=None, orig=None, **kw):
         if pyobj not in self.choices:
             raise EvaluateException('Value not in int enumeration list',
                     ps.Backtrace(elt))
         Decimal.serialize(self, elt, sw, pyobj, name=name, orig=orig, **kw)
-    
+
 
 if __name__ == '__main__': print _copyright

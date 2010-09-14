@@ -3,9 +3,9 @@
 '''Typecodes for dates and times.
 '''
 
-from ZSI import _copyright, _floattypes, _inttypes, _get_idstr, EvaluateException
-from ZSI.TC import TypeCode, SimpleType
-from ZSI.wstools.Namespaces import SCHEMA
+from vmw.ZSI import _copyright, _floattypes, _inttypes, _get_idstr, EvaluateException
+from vmw.ZSI.TC import TypeCode, SimpleType
+from vmw.ZSI.wstools.Namespaces import SCHEMA
 import operator, re, time as _time
 from time import mktime as _mktime, localtime as _localtime, gmtime as _gmtime
 from datetime import tzinfo as _tzinfo, timedelta as _timedelta,\
@@ -24,7 +24,7 @@ class _localtimezone(_tzinfo):
         self.__dstoffset = self.__stdoffset = _timedelta(seconds=-_time.timezone)
         if _time.daylight: self.__dstoffset = _timedelta(seconds=-_time.altzone)
         self.__dstdiff = self.__dstoffset - self.__stdoffset
-        
+
     """ """
     def dst(self, dt):
         """datetime -> DST offset in minutes east of UTC."""
@@ -32,7 +32,7 @@ class _localtimezone(_tzinfo):
                  dt.hour, dt.minute, dt.second, dt.weekday(), 0, -1)))
         if tt.tm_isdst > 0: return self.__dstdiff
         return _zero
-    
+
     #def fromutc(...)
     #datetime in UTC -> datetime in local time.
 
@@ -51,7 +51,7 @@ class _localtimezone(_tzinfo):
 
 class _fixedoffset(_tzinfo):
     """Fixed offset in minutes east from UTC.
-    
+
     A class building tzinfo objects for fixed-offset time zones.
     Note that _fixedoffset(0, "UTC") is a different way to build a
     UTC tzinfo object.
@@ -60,16 +60,16 @@ class _fixedoffset(_tzinfo):
     def __init__(self, offset):
         self.__offset = _timedelta(minutes=offset)
         #self.__name = name
-        
+
     def dst(self, dt):
         """datetime -> DST offset in minutes east of UTC."""
         return _zero
-    
+
     def tzname(self, dt):
         """datetime -> string name of time zone."""
         #return self.__name
         return "server"
-    
+
     def utcoffset(self, dt):
         """datetime -> minutes east of UTC (negative for west of UTC)."""
         return self.__offset
@@ -109,23 +109,23 @@ def _fix_none_fields(tv):
     if ltv[1] is None: ltv[1] = 1 # Month is absent
     if ltv[2] is None: ltv[2] = 1 # Day is absent
     return tuple(ltv)
-    
+
 def _dict_to_tuple(d):
     '''Convert a dictionary to a time tuple.  Depends on key values in the
     regexp pattern!
-    '''    
-    # TODO: Adding a ms field to struct_time tuples is problematic 
+    '''
+    # TODO: Adding a ms field to struct_time tuples is problematic
     # since they don't have this field.  Should use datetime
-    # which has a microseconds field, else no ms..  When mapping struct_time 
+    # which has a microseconds field, else no ms..  When mapping struct_time
     # to gDateTime the last 3 fields are irrelevant, here using dummy values to make
     # everything happy.
-    # 
+    #
 
     retval = _niltime[:]
     for k,i in ( ('Y', 0), ('M', 1), ('D', 2), ('h', 3), ('m', 4), ):
         v = d.get(k)
         if v: retval[i] = int(v)
-        
+
     v = d.get('s')
     if v:
         msec,sec = _modf(float(v))
@@ -163,15 +163,15 @@ class Duration(SimpleType):
             retval = _dict_to_tuple(d)
         except ValueError, e:
             raise EvaluateException(str(e))
-    
+
         if self.pyclass is not None:
             return self.pyclass(retval)
-        return retval  
-    
+        return retval
+
     def get_formatted_content(self, pyobj):
         if type(pyobj) in _floattypes or type(pyobj) in _inttypes:
             pyobj = _gmtime(pyobj)
-        
+
         d = {}
         pyobj = tuple(pyobj)
         if 1 in map(lambda x: x < 0, pyobj[0:6]):
@@ -179,12 +179,12 @@ class Duration(SimpleType):
             neg = '-'
         else:
             neg = ''
-            
+
         val = '%sP%dY%dM%dDT%dH%dM%dS' % \
             ( neg, pyobj[0], pyobj[1], pyobj[2], pyobj[3], pyobj[4], pyobj[5])
 
         return val
-        
+
 
 class Gregorian(SimpleType):
     '''Gregorian times.
@@ -197,7 +197,7 @@ class Gregorian(SimpleType):
         '''
         if text is None:
             return None
-        
+
         m = self.lex_pattern.match(text)
         if not m:
             raise EvaluateException('Bad Gregorian: %s' %text, ps.Backtrace(elt))
@@ -214,12 +214,12 @@ class Gregorian(SimpleType):
 
         if self.pyclass is not None:
             return self.pyclass(retval)
-        return retval    
+        return retval
 
     def get_formatted_content(self, pyobj):
         if type(pyobj) in _floattypes or type(pyobj) in _inttypes:
             pyobj = _gmtime(pyobj)
-        
+
         if self.fix_timezone:
             pyobj = _fix_timezone(pyobj, tz_from = None, tz_to = "Z")
 
@@ -236,7 +236,7 @@ class Gregorian(SimpleType):
             d[k] = pyobj[i]
 
         ms = pyobj[6]
-        if not ms or not hasattr(self, 'format_ms'): 
+        if not ms or not hasattr(self, 'format_ms'):
             return self.format % d
 
         if  ms > 999:
@@ -244,7 +244,7 @@ class Gregorian(SimpleType):
 
         d['ms'] = ms
         return self.format_ms % d
- 
+
 
 class gDateTime(Gregorian):
     '''A date and time.
@@ -309,7 +309,7 @@ class gDay(Gregorian):
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
     tag, format = 'gDay', '---%(D)02d'
     type = (SCHEMA.XSD3, 'gDay')
-    
+
 class gMonth(Gregorian):
     '''A gMonth.
     '''
@@ -319,7 +319,7 @@ class gMonth(Gregorian):
                         r'(?P<tz>Z|([-+]\d\d:\d\d))?' '$')
     tag, format = 'gMonth', '--%(M)02d'
     type = (SCHEMA.XSD3, 'gMonth')
-    
+
 class gTime(Gregorian):
     '''A time.
     '''
