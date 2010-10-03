@@ -40,7 +40,7 @@ _packages = [ "vmw.ZSI", "vmw.ZSI.generate", "vmw.ZSI.wstools"]
 
 if sys.version_info[0:2] >= (2, 4):
     _packages.append("vmw.ZSI.twisted")
-    
+
 
 # setuptools specific logic
 additional_params = {}
@@ -59,7 +59,7 @@ setup(
     version=_version,
     license="Python",
     packages=_packages,
-    namespace_packages = ['vmw'],
+    namespace_packages = ['vmw',],
     description="Zolera SOAP Infrastructure",
     author="Rich Salz, et al",
     author_email="rsalz@datapower.com",
