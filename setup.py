@@ -60,7 +60,7 @@ setup(
     license="Python",
     packages=_packages,
     namespace_packages = ['vmw',],
-    description="Zolera SOAP Infrastructure",
+    description="Zolera SOAP Infrastructure -- VMware edition",
     author="Rich Salz, et al",
     author_email="rsalz@datapower.com",
     maintainer="Rich Salz, et al",
